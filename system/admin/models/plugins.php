@@ -105,19 +105,29 @@ class Plugins_Model_Core extends Model {
 		
 		foreach ($query as $val) {
 			//找出 $classid的子栏目
+			$_fatherclasses = array();
+			$_canaddclasses = array();
 			if ($val['classides'] == '|0|') {
 				$specials[] = $val;
 				continue;
 			}
-			$_config = MyqeeCMS::config('class/'.$classid);
-			$_sonclasses = array();
-			$_sonclasses[] = $classid;
-			if (!empty($_config['sonclass']) && !$val['isrecursion']) {
-				$_sonclasses = array_merge($_sonclasses,explode('|',trim($_config['sonclass'],'|'))); 
+			
+			if ($val['isrecursion']) {
+				//是递归的话找出所有的classid
+				$tmp = explode('|',trim($val['classides'],'|'));
+				foreach ($tmp as $v) {
+					$_canaddclasses[] = $v;
+					$_config = MyqeeCMS::config('class/class_'.$v);
+					$_sonclasses =explode('|',trim($_config['sonclass'],'|'));
+					$_canaddclasses = array_merge($_canaddclasses,$_sonclasses);
+				}
+				$_config = MyqeeCMS::config('class/class_'.$classid);
+				$_fatherclasses = explode('|',trim($_config['fatherclass'],'|'));
+			}else{
+				$_canaddclasses = explode('|',trim($val['classides'],'|'));
 			}
-			$_spclasses = explode('|',trim($val['classides']));
-			$_df = array_intersect($_sonclasses,$_spclasses);
-			if (!empty($_df)) {
+			//子栏目或者父栏目中有
+			if (in_array($classid,$_canaddclasses) || array_intersect($_fatherclasses,$_canaddclasses)) {
 				$specials[] = $val;
 			}
 		}
