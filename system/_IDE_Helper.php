@@ -20,6 +20,5 @@ class Des extends Des_Core {}
 class Acquisition_Api extends Acquisition_Api_Core {}
 class Plugins extends Plugins_Core {}
 class Tohtml extends Tohtml_Core {}
-class Template extends Template_Core {}
 
 class ipinfo extends ipinfo_Core {}
