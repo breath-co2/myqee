@@ -1,5 +1,5 @@
 <?php defined('MYQEEPATH') or die('No direct script access.');
-//2009-11-13 14:34:28
+//2009-11-18 23:28:53
 //it is saved by myqee system,please don't edit it.
 
 $config['dbname'] = 'default/news';
@@ -46,7 +46,6 @@ $config['field'] = array (
   ),
   'title' => 
   array (
-    'dbname' => '标题123',
     'input' => true,
     'editor' => true,
     'view' => true,
@@ -75,7 +74,6 @@ $config['field'] = array (
   ),
   'abstract' => 
   array (
-    'tag' => '高级',
     'input' => true,
     'editor' => true,
     'caiji' => true,

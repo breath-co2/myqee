@@ -1,9 +1,9 @@
 <?php defined('MYQEEPATH') or die('No direct script access.');
-//2009-11-10 16:36:48
+//2009-11-18 23:41:02
 //it is saved by myqee system,please don't edit it.
 
 $config['ckfinder'] = array (
-  'name' => 'ckfinder',
+  'name' => 'CKFinder文件管理',
   'isuse' => true,
   'detailconfig' => 
   array (
@@ -19,7 +19,7 @@ $config['link'] = array (
   ),
 );
 $config['comment'] = array (
-  'name' => 'comment',
+  'name' => '评论管理',
   'isuse' => true,
   'detailconfig' => 
   array (
