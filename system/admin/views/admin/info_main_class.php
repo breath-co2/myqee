@@ -132,8 +132,8 @@ echo form::dropdown('search[limit]',array(''=>'','10'=>'10','20'=>'20','30'=>'30
 <tr>
 	<td class="td1" width="20" align="center"><input type="checkbox" title="选择上面全部" onclick="selectbox(this,'select_id')" /></td>
 	<td class="td1">
-		<input type="button" value="删除" class="btns" onclick="confirm('确认执行删除操作？',null,null,null,function(t){if(t=='ok')submitbox('select_id','info/del/<?php echo $class['dbname'];?>/[id]/','hiddenFrame')});" />
-		<select size="1" onchange="var thisObj=this;confirm('确认执行此操作？',null,null,null,function(t){if(t=='ok'){if(!submitbox('select_id','info/setvalue/<?php echo $class['dbname'];?>/'+thisObj.value+'/[id]/','hiddenFrame')){thisObj.value='';}}else{thisObj.value='';}})">
+		<input type="button" value="删除" class="btns" onclick="confirm('确认执行删除操作？',null,null,null,function(t){if(t=='ok')submitbox('select_id','<?php echo Myqee::url("info/del/{$class['dbname']}/{{moveclassid}}/[id]/");?>'.replace('{{moveclassid}}',$('moveclassid').value),'hiddenFrame')});" />
+		<select size="1" onchange="var thisObj=this;confirm('确认执行此操作？',null,null,null,function(t){if(t=='ok'){if(!submitbox('select_id','<?php echo Myqee::url("info/setvalue/{$class['dbname']}/{{value}}/[id]/");?>'.replace('{{value}}',thisObj.value),'hiddenFrame')){thisObj.value='';}}else{thisObj.value='';}})">
 			<option value="">对选中信息进行操作</option>
 			<optgroup label="审核信息"><option value="isshow=1">通过审核</option><option value="isshow=-1">审核不通过</option><option value="isshow=0">取消审核</option></optgroup>
 			<optgroup label="首页显示"><option value="is_indexshow=1">首页显示</option><option value="is_indexshow=0">首页不显示</option></optgroup>
@@ -164,7 +164,8 @@ echo form::dropdown('search[limit]',array(''=>'','10'=>'10','20'=>'20','30'=>'30
 				<option value="ontop=9">9 级设置</option>
 			</optgroup>
 		</select> &nbsp;或&nbsp;
-		<?php echo Form::classlist('moveclassid',$classtree,'',0,'移动或复制到以下栏目','color:red');?><input onclick="submitbox('select_id','info/copy/<?php echo $class['dbname'];?>/'+$('moveclassid').value+'/[id]/','hiddenFrame')" type="button" value="复制" class="btns" /><input onclick="submitbox('select_id','info/move/<?php echo $class['dbname'];?>/'+$('moveclassid').value+'/[id]/','hiddenFrame')"  type="button" value="移动" class="btns" />
+		<?php echo Form::classlist('moveclassid',$classtree,'',0,'移动或复制到以下栏目','color:red');?><input onclick="submitbox('select_id','<?php echo Myqee::url("info/copy/{$class['dbname']}/{{moveclassid}}/[id]/");?>'.replace('{{moveclassid}}',$('moveclassid').value),'hiddenFrame')" type="button" value="复制" class="btns" /><input onclick="submitbox('select_id','<?php echo Myqee::url("info/move/{$class['dbname']}/{{moveclassid}}/[id]/");?>'.replace('{{moveclassid}}',$('moveclassid').value),'hiddenFrame')"  type="button" value="移动" class="btns" />
+         &nbsp;或&nbsp; <?php echo form::dropdown('specialid',$specials);?><input onclick="submitbox('select_id','<?php echo Myqee::url("info/copy2special/{$class['dbname']}/{{specialid}}/[id]/");?>'.replace('{{specialid}}',$('specialid').value),'hiddenFrame')" type="button" value="复制" class="btns" /
 	</td>
 	<td class="td1" width="160" align="center">
 		共 <font color="red"><?php echo $total;?></font> 条信息
