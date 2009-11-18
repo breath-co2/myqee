@@ -1,0 +1,144 @@
+<?php defined('MYQEEPATH') or die('No direct script access.');
+
+$config['sitename'] = NULL/*{{sitename}}*/;
+$config['mysite_domain'] = NULL/*{{mysite_domain}}*/;		//网站默认域名
+$config['mysite_url'] = NULL/*{{mysite_url}}*/;				//网站默认地址
+$config['mysite_path'] = NULL/*{{mysite_path}}*/;				//网站路径地址
+$config['myqee_page'] = NULL/*{{myqee_page}}*/;				//动态页面索引页，若启用rewrite本项可设空，默认myqee.php
+
+
+$config['extension_prefix'] = NULL/*{{extension_prefix}}*/;
+
+$config['language'] = array(NULL/*{language}{{0}}*/, NULL/*{language}{{1}}*/);		//系统语言
+
+/**
+ * Locale timezone. Defaults to use the server timezone.
+ * @see http://php.net/timezones
+ */
+$config['timezone'] = NULL/*{{timezone}}*/;
+
+
+$config['internal_cache'] = NULL/*{{internal_cache}}*/;				//配置、语言包、文件列表缓存，0=禁用，1=手动，大于1为定时更新，并且这个值是有效时间
+
+$config['charset'] = NULL/*{{charset}}*/;
+
+$config['display_errors'] = NULL/*{{display_errors}}*/;
+
+
+$config['admin_welcome'] = NULL/*{{admin_welcome}}*/;				//后台管理欢迎语
+
+$config['index_template'] = NULL/*{{index_template}}*/;				//首页模板ID
+$config['index_filename'] = NULL/*{{index_filename}}*/;		//首页文件
+
+$config['defaultpage'] = NULL/*{{defaultpage}}*/;
+
+$config['url_suffix'] = NULL/*{{url_suffix}}*/;
+
+$config['default_viewgroup'] = NULL/*{{default_viewgroup}}*/;
+
+$config['tohtml_limit'] = NULL/*{{tohtml_limit}}*/;				//批量生成静态页面每次生成页面数量
+
+
+$config['aptitudethumb'] = NULL/*{{aptitudethumb}}*/;				//智能缩略图生成功能
+
+
+$config['image'] = array('driver'=>NULL/*{image}{{driver}}*/);					//图像生成采用GD/IMAGEMAGICK
+
+$config['allow_task'] = NULL/*{{allow_task}}*/;					//启动任务功能
+
+
+$config['home_url'] = NULL/*{{home_url}}*/;					//用户home space URL
+
+
+$config['use_ucenter'] = NULL/*{{use_ucenter}}*/;					//否是启用UCENTER
+
+$config['use_uchome'] = NULL/*{{use_uchome}}*/;					//否是启用UCHOME
+
+$config['bbs_url'] = NULL/*{{bbs_url}}*/;					//用户bbs space URL
+
+
+/**
+ * Log thresholds:
+ *  0 - Disable logging
+ *  1 - Errors and exceptions
+ *  2 - Warnings
+ *  3 - Notices
+ *  4 - Debugging
+ */
+$config['log_threshold'] = NULL/*{{log_threshold}}*/;
+
+
+$config['session'] = array(
+	'name' => NULL/*{session}{{name}}*/,
+	'expiration' => NULL/*{session}{{expiration}}*/,
+	'gc_probability' => NULL/*{session}{{gc_probability}}*/,
+);
+$config['cookie'] = array(
+	'domain' => NULL/*{cookie}{{domain}}*/,
+	'prefix' => NULL/*{cookie}{{prefix}}*/,
+	'path' => NULL/*{cookie}{{path}}*/,
+	'expire' => NULL/*{cookie}{{expire}}*/,
+	'secure' => NULL/*{cookie}{{secure}}*/,
+	'httponly' => NULL/*{cookie}{{httponly}}*/,
+);
+
+
+$config['upload'] = array(
+	'urlpath' => NULL/*{upload}{{urlpath}}*/,				//附件URL前缀
+	'filepath' => NULL/*{upload}{{filepath}}*/,					//上传路径，可以绝对路径，也可以是相对于WWWROOT路径
+	'maxsize' => NULL/*{upload}{{maxsize}}*/,				//最大大小限制
+	'extension' => NULL/*{upload}{{extension}}*/,					//默认允许的文件类型
+	'selfpath' => NULL/*{upload}{{selfpath}}*/,					//上传文件创建的目录
+	'setname' => NULL/*{upload}{{setname}}*/,					//重新设置文件名，abc123=随机字符20位，md5=md5算法32位，sha1=sha1算法40位，留空表示使用原名称
+	'autowatermark' => NULL/*{upload}{{autowatermark}}*/,						//自动添加水印
+	'autothumb' => NULL/*{upload}{{autothumb}}*/,						//自动缩略图
+	'thumbwidth' => NULL/*{upload}{{thumbwidth}}*/,								//默认缩略图宽度
+	'thumbheight' => NULL/*{upload}{{thumbheight}}*/,								//默认缩略图高度
+	'chmod' => NULL/*{upload}{{chmod}}*/,									//对上传文件进行权限设置
+);
+
+$config['watermark'] = array(
+	'position' => NULL/*{watermark}{{position}}*/,						//0=随机，1=左上角,2=上中角,3=右上角.4=左中,5=中间,6=右中,7=左下,8=下中,9=右下
+	'posx' => NULL/*{watermark}{{posx}}*/,							//水平偏移，0表示不偏移，负数表示左偏移，整数表示右偏移，基点坐标由type决定
+	'posy' => NULL/*{watermark}{{posy}}*/,							//水平偏移，0表示不偏移，负数表示上偏移，整数表示下偏移，基点坐标由type决定
+	'type' => NULL/*{watermark}{{type}}*/,							//水印方式，0=文字，1=图片，3=随机
+	'gifwatermark' => NULL/*{watermark}{{gifwatermark}}*/,							//是否GIF生成缩略图，0表示对GIF图片不生成缩略图，1=生成
+	'quality' => NULL/*{watermark}{{quality}}*/,							//JPG图片保存质量
+	 'font' => array(
+		'text' => NULL/*{watermark}{font}{{text}}*/,					//文字内容
+		'color' => NULL/*{watermark}{font}{{color}}*/,			//文字颜色
+		'fonts' => NULL/*{watermark}{font}{{fonts}}*/,					//文字路径
+		'size' => NULL/*{watermark}{font}{{size}}*/,					//文字大小
+	 ),
+	 'image' => array(
+		'path' => NULL/*{watermark}{image}{{path}}*/,					//水印图片路径
+		'opacity' => NULL/*{watermark}{image}{{opacity}}*/,				//透明度
+	 ),
+);
+
+
+
+$config['useroutes'] = NULL/*{{useroutes}}*/;					//是否启用路由
+$config['saferoutes'] = NULL/*{{saferoutes}}*/;					//是否启用路由安全模式
+
+//网站路由，是一个可用的正则数组，不启用则设置为null
+/*
+例如
+array(
+  'test(.*)' => 'mynewpage$1',
+);
+*/
+$config['routes'] = NULL/*{{routes}}*/;
+
+//模块设置
+/*
+例如
+'member' => array(
+	'name'=>'用户系统',
+	'url' => '/member/',
+	'navshow' => true,
+	'isuse' => true,
+),
+
+*/
+$config['modules'] = NULL/*{{modules}}*/;
