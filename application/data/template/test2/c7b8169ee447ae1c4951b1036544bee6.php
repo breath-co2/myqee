@@ -1,0 +1,1 @@
+<?php defined('MYQEEPATH') or die('No direct script access.');?>include成功
