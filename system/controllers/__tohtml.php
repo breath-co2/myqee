@@ -749,7 +749,7 @@ class __tohtml_Controller_Core extends Controller {
 				//待传入模板的数据
 				$thedata = $this->_get_cover_data();
 				//生成封面
-				if (($msg = Createhtml::instance() -> createhtml($this -> myclass[$nowclassid]['cover_tplid'], $defaultpage, $thedata)) === true) {
+				if (($msg = Createhtml::instance() -> createhtml($this -> myclass[$nowclassid]['cover_tplid'], $defaultpage, $thedata,'class')) === true) {
 					$tohtml_ok += 1;
 				}
 				else {
