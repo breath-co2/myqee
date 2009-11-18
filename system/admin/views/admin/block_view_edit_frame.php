@@ -3,6 +3,7 @@ $page_index = 'info';
 View::factory('admin/header_frame') -> render(TRUE);
 ?>
 <style type="text/css">
+html{overflow:auto;}
 body{min-width:300px;}
 ul.tag2{display:block;}
 ul.tag2 li{float:left;white-space: nowrap;display:inline-block;line-height:1.8em;margin:0 6px;height:1.8em;overflow:hidden;cursor:pointer;text-decoration:underline;}

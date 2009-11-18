@@ -1,6 +1,6 @@
 <?php
 class Comment_Controller extends Controller{
-	
+	protected $dbname = 'plugins_comments';
 	function __construct(){
 		parent::__construct();
 		Passport::chkadmin();
@@ -19,7 +19,7 @@ class Comment_Controller extends Controller{
 		$status = 1;
 		if (!empty($allid) && $isadmin) {
 			$db = Database::instance();
-			$query = $db -> in ('id',$allid)->delete('comments');
+			$query = $db -> in ('id',$allid)->delete($this->dbname);
 			$status = $query -> count();
 		}
 		if ($status > 0) {
@@ -43,14 +43,13 @@ class Comment_Controller extends Controller{
 		
 		$per = 20;
 		$page = intval($page) > 0 ? intval($page) : 1;
-		$num = $db -> count_records('comments');
+		$num = $db -> count_records($this->dbname);
 		$this -> pagination = new Pagination( array(
 			'uri_segment'    => 'managelist',
 			'total_items'    => $num,
 			'items_per_page' => $per
 		) );
-		$offset = ($page - 1) * $per;
-		$list = $db -> getwhere('comments',array(),$per,$this -> pagination -> sql_offset)->result_array(false);
+		$list = $db -> getwhere($this->dbname,array(),$per,$this -> pagination -> sql_offset)->result_array(false);
 		$view = new View ('comment_managelist');
 		$view -> set ( 'list' , $list );
 		$view -> render(true);

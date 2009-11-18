@@ -6,6 +6,7 @@
  */
 class Comment_Controller extends Controller{
 
+	protected $dbname = 'plugins_comments';
 	/**
 	 * 发表评论
 	 */
@@ -44,7 +45,7 @@ class Comment_Controller extends Controller{
 		}
 		$data['addip'] = Tools::getonlineip();
 		$data['addtime'] = time();
-		$query = $db -> insert ('comments',$data);
+		$query = $db -> insert ($this->dbname,$data);
 		if ($query->count() >0) {
 			//评论成功
 			exit ('success');
@@ -68,7 +69,7 @@ class Comment_Controller extends Controller{
 		$status = 1;
 		if (!empty($id) && $isadmin) {
 			$db = Database::instance();
-			$query = $db -> where ('id',$id)->delete('comments');
+			$query = $db -> where ('id',$id)->delete($this->dbname);
 			$status = $query -> count();
 		}
 		if ($status > 0) {
@@ -104,12 +105,12 @@ class Comment_Controller extends Controller{
 		$db = Database::instance();
 		$per = 10;
 		$page = intval($page) > 0 ? intval($page) : 1;
-		$count = $db -> count_records('comments');
+		$count = $db -> count_records($this->dbname);
 		$url = Myqee::url('plugins/comment/comment/showcomment/{{page}}/{{classid}}/{{news_id}}/');
 		$pageurl = Myhtml::page($page,$count,$url,array('page'=>$page,'classid'=>$classid,'news_id',$news_id));
 		
 		$offset = ($page - 1) * $per;
-		$list = $db -> getwhere('comments',array('classid'=>$classid,'news_id'=>$news_id),$per,$this -> pagination -> sql_offset)->result_array(false);
+		$list = $db -> getwhere($this->dbname,array('classid'=>$classid,'news_id'=>$news_id),$per,$this -> pagination -> sql_offset)->result_array(false);
 		$view -> set ('list',$list);
 		$view -> set ('pageurl',$pageurl);
 		$view -> set ('count',$count);

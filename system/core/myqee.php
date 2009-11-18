@@ -408,6 +408,7 @@ abstract class myqee_root{
 		Myqee::$method_name = $method_name;
 		Myqee::$arguments = self::$arguments;
 		
+		Myqee::close_buffers(false);
 		ob_start();
 		
 		switch (count($arguments)) {
@@ -441,7 +442,7 @@ abstract class myqee_root{
 		if(strpos(strtolower($_SERVER['HTTP_ACCEPT_ENCODING']),'gzip')!==false)
 		{
 			//开启gzip压缩
-			@ob_start("ob_gzhandler");
+			ob_start("ob_gzhandler");
 		}
 		
 		if ($returnhtml){
