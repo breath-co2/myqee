@@ -213,7 +213,7 @@ class Model_Controller_Core extends Controller {
 		
 		$vfields = array_keys($vconfig);
 		foreach ($vfields as $val) {
-			$field[$val] = array('disable'=>1,'dbname'=>$vconfig[$val]['title']);
+			$field[$val] = array_merge((array)$field[$val],array('disable'=>1,'dbname'=>$vconfig[$val]['title']));
 		}
 		
 		foreach ($field as $key=>$val) {
@@ -1863,11 +1863,11 @@ class Model_Controller_Core extends Controller {
 			} else {
 				$status = $db->update ('[dbtable]',$data,array('name'=>$data['name']));
 			}
-			if ($status->count() >0) {
-				MyqeeCMS::show_info ( Myqee::lang ( 'admin/model.info.saveok' ), true, 'goback' );
-			}else{
-				MyqeeCMS::show_info ( '没有修改数据！', true );
-			}
+		}
+		if ($status->count() >0) {
+			MyqeeCMS::show_info ( Myqee::lang ( 'admin/model.info.saveok' ), true, 'goback' );
+		}else{
+			MyqeeCMS::show_info ( '没有修改数据！', true );
 		}
 	}
 	
