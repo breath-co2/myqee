@@ -1010,11 +1010,6 @@ class Admin_Model_Core extends Model {
 			list($database,$tablename) = explode('/',$dbname);
 		}
 		$_db = Database::instance($database);
-	
-		if (is_array($where)){
-			$_db -> where($where);
-		}
-		
 		if ($classid_field && $this -> site_id>0){
 			$allclass = $this -> get_site_allclass_id($dbname);
 			if (!$allclass)return 0;
@@ -1022,6 +1017,9 @@ class Admin_Model_Core extends Model {
 			//找出其所属的数据库
 			
 			$_db -> in( $classid_field , $allclass );
+		}
+		if (is_array($where)){
+			$_db -> where($where);
 		}
 		if (is_array($otherBuilder)){
 			foreach ($otherBuilder as $v){
@@ -1292,7 +1290,7 @@ class Admin_Model_Core extends Model {
 		if ($modelid>0){
 			$model_set = MyqeeCMS::config('model/model_'.$modelid);
 			//处理钩子
-			$this->_hook($dbset,$model_set,$info);
+			$this->_hook($this -> dbset,$model_set,$info);
 			$model_field = $model_set['field'];
 			$model_dbset = $model_set['dbset'];
 			if (is_array($model_dbset)){
@@ -1374,9 +1372,6 @@ class Admin_Model_Core extends Model {
 						$dohtmlfun = 'viewhtml';
 					}else{
 						$dohtmlfun = 'edithtml';
-					}
-					if ($fieldname == '#special') {
-						$myset['title'] = '所属专题';
 					}
 					/*
 					if (!isset($myset['editwidth'])||$myset['editwidth']===NULL){
