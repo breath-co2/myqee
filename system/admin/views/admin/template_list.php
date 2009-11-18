@@ -49,7 +49,7 @@ if($list):
 	<td class="td2" align="center"><a href="<?php echo Myqee::url('template/index/1/' .  $item['type']) ;?>"><?php echo $mytype[$item['type']];?></a></td>
 	<td class="td2"><?php if ($item['cate']):?><a class="classlink" href="<?php echo Myqee::url('template/index/1/' . $tplname . '/' . urlencode($item['cate'])) ;?>">[<?php echo $item['cate'];?>]</a> <?php endif;?><?php echo $item['tplname'];?></td>
 	<td class="td2" style="color:#12C450"><?php echo $item['group'].'/<font style="color:#b52">'.$item['filename'].$item['filename_suffix'].'</font>';?></td>
-	<td class="td2" align="center"><?if ($item['isuse']){echo '是';}else{echo '<font color="red">否</font>';}?></td>
+	<td class="td2" align="center"><?php if ($item['isuse']){echo '是';}else{echo '<font color="red">否</font>';}?></td>
 	<td class="td2" align="center">
 	<input onclick="var myvalue=prompt('您可以输入加密密码以保护您的模板。留空或取消则不设置密码！','')||'';goUrl('<?php echo ADMIN_URLPATH.'template/output/'.$item['id'] ;?>/'+myvalue,'hiddenFrame')" type="button" value="导出模板" class="btn" />
 	<input onclick="goUrl('<?php echo Myqee::url('template/copy/'.$item['id']) ;?>')" type="button" value="复制模板" class="btn" />
