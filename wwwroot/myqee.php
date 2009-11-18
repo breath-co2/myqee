@@ -3,7 +3,7 @@ $myqee_wwwroot 		= './';			//网站WWWROOT目录
 $myqee_sysapppath 	= '../system';		//系统目录
 $myqee_userapppath 	= '../application';	//自定义APP目录
 $myqee_modulepath 	= '../modules';		//模块目录
-$myqee_cachepath 	= '../myapp/cache';	//缓存目录
+$myqee_cachepath 	= '../application/cache';	//缓存目录
 
 
 
