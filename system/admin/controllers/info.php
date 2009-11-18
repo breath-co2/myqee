@@ -232,6 +232,12 @@ class Info_Controller_Core extends Controller {
 			$view -> set ('dbfield',$dbfield);
 		}
 //		echo $adminmodel -> db -> last_query();
+		$query = Database::instance ()->get('[special]')->result_array(false);
+		$specials[0] = '复制到下列专题';
+		foreach ($query as $val) {
+			$specials[$val['sid']] = $val['title'];
+		}
+		$view -> set ('specials' , $specials);
 		$view -> set ('class' , $classArray);
 		$view -> set ('page' , $p);
 		$view -> set ('showheader' , $showheader);
@@ -856,16 +862,18 @@ class Info_Controller_Core extends Controller {
 		}
 	}
 
-	public function move($database=null,$tablename=null,$newclassid=null,$allid=null){
+	public function move($database='',$tablename='',$newclassid=null,$allid=null){
 		Passport::checkallow('info.move','',true);
+		$dbname = $database.'/'.$tablename;
 		$newclassid = (int)$newclassid;
 		if (!($newclassid>0))MyqeeCMS::show_error( Myqee::lang('admin/info.error.parametererror'),true );
 		define('IS_SETCLASS','yes');
 		$this -> setvalue($database,$tablename,'class_id='.$newclassid,$allid);
 	}
 
-	public function copy($dbname=null,$newclassid=null,$allid=null){
+	public function copy($database='',$tablename='',$newclassid=null,$allid=null){
 		Passport::checkallow('info.add','',true);
+		$dbname = $database.'/'.$tablename;
 		if ( !$dbname ){
 			MyqeeCMS::show_error( Myqee::lang('admin/info.error.errordbname'),true );
 		}
@@ -900,7 +908,7 @@ class Info_Controller_Core extends Controller {
 		}
 		$dbconfig = MyqeeCMS::config('db/'.$dbname);
 		$myInfos = $adminmodel -> get_userdb_info($dbname,$myId,'*');
-		$_db = Database::instance($dbconfig['database']);
+		$_db = Database::instance($database);
 		$copynum = 0;
 		$nocopynum = 0;
 		foreach ($myInfos as $myInfo){
@@ -909,7 +917,7 @@ class Info_Controller_Core extends Controller {
 				unset($myInfo[$sys_field['id']]);
 				$myInfo[$sys_field['class_id']] = $newclassid;
 				$myInfo[$sys_field['class_name']] = $myclass['classname'];
-				$rs = $_db -> insert($dbname,$myInfo);
+				$rs = $_db -> insert($tablename,$myInfo);
 				$copynum += count($rs);
 			}else{
 				$nocopynum++;
@@ -924,6 +932,148 @@ class Info_Controller_Core extends Controller {
 	}
 	
 	/**
+	 * 信息复制到专题
+	 * @param string $database
+	 * @param string $tablename
+	 * @param int $newclassid
+	 * @param string $allid id1,id2,....
+	 */
+	public function copy2special($database='',$tablename='',$specialid=null,$allid=null) {
+		Passport::checkallow('info.add','',true);
+		$dbname = $database.'/'.$tablename;
+		if ( !$dbname ){
+			MyqeeCMS::show_error( Myqee::lang('admin/info.error.errordbname'),true );
+		}
+		$specialid = (int)$specialid;
+		if (!$specialid){
+			MyqeeCMS::show_error( Myqee::lang('admin/info.error.setvaluetypenull'),true );
+		}
+		$db = Database::instance();
+		$query = $db->getwhere('[special]',array('sid'=>$specialid))->result_array(false);
+		if (empty($query)) {
+			MyqeeCMS::show_error( Myqee::lang('admin/info.error.setvaluetypenull'),true );
+		}
+		$specialinfo = $query[0];
+		if (!$allid){
+			MyqeeCMS::show_error( Myqee::lang('admin/info.error.parametererror'),true );
+		}
+		$idArr = explode(',',$allid);
+		$myId = array();
+		foreach ($idArr as $tmpid){
+			if ($tmpid>0 && !in_array($tmpid,$myId)){
+				$myId[] = $tmpid;
+			}
+		}
+		if (count($myId)==0){
+			MyqeeCMS::show_info( Myqee::lang('admin/info.info.nodoset') , true );
+		}
+		$dbconfig = MyqeeCMS::config('db/'.$dbname);
+		$this->adminmodel = new Admin_Model;
+		$myInfos = $this->adminmodel -> get_userdb_info($dbname,$myId,'*');
+		$_db = Database::instance($database);
+		$copynum = 0;
+		$nocopynum = 0;
+		//找到可以允许的classid
+		$_canaddclasses = array();
+		if ($specialinfo['isrecursion']) {
+			$tmp = explode('|',trim($specialinfo['classides'],'|'));
+			foreach ($tmp as $v) {
+				$_canaddclasses[] = $v;
+				$_config = MyqeeCMS::config('class/class_'.$v);
+				$_sonclasses =explode('|',trim($_config['sonclass'],'|'));
+				$_canaddclasses = array_merge($_canaddclasses,$_sonclasses);
+			}
+		}else{
+			$_canaddclasses = explode('|',trim($specialinfo['classides'],'|'));
+		}
+		foreach ($myInfos as $myInfo){
+			if ($specialinfo['classides'] != '|0|' && !in_array($myInfo['class_id'],$_canaddclasses)) {
+				$_config = MyqeeCMS::config('class/class_'.$myInfo['class_id']);
+				$_fatherclasses = explode('|',trim($_config['fatherclass'],'|'));
+				if (!array_intersect($_fatherclasses,$_canaddclasses)) {
+					continue;
+				}
+			}
+			$data = $this->_get_specialdata($dbconfig,$myInfo);
+			$data['sid'] = $specialid;
+			$query = $db->merge('[special_info]',$data);
+			$tmp = count($query);
+			if ($tmp >0) {
+				$copynum += 1;
+			}
+		}
+
+		if ($copynum>0){
+			MyqeeCMS::show_info( Myqee::lang('admin/info.info.copysuccess',$copynum) , true);
+		}else{
+			MyqeeCMS::show_info( Myqee::lang('admin/info.info.nodoset') , true );
+		}
+		
+	}
+	
+	/**
+	 * 根据数据表信息得到专辑的信息
+	 * @param array $dbconfig
+	 * @param array $info
+	 * @return array
+	 */
+	protected function _get_specialdata ($dbconfig,$info) {
+		$data = array();
+		$data['infoid'] = $info[$dbconfig['sys_field']['id']];
+		$data['dbname'] = $dbconfig['dbname'];
+		$data['posttime'] = time();
+		
+		$data['createtime'] = time();
+		if ($dbconfig['sys_field']['title']){
+			$data['title'] = $info[$dbconfig['sys_field']['title']];
+		}
+		
+		if ($dbconfig['sys_field']['imagenews']){
+			$data['imagenews'] = $info[$dbconfig['sys_field']['imagenews']];
+		}
+		
+		if ($dbconfig['sys_field']['linkurl']){
+			$data['linkurl'] = $info[$dbconfig['sys_field']['linkurl']];
+		}
+		
+		if ($dbconfig['sys_field']['class_id']){
+			$data['class_id'] = $info[$dbconfig['sys_field']['class_id']];
+		}
+		
+		if ($dbconfig['sys_field']['class_name']){
+			$data['class_name'] = $info[$dbconfig['sys_field']['class_name']];
+		}
+		
+		if ($dbconfig['sys_field']['title']){
+			$data['title'] = $info[$dbconfig['sys_field']['title']];
+		}
+
+		if ($dbconfig['sys_field']['isshow']){
+			$data['isshow'] = $info[$dbconfig['sys_field']['isshow']];
+		}
+		
+		if ($dbconfig['sys_field']['isheadlines']){
+			$data['isheadlines'] = $info[$dbconfig['sys_field']['isheadlines']];
+		}
+		if ($dbconfig['sys_field']['ontop']){
+			$data['ontop'] = $info[$dbconfig['sys_field']['ontop']];
+		}
+		if ($dbconfig['sys_field']['is_hot']){
+			$data['ishot'] = $info[$dbconfig['sys_field']['is_hot']];
+		}
+		if ($dbconfig['sys_field']['iscommend']){
+			$data['iscommend'] = $info[$dbconfig['sys_field']['iscommend']];
+		}
+		//算出url
+		$info[$dbconfig['sys_field']['id']] = $data['infoid'];
+		$classid = $data['class_id'] >0 ? $data['class_id'] : $dbconfig['dbname'];
+		$adminmodel = new Admin_Model();
+		$data['url'] = $adminmodel->getinfourl($classid,$info);
+		
+		unset ($data[$dbconfig['sys_field']['id']]);
+		return $data;
+	}
+	/** 
 	 * 从扩展表中读取信息
 	 *
 	 * @param string $tablename 主表的名称
