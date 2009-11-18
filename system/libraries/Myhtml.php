@@ -2,7 +2,7 @@
 /**
  * 为前台数据提供数据调用功能
  *
- * $Id: Myhtml.php,v 1.6 2009/11/02 01:46:55 jonwang Exp $
+ * $Id: Myhtml.php,v 1.1 2009/11/11 12:00:04 tom Exp $
  *
  * @package    Core
  * @author     Myqee Team
@@ -1063,12 +1063,12 @@ showFlash(null,',var_export($swfurl),',focus_width,swf_height,false,true,flashVa
 	 * @param boolean $returnstring 是否返回字符串，若返回字符串，则所有栏目ID之间用,隔开，默认否
 	 * @return array/string
 	 */
-	public function get_sonclass_id($bclassid, $treedepth =0 ,$isincludeself = false , $returnstring = false){
-		$classtree = self::get_allclass_array($bclassid,$treedepth,$isincludeself);
+	public static function get_sonclass_id($bclassid, $treedepth =0 ,$isincludeself = false , $returnstring = false){
+		$classtree = self::get_allclass_array($bclassid,$treedepth,$isincludeself,'classid,classname,sonclass');
 		return self::_listsonclass($classtree,$returnstring);
 	}
 
-	protected function _listsonclass($classtree,$returnstring = true){
+	protected static function _listsonclass($classtree,$returnstring = true){
 		$classtree = (array)$classtree;
 		$classid = '';
 		foreach ($classtree as $item){
