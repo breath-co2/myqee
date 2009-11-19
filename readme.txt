@@ -7,6 +7,7 @@
 application/config/database.php文件修改
 
 后台地址http://localhost/admin/
+若不启用.htaccess则地址是http://localhost/admin.php并且你需要按本文档最后的说明修改wwwroot/admin.php文件
 用户名admin密码123456
 若你根目录不是设置在wwwroot下，你可能需要修改wwwroot/admin.php文件中页面路径地址
 
@@ -17,8 +18,10 @@ application/config/database.php文件修改
 Kohana的手册地址http://docs.kohanaphp.com/
 
 
-
+-----------------------------------------------
 注意事项：
+出现跳转到/login/index.html?forward=%2Fadmin.php上404错误的问题，请看本文档最后解决办法
+
 读取config请使用Myqee::config('test')而不要使用Kohana::config('test')
 Database和Kohana的方法一样
 很多工具都在Tools类里
@@ -29,14 +32,19 @@ Database和Kohana的方法一样
 
 
 
+-----------------------------------------------
 目录结构：
 本目录结构和Kohana类似但也有不少区别
 用户扩展文件都在application目录
 后台扩展文件都在admin目录
 本系统全部在system目录，系统后台文件都在system/admin/目录
 
-网站前后台可以分离使用2个不同的域名，只要把wwwroot/admin.php放到别的地方，然后修改下里面的配置即可。
+网站前后台可以分离使用2个不同的域名，只要把wwwroot/admin.php放到别的地方，然后修改下里面的路径配置即可。
 
 
 
-目前使用了.htaccess文件，也有直接配置在apache里面的，或者不用rewrite也可以，但要修改一下后台文件的配置
+
+目前使用了.htaccess文件，也有直接配置在apache里面的，
+
+若不用rewrite，但要修改一下后台文件的配置
+修改wwwroot/admin.php文件的第20行为$myqee_adminurlpath = '/admin.php/';
