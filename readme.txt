@@ -7,6 +7,7 @@
 application/config/database.php文件修改
 
 后台地址http://localhost/admin/
+用户名admin密码123456
 若你根目录不是设置在wwwroot下，你可能需要修改wwwroot/admin.php文件中页面路径地址
 
 
