@@ -109,8 +109,6 @@ if (MYAPPPATH==='/')die('The application does not exist');
 if (MODULEPATH==='/')die('The modulepath does not exist');
 if (UPLOADPATH==='/')die('The uploadpath does not exist');
 
-
-if (WWWROOT==='/')die('The wwwroot does not exist');if (MYQEEPATH==='/')die('The system does not exist');if (ADMINPATH==='/')die('The adminpath does not exist');if (CACHEPATH==='/')die('The admincache does not exist');if (MYAPPPATH==='/')die('The application does not exist');if (MODULEPATH==='/')die('The modulepath does not exist');if (UPLOADPATH==='/')die('The uploadpath does not exist');
 /**
  * 管理员页面图片、样式、脚本等主目录
  * 以/开头，最后不要加/若图片在主目录，则留空
