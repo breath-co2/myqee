@@ -120,7 +120,7 @@ define('EDIT_TEMPLATE',$myqee_edittemplate);
 define('EXT', '.php');
 
 
-unset($model_begin,$myqee_wwwroot,$myqee_myqeepath,$myqee_adminpath,$myqee_cachepath,$myqee_modulepath,$myqee_userapppath,$myqee_adminimgpath,$myqee_adminurlpath,$myqee_uploadpath,$myqee_edittemplate);
+unset($model_begin,$myqee_wwwroot,$myqee_sysapppath,$myqee_adminpath,$myqee_cachepath,$myqee_modulepath,$myqee_userapppath,$myqee_adminimgpath,$myqee_adminurlpath,$myqee_uploadpath,$myqee_edittemplate);
 
 //防止其它引用页include时解析地址错误
 $_SERVER['SCRIPT_FILENAME'] = __FILE__;
