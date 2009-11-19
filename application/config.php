@@ -1,7 +1,7 @@
 <?php defined('MYQEEPATH') or die('No direct script access.');
 
 $config['sitename'] = '麦琪网';
-$config['mysite_domain'] = 'web.myqee.com';		//网站默认域名
+$config['mysite_domain'] = 'localhost';		//网站默认域名
 $config['mysite_url'] = '/';				//网站默认地址
 $config['mysite_path'] = NULL;				//网站路径地址
 $config['myqee_page'] = '';				//动态页面索引页，若启用rewrite本项可设空，默认myqee.php
@@ -47,14 +47,14 @@ $config['image'] = array('driver'=>'GD');					//图像生成采用GD/IMAGEMAGICK
 $config['allow_task'] = '1';					//启动任务功能
 
 
-$config['home_url'] = 'http://home.waitanwatch.com';					//用户home space URL
+$config['home_url'] = '';					//用户home space URL
 
 
 $config['use_ucenter'] = '1';					//否是启用UCENTER
 
 $config['use_uchome'] = '1';					//否是启用UCHOME
 
-$config['bbs_url'] = 'http://bbs.waitanwatch.com';					//用户bbs space URL
+$config['bbs_url'] = '';					//用户bbs space URL
 
 
 /**
