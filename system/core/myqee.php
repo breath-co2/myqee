@@ -22,7 +22,7 @@ if (MAGIC_QUOTES_GPC){
 	function _stripslashes($string) {
 		if(is_array($string)) {
 			foreach($string as $key => $val) {
-				$string[$key] = _stripslashes($val, $force);
+				$string[$key] = _stripslashes($val);
 			}
 		} else {
 			$string = stripslashes($string);

@@ -21,7 +21,7 @@ class Index_Controller_Core extends Controller {
 		echo '{"pinyin":"'.$str.'"}';
 	}
 
-	public static function runtime ($decimals = 3, $begintime = null)
+	public function runtime ($decimals = 3, $begintime = null)
 	{
 		$begintime or $begintime = STARTTIME;
 		list ($usec, $sec) = explode(" ", microtime());
@@ -35,11 +35,11 @@ class Index_Controller_Core extends Controller {
 			foreach ($_GET['watermark'] as $key => $value) {
 				if (is_array($value)) {
 					foreach ($value as $k2 => $v2) {
-						$testconfig[$key][$k2] = is_array($v2) ? $v2 : MyqeeCMS::unescape($v2);
+						$testconfig[$key][$k2] = is_array($v2) ? $v2 : Tools::unescape($v2);
 					}
 				}
 				else {
-					$testconfig[$key] = MyqeeCMS::unescape($value);
+					$testconfig[$key] = Tools::unescape($value);
 				}
 			}
 		}

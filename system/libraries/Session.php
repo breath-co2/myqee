@@ -314,7 +314,7 @@ class Session_Core {
 	 * @param   string  variable key(s)
 	 * @return  void
 	 */
-	public function delete($keys)
+	public function delete()
 	{
 		$args = func_get_args();
 

@@ -3,6 +3,13 @@ html{
 	filter:expression(document.execCommand("BackgroundImageCache", false, true));
 	overflow:scroll;
 	overflow-x:auto;
+	scrollbar-face-color:#e0e0e0;
+	scrollbar-shadow-color:#e0e0e0;
+	scrollbar-highlight-color:#e0e0e0;
+	scrollbar-3dlight-color:#eaeaea;
+	scrollbar-darkshadow-color:#697074;
+	scrollbar-track-color:#f7f7f7;
+	scrollbar-arrow-color:#666666;
 }
 
 body {
