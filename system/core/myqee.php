@@ -1510,7 +1510,7 @@ abstract class Myqee {
 			$url =  ( defined('ADMIN_URLPATH')?ADMIN_URLPATH:self::config('core.mysite_url').($myqeepage ? $myqeepage . '/' : '') ).$urlstr [0];
 		}
 		$url .= (substr($urlstr[0],-1)!='/'?($suffix?$suffix:self::config('core.url_suffix')):'') . 
-				($urlstr [1]?'?'.$urlstr[1]:'');
+				(isset($urlstr[1])?'?'.$urlstr[1]:'');
 		
 		if ($full_url && substr($url,0,1)=='/'){
 			$url = self::protocol() .'://'. $_SERVER['HTTP_HOST'] . $url;
@@ -1564,8 +1564,6 @@ abstract class Myqee {
 				$close ();
 			}
 			
-			// This will flush the Kohana buffer, which sets self::$output
-			ob_end_clean ();
 			
 			// Reset the buffer level
 			self::$buffer_level = ob_get_level ();
