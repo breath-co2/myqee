@@ -290,7 +290,7 @@ abstract class myqee_root{
 					$found_sondir = true;
 				}
 				
-				if ( is_file($tmp_c_file) ){
+				if ( !$foundcontroller && is_file($tmp_c_file) ){
 					$foundcontroller = $tmp_c_file;
 					$mypath = $k;
 					$extincludepath = $includepath;

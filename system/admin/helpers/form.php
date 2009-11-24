@@ -550,6 +550,10 @@ class form_Core {
 	public static function imginput($data, $value = '', $extra = '', $allownum = 1){
 		return self::uploadfile($data, $value, $extra, 'upimg',$allownum);
 	}
+
+	public static function flash($data, $value = '', $extra = '', $allownum = 1){
+		return self::uploadfile($data, $value, $extra, 'upflash',$allownum);
+	}
 	
 	public static function uploadfile($data, $value = '', $extra = '' , $uptype = null , $allownum = 1){
 		if (!in_array($uptype , array('upimg','upfile','upflash')))$uptype='upfile';
@@ -1095,7 +1099,7 @@ function html_rename_all(){
 		$myset['set']['id'] or $myset['set']['id'] = '_myqee_input_'.$myset['set']['name'];
 		$type = $myset['type'];
 		$data = $myset['set'];
-		$extra = $data['ohter'];
+		$extra = $data['other'];
 		
 		unset($data['other']);
 		
@@ -1221,6 +1225,9 @@ function html_rename_all(){
 				break;
 			case 'imginput':
 				$html = form::imginput($data,$value,$extra);
+				break;
+			case 'flash':
+				$html = form::flash($data,$value,$extra);
 				break;
 			case 'classlist':
 				if (substr($data['name'],-2,2)!='[]'){

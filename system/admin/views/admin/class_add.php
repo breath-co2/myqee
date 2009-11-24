@@ -180,7 +180,7 @@ function get_pinyin_path(){
 		</td>
 	</tr>
 	<tr>
-		<td class="td1" align="right" width="50" height="26">输出方式：</td>
+		<td class="td1" align="right">输出方式：</td>
 		<td class="td2"><?php echo form::radio('class[cover_tohtml]','0',$class['cover_tohtml']==0,'onclick="if(this.checked){$(\'cover_tohtmlshow\').style.display=\'none\';}"');?>生成静态封面页
 	<?php echo form::radio('class[cover_tohtml]','1',$class['cover_tohtml']==1,'onclick="if(this.checked){$(\'cover_tohtmlshow\').style.display=\'\';}" id="class[cover_tohtml]_1"');?>使用动态封面输出
 	<span style="display: none;" id="cover_tohtmlshow">
