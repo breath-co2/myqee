@@ -318,7 +318,6 @@ function addfile(){
 
 
 <?php
-$config_upload = Myqee::config('core.upload');
 $maxsize = $config_upload['maxsize']>1024?($config_upload['maxsize']/1024).' MB':$config_upload['maxsize'].' KB';
 
 if (isset($allow_type) && is_array($allow_type)){
@@ -366,6 +365,10 @@ if ($limit_file==1){
 	<tr>
 		<td class="td1" align="right">允许上传的文件类型</td>
 		<td class="td2"><?php echo $allowtype;?></td>
+	</tr>
+	<tr>
+		<td class="td1" align="right">上传至目录</td>
+		<td class="td2"><?php echo $config_upload['filepath'];?></td>
 	</tr>
 	<tr>
 		<td class="td1" align="right">图片是否添加水印</td>
@@ -423,7 +426,7 @@ var swfu;
 	var settings = {
 		flash_url : "<?php echo ADMIN_IMGPATH;?>/admin/swfupload/swfupload.swf",
 		upload_url: "<?php echo Myqee::url( 'uploadfile/upfile');?>",	// Relative to the SWF file
-		post_params: {"sid" : "<?php echo $checekinfo['sid'];?>","time":"<?php echo $checekinfo['time'];?>","adminid":"<?php echo $checekinfo['adminid'];?>","code":"<?php echo $checekinfo['code'];?>"},
+		post_params: {"sid" : "<?php echo $checekinfo['sid'];?>","time":"<?php echo $checekinfo['time'];?>","adminid":"<?php echo $checekinfo['adminid'];?>","code":"<?php echo $checekinfo['code'];?>","config":"<?php echo $config;?>"},
 		file_size_limit : '<?php echo $maxsize;?>',
 		file_types : '<?php echo $allowtype;?>',
 		file_types_description : '所有支持格式(最大<?php echo $maxsize;?>)',

@@ -567,8 +567,13 @@ class form_Core {
 		}
 		$data['disabled'] and $uptype .= '_disabled';
 		$data['class'] = 'input';
+		if ($data['_config']){
+			$config = $data['config'];
+		}elseif($extra && preg_match("/_config=\"([a-zA-Z0-9]+)\"/",$extra,$match)){
+			$config = $match[1];
+		}
 		return '<span style="white-space:nowrap;">'.form::input($data , $value , $extra .'style="width:300px;"' ) . 
-		'&nbsp;<img src="' . ADMIN_IMGPATH. '/admin/'.$uptype.'.gif" align="absmiddle"'.($data['disabled']?' disabled="disabled"':'').' style="cursor:pointer" onclick="if(this.getAttribute(\'disabled\')==\'disabled\')return;show_upload_frame(\'' . $data['id'] . '\',\''. Myqee::url('uploadfile/inframe/'.$uptype.'/'.$allownum) .'\',\''.$uptype.'\')" /></span>';
+		'<img title="点击查看" width="10" height="10" src="' . ADMIN_IMGPATH. '/admin/external.png" style="position:absolute;margin:0 0 0 -10px;cursor:pointer;" onclick="var myinput=$(\''.$data['id'].'\');if(myinput.value){goUrl(\''.Myqee::url('uploadfile/showfile').'?url=\'+encodeURIComponent(myinput.value),\'_blank\')}else{alert(\'请先上传文件！\')}" />&nbsp;<img src="' . ADMIN_IMGPATH. '/admin/'.$uptype.'.gif" align="absmiddle"'.($data['disabled']?' disabled="disabled"':'').' style="cursor:pointer" onclick="if(this.getAttribute(\'disabled\')==\'disabled\')return;show_upload_frame(\'' . $data['id'] . '\',\''. Myqee::url('uploadfile/inframe/'.$uptype.'/'.$allownum.'/'.$config) .'\',\''.$uptype.'\')" /></span>';
 	}
 	
 	public static function classlist($data  , $class_array = FALSE , $extra = '' ,$selected = FALSE ,$isaddroot = TRUE ,$isshowcolor = false,$setcolorby = '', $spacer=''){

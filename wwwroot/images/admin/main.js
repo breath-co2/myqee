@@ -401,7 +401,7 @@ function show_upload_frame(id,url,type){
 		'upflash':'Flash上传'
 	};
 	theTitle[type] = theTitle[type] || '文件上传';
-	window.win({message:url+'#'+escape(id),width:600,height:320,title:theTitle[type],iframe:true});
+	window.win({message:url+'#'+escape(id),width:600,height:360,title:theTitle[type],iframe:true});
 }
 
 function swapNodes(item1,item2) {

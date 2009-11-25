@@ -61,7 +61,7 @@ class Uploadfile_Controller_Core extends Controller {
 		if (!$this->_chkislogin ( $_POST )){
 			exit;
 		}
-		$upinfo = Upload::save();
+		$upinfo = Upload::save($_POST['config']);
 		$upinfo ['url'] = $upinfo ['path'] . $upinfo ['name'] . '.' . $upinfo ['extension'];
 		$this -> db = Database::instance();
        
@@ -93,14 +93,24 @@ class Uploadfile_Controller_Core extends Controller {
 		exit ();
 	}
 	
-	public function inframe($type = null, $limit_file = 0) {
+	public function inframe($type = null, $limit_file = 0 ,$config = 'default') {
 		$this->_chkadmin ();
-		Passport::checkallow('info.uploadexplorer');
+		Passport::checkallow('info.uploadexplorer','',TRUE);
 		$view = new View ( 'admin/upload_file_frame' );
 		if ($type == 'upimg') {
-			$view->set ( 'allow_type', array ('gif', 'jpg', 'jpeg', 'png' ) );
+			$view->set ( 'allow_type', array ('gif', 'jpg', 'jpeg', 'png' , 'bmp' ) );
+		}elseif($type == 'upflash') {
+			$view->set ( 'allow_type', array ('swf') );
 		}
-		
+		if ($config && $config!='default' && preg_match("/[a-zA-Z0-9]+/",$config)){
+			$config_upload= MyqeeCMS::config('upload.'.$config);
+		}
+		if (!$config_upload||!is_array($config_upload)){
+			$config_upload = Myqee::config('core.upload');
+			$config = 'default';
+		}
+		$view->set('config=',$config);
+		$view->set('config_upload',$config_upload);
 		$view->set('checekinfo',$this->_get_checkinfo());
 		$view->set ( 'limit_file', $limit_file );
 		$view->render ( TRUE );
@@ -113,7 +123,6 @@ class Uploadfile_Controller_Core extends Controller {
 		$key = Myqee::config('encryption.default.key');
 		return array(
 			'sid' => $sid,
-			'time' => $time,
 			'time' => $time,
 			'adminid' => $adminid,
 			'code' =>md5($key.'___'.$time.'___'.$adminid.'__'.$sid),

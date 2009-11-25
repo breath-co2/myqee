@@ -135,19 +135,21 @@ abstract class myqee_root{
 					continue;
 				
 				$modulesurllen = strlen ( $item ['url'] );
-				if (substr ( $item ['url'], 0, 7 ) == 'http://') {
-					$uri = 'http://' . $_SERVER ['HTTP_HOST'] . '/' . $pathinfo;
+				$protocol = Myqee::protocol().'://';
+				if (substr ( $item ['url'], 0, strlen($protocol) ) == $protocol) {
+					$uri = $protocol . $_SERVER ['HTTP_HOST'] . $_SERVER ['REQUEST_URI'];
 					if (substr ( $uri, 0, $modulesurllen ) == $item ['url']) {
 						//OK
 						$is_modules = true;
 						$pathinfo = ltrim ( substr ( $uri, $modulesurllen ), '/' );
+						list($pathinfo) = explode('?',$pathinfo,2);
 						break;
 					} else {
 						continue;
 					}
 				} else {
-					$urilen = strlen ( ltrim ( preg_replace ( "/^(http\:\/\/[^\/]+)/", '', $myconfig ['mysite_url'] ), '/' ) );
-					if (substr ( $pathinfo, $urilen, $modulesurllen ) == $item ['url']) {
+					//$urilen = strlen ( ltrim ( preg_replace ( "/^(http\:\/\/[^\/]+)/", '', $myconfig ['mysite_url'] ), '/' ) );
+					if (substr ( $pathinfo, 0, $modulesurllen ) == $item ['url']) {
 						//OK
 						$is_modules = true;
 						$pathinfo = ltrim ( substr ( $pathinfo, $modulesurllen + $urilen ), '/' );
@@ -160,6 +162,7 @@ abstract class myqee_root{
 			if ($is_modules == true) {
 				//SET MODULES
 				define ('MY_MODULE_PATH', $modelpath );
+				$_SERVER ["PATH_INFO"] = '/'.$pathinfo;
 			}
 		}
 		
@@ -279,6 +282,7 @@ abstract class myqee_root{
 			}
 			
 			$found_sondir = false;
+			$isfoundfile = false;
 			foreach ( $includepath as $k => $mypath ) {
 				$tmp_c_path = $mypath . 'controllers' . $controller_path .'/';
 				$tmp_c_file = $tmp_c_path . $item . EXT;
@@ -290,7 +294,8 @@ abstract class myqee_root{
 					$found_sondir = true;
 				}
 				
-				if ( !$foundcontroller && is_file($tmp_c_file) ){
+				if ( $isfoundfile==false && is_file($tmp_c_file) ){
+					$isfoundfile = true;
 					$foundcontroller = $tmp_c_file;
 					$mypath = $k;
 					$extincludepath = $includepath;

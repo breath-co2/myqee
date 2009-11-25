@@ -4,10 +4,14 @@ class Upload_Core {
 	protected static $configs = array();
 	
 	public static function setconfig($myconfig=null){
-		$config = Myqee::config('core.upload');
 		$config['gifwatermark'] = Myqee::config('core.watermark.gifwatermark');
 		if (is_array($myconfig)){
-			$config = array_merge($config,$myconfig);
+			$config = array_merge(Myqee::config('core.upload'),$myconfig);
+		}elseif($myconfig){
+			$config = MyqeeCMS::config('upload.'.$myconfig);
+			if (!$config){
+				$config = Myqee::config('core.upload');
+			}
 		}
 		
 		self::$configs['floder'] = !empty($config['floder'])?$config['floder']:'upload/';
@@ -22,11 +26,21 @@ class Upload_Core {
 			self::$configs['autowatermark'] = true;
 		}
 
+		if($config['filepath']){
+			if (substr($config['filepath'],0,1)=='/'){
+				self::$configs['filepath'] = rtrim($config['filepath'],'/').'/';
+			}elseif (MYQEE_IS_WIN===true && preg_match("\[a-zA-Z]+\:\/\/",$config['filepath'])){
+				self::$configs['filepath'] = rtrim($config['filepath'],'/').'/';
+			}else{
+				self::$configs['filepath'] = WWWROOT . $config['filepath'].'/';
+			}
+		}else{
+			self::$configs['filepath'] = UPLOADPATH;
+		}
 		self::$configs['selfpath'] = isset($config['selfpath']) ? $config['selfpath']:'Y/m/d';
 		self::$configs['chmod'] = isset($config['chmod']) ? $config['chmod']:0755;
-		
 		self::$configs['setname'] = $config['setname'];
-	
+
 		return self;
 	}
 	public static function save( $config = NULL){
@@ -92,7 +106,8 @@ class Upload_Core {
 		self::$configs['selfpath'] = trim(self::$configs['selfpath'] ,' /.');
 		$savefloder = self::$configs['selfpath'] ? date(self::$configs['selfpath']) .'/' : '';
 		
-		if (!is_dir(UPLOADPATH.$savefloder))Tools::create_dir(UPLOADPATH.$savefloder);			//创建文件夹
+		$filepath = self::$configs['filepath'].$savefloder;
+		if (!is_dir($filepath))Tools::create_dir($filepath);			//创建文件夹
 		
 		switch (self::$configs['setname']){
 			case 'time':
@@ -115,7 +130,7 @@ class Upload_Core {
 		$iCounter = 0 ;
 		$sFileName = '';
 		while ( true ){
-			$fullpath = UPLOADPATH.$savefloder.urlencode($new_file_name).$sFileName.'.'.$file_extension;
+			$fullpath = $filepath.urlencode($new_file_name).$sFileName.'.'.$file_extension;
 			if ( is_file( $fullpath ) ){
 				$iCounter++ ;
 				$sFileName = '(' . $iCounter . ')';
