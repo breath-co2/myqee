@@ -1501,25 +1501,33 @@ abstract class Myqee {
 	 *
 	 * @param string $urlstr 页面路径
 	 * @param string $suffix 后缀
+	 * @param boolean $full_url 是否返回完整路径
 	 * @return string URL
 	 */
 	public static function url($urlstr = '', $suffix = null ,$full_url=false) {
 		if (empty($urlstr)) {
 			return '';
 		}
+		static $urlache;
+		$urlkeystr = $urlstr.'_'.$suffix.'__'.($full_url?'true':'false');
+		if (isset($urlache[$urlkeystr])){
+			return $urlache[$urlkeystr];
+		}
 		$urlstr = explode ( '?', $urlstr, 2 );
+		$urlstr = explode ( '#', $urlstr, 2 );
 		if ( preg_match("/^\/|https?\:\/\//i",$urlstr[0]) ){
 			$url = $urlstr[0];
 		}else{
 			$myqeepage = self::config ( 'core.myqee_page' );
-			$url =  ( defined('ADMIN_URLPATH')?ADMIN_URLPATH:self::config('core.mysite_url').($myqeepage ? $myqeepage . '/' : '') ).$urlstr [0];
+			$url =  ( defined('ADMIN_URLPATH')?ADMIN_URLPATH:SITE_URL.($myqeepage ? $myqeepage . '/' : '') ).$urlstr [0];
 		}
 		$url .= (substr($urlstr[0],-1)!='/'?($suffix?$suffix:self::config('core.url_suffix')):'') . 
 				(isset($urlstr[1])?'?'.$urlstr[1]:'');
 		
 		if ($full_url && substr($url,0,1)=='/'){
-			$url = self::protocol() .'://'. $_SERVER['HTTP_HOST'] . $url;
+			$url = self::protocol() .'://'. SITE_DOMAIN . $url;
 		}
+		$urlache[$urlkeystr] = $url;
 		return $url;
 	}
 	

@@ -172,7 +172,9 @@ class Info_Controller_Core extends Controller {
 						$search['myorder'] = $sys_field['id']?$sys_field['id']:key($dbfield);
 					}
 					$orderby[$search['myorder']] = $search['orderby']?'ASC':'DESC';	
-				}elseif($sys_field['id']){
+				}
+				$orderby[$classArray['manage_orderbyfield']] = $classArray['manage_orderby']=='ASC'?'ASC':'DESC';
+				if($sys_field['id']){
 					$orderby[$sys_field['id']] = 'DESC';
 				}
 

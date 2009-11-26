@@ -1501,7 +1501,7 @@ class Model_Controller_Core extends Controller {
 			$post ['length'] = ($length[0] > 0 && $length[0] <= 50 && $length[0]>=$length[1] ? $length[0] : 20).','.($length[1] > 0 && $length[1] <= 50 ? $length[1] : 20);
 		}
 		
-		if (! in_array ( $post ['inputtype'], array ('pageselect', 'page' ,'input', 'password', 'time', 'date', 'select', 'radio', 'checkbox', 'textarea', 'basehtmlarea', 'htmlarea', 'imginput', 'flash', 'file', 'color', 'hidden' ) )) {
+		if (! in_array ( $post ['inputtype'], array ('pageselect', 'page' ,'input', 'password', 'time', 'date', 'select', 'selectinput', 'radio', 'checkbox', 'textarea', 'basehtmlarea', 'htmlarea', 'imginput', 'flash', 'file', 'color', 'hidden' ) )) {
 			$post ['inputtype'] = 'input';
 		}
 		if ($post ['istofile']) {

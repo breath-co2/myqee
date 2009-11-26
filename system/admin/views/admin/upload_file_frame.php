@@ -324,8 +324,10 @@ if (isset($allow_type) && is_array($allow_type)){
 	$tmpext = explode(',',$config_upload['extension']);
 	$tmpext = array_intersect($tmpext,$allow_type);			//计算交集
 	$config_upload['extension'] = join(',',$tmpext);
+	$allowtype = empty($config_upload['extension'])?'*.txt':'*.'.str_replace(',',';*.',$config_upload['extension']);
+}else{
+	$allowtype = '*.txt';
 }
-$allowtype = empty($config_upload['extension'])?'*.*':'*.'.str_replace(',',';*.',$config_upload['extension']);
 ?>
 <div style="width:96%;margin:auto;">
 <ul class="ul tag">
@@ -372,11 +374,11 @@ if ($limit_file==1){
 	</tr>
 	<tr>
 		<td class="td1" align="right">图片是否添加水印</td>
-		<td class="td2"><?php echo $config_upload['autowatermark']?'是':'否';?></td>
+		<td class="td2"><?php echo $config_upload['autowatermark']?'<font color="red">是</font> &nbsp; <a href="'.Myqee::url('index/config').'#tag5" target="_blank">修改水印设置</a>':'否';?></td>
 	</tr>
 	<tr>
 		<td class="td1" align="right">图片自动生成缩略图</td>
-		<td class="td2"><?php echo $config_upload['autothumb']?'是':'否';?></td>
+		<td class="td2"><?php echo $config_upload['autothumb']?'<font color="red">是</font> &nbsp; 宽:'.$config_upload['thumbwidth'].' 高:'.$config_upload['thumbheight']:'否';?></td>
 	</tr>
 </table>
 

@@ -106,7 +106,7 @@ class Upload_Core {
 		self::$configs['selfpath'] = trim(self::$configs['selfpath'] ,' /.');
 		$savefloder = self::$configs['selfpath'] ? date(self::$configs['selfpath']) .'/' : '';
 		
-		$filepath = self::$configs['filepath'].$savefloder;
+		$filepath = str_replace('//','/',self::$configs['filepath'].$savefloder);
 		if (!is_dir($filepath))Tools::create_dir($filepath);			//创建文件夹
 		
 		switch (self::$configs['setname']){
@@ -158,7 +158,7 @@ class Upload_Core {
 		//创建缩略图
 		$imgext[] = 'gif';
 		if (self::$configs['autothumb']==true && in_array($file_extension , $imgext)){
-			Image::factory($fullpath) -> resize(self::$configs['thumbwidth'],self::$configs['thumbheight']) -> save(UPLOADPATH.$savefloder.$new_file_name.'_thumb.'.$file_extension);
+			Image::factory($fullpath) -> resize(self::$configs['thumbwidth'],self::$configs['thumbheight']) -> save($filepath.$new_file_name.'_thumb.'.$file_extension);
 		}
 		//恢复为UTF-8编码的
 		$new_file_name_old and $new_file_name = $new_file_name_old.$sFileName;
