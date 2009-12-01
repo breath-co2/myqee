@@ -456,7 +456,7 @@ class Model_Controller_Core extends Controller {
 		
 		//读取数据表配置文件
 		$dbname = $model_info['dbname'];
-		$dbconfig = MyqeeCMS::config('db/'.$dbname);
+		$dbconfig = Myqee::config('db/'.$dbname);
 //		if (!is_array($dbconfig) || ($this -> site_id>0 && $this -> site_id!=$dbconfig['siteid']) ){
 		if (!is_array($dbconfig)){
 			MyqeeCMS::show_error(Myqee::lang('admin/model.error.nothedbname',$dbname),FALSE,'goback');
@@ -555,7 +555,7 @@ class Model_Controller_Core extends Controller {
 	
 		//读取数据表配置文件
 		$dbname = $model_info['dbname'];
-		$dbconfig = MyqeeCMS::config('db/'.$dbname);
+		$dbconfig = Myqee::config('db/'.$dbname);
 //		if (!is_array($dbconfig) || ($this -> site_id>0 && $this -> site_id!=$dbconfig['siteid']) ){
 		if (!is_array($dbconfig)){
 			MyqeeCMS::show_error(Myqee::lang('admin/model.error.nothedbname',$dbname),true);
@@ -1193,7 +1193,7 @@ class Model_Controller_Core extends Controller {
 				$createsql = str_replace ( 'CREATE TABLE `' . $olddbname . '`', 'CREATE TABLE `' . $_db->table_prefix () . $_table . '`', $createsql );
 			} else {
 				$data ['config'] = serialize ( array ('sys_field'=> array('id'=>'id'),'field' => array ('id' => array ('name' => 'id', 'dbname' => 'ID', 'autoset' => 'id', 'iskey' => 1, 'isonly' => 1, 'isnonull' => 1, 'type' => 'int', 'length' => 11, 'inputtype' => 'hidden', 'islist' => 1, 'width' => 60, 'align' => 'center', 'tdclass' => 'td1' ) ) ) );
-				$createsql = 'CREATE TABLE `' . $_db->table_prefix () . $_table . '` (`id` int(11) NULL auto_increment, PRIMARY KEY (`id`)) ENGINE=MyISAM DEFAULT CHARSET=' . MyqeeCMS::config ( 'database.'.$post['database'].'.character_set' );
+				$createsql = 'CREATE TABLE `' . $_db->table_prefix () . $_table . '` (`id` int(11) NULL auto_increment, PRIMARY KEY (`id`)) ENGINE=MyISAM DEFAULT CHARSET=' . Myqee::config( 'database.'.$post['database'].'.character_set' );
 			}
 			//插入数据
 			$status = $this->db->insert ( '[dbtable]', $data );
@@ -1390,9 +1390,9 @@ class Model_Controller_Core extends Controller {
 		$view->set ( 'field', $db_field [$field] );
 		
 		if ($db_info ['ismemberdb'] == 1) {
-			$sysdbfield = ( array ) MyqeeCMS::config ( 'sysdbfield/member.field');
+			$sysdbfield = ( array ) Myqee::config( 'sysdbfield/member.field');
 		} else {
-			$sysdbfield = ( array ) MyqeeCMS::config ( 'sysdbfield/default.field');
+			$sysdbfield = ( array ) Myqee::config( 'sysdbfield/default.field');
 		}
 		$sysfield_forselect = array ('' => '自定义' );
 		
@@ -1525,7 +1525,7 @@ class Model_Controller_Core extends Controller {
 			}else{
 				$sysfile = 'default';
 			}
-			$sysdbfield = MyqeeCMS::config ( 'sysdbfield/'.$sysfile.'.field');
+			$sysdbfield = Myqee::config( 'sysdbfield/'.$sysfile.'.field');
 			if ($sysdbfield [$post ['autoset']]) {
 				$post = array_merge ( $post, $sysdbfield [$post ['autoset']] ['set'] );
 
@@ -1762,7 +1762,7 @@ class Model_Controller_Core extends Controller {
 		foreach ( $results as $value ) {
 			list($_database,$_table) = explode('/',$value['name']);
 			$_db = Database::instance($_database);
-			$_config = MyqeeCMS::config('database.'.$_database);
+			$_config = Myqee::config('database.'.$_database);
 			$sql = 'SHOW CREATE TABLE `' . $_db->table_prefix () . $_table . '`';
 			$rs = $_db->query ( $sql )->result_array ( FALSE );
 			$createsql = $rs [0] ['Create Table'];
@@ -1782,7 +1782,7 @@ class Model_Controller_Core extends Controller {
 	public function inputdbshow () {
 		$view = new View ( 'admin/db_input' );
 		//tables
-		$dbconfig = MyqeeCMS::config('database');
+		$dbconfig = Myqee::config('database');
 		$tables = array();
 		foreach ($dbconfig as $database=>$config) {
 			$db = Database::instance ($database);
@@ -1895,7 +1895,7 @@ class Model_Controller_Core extends Controller {
 		}
 		$view = new View ( 'admin/db_input' );
 		//tables
-		$dbconfig = MyqeeCMS::config('database');
+		$dbconfig = Myqee::config('database');
 		$tables = array();
 		foreach ($dbconfig as $database=>$config) {
 			$db = Database::instance ($database);
@@ -2069,7 +2069,7 @@ class Model_Controller_Core extends Controller {
 		$mydbname = '['.$dbname.']';
 
 		$adminmodel = new Admin_Model;
-		$sys_field = MyqeeCMS::config('db/'.$dbname.'.sys_field');
+		$sys_field = Myqee::config('db/'.$dbname.'.sys_field');
 
 		$view = new View('admin/model_infoform');
 

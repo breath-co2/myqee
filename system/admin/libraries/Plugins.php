@@ -28,7 +28,7 @@ class Plugins_Core {
 	
 	public static function config($key=''){
 		if (!self::$plugins)return false;
-		return MyqeeCMS::config('plugins/'.self::$plugins.($key?'.'.$key:''));
+		return Myqee::config('plugins/'.self::$plugins.($key?'.'.$key:''));
 	}
 	
 } // End Plugins

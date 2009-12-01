@@ -11,6 +11,7 @@ error_reporting(E_ALL & ~E_NOTICE);
 
 $myqee_wwwroot 		= './';				//网站WWWROOT目录
 $myqee_sysapppath 	= '../system';				//myqee系统目录
+
 $myqee_adminpath 	= '../admin';				//用户后台程序目录
 $myqee_cachepath 	= '../admin/cache';			//缓存目录
 $myqee_userapppath 	= '../application';			//用户APP目录

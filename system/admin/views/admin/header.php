@@ -45,7 +45,7 @@ document.write('<div id="appendChildDiv"></div><div id="hiddenfRameDiv"><iframe 
 <div class="mainTable">
 <ul class="ul menu">
 <?php
-$menuConfigData = MyqeeCMS::config('adminmenu');
+$menuConfigData = Myqee::config('adminmenu');
 if (!is_array($menuConfigData)){
 	$menuConfigData = Myqee::config('adminmenu');
 }

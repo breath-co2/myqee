@@ -12,12 +12,12 @@ class Member_Controller_Core extends Controller {
 		
 		$adminmodel = new Admin_Model;
 		
-		$memberdb = MyqeeCMS::config('member.dbname');
+		$memberdb = Myqee::config('member.dbname');
 		if ( !$adminmodel -> db -> table_exists($memberdb)){
 			MyqeeCMS::show_error('指定的用户数据表不存在！');
 		}
 
-		$dbconfig = (array)MyqeeCMS::config('db/'.$memberdb);
+		$dbconfig = (array)Myqee::config('db/'.$memberdb);
 		$sys_field = (array)$dbconfig['sys_field'];
 		
 		
@@ -74,7 +74,7 @@ class Member_Controller_Core extends Controller {
 	public function dbset(){
 		$adminmodel = new Admin_Model();
 		$this -> db = Database::instance();
-		$db_info = MyqeeCMS::config('member');
+		$db_info = Myqee::config('member');
 		if (!$db_info){
 			//MyqeeCMS::show_error( Myqee::lang('admin/model.error.notheiddb'),false,'goback');
 		}
@@ -126,7 +126,7 @@ class Member_Controller_Core extends Controller {
 	
 	public function field_config(){
 		$view = new View('admin/member_field_config');
-		$memberConfig = (array)MyqeeCMS::config('member');
+		$memberConfig = (array)Myqee::config('member');
 		if(!is_array($memberConfig)){
 			MyqeeCMS::show_error('字段关联数据不存在！',true);
 		}
@@ -155,7 +155,7 @@ class Member_Controller_Core extends Controller {
 	public function addfield($id = ''){
 		$member = array();
 		if((int)$id >= 0){
-			$memberConfig = (array)MyqeeCMS::config('member');
+			$memberConfig = (array)Myqee::config('member');
 			$member = $memberConfig['member'][$id];
 			$fieldarray = explode(',',$member['field']);
 			foreach ($fieldarray as $dbfield){
@@ -184,7 +184,7 @@ class Member_Controller_Core extends Controller {
 		if((int)$id < 0){
 			MyqeeCMS::show_error('此字段关联不能删除！',true);
 		}
-		$memberConfig = (array)MyqeeCMS::config('member');
+		$memberConfig = (array)Myqee::config('member');
 		if(!is_array($memberConfig)){
 			MyqeeCMS::show_error('字段关联数据不存在！',true);
 		}
@@ -218,7 +218,7 @@ class Member_Controller_Core extends Controller {
 		}
 		$data['comment'] = $post['comment'];
 		$data['field'] = $field;
-		$memberConfig = (array)MyqeeCMS::config('member');
+		$memberConfig = (array)Myqee::config('member');
 		if(((int)$id >= 0) && $id != ''&& $id != NULL){
 			$memberConfig['member'][$id] = $data;
 		}else{
@@ -269,7 +269,7 @@ class Member_Controller_Core extends Controller {
 		if(count($fromtable) != 1 || count($totable) != 1 || in_array('0',$fromtable) || in_array('0',$totable)){
 			MyqeeCMS::show_error('只允许单表同步！',true);
 		}
-		$memberConfig = (array)MyqeeCMS::config('member');
+		$memberConfig = (array)Myqee::config('member');
 		if(!is_array($memberConfig)){
 			MyqeeCMS::show_error('字段关联数据不存在！',true);
 		}

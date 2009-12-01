@@ -83,7 +83,7 @@ class Class_Controller_Core extends Controller {
 		
 			if ($thisclass['siteid']){
 				//有指定站点
-				$siteconfig = MyqeeCMS::config('site/'.$thisclass['siteid']);
+				$siteconfig = Myqee::config('site/'.$thisclass['siteid']);
 				if ($siteconfig){
 					if ($siteconfig['config']['template_group']){
 						$class_tplgroup = $siteconfig['config']['template_group'];
@@ -239,7 +239,7 @@ class Class_Controller_Core extends Controller {
 		$siteid = $_SESSION['now_site'];
 		$arguments = $arguments = explode('/',$_GET['path']);
 		$view = new View('admin/class_nav_list');
-		$nav_list = MyqeeCMS::config('navigation'.($siteid?'/site_'.$siteid:''));
+		$nav_list = Myqee::config('navigation'.($siteid?'/site_'.$siteid:''));
 		if ($arguments){
 			foreach ($arguments as $arg){
 				if (!empty($arg)){
@@ -300,7 +300,7 @@ class Class_Controller_Core extends Controller {
 	public function nav_save(){
 		Passport::checkallow('class.navigation','',true);
 		$siteid = $_SESSION['now_site'];
-		$nav_list = (array)MyqeeCMS::config('navigation'.($siteid?'/site_'.$siteid:''));
+		$nav_list = (array)Myqee::config('navigation'.($siteid?'/site_'.$siteid:''));
 		//MyqeeCMS::print_r($_POST);
 		//生成完整的菜单结构
 		/*

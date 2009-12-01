@@ -74,7 +74,7 @@ class Site_Controller_Core extends Controller {
 		$view -> set('site',$siteinfo);
 		
 		
-		$tplgroup = MyqeeCMS::config('template.group');
+		$tplgroup = Myqee::config('template.group');
 		if (!is_array($tplgroup)){
 			$tplgroup = array('default' => '默认模板组');
 		}else{
@@ -254,7 +254,7 @@ class Site_Controller_Core extends Controller {
 	
 	public function changesite($id=''){
 		$db = Database::instance();
-		if ($id)$siteinfo = MyqeeCMS::config('site/'.$id);
+		if ($id)$siteinfo = Myqee::config('site/'.$id);
 		if ($siteinfo && $siteinfo['isuse']){
 			$this -> session -> set ('now_site',$id);
 			$this -> session -> set ('now_site_name',$siteinfo['sitename']);

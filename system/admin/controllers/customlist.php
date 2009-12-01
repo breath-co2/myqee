@@ -199,7 +199,7 @@ class CustomList_Controller_Core extends Controller {
 			//如果选择模板 
 			if ($data ['isuse'] == 1) {
 				if ($tplid > 0) {
-					$tohtmlurl = _get_tohtmlurl ( 'tocustomlist', MyqeeCMS::config ( 'encryption.default.key' ), '&theid=' . $id );
+					$tohtmlurl = _get_tohtmlurl ( 'tocustomlist', Myqee::config( 'encryption.default.key' ), '&theid=' . $id );
 					header ( 'location:' . $tohtmlurl );
 					exit ();
 				} 
@@ -245,7 +245,7 @@ class CustomList_Controller_Core extends Controller {
 		}
 		$tmpid = trim ( $tmpid, ',' );
 		if ($tmpid) {
-			$tohtmlurl = _get_tohtmlurl ( 'tocustomlist', MyqeeCMS::config ( 'encryption.default.key' ), '&theid=' . $allid );
+			$tohtmlurl = _get_tohtmlurl ( 'tocustomlist', Myqee::config( 'encryption.default.key' ), '&theid=' . $allid );
 			header ( 'location:' . $tohtmlurl );
 			exit ();
 		}

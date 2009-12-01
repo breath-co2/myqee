@@ -527,46 +527,6 @@ abstract class Controller {
 	}
 }
 
-
-abstract class Template_Controllers extends Controller {
-
-	// Template view name
-	public $template = 'template';
-
-	// Default to do auto-rendering
-	public $auto_render = TRUE;
-
-	/**
-	 * Template loading and setup routine.
-	 */
-	public function __construct()
-	{
-		parent::__construct();
-
-		// Load the template
-		$this->template = new View($this->template);
-
-		if ($this->auto_render == TRUE)
-		{
-			// Render the template immediately after the controller method
-			Event::add('controller.shutdown', array($this, '_render'));
-		}
-	}
-
-	/**
-	 * Render the loaded template.
-	 */
-	public function _render()
-	{
-		if ($this->auto_render == TRUE)
-		{
-			// Render the template when the class is destroyed
-			$this->template->render(TRUE);
-		}
-	}
-
-}
-
 abstract class Model {
 	protected $db;
 	
@@ -862,7 +822,7 @@ abstract class Myqee {
 					foreach ( $thefiles as $thefile ) {
 						if ($thefile) {
 							include $thefile;
-							if (isset($break) && $break=true){
+							if (isset($break) && $break==true){
 								break;
 							}
 						}
@@ -1094,19 +1054,22 @@ abstract class Myqee {
 					//支持自定义管理模块功能
 					$path = realpath(MODULEPATH . MY_MODULE_PATH . '/admin/');
 					if ($path) {
-						$include_paths ['g'] = str_replace('\\', '/',$path).'/';
+						$include_paths ['h'] = str_replace('\\', '/',$path).'/';
 					}
 					$path = realpath(ADMINPATH . 'modules/' . MY_MODULE_PATH . '/');
 					if ($path) {
-						$include_paths ['f'] = str_replace('\\', '/',$path).'/';
+						$include_paths ['g'] = str_replace('\\', '/',$path).'/';
 					}
+
 					//系统管理目录
 					$path = realpath(MYQEEPATH . 'admin/modules/' . MY_MODULE_PATH . '/');
 					if ($path) {
-						$include_paths ['e'] = str_replace('\\', '/',$path).'/';
+						$include_paths ['f'] = str_replace('\\', '/',$path).'/';
 					}
 				}
-				$include_paths ['d'] = ADMINPATH;
+				$include_paths ['e'] = ADMINPATH;
+				//application目录
+				$include_paths ['d'] = MYAPPPATH;
 				$include_paths ['c'] = MYQEEPATH . 'admin/';
 			} else {
 				if (defined ( 'MY_MODULE_PATH' ) && MY_MODULE_PATH!=false && preg_match("/^[a-z0-9]+$/i",MY_MODULE_PATH)) {
@@ -1514,7 +1477,7 @@ abstract class Myqee {
 			return $urlache[$urlkeystr];
 		}
 		$urlstr = explode ( '?', $urlstr, 2 );
-		$urlstr = explode ( '#', $urlstr, 2 );
+		$urlstr = explode ( '#', $urlstr[0], 2 );
 		if ( preg_match("/^\/|https?\:\/\//i",$urlstr[0]) ){
 			$url = $urlstr[0];
 		}else{

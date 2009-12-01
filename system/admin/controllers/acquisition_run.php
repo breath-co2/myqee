@@ -425,7 +425,7 @@ class acquisition_run_Controller_Core extends Controller {
 		}
 		
 		//读取配置
-		$this->config = MyqeeCMS::config('acquisition/acqu_'.$this->id);
+		$this->config = Myqee::config('acquisition/acqu_'.$this->id);
 		if (!is_array($this->config)){
 			$this -> _log('error','NO ACQUISITON');
 			$this -> _header('NO ACQUISITON');
@@ -494,7 +494,7 @@ class acquisition_run_Controller_Core extends Controller {
 		
 		
 		//读取配置
-		$this->config = MyqeeCMS::config('acquisition/acqu_'.$this->id);
+		$this->config = Myqee::config('acquisition/acqu_'.$this->id);
 		if (!is_array($this->config)){
 			$this -> _log('error','NO ACQUISITON');
 			$this -> _header('NO ACQUISITON');
@@ -736,7 +736,7 @@ class acquisition_run_Controller_Core extends Controller {
 	
 		
 		if ($this->node['dbname']){
-			$this->dbconfig or $this->dbconfig = MyqeeCMS::config('db/'.$this->node['dbname']);
+			$this->dbconfig or $this->dbconfig = Myqee::config('db/'.$this->node['dbname']);
 		}
 		//信息标题
 		if ($this->dbconfig && ($title_field=$this->dbconfig['sys_field']['title']) ){
@@ -1186,7 +1186,7 @@ class acquisition_run_Controller_Core extends Controller {
 		
 		if ($data_ids){
 			$post['dataids'] = $data_ids;
-			$keycode = md5(MyqeeCMS::config('encryption.default.key').'__'.$post['dataids']);
+			$keycode = md5(Myqee::config('encryption.default.key').'__'.$post['dataids']);
 		}else{
 			$post['id'] = $this -> id;
 			$post['nodeid'] = $this -> nodeid;
@@ -1244,7 +1244,7 @@ class acquisition_run_Controller_Core extends Controller {
 			$this->nodeid = (int)$_POST['nodeid'];
 			
 			//读取配置
-			$this->config = MyqeeCMS::config('acquisition/acqu_'.$this->id);
+			$this->config = Myqee::config('acquisition/acqu_'.$this->id);
 			if (!is_array($this->config)){
 				$this -> _log('error','没有找到任务！入库程序退出！');
 				$this -> _header('NO ACQUISITON');
@@ -1272,7 +1272,7 @@ class acquisition_run_Controller_Core extends Controller {
 			$type=2;
 			if ($_POST['dataids']){
 				$dataids = Tools::formatids($_POST['dataids'],true);
-				$keycode = md5(MyqeeCMS::config('encryption.default.key').'__'.$_POST['dataids']);
+				$keycode = md5(Myqee::config('encryption.default.key').'__'.$_POST['dataids']);
 			}else{
 				//phpinfo();
 				$this -> _log('error','请求的参数错误！入库程序退出！');
@@ -1359,7 +1359,7 @@ class acquisition_run_Controller_Core extends Controller {
 	
 	protected function _to_user_data($dbname,$data,$classid=0,$db_id=0){
 		
-		$this -> dbconfig or $this -> dbconfig = MyqeeCMS::config('db/'.$dbname);
+		$this -> dbconfig or $this -> dbconfig = Myqee::config('db/'.$dbname);
 		
 		//处理栏目ID和栏目名称
 		if ($classid>0){
@@ -1369,7 +1369,7 @@ class acquisition_run_Controller_Core extends Controller {
 			$classname_field = $this -> dbconfig['sys_field']['class_name'];
 			if ($classname_field && !$data[$classname_field]){
 				if (!isset($this -> classarr[$classid])){
-					$this -> classarr[$classid] = MyqeeCMS::config('class/class_'.$classid);
+					$this -> classarr[$classid] = Myqee::config('class/class_'.$classid);
 				}
 				if ($this -> classarr[$classid]){
 					$data[$classname_field] = $this -> classarr[$classid]['classname'];
@@ -1399,7 +1399,7 @@ class acquisition_run_Controller_Core extends Controller {
 		foreach ($extenddata as $_database=>$_tables) {
 			$_db = Database::instance($_database);
 			foreach ($_tables as $_table=>$_fields) {
-				$_config = 	MyqeeCMS::config('db/'.$_database.'/'.$_table);
+				$_config = 	Myqee::config('db/'.$_database.'/'.$_table);
 				if (empty($_config) || empty($_config['sys_field']['id'])) {
 					continue ;
 				}
@@ -1417,7 +1417,7 @@ class acquisition_run_Controller_Core extends Controller {
 	}
 	
 	protected function _auto_to_html($classid,$id){
-		$url = _get_tohtmlurl('toinfo_byid',MyqeeCMS::config('encryption.default.key'),'id='.(int)$id.'&allclassid='.$classid.'&nowclassid='.$classid.'&limit=1');
+		$url = _get_tohtmlurl('toinfo_byid',Myqee::config('encryption.default.key'),'id='.(int)$id.'&allclassid='.$classid.'&nowclassid='.$classid.'&limit=1');
 		if (substr($url,0,1)=='/'){
 			$url = Myqee::protocol() .'://'. $_SERVER['HTTP_HOST'] . $url;
 		}

@@ -117,11 +117,11 @@ class Plugins_Model_Core extends Model {
 				$tmp = explode('|',trim($val['classides'],'|'));
 				foreach ($tmp as $v) {
 					$_canaddclasses[] = $v;
-					$_config = MyqeeCMS::config('class/class_'.$v);
+					$_config = Myqee::config('class/class_'.$v);
 					$_sonclasses =explode('|',trim($_config['sonclass'],'|'));
 					$_canaddclasses = array_merge($_canaddclasses,$_sonclasses);
 				}
-				$_config = MyqeeCMS::config('class/class_'.$classid);
+				$_config = Myqee::config('class/class_'.$classid);
 				$_fatherclasses = explode('|',trim($_config['fatherclass'],'|'));
 			}else{
 				$_canaddclasses = explode('|',trim($val['classides'],'|'));

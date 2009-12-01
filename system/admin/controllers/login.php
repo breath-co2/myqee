@@ -70,7 +70,7 @@ class Login_Controller_Core extends Controller {
 		$this->session->set('login_time',$_SERVER['REQUEST_TIME']);
 		$this->session->delete('loginerr_num');
 		if ($userDate['defaultsite']>0){
-			$siteconfig = MyqeeCMS::config('site/'.$userDate['defaultsite']);
+			$siteconfig = Myqee::config('site/'.$userDate['defaultsite']);
 			if ($siteconfig['isuse']){
 				$this->session->set('now_site',$userDate['defaultsite']);
 				$this->session->set('now_site_name',$siteconfig['sitename']);

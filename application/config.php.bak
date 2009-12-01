@@ -1,7 +1,7 @@
 <?php defined('MYQEEPATH') or die('No direct script access.');
 
 $config['sitename'] = '麦琪网';
-$config['mysite_domain'] = 'web.myqee.com';		//网站默认域名
+$config['mysite_domain'] = 'localhost';		//网站默认域名
 $config['mysite_url'] = '/';				//网站默认地址
 $config['mysite_path'] = NULL;				//网站路径地址
 $config['myqee_page'] = '';				//动态页面索引页，若启用rewrite本项可设空，默认myqee.php
@@ -18,7 +18,7 @@ $config['language'] = array('zh_CN', 'ShangHai');		//系统语言
 $config['timezone'] = 'PRC';
 
 
-$config['internal_cache'] = '0';				//配置、语言包、文件列表缓存，0=禁用，1=手动，大于1为定时更新，并且这个值是有效时间
+$config['internal_cache'] = '1';				//配置、语言包、文件列表缓存，0=禁用，1=手动，大于1为定时更新，并且这个值是有效时间
 
 $config['charset'] = 'utf-8';
 
@@ -47,14 +47,14 @@ $config['image'] = array('driver'=>'GD');					//图像生成采用GD/IMAGEMAGICK
 $config['allow_task'] = '1';					//启动任务功能
 
 
-$config['home_url'] = 'http://home.waitanwatch.com';					//用户home space URL
+$config['home_url'] = '';					//用户home space URL
 
 
 $config['use_ucenter'] = '1';					//否是启用UCENTER
 
 $config['use_uchome'] = '1';					//否是启用UCHOME
 
-$config['bbs_url'] = 'http://bbs.waitanwatch.com';					//用户bbs space URL
+$config['bbs_url'] = '';					//用户bbs space URL
 
 
 /**
@@ -88,7 +88,7 @@ $config['upload'] = array(
 	'filepath' => 'upload',					//上传路径，可以绝对路径，也可以是相对于WWWROOT路径
 	'maxsize' => 999999,				//最大大小限制
 	'extension' => 'jpg,jpeg,gif,bmp,png,rar,zip,txt,swf',					//默认允许的文件类型
-	'selfpath' => 'Y-m-d',					//上传文件创建的目录
+	'selfpath' => 'Y/m/d',					//上传文件创建的目录
 	'setname' => 'abc123',					//重新设置文件名，abc123=随机字符20位，md5=md5算法32位，sha1=sha1算法40位，留空表示使用原名称
 	'autowatermark' => '0',						//自动添加水印
 	'autothumb' => '0',						//自动缩略图

@@ -8,7 +8,7 @@ class Upload_Core {
 		if (is_array($myconfig)){
 			$config = array_merge(Myqee::config('core.upload'),$myconfig);
 		}elseif($myconfig){
-			$config = MyqeeCMS::config('upload.'.$myconfig);
+			$config = Myqee::config('upload.'.$myconfig);
 			if (!$config){
 				$config = Myqee::config('core.upload');
 			}

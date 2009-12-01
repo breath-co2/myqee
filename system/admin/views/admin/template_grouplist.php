@@ -28,7 +28,7 @@ if($list):
 		'search' => '搜索',
 	);
 	$makesuredelete = Myqee::lang('admin/template.list.makesuredeletegroup');
-	$tplgroup = MyqeeCMS::config('template');
+	$tplgroup = Myqee::config('template');
 	$engine = Myqee::config('template.engine');
 	if ($_SESSION['now_site_tlpgroup']){
 		$usegroup = $_SESSION['now_site_tlpgroup'];

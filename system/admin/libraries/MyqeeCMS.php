@@ -146,7 +146,7 @@ class MyqeeCMS_Core {
 		exit;
 	}
 	
-	
+	/*
 	public static function config($myconfig){
 		$c = explode('.',$myconfig);
 		if ($c[0] == 'core'){
@@ -176,6 +176,7 @@ class MyqeeCMS_Core {
 		}
 		return $v;
 	}
+	*/
 
 	public static function move_classpath($oldclaspath,$newclasspath){
 		$oldclaspath = str_replace('\\', '/', WWWROOT) . $oldclaspath;
@@ -342,7 +343,7 @@ class MyqeeCMS_Core {
 	 * @return array
 	 */
 	protected static function _get_plugins_virtual_field () {
-		$config = (array)MyqeeCMS::config('plugins');
+		$config = (array)Myqee::config('plugins');
 		$vfields = array();
 		foreach ($config as $key => $val) {
 			$_vfield = $val['detailconfig']['model']['virtualfield'];

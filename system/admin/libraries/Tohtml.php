@@ -75,7 +75,7 @@ class Tohtml_Core {
 	
 	
 	protected static function _run_tohtml($type,$other=null){
-		$url = _get_tohtmlurl($type,MyqeeCMS::config('encryption.default.key'),$other);
+		$url = _get_tohtmlurl($type,Myqee::config('encryption.default.key'),$other);
 		if (substr($url,0,1)=='/'){
 			$url = Myqee::protocol() .'://'. $_SERVER['HTTP_HOST'] . $url;
 		}

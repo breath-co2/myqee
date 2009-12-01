@@ -37,7 +37,7 @@ class Acquisition_Controller_Core extends Controller {
 		
 		$db = Database::instance();
 		
-//		$acquisition = MyqeeCMS::config('acquisition');
+//		$acquisition = Myqee::config('acquisition');
 		$count = $acquisition = $db -> count_records('[acquisition]');
 
 		$pagination = new Pagination( array(
@@ -79,7 +79,7 @@ class Acquisition_Controller_Core extends Controller {
 			$db = Database::instance();
 			$data = $db ->from('[acquisition]')->where('id',$id)->get()->result_array(FALSE);
 			$data = $data[0];
-//			$acquisition = MyqeeCMS::config('acquisition');
+//			$acquisition = Myqee::config('acquisition');
 //			$data = $acquisition['acqu_'.$id];
 			if ( !is_array($data) ){
 				MyqeeCMS::show_error(Myqee::lang('admin/acquisition.error.nofoundacqu'),false,'goback');
@@ -178,7 +178,7 @@ class Acquisition_Controller_Core extends Controller {
 		$data['loginpost'] = $post['loginpost'];
 		$data['loginimageurl'] = $post['loginimageurl'];
 		
-//		$acquisition = MyqeeCMS::config('acquisition');
+//		$acquisition = Myqee::config('acquisition');
 		
 		$db = $adminmodel?$adminmodel->db:Database::instance();
 		
@@ -219,7 +219,7 @@ class Acquisition_Controller_Core extends Controller {
 		if ($status){
 			//保存配置文件
 			if ($id){
-				if(!$node)$node = MyqeeCMS::config('acquisition/acqu_'.$id.'.node');
+				if(!$node)$node = Myqee::config('acquisition/acqu_'.$id.'.node');
 				$data['post'] = $acqupost;
 				$data['node'] = $node;
 				MyqeeCMS::saveconfig('acquisition/acqu_'.$id,$data);
@@ -243,7 +243,7 @@ class Acquisition_Controller_Core extends Controller {
 		}else{
 			MyqeeCMS::show_error(Myqee::lang('admin/acquisition.info.nodelete'),true);
 		}
-//		$acquisition = MyqeeCMS::config('acquisition');
+//		$acquisition = Myqee::config('acquisition');
 //		
 //		if (!$acquisition['acqu_'.$id])MyqeeCMS::show_error(Myqee::lang('admin/acquisition.error.nofoundacqu'),true);
 //		
@@ -378,10 +378,10 @@ class Acquisition_Controller_Core extends Controller {
 			$classinfo = $adminmodel -> get_class_array($classid,'classid,modelid,dbname');
 			$acquisition['modelid'] = $classinfo['modelid'];
 			$acquisition['dbname'] = $classinfo['dbname'];
-			$modelconfig = MyqeeCMS::config('model/model_'.$classinfo['modelid']);
+			$modelconfig = Myqee::config('model/model_'.$classinfo['modelid']);
 		} elseif ($modelid>0){
 			//读取模型配置
-			$modelconfig = MyqeeCMS::config('model/model_'.$modelid);
+			$modelconfig = Myqee::config('model/model_'.$modelid);
 			if (is_array($modelconfig) && $modelconfig['dbname']){
 				$acquisition['dbname'] = $modelconfig['dbname'];
 			}
@@ -409,7 +409,7 @@ class Acquisition_Controller_Core extends Controller {
 			foreach ($modelconfig['field'] as $key => $value){
 				if (substr($key,0,1) == '_') {
 					//扩展表
-					$_db_config = MyqeeCMS::config('db/'.substr($key,1));
+					$_db_config = Myqee::config('db/'.substr($key,1));
 					list ($_database,$_tablename) = explode('/',substr($key,1));
 					if (is_array($_db_config['model']['field'])) foreach ($_db_config['model']['field'] as $k=>$v) {
 						if (substr($k,0,1) == '_' || $k == 'id') {
@@ -727,7 +727,7 @@ class Acquisition_Controller_Core extends Controller {
 		$docount = $db -> update('[acquisition]',$acqudata,array('id'=>$id)) -> count();
 		
 		if ($docount>0){
-			$acqu = MyqeeCMS::config('acquisition/acqu_'.$id);
+			$acqu = Myqee::config('acquisition/acqu_'.$id);
 			$acqu['node'] = $acqudata_node;
 			MyqeeCMS::saveconfig('acquisition/acqu_'.$id,$acqu);
 			
@@ -757,7 +757,7 @@ class Acquisition_Controller_Core extends Controller {
 		$update = array('node'=>serialize($data['node']));
 		
 		if ( $this->db->update('[acquisition]' , $update, array ('id' => $id )) -> count() ) {
-			$acqu = MyqeeCMS::config('acquisition/acqu_'.$id);
+			$acqu = Myqee::config('acquisition/acqu_'.$id);
 			$acqu['node'] = $data['node'];
 			$acqu = MyqeeCMS::saveconfig('acquisition/acqu_'.$id,$acqu);
 			MyqeeCMS::show_ok ( '恭喜，删除节点成功！', true, 'refresh' );
@@ -814,7 +814,7 @@ class Acquisition_Controller_Core extends Controller {
 		if ($node_id>0){
 			$where['node_id']=$node_id;
 		}
-		$acqu = MyqeeCMS::config('acquisition/acqu_'.$id);
+		$acqu = Myqee::config('acquisition/acqu_'.$id);
 		if (!$acqu){
 			MyqeeCMS::show_info ( '不存在指定任务！' , false ,'goback' );
 		}
@@ -872,7 +872,7 @@ class Acquisition_Controller_Core extends Controller {
 			MyqeeCMS::show_info ( '不存在指定采集数据！' , false ,'goback' );
 		}
 		
-		$acqu = MyqeeCMS::config('acquisition/acqu_'.$data['acqu_id']);
+		$acqu = Myqee::config('acquisition/acqu_'.$data['acqu_id']);
 		
 		$view = new View('admin/acquisition_info_view');
 		$view -> set('data_id',$data['id']);
@@ -922,7 +922,7 @@ class Acquisition_Controller_Core extends Controller {
 		}
 		
 		$this->adminid = $_SESSION['admin']['id'];
-		$acqu = MyqeeCMS::config('acquisition/acqu_'.$id);
+		$acqu = Myqee::config('acquisition/acqu_'.$id);
 		if (!$acqu){
 			MyqeeCMS::show_info ( '不存在指定任务！' , false ,'goback' );
 		}
@@ -934,7 +934,7 @@ class Acquisition_Controller_Core extends Controller {
 		
 		if ($data_ids){
 			$post['dataids'] = Tools::formatids($data_ids,true);
-			$keycode = md5(MyqeeCMS::config('encryption.default.key').'__'.$post['dataids']);
+			$keycode = md5(Myqee::config('encryption.default.key').'__'.$post['dataids']);
 		}else{
 			$post['id'] = $id;
 			$post['nodeid'] = $node_id;
@@ -993,7 +993,7 @@ class Acquisition_Controller_Core extends Controller {
 		if (!$id>0 ||!$node_id>0){
 			return Myqee::lang('admin/acquisition.error.parameterserror');
 		}
-		$this->acqu = MyqeeCMS::config('acquisition/acqu_'.$id);
+		$this->acqu = Myqee::config('acquisition/acqu_'.$id);
 		if (!$this->acqu){
 			return Myqee::lang('admin/acquisition.error.nofoundacqu');
 		}
@@ -1206,7 +1206,7 @@ class Acquisition_Controller_Core extends Controller {
 		if (!$id>0 ||!$node_id>0){
 			MyqeeCMS::show_error( Myqee::lang('admin/acquisition.error.parameterserror'),false,'goback');
 		}
-		$acquisition = MyqeeCMS::config('acquisition/acqu_'.$id);
+		$acquisition = Myqee::config('acquisition/acqu_'.$id);
 		if (!$acquisition){
 			MyqeeCMS::show_error('不存在指定采集设置！',FALSE,'goback');
 		}

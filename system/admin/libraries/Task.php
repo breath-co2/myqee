@@ -40,7 +40,7 @@ class Task_Core {
 			return -2;
 		}
 		$timeline = time();
-		$code = md5(MyqeeCMS::config('encryption.default.key') . '__task_'.$timeline.'__');
+		$code = md5(Myqee::config('encryption.default.key') . '__task_'.$timeline.'__');
 		
 		$snoopy = new Snoopy();
 		$snoopy -> get_header(Myqee::url('task_run/index?timeline='.$timeline.'&code='.$code,null,true) , $_SERVER["SERVER_ADDR"] );
@@ -59,7 +59,7 @@ class Task_Core {
 	public static function save_task_onehouse() {
 		/*$adminmodel = new Admin_Model ( );
 		$taskarray = $adminmodel->get_tasks_array ( $isuse );*/
-		$taskarray = MyqeeCMS::config('tasks');
+		$taskarray = Myqee::config('tasks');
 		$inttime = time(); //本次调用开始时间 
 		$currtime = getdate($inttime); //本次调用开始时间数组
 		$endtime = $inttime + 60 * 60; //本次调用结束时间

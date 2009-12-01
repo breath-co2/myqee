@@ -80,7 +80,7 @@ class Mydata_Controller_Core extends Controller {
 			$tplcate[$item['cate']] = $item['cate'];	
 		}
 		$view -> tplcate = $tplcate;
-		$dbconfig = MyqeeCMS::config('database');
+		$dbconfig = Myqee::config('database');
 		foreach ($dbconfig as $key => $value){
 			$dbselect[$key] = $value['name']?$value['name']:$key;
 		}

@@ -103,7 +103,7 @@ class Uploadfile_Controller_Core extends Controller {
 			$view->set ( 'allow_type', array ('swf') );
 		}
 		if ($config && $config!='default' && preg_match("/[a-zA-Z0-9]+/",$config)){
-			$config_upload= MyqeeCMS::config('upload.'.$config);
+			$config_upload= Myqee::config('upload.'.$config);
 		}
 		if (!$config_upload||!is_array($config_upload)){
 			$config_upload = Myqee::config('core.upload');

@@ -14,7 +14,7 @@ class Template_Controller_Core extends Controller {
 			$tplname = 'all';
 		}
 		//获取模板组
-		$tplconfig = MyqeeCMS::config('template');
+		$tplconfig = Myqee::config('template');
 		$tplgroup = $tplconfig['group'];
 		if (!is_array($tplgroup)){
 			$tplgroup = array('default' => '默认模板组');
@@ -69,7 +69,7 @@ class Template_Controller_Core extends Controller {
 	}
 
 	public function changegroup($groupkey=''){
-		$tplgroup = MyqeeCMS::config('template.group');
+		$tplgroup = Myqee::config('template.group');
 		if (!$groupkey || !$tplgroup[$groupkey])$groupkey = $groupkey = key($tplgroup);
 		$this -> session -> set ('now_tlpgroup',$groupkey);
 		header('location:'.Myqee::url('template/index'));
@@ -93,7 +93,7 @@ class Template_Controller_Core extends Controller {
 		$view = new View('admin/template_add');
 		$this -> db = Database::instance();
 		
-		$tplconfig = MyqeeCMS::config('template');
+		$tplconfig = Myqee::config('template');
 		
 		if ($id>0){
 			$result = $this -> db -> from('[template]') -> where(array('id' => $id)) -> limit(1) -> get() -> result_array(FALSE);
@@ -171,7 +171,7 @@ class Template_Controller_Core extends Controller {
 		
 
 		/*
-		if ( !MyqeeCMS::config('template.allowphp') ){
+		if ( !Myqee::config('template.allowphp') ){
 			if(strpos($post['content'],'<?') || strpos($post['content'],'?>'))
 			MyqeeCMS::show_error(Myqee::lang('admin/template.error.contenthavephp'),true);
 		}
@@ -195,7 +195,7 @@ class Template_Controller_Core extends Controller {
 			if(!$data['group'])$data['group'] = 'default';
 			$grouppath = $data['group'];
 		}
-		$tplconfig = MyqeeCMS::config('template.group.'.$grouppath);
+		$tplconfig = Myqee::config('template.group.'.$grouppath);
 		if (!$tplconfig){
 			MyqeeCMS::show_error(Myqee::lang('admin/template.error.nothisgroup'),true);
 		}
@@ -415,7 +415,7 @@ class Template_Controller_Core extends Controller {
 		$view = new View('admin/template_input');
 
 		//获取模板组
-		$tplgroup = MyqeeCMS::config('template.group');
+		$tplgroup = Myqee::config('template.group');
 		if (!is_array($tplgroup)){
 			$tplgroup = array('default' => '默认模板组');
 		}else{
@@ -480,7 +480,7 @@ class Template_Controller_Core extends Controller {
 			$group = 'default';
 		}
 		//获取模板组
-		$tplgroup = MyqeeCMS::config('template.group');
+		$tplgroup = Myqee::config('template.group');
 		if (!is_array($tplgroup))$tplgroup = array('default' => array('name'=>'默认模板组'));
 
 		//创建新模板组
@@ -541,8 +541,8 @@ class Template_Controller_Core extends Controller {
 		Passport::checkallow('template.grouplist');
 		$view = new View('admin/template_grouplist');
 
-		$view -> set('list' , MyqeeCMS::config('template.group'));
-		$view -> set('defaultgroup' , MyqeeCMS::config('template.default'));
+		$view -> set('list' , Myqee::config('template.group'));
+		$view -> set('defaultgroup' , Myqee::config('template.default'));
 		$view -> render(TRUE);
 	}
 
@@ -556,7 +556,7 @@ class Template_Controller_Core extends Controller {
 		if (!$groupset['name'])$groupset['name'] = $group;
 
 		//获取模板组
-		$template = MyqeeCMS::config('template');
+		$template = Myqee::config('template');
 		if (!is_array($template['group']))$template['group'] = array('default' => array('name'=>'默认模板组'));
 
 		//创建新模板组
@@ -590,7 +590,7 @@ class Template_Controller_Core extends Controller {
 		}
 		$view = new View('admin/template_groupadd');
 
-		$tplconfig = MyqeeCMS::config('template');
+		$tplconfig = Myqee::config('template');
 		if ($thegroup){
 			$view -> set('group',$tplconfig['group'][$thegroup]);
 			$view -> set('thisgroup',$thegroup);
@@ -645,7 +645,7 @@ class Template_Controller_Core extends Controller {
 			$groupset['allsuffix'] = $engine[$groupset['engine']]['allsuffix'];
 		}
 
-		$tplconfig = MyqeeCMS::config('template');
+		$tplconfig = Myqee::config('template');
 		if ($old_id){
 			if ($tplconfig['group'][$old_id]){
 
@@ -681,7 +681,7 @@ class Template_Controller_Core extends Controller {
 			MyqeeCMS::show_error('当前设置不允许修改模板！',TRUE);
 		}
 		Passport::checkallow('template.groupdel',null,true);
-		$tplconfig = MyqeeCMS::config('template.group');
+		$tplconfig = Myqee::config('template.group');
 		if (!$tplconfig[$thegroup]){
 			MyqeeCMS::show_error(Myqee::lang('admin/template.error.nothisgroup'),true);
 		}

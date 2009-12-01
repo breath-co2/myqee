@@ -44,7 +44,7 @@ class Info_Controller_Core extends Controller {
 		}
 		list($database,$tablename) = explode('/',$dbname,2);
 		$view -> set ( 'select_dbtable' , $dbname);
-		$dbconfig = (array)MyqeeCMS::config('db/'.$dbname);
+		$dbconfig = (array)Myqee::config('db/'.$dbname);
 		$_db = Database::instance($database);
 		if ( $_db -> table_exists($tablename)){
 			
@@ -142,7 +142,7 @@ class Info_Controller_Core extends Controller {
 			//数据表字段列表
 			$dbfield = $adminmodel -> get_table_field($dbname,array(''=>'默认'));
 			
-			$dbconfig = (array)MyqeeCMS::config('db/'.$dbname);
+			$dbconfig = (array)Myqee::config('db/'.$dbname);
 			
 			
 			if ( $_db -> table_exists($tablename)){
@@ -332,7 +332,7 @@ class Info_Controller_Core extends Controller {
 		}
 		$dbname = $database .'/'.$tablename;
 		
-		$db_config = MyqeeCMS::config('db/'.$database.'/'.$tablename);
+		$db_config = Myqee::config('db/'.$database.'/'.$tablename);
 		($adminmodel = $this -> adminmodel) or $adminmodel = new Admin_Model;
 
 		$_db = Database::instance($database);
@@ -456,7 +456,7 @@ class Info_Controller_Core extends Controller {
 		if ( $savekey != $post['sys']['savekey']){
 			MyqeeCMS::show_error( Myqee::lang('admin/info.error.errorkey'),true );
 		}
-		$dbconfig = MyqeeCMS::config('db/'.$dbname);
+		$dbconfig = Myqee::config('db/'.$dbname);
 		list($database,$tablename) = explode('/',$dbname);
 		$_db = Database::instance($database);
 		if ( !($_db -> table_exists($tablename))){
@@ -472,7 +472,7 @@ class Info_Controller_Core extends Controller {
 			$classinfo = $adminmodel -> get_class_array($classid);
 			$modelid = (int)$classinfo['modelid'];
 			if ($modelid>0){
-				$modelconfig = MyqeeCMS::config('model/model_'.$modelid);
+				$modelconfig = Myqee::config('model/model_'.$modelid);
 			}elseif ($dbconfig['usedbmodel']){
 				$modelconfig = $dbconfig['model'];
 			}
@@ -640,7 +640,7 @@ class Info_Controller_Core extends Controller {
 				
 				//生成静态页
 				$snoopy = new Snoopy();
-				$url = _get_tohtmlurl('toinfo_byid',MyqeeCMS::config('encryption.default.key'),'_id='.(int)$post['sys']['id'].'&_allclassid='.$classid.'&_nowclassid='.$classid.'&_limit=1');
+				$url = _get_tohtmlurl('toinfo_byid',Myqee::config('encryption.default.key'),'_id='.(int)$post['sys']['id'].'&_allclassid='.$classid.'&_nowclassid='.$classid.'&_limit=1');
 				if (substr($url,0,1)=='/'){
 					$url = Myqee::protocol() .'://'. $_SERVER['HTTP_HOST'] . $url;
 				}
@@ -727,7 +727,7 @@ class Info_Controller_Core extends Controller {
 		}
 
 		$adminmodel = new Admin_Model;
-		$dbconfig = MyqeeCMS::config('db/'.$dbname);
+		$dbconfig = Myqee::config('db/'.$dbname);
 		$sys_field = $dbconfig['sys_field'];
 		$_db = Database::instance($dbconfig['database']);
 		$result = $_db -> select('*') -> from($tablename) -> in($sys_field['id'],$myId) -> get() -> result_array ( FALSE );
@@ -743,7 +743,7 @@ class Info_Controller_Core extends Controller {
 				$modelid = (int)$classinfo[$classid]['modelid'];
 				if ($modelid>0){
 					$nowmodelkey = $modelid;
-					$modelconfig[$modelid] or $modelconfig[$modelid] = MyqeeCMS::config('model/model_'.$modelid);
+					$modelconfig[$modelid] or $modelconfig[$modelid] = Myqee::config('model/model_'.$modelid);
 				}elseif($dbconfig['usedbmodel']){
 					$nowmodelkey = $dbname;
 					$modelconfig[$dbname] or $modelconfig[$dbname] = $dbconfig['model'];
@@ -830,7 +830,7 @@ class Info_Controller_Core extends Controller {
 		if ( !in_array($type[0],$canset)){
 			MyqeeCMS::show_error( Myqee::lang('admin/info.error.setvaluetypeerror'),true );
 		}
-		$sys_field = MyqeeCMS::config('db/'.$dbname.'.sys_field');
+		$sys_field = Myqee::config('db/'.$dbname.'.sys_field');
 		if ( !$sys_field[$type[0]] ){
 			//MyqeeCMS::show_error( str_replace("\n",'',print_r($sys_field,true)),true );
 			MyqeeCMS::show_error( Myqee::lang('admin/info.error.setvaluetypeerror2'),true );
@@ -896,7 +896,7 @@ class Info_Controller_Core extends Controller {
 		if (count($myId)==0){
 			MyqeeCMS::show_info( Myqee::lang('admin/info.info.nodoset') , true );
 		}
-		$sys_field = MyqeeCMS::config('db/'.$dbname.'.sys_field');
+		$sys_field = Myqee::config('db/'.$dbname.'.sys_field');
 
 		$adminmodel = new Admin_Model;
 
@@ -908,7 +908,7 @@ class Info_Controller_Core extends Controller {
 		if ($myclass['dbname']!=$dbname){
 			MyqeeCMS::show_error( Myqee::lang('admin/info.error.diffdatabase'),true);
 		}
-		$dbconfig = MyqeeCMS::config('db/'.$dbname);
+		$dbconfig = Myqee::config('db/'.$dbname);
 		$myInfos = $adminmodel -> get_userdb_info($dbname,$myId,'*');
 		$_db = Database::instance($database);
 		$copynum = 0;
@@ -969,7 +969,7 @@ class Info_Controller_Core extends Controller {
 		if (count($myId)==0){
 			MyqeeCMS::show_info( Myqee::lang('admin/info.info.nodoset') , true );
 		}
-		$dbconfig = MyqeeCMS::config('db/'.$dbname);
+		$dbconfig = Myqee::config('db/'.$dbname);
 		$this->adminmodel = new Admin_Model;
 		$myInfos = $this->adminmodel -> get_userdb_info($dbname,$myId,'*');
 		$_db = Database::instance($database);
@@ -981,7 +981,7 @@ class Info_Controller_Core extends Controller {
 			$tmp = explode('|',trim($specialinfo['classides'],'|'));
 			foreach ($tmp as $v) {
 				$_canaddclasses[] = $v;
-				$_config = MyqeeCMS::config('class/class_'.$v);
+				$_config = Myqee::config('class/class_'.$v);
 				$_sonclasses =explode('|',trim($_config['sonclass'],'|'));
 				$_canaddclasses = array_merge($_canaddclasses,$_sonclasses);
 			}
@@ -990,7 +990,7 @@ class Info_Controller_Core extends Controller {
 		}
 		foreach ($myInfos as $myInfo){
 			if ($specialinfo['classides'] != '|0|' && !in_array($myInfo['class_id'],$_canaddclasses)) {
-				$_config = MyqeeCMS::config('class/class_'.$myInfo['class_id']);
+				$_config = Myqee::config('class/class_'.$myInfo['class_id']);
 				$_fatherclasses = explode('|',trim($_config['fatherclass'],'|'));
 				if (!array_intersect($_fatherclasses,$_canaddclasses)) {
 					continue;
@@ -1101,7 +1101,7 @@ class Info_Controller_Core extends Controller {
 		$page = (int)$_GET['page'];
 		$page > 0 or $page = 1;
 		
-		$dbconfig = MyqeeCMS::config('db/'.$dbname);
+		$dbconfig = Myqee::config('db/'.$dbname);
 		$db = Database::instance($fdatabase);
 		
 		$limit = 20;
@@ -1152,7 +1152,7 @@ class Info_Controller_Core extends Controller {
 		$ktables = array_unique($ktables);
 		//加载这些表的配置
 		foreach ($ktables as $val) {
-			$config = MyqeeCMS::config('db/'.$val);
+			$config = Myqee::config('db/'.$val);
 			if (!empty($config)) {
 				foreach ($config['model']['field'] as $k=>$v) {
 					if ($v['input'] || $v['edit']) {

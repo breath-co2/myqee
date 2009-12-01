@@ -34,7 +34,7 @@ class Mylink_Controller_Core extends Controller {
 		Passport::checkallow('info.mylink_child_links');
 		$arguments = explode('/',$_GET['path']);
 		$view = new View('admin/mylink_child_lists');
-		$link_list = MyqeeCMS::config('mylinks/link_'.$id);
+		$link_list = Myqee::config('mylinks/link_'.$id);
 		if ($arguments){
 			foreach ($arguments as $arg){
 				if (!empty($arg)){
@@ -138,7 +138,7 @@ class Mylink_Controller_Core extends Controller {
 	
 	public function save_child_links($id=0){
 		Passport::checkallow('info.save_links');
-		$link_list = (array)MyqeeCMS::config('mylinks/link_'.$id);
+		$link_list = (array)Myqee::config('mylinks/link_'.$id);
 		$link_list2 = $link_list;		//复制一个用来处理
 		$thepath = trim($_GET['path'],'/ ');
 		if (!empty($thepath)){
@@ -252,7 +252,7 @@ class Mylink_Controller_Core extends Controller {
 					$save_error += 1;
 					continue;
 				}
-				$mylink_config = MyqeeCMS::config('mylinks/link_'.$item['id']);
+				$mylink_config = Myqee::config('mylinks/link_'.$item['id']);
 				$mylink = array();
 				foreach ($mylink_config as $key => $mylink_item){
 					if($mylink_item['infoid'] == '' || $mylink_item['infoid'] == NULL){
@@ -282,7 +282,7 @@ class Mylink_Controller_Core extends Controller {
 		if($id <= 0){
 			return FALSE;
 		}
-		$mydata_config = MyqeeCMS::config('mydata/mydata_'.$id);
+		$mydata_config = Myqee::config('mydata/mydata_'.$id);
 		$dbname = $mydata_config['dbname'];
 		if ($dbname == '' || $dbname == NULL){
 			return FALSE;
@@ -294,7 +294,7 @@ class Mylink_Controller_Core extends Controller {
 			$adminmodel = new Admin_Model ( );
 			$results = $adminmodel -> db -> query($sql) -> result_array(false);
 			$data = array();
-			$db_config = MyqeeCMS::config('db/'.$dbname);
+			$db_config = Myqee::config('db/'.$dbname);
 			if(count($results) < $count){
 				$count = count($results);
 			}

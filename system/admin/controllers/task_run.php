@@ -2,7 +2,7 @@
 class task_run_Controller_Core extends Controller {
 	protected $run_file;
 	function __construct(){
-		$code = md5(MyqeeCMS::config('encryption.default.key') . '__task_'.$_GET['timeline'].'__');
+		$code = md5(Myqee::config('encryption.default.key') . '__task_'.$_GET['timeline'].'__');
 		if ($_SERVER['REQUEST_TIME'] - $_GET['timeline']>600 || $code != $_GET['code'] ){
 			exit;
 		}

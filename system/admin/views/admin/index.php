@@ -6,7 +6,7 @@ View::factory('admin/header',array('page_index'=>$page_index,'page_title'=>$page
 <table border="0" width="900" align="center">
 	<tr>
 		<td align="center" height="50"><br/>
-			<h2 style="font-family:'楷体_GB2312','楷体';font-size:25px;"><?php if($welcome=Myqee::config('core.admin_welcome')){echo $welcome;}else{echo '欢迎您使麦琪内容管理系统';}?></h2></td>
+			<h2 style="font-family:'楷体_GB2312','楷体';font-size:25px;"><?php if($welcome=Myqee::config('core.admin_welcome')){echo $welcome;}else{echo '欢迎您使用麦琪内容管理系统';}?></h2></td>
 	</tr>
 </table>
 <table border="0" cellpadding="4" cellspacing="1" align="center" class="tableborder">

@@ -377,7 +377,7 @@ class Admin_Model_Core extends Model {
 				$tplwhere = array();
 			}
 		}
-		$tplwhere['group'] = $_SESSION['now_tlpgroup']?$_SESSION['now_tlpgroup']:MyqeeCMS::config('template.default');
+		$tplwhere['group'] = $_SESSION['now_tlpgroup']?$_SESSION['now_tlpgroup']:Myqee::config('template.default');
 		
 		$this -> db ->select ( $select )->from ( '[template]' ) -> where($tplwhere);
 		if (is_array($orderby)){
@@ -404,7 +404,7 @@ class Admin_Model_Core extends Model {
 			if ($group){
 				$where['group'] = $group;
 			}else{
-				$where['group'] = $_SESSION['now_site_tlpgroup']?$_SESSION['now_site_tlpgroup']:MyqeeCMS::config('template.default');
+				$where['group'] = $_SESSION['now_site_tlpgroup']?$_SESSION['now_site_tlpgroup']:Myqee::config('template.default');
 			}
 			$where['group'] or $where['group']='default';
 			$this -> templates = $this -> db -> from ( '[template]' ) -> where($where) -> orderby('cate','asc') -> orderby('myorder','DESC') ->get ()->result_array ( FALSE );
@@ -806,7 +806,7 @@ class Admin_Model_Core extends Model {
 		$navclass = $this -> get_allclass_array(0,0,false,array('isnavshow'=>1));
 		//$navclass = $this -> db -> select('classid,classname,myorder')->where(array('isnavshow'=>1))->orderby('myorder','ASC')->orderby('classid','ASC') -> get('[class]') -> result_array ( FALSE );
 		
-		if (!$navarray) $navarray = MyqeeCMS::config('navigation'.($this -> site_id?'/site_'.$this -> site_id:''));
+		if (!$navarray) $navarray = Myqee::config('navigation'.($this -> site_id?'/site_'.$this -> site_id:''));
 		$mynav = $this -> _set_nav_array($navarray,$navclass);
 		
 		return MyqeeCMS::saveconfig('navigation'.($this -> site_id?'/site_'.$this -> site_id:''),$mynav);
@@ -868,7 +868,7 @@ class Admin_Model_Core extends Model {
 		
 		if($class_info['isnothtml']!=0 || ($page==0 && $class_info['cover_tohtml']) || ($page>0 && $class_info['list_tohtml']) ){
 			$this -> url_suffix or $this -> url_suffix = Myqee::config('core.url_suffix');
-			$theurl = $this -> mysiteurl.'myclass/'.substr(Des::Encrypt('['.$class_info['classid'].']',MyqeeCMS::config('encryption.urlcode.key')),2).($page>0?'/'.$page:'').$this -> url_suffix;
+			$theurl = $this -> mysiteurl.'myclass/'.substr(Des::Encrypt('['.$class_info['classid'].']',Myqee::config('encryption.urlcode.key')),2).($page>0?'/'.$page:'').$this -> url_suffix;
 		}else{
 			if ($page>0){
 				//列表
@@ -1054,7 +1054,7 @@ class Admin_Model_Core extends Model {
 			$modelid = (int)$classinfo['modelid'];
 			if ($modelid>0){
 				//获取模型
-				$modelconfig = MyqeeCMS::config('model/model_'.$modelid);
+				$modelconfig = Myqee::config('model/model_'.$modelid);
 				$modelconfig['usedbmodel'] = 1;
 				if (is_array($modelconfig)){
 					if (count($modelconfig['nolist'])>0){
@@ -1124,7 +1124,7 @@ class Admin_Model_Core extends Model {
 				$modelid = (int)$classinfo['modelid'];
 				if ($modelid>0){
 					//获取模型
-					$modelconfig = MyqeeCMS::config('model/model_'.$modelid);
+					$modelconfig = Myqee::config('model/model_'.$modelid);
 					$modelconfig['usedbmodel'] = 1;
 				}elseif($dbconfig['usedbmodel']){
 					$modelconfig = $dbconfig['model'];
@@ -1268,7 +1268,7 @@ class Admin_Model_Core extends Model {
 
 	public function get_userdb_info($dbname , $infoid = 0 , $selectit = '*') {
 		if ((!is_array($infoid) && !($infoid>0)) || !$dbname)return false;
-		$db_id = MyqeeCMS::config('db/'.$dbname.'.sys_field.id');
+		$db_id = Myqee::config('db/'.$dbname.'.sys_field.id');
 
 		if (!$db_id)return false;
 		list($database,$tablename) = explode('/',$dbname);
@@ -1286,9 +1286,9 @@ class Admin_Model_Core extends Model {
 	public function get_user_editinfo_form($dbname, $info ,$modelid = 0 ,$isadd = true ,$isviewtype = false){
 		if (!$dbname)return false;
 		$modelid = (int)$modelid;
-		$this -> dbset = (array)MyqeeCMS::config('db/'.$dbname);
+		$this -> dbset = (array)Myqee::config('db/'.$dbname);
 		if ($modelid>0){
-			$model_set = MyqeeCMS::config('model/model_'.$modelid);
+			$model_set = Myqee::config('model/model_'.$modelid);
 			//处理钩子
 			$this->_hook($this -> dbset,$model_set,$info);
 			$model_field = $model_set['field'];
@@ -1480,7 +1480,7 @@ class Admin_Model_Core extends Model {
 		if (is_array($info)){
 			$info = join('__',$info);
 		}
-		return md5($info . '_' .MyqeeCMS::config('encryption.default.key'));
+		return md5($info . '_' .Myqee::config('encryption.default.key'));
 	}
 
 	/*public function get_advfield_array($arr,$fieldname='',$idstr=''){
@@ -1913,7 +1913,7 @@ class Admin_Model_Core extends Model {
 		}else{
 			$sysfile = 'default';
 		}
-		$sysdbfield = MyqeeCMS::config('sysdbfield/'.$sysfile.'.field');
+		$sysdbfield = Myqee::config('sysdbfield/'.$sysfile.'.field');
 		foreach ((array)$db_field as $key => $itemfield){
 			//auto config set
 			if ($itemfield['autoset']){
@@ -2153,7 +2153,7 @@ class Admin_Model_Core extends Model {
 			$dbname = $classid;
 		}
 
-		$this->dbconfig[$dbname] or $this->dbconfig[$dbname] = MyqeeCMS::config('db/'.$dbname);
+		$this->dbconfig[$dbname] or $this->dbconfig[$dbname] = Myqee::config('db/'.$dbname);
 		if ($this->dbconfig[$dbname]['sys_field']['linkurl']){
 			if ($mylinkUrl = $theinfo[$this->dbconfig[$dbname]['sys_field']['linkurl']])return $mylinkUrl;
 		}
@@ -2182,14 +2182,14 @@ class Admin_Model_Core extends Model {
 			//缺少数据表信息将无法获取信息内容，返回空链接
 			if (!$dbname)return './#';
 			
-			$this->dbconfig[$dbname] or $this->dbconfig[$dbname] = MyqeeCMS::config('db/'.$dbname);
+			$this->dbconfig[$dbname] or $this->dbconfig[$dbname] = Myqee::config('db/'.$dbname);
 			//缺少唯一标示将无法定位具体信息，返回空链接
 			if (!$this->dbconfig[$dbname]['sys_field']['id'])return './#';
 			$myqeepage = Myqee::config('core.myqee_page');
 			if ($myqeepage){
 				$info_url .= $myqeepage.'/';
 			}
-			$info_url .= 'myinfo/'.substr(Des::Encrypt(($classid>0?$classid:$dbname).','.$theinfo[$this->dbconfig[$dbname]['sys_field']['id']],MyqeeCMS::config('encryption.urlcode.key')),2).Myqee::config('core.url_suffix');
+			$info_url .= 'myinfo/'.substr(Des::Encrypt(($classid>0?$classid:$dbname).','.$theinfo[$this->dbconfig[$dbname]['sys_field']['id']],Myqee::config('encryption.urlcode.key')),2).Myqee::config('core.url_suffix');
 			return $info_url;
 		}
 	}
@@ -2214,7 +2214,7 @@ class Admin_Model_Core extends Model {
 		}
 		if (!$dbname)return false;
 		
-		$this->dbconfig[$dbname] or $this->dbconfig[$dbname]=MyqeeCMS::config('db/'.$dbname);
+		$this->dbconfig[$dbname] or $this->dbconfig[$dbname]=Myqee::config('db/'.$dbname);
 		
 		//根据内容信息的ID重新获取信息classid（如果存在）
 		if ( !($classid>0) ){
@@ -2336,7 +2336,7 @@ class Admin_Model_Core extends Model {
 	 * @param array $option 返回数组
 	 */
 	public function get_table_field($dbname, $option = array()){
-		$field = MyqeeCMS::config('db/'.$dbname);
+		$field = Myqee::config('db/'.$dbname);
 		if ($field == NULL || $field == ''){
 			return array();
 		}
@@ -2692,7 +2692,7 @@ class Admin_Model_Core extends Model {
 	 * @return array
 	 */
 	protected function _getFieldFromTable ($table) {
-		$config = MyqeeCMS::config('db/'.$table);
+		$config = Myqee::config('db/'.$table);
 		$field = array();
 		if (is_array($config['model']['field'])) {
 			foreach ($config['model']['field'] as $key=>$val) {

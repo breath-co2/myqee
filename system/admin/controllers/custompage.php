@@ -275,7 +275,7 @@ class Custompage_Controller_Core extends Controller {
 		
 		$tmpid = trim ( $tmpid, ',' );
 		if ($tmpid) {
-			$tohtmlurl = _get_tohtmlurl ( 'tocustompage', MyqeeCMS::config ( 'encryption.default.key' ), '&theid=' . $allid );
+			$tohtmlurl = _get_tohtmlurl ( 'tocustompage', Myqee::config( 'encryption.default.key' ), '&theid=' . $allid );
 			header ( 'location:' . $tohtmlurl );
 			exit ();
 		}

@@ -133,7 +133,7 @@ class Tohtml_Controller_Core extends Controller {
 			$does [] = array ('sid' => $item ['sid'], 'info' => '生成专题<font color="#12C450">[' . $item ['title'] . ']</font> (id:' . $item ['sid'] . ')' );
 		}
 		
-		$view->set ( 'tohtmlurl', _get_tohtmlurl ( 'tospecial_byspecialid', MyqeeCMS::config ( 'encryption.default.key' ), '_allspecialid=' . join ( ',', $specialid_array ) . '&_nowspecialid=' . $specialid_array [0] . '&_limit=' . $dohtml_limit  ) );
+		$view->set ( 'tohtmlurl', _get_tohtmlurl ( 'tospecial_byspecialid', Myqee::config( 'encryption.default.key' ), '_allspecialid=' . join ( ',', $specialid_array ) . '&_nowspecialid=' . $specialid_array [0] . '&_limit=' . $dohtml_limit  ) );
 		$view->set ( 'dohtml_limit', $dohtml_limit );
 		$view->set ( 'does', $does );
 		$view->set ( 'special_info', $special_info );
@@ -180,7 +180,7 @@ class Tohtml_Controller_Core extends Controller {
 			} else {
 				$other = '';
 			}
-			$view->set ( 'tohtmlurl', _get_tohtmlurl ( ($type == 'info' ? 'toinfo_byclassid' : 'toclass_byclassid'), MyqeeCMS::config ( 'encryption.default.key' ), '_allclassid=' . join ( ',', $classid_array ) . '&_nowclassid=' . $classid_array [0] . '&_limit=' . $dohtml_limit . $other ) );
+			$view->set ( 'tohtmlurl', _get_tohtmlurl ( ($type == 'info' ? 'toinfo_byclassid' : 'toclass_byclassid'), Myqee::config( 'encryption.default.key' ), '_allclassid=' . join ( ',', $classid_array ) . '&_nowclassid=' . $classid_array [0] . '&_limit=' . $dohtml_limit . $other ) );
 		}
 		
 		$view->set ( 'dohtml_limit', $dohtml_limit );
@@ -230,7 +230,7 @@ class Tohtml_Controller_Core extends Controller {
 		}
 		
 		$url = _get_tohtmlurl ( 'class_block', 
-		MyqeeCMS::config ('encryption.default.key' ), 
+		Myqee::config('encryption.default.key' ), 
 		'_nowclassid='.$class_id.'&_editblock=yes&_blocktype='.$blocktype);
 		header('location: '.$url);
 		exit('');

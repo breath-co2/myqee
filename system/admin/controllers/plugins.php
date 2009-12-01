@@ -131,7 +131,7 @@ class Plugins_Controller_Core extends Controller {
 			MyqeeCMS::show_error('不存在指定的插件！',$showheader?FALSE:TRUE,'goback');
 		}
 		
-		$plugins_config = MyqeeCMS::config('plugins.'.$plugins);
+		$plugins_config = Myqee::config('plugins.'.$plugins);
 		if (!$plugins_config || !$plugins_config['isuse']){
 			MyqeeCMS::show_error('指定的插件未启用！',$showheader?FALSE:TRUE,'goback');
 		}
@@ -201,7 +201,7 @@ class Plugins_Controller_Core extends Controller {
 			(array) MyqeeCMS::dirlist(MYQEEPATH . 'admin/plugins/', 'dir'),
 			(array) MyqeeCMS::dirlist(ADMINPATH .'plugins/', 'dir')
 		);
-		$plugins_config = (array) MyqeeCMS::config('plugins');
+		$plugins_config = (array) Myqee::config('plugins');
 		if($getarr==true){
 				$data = $plugins_config;
 		}else{
@@ -273,7 +273,7 @@ class Plugins_Controller_Core extends Controller {
 			'vision'	=> MYQEE_VERSION,
 			'host'		=> $_SERVER['HTTP_HOST'],
 			'time'		=> time(),
-			'config'	=> MyqeeCMS::config('plugins/'.$plugins),
+			'config'	=> Myqee::config('plugins/'.$plugins),
 			'path'		=> $plugins,
 		);
 		$myconfig = Tools::info_encryp(serialize($myconfig),$pass);

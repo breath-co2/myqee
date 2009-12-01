@@ -67,7 +67,7 @@ class Index_Controller_Core extends Controller {
 		$modules = Tools::json_encode($modules_config);
 		$view -> set('tplgroup', $covertemplate);
 		$view -> set('modules', $modules);
-		$view -> set('member', (array) MyqeeCMS::config('member'));
+		$view -> set('member', (array) Myqee::config('member'));
 		$view -> set('coreconfig', Myqee::config('core'));
 		$view -> render(TRUE);
 	}
@@ -261,12 +261,12 @@ class Index_Controller_Core extends Controller {
 		}
 		//////////////////////////////member	
 		$member = $post['member'];
-		if (is_array($member) && (serialize($member) != serialize(MyqeeCMS::config('member')))) {
+		if (is_array($member) && (serialize($member) != serialize(Myqee::config('member')))) {
 			MyqeeCMS::saveconfig('member', $member);
 		}
 		//////////////////////////////encryption
 		$this -> isconfigchange = false;
-		$myconfig = MyqeeCMS::config('encryption');
+		$myconfig = Myqee::config('encryption');
 		$myconfig = $this -> _setnewconfig($myconfig, $post['encryption']);
 		if ($this -> isconfigchange) {
 			MyqeeCMS::saveconfig('encryption', $myconfig);
@@ -373,7 +373,7 @@ class Index_Controller_Core extends Controller {
 		if (! is_array($sysConfigData)) {
 			MyqeeCMS::show_error(Myqee::lang('admin/index.error.nofoundadminmenu'), false, 'goback');
 		}
-		$appConfigData = (array) MyqeeCMS::config('adminmenu');
+		$appConfigData = (array) Myqee::config('adminmenu');
 		$appConfigData = array_merge($sysConfigData, $appConfigData);
 		if (is_array($appConfigData)) {
 			//复制系统菜单，生产新的数组  $data
@@ -503,7 +503,7 @@ class Index_Controller_Core extends Controller {
 		if (! $menu['key'] || empty($menu['key']) || ! preg_match("/^[a-zA-Z][a-zA-Z0-9_]*$/", $menu['key'])) {
 			MyqeeCMS::show_error('抱歉，KEY值“' . $menu['key'] . '”不符合要求，\n\n KEY值不能空，且不能含有非法字符，且不能为纯数字，且以字母开头\n\n请重新输入！', true, '');
 		}
-		$configData = MyqeeCMS::config('adminmenu');
+		$configData = Myqee::config('adminmenu');
 		$k = 1;
 		$allkey = array();
 		if ((is_array($configData) && ! empty($configData))) {
@@ -639,7 +639,7 @@ class Index_Controller_Core extends Controller {
 	{
 		$k = 1;
 		$allName = array();
-		$configData = MyqeeCMS::config('adminmenu');
+		$configData = Myqee::config('adminmenu');
 		if (! is_array($configData) || empty($configData)) {
 			return array();
 		}
@@ -755,7 +755,7 @@ class Index_Controller_Core extends Controller {
 	}
 	
 	protected function _get_logs_code($time,$ftell){
-		return md5(MyqeeCMS::config('encryption.default.key').'__logread__'.$time.'__'.$ftell);
+		return md5(Myqee::config('encryption.default.key').'__logread__'.$time.'__'.$ftell);
 	}
 	
 	protected function _get_logs($file,$ftell=0,$time=0,$code=''){

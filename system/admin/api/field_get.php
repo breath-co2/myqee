@@ -6,6 +6,6 @@ class Field_get_Api_Core{
 	
 	
 	public function getconfig($str=''){
-		return MyqeeCMS::config($str);
+		return Myqee::config($str);
 	}
 }

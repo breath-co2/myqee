@@ -124,7 +124,7 @@ $databaseconfig = Myqee::config('database');
 	</tr>
 	<tr>
 		<td class="td1" align="right" width="150">网站密钥：</td>
-		<td class="td2"><?php echo form::input('encryption[default][key]',MyqeeCMS::config('encryption.default.key'),'size="40" maxlength="100" class="input"') ?> <font color="#999999">可用字母、数字、字符等混合，越复杂越好</font></td>
+		<td class="td2"><?php echo form::input('encryption[default][key]',Myqee::config('encryption.default.key'),'size="40" maxlength="100" class="input"') ?> <font color="#999999">可用字母、数字、字符等混合，越复杂越好</font></td>
 	</tr>
 </table>
 </div>
