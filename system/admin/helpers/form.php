@@ -1138,7 +1138,13 @@ function html_rename_all(){
 			return $html;
 		}
 		//$options = (array)$this -> dbset['edit'][$fieldname]['candidate'];
-		if (is_array($myset['candidate'])){
+		if($getcode=$myset['getcode']){
+			static $getcodeclass;
+			if ( $getcodeclass===null ){
+				 $getcodeclass = new Field_get_Api;
+			}
+			$options = (array)$getcodeclass -> $getcode($myset['candidate']);
+		}elseif (is_array($myset['candidate'])){
 			$options = $myset['candidate'];
 		}else{
 			$options = array();

@@ -149,10 +149,10 @@ class MyqeeCMS_Core {
 	
 	public static function config($myconfig){
 		$c = explode('.',$myconfig);
-		$filename = array_shift($c);
-		if ($filename == 'core'){
-			return Myqee::config('core.'.join('.',$c));
+		if ($c[0] == 'core'){
+			return Myqee::config($myconfig);
 		}
+		$filename = array_shift($c);
 		if (!isset(self::$config[$filename])){
 			if ($filename == 'config'){
 				include (MYAPPPATH.'config'.EXT);

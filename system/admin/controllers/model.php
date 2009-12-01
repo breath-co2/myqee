@@ -483,6 +483,7 @@ class Model_Controller_Core extends Controller {
 			'rows' => $fieldset['set']['rows'],
 			'format' => $fieldset['format'],
 			'default' => $fieldset['default'],
+			'getcode' => $fieldset['getcode'],
 			'candidate' => $tmpcandidate,
 			'inputtype' => $fieldset['type'],
 			'islist' => $modelconfig['nolist'][$fieldname]?'0':($modelconfig['list'][$fieldname]?'1':''),
@@ -520,8 +521,9 @@ class Model_Controller_Core extends Controller {
 		
 		//列表输出转换函数API
 		$adminmodel = new Admin_Model();
-		$doinfomodel = $adminmodel -> get_apiclass_list('Field_Api',array(''=>'默认'));
-		$view->set ( 'fielddocode', $doinfomodel );
+		$view->set ( 'fielddocode', $adminmodel -> get_apiclass_list('Field_list_Api',array(''=>'默认')) );
+
+		$view->set ( 'fieldgetcode', $adminmodel -> get_apiclass_list('Field_get_Api',array(''=>'默认')) );
 		
 		$view -> render(TRUE);
 	}
@@ -584,7 +586,8 @@ class Model_Controller_Core extends Controller {
 				'rows' => $post['rows'],
 				'other' => $post['other'],
 			),
-			'default' => trim($post['default']),
+			'default' => $post['default'],
+			'getcode' => $post['getcode'],
 			'candidate' => $post['candidate'],
 			'format' => $post['format'],
 		);
@@ -594,7 +597,13 @@ class Model_Controller_Core extends Controller {
 		}
 		
 		//处理候选值
-		if (!empty($post['candidate'])){
+		if ($post ['getcode']){
+			$tmpdoinfomodel = (array)get_class_methods('Field_get_Api');
+			if (in_array($post ['getcode'],$tmpdoinfomodel)){
+				$data_list['getcode'] = $post['getcode'];
+			}
+			$data['candidate'] = $post['candidate'];
+		}elseif (!empty($post['candidate'])){
 			$tmpvalue = explode("\n",$post['candidate']);
 			foreach ($tmpvalue as $value){
 				if (empty($value))continue;
@@ -622,7 +631,7 @@ class Model_Controller_Core extends Controller {
 			$post['tdclass'] and $data_list['tdclass']=$post['tdclass'];
 			
 			if ($post ['docode']){
-				$tmpdoinfomodel = (array)get_class_methods('Field_Api');
+				$tmpdoinfomodel = (array)get_class_methods('Field_list_Api');
 				if (in_array($post ['docode'],$tmpdoinfomodel)){
 					$data_list ['docode'] = $post ['docode'];
 				}
@@ -1395,6 +1404,7 @@ class Model_Controller_Core extends Controller {
 			$sysdbfield_json [$key] ['rows'] = $sysdbfield [$key] ['editset'] ['set'] ['rows'];
 			$sysdbfield_json [$key] ['size'] = $sysdbfield [$key] ['editset'] ['set'] ['cols'] ? $sysdbfield [$key] ['editset'] ['set'] ['cols'] : $sysdbfield [$key] ['editset'] ['set'] ['size'];
 			$sysdbfield_json [$key] ['default'] = $sysdbfield [$key] ['editset'] ['default'];
+			$sysdbfield_json [$key] ['getcode'] = $sysdbfield [$key] ['editset'] ['getcode'];
 			$sysdbfield_json [$key] ['candidate'] = $sysdbfield [$key] ['editset'] ['candidate'];
 			$sysdbfield_json [$key] ['format'] = $sysdbfield [$key] ['editset'] ['format'];
 		}
@@ -1404,8 +1414,8 @@ class Model_Controller_Core extends Controller {
 		$view->set ( 'field_adv', Tools::json_encode ( (array)$db_field [$field]['adv'] ) );
 		
 		//列表输出转换函数API
-		$doinfomodel = $adminmodel -> get_apiclass_list('Field_Api',array(''=>'默认'));
-		$view->set ( 'fielddocode', $doinfomodel );
+		$view->set ( 'fielddocode',$adminmodel -> get_apiclass_list('Field_list_Api',array(''=>'默认')) );
+		$view->set ( 'fieldgetcode',$adminmodel -> get_apiclass_list('Field_get_Api',array(''=>'默认')) );
 		
 		
 		$view->render ( TRUE );
@@ -1568,6 +1578,13 @@ class Model_Controller_Core extends Controller {
 		( int ) $post ['rows'] and $data ['rows'] = ( int ) $post ['rows'];
 		( int ) $post ['cols'] and $data ['cols'] = ( int ) $post ['cols'];
 		
+		if ($post ['getcode']){
+			$tmpdoinfomodel = (array)get_class_methods('Field_get_Api');
+			if (in_array($post ['getcode'],$tmpdoinfomodel)){
+				$data ['getcode'] = $post ['getcode'];
+			}
+		}
+
 		if ($post ['islist']) {
 			$data ['islist'] = true;
 			( int ) $post ['width'] > 0 and $data ['width'] = ( int ) $post ['width'];
@@ -1575,7 +1592,7 @@ class Model_Controller_Core extends Controller {
 			$data ['tdclass'] = $post ['align'] == 'td1' ? 'td1' : 'td2';
 			$post ['boolean'] and $data ['boolean'] = $post ['boolean'];
 			if ($post ['docode']){
-				$tmpdoinfomodel = (array)get_class_methods('Field_Api');
+				$tmpdoinfomodel = (array)get_class_methods('Field_list_Api');
 				if (in_array($post ['docode'],$tmpdoinfomodel)){
 					$data ['docode'] = $post ['docode'];
 				}

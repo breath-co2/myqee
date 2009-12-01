@@ -168,6 +168,10 @@ echo form::input(array('name'=>'field[usehtml]','id'=>'field[usehtml]','type'=>'
 			&nbsp;<font class="helpicon">&nbsp;</font>
 			</td>
 		</tr>
+		<tr>
+			<td class="td1" width="120" align="right">候选值操作转换函数：</td><td class="td2"><?php echo form::dropdown('field[getcode]',$fieldgetcode,$field['getcode'],'id="field[getcode]"');?> 
+			<font class="helpicon" title="函数位于admin/api/field_get.php文件的Field_get_Api类">&nbsp;</font></td>
+		</tr>
 		<tr><td class="td1" align="right">候选值传入内容：</td>
 			<td class="td2">
 			<span id="fieldCandidateValueDiv"><?php echo form::textarea('field[candidate]',$field['candidate'],'id="field[candidate]" style="width:300px;" class="input" rows="6"');?></span> &nbsp;<font class="helpicon" title="候选者每行一条，值和显示内容用|分开。例如：<br>0|否<br>1|是">&nbsp;</font>
@@ -284,7 +288,7 @@ echo form::input(array('name'=>'field[usehtml]','id'=>'field[usehtml]','type'=>'
 			<td class="td1" width="120" align="right">单元格样式：</td><td class="td2"><?php echo form::dropdown('field[tdclass]',array(''=>'默认样式(td2)','td1'=>'加深醒目(td1)'),$field['tdclass'],'id="field[tdclass]" size="1"');?>&nbsp;<font color="#a3a3a3">若需要醒目则选择td2。</font></td>
 		</tr><tr>
 			<td class="td1" width="120" align="right">输出转换函数：</td><td class="td2"><?php echo form::dropdown('field[docode]',$fielddocode,$field['docode'],'id="field[docode]"');?> 
-			<font class="helpicon" title="函数位于model/fieldapi.php文件">&nbsp;</font></td>
+			<font class="helpicon" title="函数位于admin/api/fieldlist.php文件的Field_list_Api类">&nbsp;</font></td>
 		</tr><tr>
 			<td class="td1" width="120" align="right">输出转换传递参数：</td><td class="td2"><?php echo form::textarea('field[boolean]',$field['boolean'],'id="field[boolean]" cols="40" rows="4" class="input"');?>&nbsp;<font class="helpicon" title="当“输出转换函数”为“默认”时：每行替换一个值，支持HTML。<br/>例如：<br/>1|是<br/>0|&amp;lt;font color=&quot;red&quot;&amp;gt;否&amp;lt;/font&amp;gt;<br/>表示将0转换显示为“<font color=&quot;red&quot;>否</font>”，将1转换显示为“是”">&nbsp;</font></td>
 		</tr>

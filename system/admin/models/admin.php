@@ -1163,7 +1163,7 @@ class Admin_Model_Core extends Model {
 				$outtd .= '<tr{{_tRcolor}} onmouseover="tr_moveover(this)" onmouseout="tr_moveout(this)" ondblclick="change_select(\'select_id_{{'.$sys_field['id'].'}}\');return false;"><td align="center" class="td1"><input onclick="select_tr(this)" type="checkbox" id="select_id_{{'.$sys_field['id'].'}}" /></td>';
 			}
 			if ($table['docode']){
-				$docode_class or $docode_class = new Field_Api;
+				$docode_class or $docode_class = new Field_list_Api;
 				$docode[$key] = array($table['docode'],$table['boolean']);
 			}else{
 				if ( is_array($table['boolean']) ){
@@ -1928,6 +1928,7 @@ class Admin_Model_Core extends Model {
 				$edit_field[$key]['description'] = $db_info['config']['field'][$key]['comment'];
 				if (!empty($db_info['config']['field'][$key]['default']))$edit_field[$key]['default']=$db_info['config']['field'][$key]['default'];
 				if (!empty($db_info['config']['field'][$key]['candidate']))$edit_field[$key]['candidate']=$db_info['config']['field'][$key]['candidate'];
+				if (!empty($db_info['config']['field'][$key]['getcode']))$edit_field[$key]['getcode']=$db_info['config']['field'][$key]['getcode'];
 				$inputtype = $edit_field[$key]['type'];
 				if ($db_info['config']['field'][$key]['class']){
 					$edit_field[$key]['set']['class'] = $db_info['config']['field'][$key]['class'];
@@ -1957,6 +1958,7 @@ class Admin_Model_Core extends Model {
 					),
 					'usehtml' => (int)$db_info['config']['field'][$key]['usehtml'],
 					'default' => $db_info['config']['field'][$key]['default'],
+					'getcode' => $db_info['config']['field'][$key]['getcode'],
 					'candidate' => $db_info['config']['field'][$key]['candidate'],
 					'format' => $db_info['config']['field'][$key]['format'],
 					'notempty' => $db_info['config']['field'][$key]['isnonull'],
@@ -1975,23 +1977,25 @@ class Admin_Model_Core extends Model {
 				$edit_field[$key]['set']['rows'] = $db_info['config']['field'][$key]['rows']?$db_info['config']['field'][$key]['rows']:12;
 			}
 			//echo $key.'--'.$inputtype."\n";
-			$tmpvalue = $db_info['config']['field'][$key]['candidate'];
-			if (!empty( $tmpvalue )){
-				$tmpvalue = explode("\n",$tmpvalue);
-				foreach ($tmpvalue as $value){
-					$value = explode('|',$value);
-					$thekey = array_shift($value);
-					if (count($value)>0){
-						$value = join('|',$value);
-					}else{
-						$value = $thekey;
+			if (!$edit_field[$key]['getcode']){
+				$tmpvalue = $db_info['config']['field'][$key]['candidate'];
+				if (!empty( $tmpvalue )){
+					$tmpvalue = explode("\n",$tmpvalue);
+					foreach ($tmpvalue as $value){
+						$value = explode('|',$value);
+						$thekey = array_shift($value);
+						if (count($value)>0){
+							$value = join('|',$value);
+						}else{
+							$value = $thekey;
+						}
+						$tmpvalue1[$thekey] = $value;
 					}
-					$tmpvalue1[$thekey] = $value;
+					$tmpvalue = $tmpvalue1;
+					$edit_field[$key]['candidate'] = $tmpvalue;
 				}
-				$tmpvalue = $tmpvalue1;
-				$edit_field[$key]['candidate'] = $tmpvalue;
+				unset($tmpvalue,$tmpvalue1);
 			}
-			unset($tmpvalue,$tmpvalue1);
 
 			//list config
 			if ($itemfield['islist']){
