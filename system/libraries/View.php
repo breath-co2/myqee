@@ -345,12 +345,12 @@ class _myqee_view_forinfo extends _myqee_view_create{
 		if ($limit>1){
 			$count_data = count($data);
 			for($i=0;$i<$count_data;$i++){
-				$data[$i]['URL'] = Createhtml::instance()->getinfourl($getinfoclass,$data[$i]);
+				$data[$i]['URL'] = Myhtml::getinfourl($getinfoclass,$data[$i]);
 				$data[$i]  = Tools::array2object($data[$i]);
 			}
 		}else{
 			$data = $data[0];
-			$data['URL'] = Createhtml::instance()->getinfourl($getinfoclass,$data);
+			$data['URL'] = Myhtml::getinfourl($getinfoclass,$data);
 			$data  = Tools::array2object($data);
 		}
 		
@@ -383,12 +383,12 @@ class _myqee_view_forinfo extends _myqee_view_create{
 		if ($limit>1){
 			$count_data = count($data);
 			for($i=0;$i<$count_data;$i++){
-				$data[$i]['URL'] = Createhtml::instance()->getinfourl($getinfoclass,$data[$i]);
+				$data[$i]['URL'] = Myhtml::getinfourl($getinfoclass,$data[$i]);
 				$data[$i]  = Tools::array2object($data[$i]);
 			}
 		}else{
 			$data = $data[0];
-			$data['URL'] = Createhtml::instance()->getinfourl($getinfoclass,$data);
+			$data['URL'] = Myhtml::getinfourl($getinfoclass,$data);
 			$data  = Tools::array2object($data);
 		}
 		$this -> data['next_info'] = $data;
@@ -429,7 +429,7 @@ class _myqee_view_forinfo extends _myqee_view_create{
 		
 		$c =count($data);
 		for($i=0;$i<$c;$i++){
-			$data[$i]['URL'] = Createhtml::instance()->getinfourl(
+			$data[$i]['URL'] = Myhtml::getinfourl(
 				$this -> data['db_config']['sys_field']['class_id']?$data[$i][$this -> data['db_config']['sys_field']['class_id']]:$this -> data['db_name'],
 				$data[$i]
 			);
@@ -553,7 +553,7 @@ class _myqee_view_create{
 						$data[$varname] = array();
 					}
 					if ($block['tlp_id']){
-						$blockhtml = Createhtml::instance() -> createhtml($blockinfo['tlp_id'],null,$data);
+						$blockhtml = Myhtml::createhtml -> createhtml($blockinfo['tlp_id'],null,$data);
 					}elseif($block['template']){
 						$templage = $block['engie']?$block['engie']:'default';
 						$engine = Myqee::config('template.engine');

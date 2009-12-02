@@ -88,7 +88,7 @@ class Myinfo_Controller_Core extends Controller {
 			//数据表不存在栏目ID字段，取消执行
 			myqee::show_error('数据表不存在ID字段，请联系管理员！',SITE_URL);
 		}
-		if ( !Createhtml::instance()->table_exists($myclass['dbname']) ){
+		if ( !Myee::db($this->dbconfig['database'])->table_exists($this->dbconfig['tablename']]) ){
 			//数据表不存在，取消执行
 			myqee::show_error('数据表不存在，请联系管理员！',SITE_URL);
 		}
@@ -109,7 +109,7 @@ class Myinfo_Controller_Core extends Controller {
 		}
 		
 		//获取信息存放路径
-		$thefile = Createhtml::instance()->getinfopath($nowclassid,$theinfo);
+		$thefile = Myhtml::getinfopath($nowclassid,$theinfo);
 
 		if ($dbconfig['sys_field']['template_id'] && $theinfo[$dbconfig['sys_field']['template_id']]){
 			$template_id = $theinfo[$dbconfig['sys_field']['template_id']];
@@ -127,10 +127,10 @@ class Myinfo_Controller_Core extends Controller {
 			'model_config' => $modelconfig,
 			'info'=>$theinfo,
 			'myclass'=>$nowclassid,
-			'class_url'=>Createhtml::instance()->getclassurl($myclass),
+			'class_url'=>Myhtml::getclassurl($myclass),
 		);
 		
-		if ($html = Createhtml::instance()->createhtml($template_id ,NULL,$thedata,'info') ){
+		if ($html = Myhtml::createhtml($template_id ,NULL,$thedata,'info') ){
 			echo $html;
 		}else{
 			myqee::show_error('页面输出失败，请联系管理员！');

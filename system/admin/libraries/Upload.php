@@ -4,15 +4,15 @@ class Upload_Core {
 	protected static $configs = array();
 	
 	public static function setconfig($myconfig=null){
-		$config['gifwatermark'] = Myqee::config('core.watermark.gifwatermark');
 		if (is_array($myconfig)){
 			$config = array_merge(Myqee::config('core.upload'),$myconfig);
 		}elseif($myconfig){
 			$config = Myqee::config('upload.'.$myconfig);
-			if (!$config){
-				$config = Myqee::config('core.upload');
-			}
 		}
+		if (!$config){
+			$config = Myqee::config('core.upload');
+		}
+		self::$configs['gifwatermark'] = Myqee::config('core.watermark.gifwatermark');
 		
 		self::$configs['floder'] = !empty($config['floder'])?$config['floder']:'upload/';
 		self::$configs['maxsize'] = $config['maxsize']>0?$config['maxsize']*1024:1048576;
@@ -29,7 +29,7 @@ class Upload_Core {
 		if($config['filepath']){
 			if (substr($config['filepath'],0,1)=='/'){
 				self::$configs['filepath'] = rtrim($config['filepath'],'/').'/';
-			}elseif (MYQEE_IS_WIN===true && preg_match("\[a-zA-Z]+\:\/\/",$config['filepath'])){
+			}elseif (MYQEE_IS_WIN===true && preg_match("\^[a-zA-Z]\:\/\.*/",$config['filepath'])){
 				self::$configs['filepath'] = rtrim($config['filepath'],'/').'/';
 			}else{
 				self::$configs['filepath'] = WWWROOT . $config['filepath'].'/';
@@ -40,18 +40,13 @@ class Upload_Core {
 		self::$configs['selfpath'] = isset($config['selfpath']) ? $config['selfpath']:'Y/m/d';
 		self::$configs['chmod'] = isset($config['chmod']) ? $config['chmod']:0755;
 		self::$configs['setname'] = $config['setname'];
+		self::$configs['urlpath'] = $config['urlpath'];
 
 		return self;
 	}
 	public static function save( $config = NULL){
-		
-		if (is_array($config)){
-			self::setconfig($config);
-		}else{
-			self::setconfig();
-		}
+		self::setconfig();
 
-		
 		$POST_MAX_SIZE = ini_get('post_max_size');
 		$unit = strtoupper(substr($POST_MAX_SIZE, -1));
 		$multiplier = ($unit == 'M' ? 1048576 : ($unit == 'K' ? 1024 : ($unit == 'G' ? 1073741824 : 1)));
@@ -165,7 +160,7 @@ class Upload_Core {
 		return array(
 			'name' => urlencode($new_file_name),
 			'oldname' => $_FILES[$upload_name]['name'],
-			'path' => Myqee::config('core.upload.urlpath').$savefloder,
+			'path' => self::$configs['urlpath'].$savefloder,
 			'extension' => $file_extension,
 			'filesize' => $file_size,
 		);

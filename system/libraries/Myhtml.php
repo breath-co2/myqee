@@ -12,6 +12,7 @@
 class Myhtml_Core{
 	
 	protected static $dbconfig;
+	protected static $template;
 	
 	/**
 	 * 获取指定栏目地址
@@ -312,12 +313,12 @@ class Myhtml_Core{
 		if (!$template_id)return false;
 		
 		if ($template_id>0){
-			if (!$this->gettpl_array($template_id))return false;
+			if (!self::gettpl_array($template_id))return false;
 			$view = new View(
-				$this->template[$template_id]['filename'],
+				self::$template[$template_id]['filename'],
 				$data,
-				$this->template[$template_id]['filename_suffix'],
-				$this->template[$template_id]['group'],
+				self::$template[$template_id]['filename_suffix'],
+				self::$template[$template_id]['group'],
 				$viewtype
 			);
 		}else{
@@ -336,6 +337,7 @@ class Myhtml_Core{
 		if (is_string($tofilename)){
 			if (!$filepath)$filepath = WWWROOT;
 			$html = $view -> render(FALSE,FALSE,TRUE);
+			myqee_root::output($html);
 			$dirname = dirname($filepath.$tofilename);
 			if (!is_dir($dirname))Tools::create_dir($dirname);
 			if (Tools::createfile($filepath.$tofilename,$html)){
@@ -357,16 +359,16 @@ class Myhtml_Core{
 	 * @return array $tplinfo
 	 */
 	public function gettpl_array($template_id){
-		if (!isset($this->template[$template_id])){
+		if (!isset(self::$template[$template_id])){
 			$rs = Myqee::db() -> select('id','tplname','group','type','filename','filename_suffix') -> getwhere('[template]',array('isuse'=>1,'id'=>$template_id)) ->result_array ( FALSE );
-			$this -> template[$template_id] = $rs[0];
+			self::$template[$template_id] = $rs[0];
 		}
-		if ($this -> template[$template_id]['filename_suffix']){
-			if (!in_array($this->template[$template_id]['filename_suffix'],array('.txt','.tpl','.html','.htm'))){
-				$this->template[$template_id]['filename_suffix'] = null;
+		if (self::$template[$template_id]['filename_suffix']){
+			if (!in_array(self::$template[$template_id]['filename_suffix'],array('.txt','.tpl','.html','.htm'))){
+				self::$template[$template_id]['filename_suffix'] = null;
 			}
 		}		
-		return $this -> template[$template_id];
+		return self::$template[$template_id];
 	}
 	/*
 	public function toinfohtml($dbname,$infoid=null){

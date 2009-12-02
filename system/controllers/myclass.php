@@ -55,7 +55,7 @@ class Myclass_Controller_Core extends Controller {
 					$cachetime = $myclass['cover_cachetime'];
 				}
 			}else{
-				$url = Createhtml::instance() -> getclassurl($myclass);
+				$url = Myhtml::createhtml -> getclassurl($myclass);
 				header('location:'.$url);
 				exit;
 			}
@@ -70,7 +70,7 @@ class Myclass_Controller_Core extends Controller {
 						$cachetime = $myclass['list_cachetime'];
 					}
 				}else{
-					$url = Createhtml::instance() -> getclassurl($myclass,$thepage);
+					$url = Myhtml::createhtml -> getclassurl($myclass,$thepage);
 					//header('location:'.$url);
 					//exit;
 				}
@@ -102,7 +102,7 @@ class Myclass_Controller_Core extends Controller {
 			//数据表不存在栏目ID字段，请联系系统管理员！
 			myqee::show_error('数据表不存在栏目ID字段，请联系系统管理员！');
 		}
-		if ( !Createhtml::instance()->table_exists($myclass['dbname']) ){
+		if ( !Myqee::db($database)->table_exists($tablename) ){
 			//数据表不存在，请联系系统管理员！
 			myqee::show_error('数据表不存在，请联系系统管理员！');
 		}
@@ -208,7 +208,7 @@ class Myclass_Controller_Core extends Controller {
 					'class_name'=>$myclass['classname'],
 					'myclass'=>$myclass,
 				);
-				if ( $html =Createhtml::instance()->createhtml($myclass['cover_tplid'] ,NULL ,$thedata ,'class') ){
+				if ( $html =Myhtml::createhtml($myclass['cover_tplid'] ,NULL ,$thedata ,'class') ){
 					echo $html;
 				}else{
 					myqee::show_error('页面执行失败，请稍候再试！');
@@ -258,14 +258,14 @@ class Myclass_Controller_Core extends Controller {
 				}
 				$allinfo = $allinfo->limit($limit,$offset) -> get($tablename) -> result_array ( FALSE );
 				
-				$myclass['url'] = Createhtml::instance() -> getclassurl($myclass);
+				$myclass['url'] = Myhtml::createhtml -> getclassurl($myclass);
 				
 				//附加URL地址
 //				echo Myqee::db()->last_query();
 				$infocount = count($allinfo);
 				if ($infocount>0){
 					for ($i=0;$i<$infocount;$i++){
-						$allinfo[$i]['URL'] = Createhtml::instance()->getinfourl($allinfo[$i][$dbconfig['sys_field']['class_id']],$allinfo[$i]);
+						$allinfo[$i]['URL'] = Myhtml::getinfourl($allinfo[$i][$dbconfig['sys_field']['class_id']],$allinfo[$i]);
 						$allinfo[$i]['CLASS_URL'] = $myclass['url'];
 					}
 				}
@@ -282,7 +282,7 @@ class Myclass_Controller_Core extends Controller {
 					'limit'			=> $limit,
 					'page'			=> $page,
 					'allpage'		=> ceil($info_count/$limit),
-					'listpage'		=> Createhtml::instance()->getclassurl($myclass,'{{page}}',$this -> issearch?true:false),//$this -> issearch?'myclass/search/'.$nowclassid .'/?page={{page}}':
+					'listpage'		=> Myhtml::getclassurl($myclass,'{{page}}',$this -> issearch?true:false),//$this -> issearch?'myclass/search/'.$nowclassid .'/?page={{page}}':
 									   //($this->myclass[$nowclassid]['isnothtml'] || $this->myclass[$nowclassid]['list_tohtml']?Myqee::url('myclass/'.$nowclassid.'/{{page}}'):$classurl[$nowclassid].$this->myclass[$nowclassid]['list_filename']),
 					'class_url'		=> $myclass['url'],
 				);
@@ -299,7 +299,7 @@ class Myclass_Controller_Core extends Controller {
 //					'listpage'=>'myclass/search/'.$nowclassid .'/?page={{page}}',
 //				);
 				//$tmp_classinfo[$i];
-				if ( $html = Createhtml::instance()->createhtml($template_id , NULL , $thedata ,'class') ){
+				if ( $html = Myhtml::createhtml($template_id , NULL , $thedata ,'class') ){
 					echo $html;
 				}else{
 					echo 'page render error';

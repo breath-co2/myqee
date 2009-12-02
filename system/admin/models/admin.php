@@ -1937,7 +1937,7 @@ class Admin_Model_Core extends Model {
 				}
 				$db_info['config']['field'][$key]['size'] and $edit_field[$key]['set']['size'] = $db_info['config']['field'][$key]['size'];
 				$db_info['config']['field'][$key]['rows'] and $edit_field[$key]['set']['rows'] = $db_info['config']['field'][$key]['rows'];
-				$db_info['config']['field'][$key]['rows'] and $edit_field[$key]['set']['other'] = $db_info['config']['field'][$key]['other'];
+				$db_info['config']['field'][$key]['other'] and $edit_field[$key]['set']['other'] = $db_info['config']['field'][$key]['other'];
 				
 				$db_info['config']['field'][$key]['usehtml'] and $edit_field[$key]['usehtml'] = $db_info['config']['field'][$key]['usehtml'];
 				$db_info['config']['field'][$key]['html'] and $edit_field[$key]['html'] = $db_info['config']['field'][$key]['html'];

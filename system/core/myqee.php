@@ -1476,16 +1476,17 @@ abstract class Myqee {
 		if (isset($urlache[$urlkeystr])){
 			return $urlache[$urlkeystr];
 		}
-		$urlstr = explode ( '?', $urlstr, 2 );
-		$urlstr = explode ( '#', $urlstr[0], 2 );
-		if ( preg_match("/^\/|https?\:\/\//i",$urlstr[0]) ){
-			$url = $urlstr[0];
+		$urlstr_1 = explode ( '?', $urlstr, 2 );
+		$urlstr_2 = explode ( '#', $urlstr_1[0], 2 );
+		if ( preg_match("/^\/|https?\:\/\//i",$urlstr_2[0]) ){
+			$url = $urlstr_2[0];
 		}else{
 			$myqeepage = self::config ( 'core.myqee_page' );
-			$url =  ( defined('ADMIN_URLPATH')?ADMIN_URLPATH:SITE_URL.($myqeepage ? $myqeepage . '/' : '') ).$urlstr [0];
+			$url =  ( defined('ADMIN_URLPATH')?ADMIN_URLPATH:SITE_URL.($myqeepage ? $myqeepage . '/' : '') ).$urlstr_2[0];
 		}
-		$url .= (substr($urlstr[0],-1)!='/'?($suffix?$suffix:self::config('core.url_suffix')):'') . 
-				(isset($urlstr[1])?'?'.$urlstr[1]:'');
+		$url .= (substr($urlstr_2[0],-1)!='/'?($suffix?$suffix:self::config('core.url_suffix')):'') . 
+				(isset($urlstr_1[1])?'?'.$urlstr_1[1]:'');
+				(isset($urlstr_2[1])?'#'.$urlstr_2[1]:'');
 		
 		if ($full_url && substr($url,0,1)=='/'){
 			$url = self::protocol() .'://'. SITE_DOMAIN . $url;
