@@ -1,4 +1,4 @@
-<?php
+g1<?php
 /**
  * Myqee Core.
  *
@@ -1069,8 +1069,8 @@ abstract class Myqee {
 				}
 				$include_paths ['e'] = ADMINPATH;
 				//application目录
-				$include_paths ['d'] = MYAPPPATH;
-				$include_paths ['c'] = MYQEEPATH . 'admin/';
+				$include_paths ['d'] = MYQEEPATH . 'admin/';
+				$include_paths ['c'] = MYAPPPATH;
 			} else {
 				if (defined ( 'MY_MODULE_PATH' ) && MY_MODULE_PATH!=false && preg_match("/^[a-z0-9]+$/i",MY_MODULE_PATH)) {
 					//支持用户自定义模块功能
