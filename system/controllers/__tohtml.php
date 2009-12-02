@@ -44,7 +44,7 @@ class __tohtml_Controller_Core extends Controller {
 			echo '{"error":"没有设置首页文件！"}';
 			return false;
 		}
-		$runmassage = Myhtml::createhtml -> createhtml($tpl,$file );
+		$runmassage = Myhtml::createhtml($tpl,$file );
 		
 		if ($runmassage === true) {
 			echo '{"ok":1}';
@@ -86,7 +86,7 @@ class __tohtml_Controller_Core extends Controller {
 						$indexset['filename'] = Myqee::config('core.index_filename');
 						$indexset['filename'] or $indexset['filename'] = 'index.html';
 					}
-					$r = Myhtml::createhtml -> createhtml($indexset['tpl'], $indexset['filename'], null, null, $indexset['filepath']);
+					$r = Myhtml::createhtml($indexset['tpl'], $indexset['filename'], null, null, $indexset['filepath']);
 					if ($r === TRUE) {
 						$dook ++;
 					}
@@ -153,7 +153,7 @@ class __tohtml_Controller_Core extends Controller {
 				continue;
 			}
 			$file = $filepath . '/' . $item['filename'] . $item['filename_suffix'];
-			if (Myhtml::createhtml -> createhtml($item['tplid'], $file, $data) === true) {
+			if (Myhtml::createhtml($item['tplid'], $file, $data) === true) {
 				$dook++;
 			}
 			else {
@@ -298,7 +298,7 @@ class __tohtml_Controller_Core extends Controller {
 					}
 				}
 				//获取信息存放路径
-				$thefile = Myhtml::createhtml -> getinfopath($nowclassid, $theinfo);
+				$thefile = Myhtml::getinfopath($nowclassid, $theinfo);
 				if ($_GET['_noretohtml'] == 1 && $thefile && is_file(WWWROOT . $thefile)) {
 					continue;
 				}
@@ -318,7 +318,7 @@ class __tohtml_Controller_Core extends Controller {
 					$path_parts = pathinfo($thefile);
 					$basenameWE = substr($path_parts['basename'], 0, - 1 - strlen($path_parts["extension"]));
 					if ($allpage > 1) {
-						$theurl = Myhtml::createhtml -> getinfourl($nowclassid, $theinfo, $thefile);
+						$theurl = Myhtml::getinfourl($nowclassid, $theinfo, $thefile);
 						$url_path_parts = pathinfo($theurl);
 						$url_basenameWE = substr($url_path_parts['basename'], 0, - 1 - strlen($url_path_parts['extension']));
 						$urlstring = $url_path_parts['dirname'] . '/' . $url_basenameWE . '_{{page}}.' . $url_path_parts['extension'];
@@ -334,7 +334,7 @@ class __tohtml_Controller_Core extends Controller {
 						}
 						if ($allpage > 1) $thedata['page'] = Myhtml::page($key + 1, $allpage, $urlstring, null, '_{{page}}');
 						
-						if (($msg = Myhtml::createhtml -> createhtml($template_id, $thepagefile, $thedata, 'info')) === true) {
+						if (($msg = Myhtml::createhtml($template_id, $thepagefile, $thedata, 'info')) === true) {
 							$tohtml_ok += 1;
 						}
 						else {
@@ -343,7 +343,7 @@ class __tohtml_Controller_Core extends Controller {
 					}
 				}
 				else {
-					if (($msg = Myhtml::createhtml -> createhtml($template_id, $thefile, $thedata, 'info')) === true) {
+					if (($msg = Myhtml::createhtml($template_id, $thefile, $thedata, 'info')) === true) {
 						$tohtml_ok += 1;
 					}
 					else {
@@ -445,14 +445,14 @@ class __tohtml_Controller_Core extends Controller {
 					$thedata = $this->_get_special_data($allinfo[$i],$i+1,$info_count,$list_pernum,$specialurlstr);
 					if ($i == 0) {
 						$cover_tolistpage = $this->specialinfo['filepath']."/index.html";
-						if (($msg = Myhtml::createhtml -> createhtml($template_id, $cover_tolistpage, $thedata,'list')) === true) {
+						if (($msg = Myhtml::createhtml($template_id, $cover_tolistpage, $thedata,'list')) === true) {
 							$tohtml_ok += 1;
 						} else {
 							$tohtml_error += 1;
 						}
 					}
 					//$tmp_classinfo[$i];
-					if (($msg = Myhtml::createhtml -> createhtml($template_id, str_replace('{{page}}', ($i + 1), $thefile), $thedata,'list')) === true) {
+					if (($msg = Myhtml::createhtml($template_id, str_replace('{{page}}', ($i + 1), $thefile), $thedata,'list')) === true) {
 						$tohtml_ok += 1;
 					} else {
 						$tohtml_error += 1;
@@ -467,7 +467,7 @@ class __tohtml_Controller_Core extends Controller {
 			$limit = $info_count;
 			$list_pernum = $info_count;
 			$offset = $info_count;
-			if (($msg = Myhtml::createhtml -> createhtml($template_id, $cover_tolistpage, $thedata)) === true) {
+			if (($msg = Myhtml::createhtml($template_id, $cover_tolistpage, $thedata)) === true) {
 				$tohtml_ok += 1;
 			} else {
 				$tohtml_error += 1;
@@ -749,7 +749,7 @@ class __tohtml_Controller_Core extends Controller {
 				//待传入模板的数据
 				$thedata = $this->_get_cover_data();
 				//生成封面
-				if (($msg = Myhtml::createhtml -> createhtml($this -> myclass[$nowclassid]['cover_tplid'], $defaultpage, $thedata,'class')) === true) {
+				if (($msg = Myhtml::createhtml($this -> myclass[$nowclassid]['cover_tplid'], $defaultpage, $thedata,'class')) === true) {
 					$tohtml_ok += 1;
 				}
 				else {
@@ -801,16 +801,16 @@ class __tohtml_Controller_Core extends Controller {
 				if (!empty($sontables) || is_array($this->dbconfig['model']['relationfield'])) {
 					$this->_addRelationInfo ($allinfo,$selectwhere,$sontables,'content');
 				}
-				$this -> myclass[$nowclassid]['url'] = Myhtml::createhtml -> getclassurl($this->myclass[$nowclassid]);
+				$this -> myclass[$nowclassid]['url'] = Myhtml::getclassurl($this->myclass[$nowclassid]);
 				//附加URL地址
 				$infocount = count($allinfo);
 				if ($infocount > 0) {
 					for ($i = 0; $i < $infocount; $i ++) {
 						if (isset($allinfo[$i]['URL'])) $allinfo[$i]['url'] = $allinfo[$i]['URL'];
-						$allinfo[$i]['URL'] = Myhtml::createhtml -> getinfourl($allinfo[$i][$this -> dbconfig['sys_field']['class_id']], $allinfo[$i]);
+						$allinfo[$i]['URL'] = Myhtml::getinfourl($allinfo[$i][$this -> dbconfig['sys_field']['class_id']], $allinfo[$i]);
 						$thisclassid = $allinfo[$i][$this->dbconfig['sys_field']['class_id']];
 						if (!isset($this->myclass[ $thisclassid ]['url'])){
-							$this -> myclass[$thisclassid]['url'] = Myhtml::createhtml -> getclassurl($this->myclass[$thisclassid]);
+							$this -> myclass[$thisclassid]['url'] = Myhtml::getclassurl($this->myclass[$thisclassid]);
 						}
 						$allinfo[$i]['CLASS_URL'] = $this->myclass[ $thisclassid ]['url'];
 					}
@@ -836,14 +836,14 @@ class __tohtml_Controller_Core extends Controller {
 				for ($i = 0; $i < $listpage; $i ++) {
 					//分页地址字符串
 					if (!isset($classurlstr[$nowclassid])){
-						$classurlstr[$nowclassid] = Myhtml::createhtml -> getclassurl($this->myclass[$nowclassid],'{{page}}');
+						$classurlstr[$nowclassid] = Myhtml::getclassurl($this->myclass[$nowclassid],'{{page}}');
 					}
 					//待传入模板的数据
 					$thedata = $this->_get_list_data($allinfo[$i],$i+1,$info_count,$limit_class,$classurlstr[$nowclassid]);
 					if ($i == 0) {
 						//若栏目是列表页，则生成封面（列表第一页）
 						if ($cover_tolistpage) {
-							if (($msg = Myhtml::createhtml -> createhtml($template_id, $cover_tolistpage, $thedata, 'class')) === true) {
+							if (($msg = Myhtml::createhtml($template_id, $cover_tolistpage, $thedata, 'class')) === true) {
 								$tohtml_ok += 1;
 							}
 							else {
@@ -852,7 +852,7 @@ class __tohtml_Controller_Core extends Controller {
 						}
 					}
 					//$tmp_classinfo[$i];
-					if (($msg = Myhtml::createhtml -> createhtml($template_id, str_replace('{{page}}', ($i + 1), $thefile), $thedata, 'class')) === true) {
+					if (($msg = Myhtml::createhtml($template_id, str_replace('{{page}}', ($i + 1), $thefile), $thedata, 'class')) === true) {
 						$tohtml_ok += 1;
 					}
 					else {
@@ -935,7 +935,7 @@ class __tohtml_Controller_Core extends Controller {
 			'model_config' => $this -> modelconfig , 
 			'info' => $theinfo , 
 			'myclass' => $this -> myclass[$nowclassid] , 
-			'class_url' => Myhtml::createhtml -> getclassurl($this -> myclass[$nowclassid])
+			'class_url' => Myhtml::getclassurl($this -> myclass[$nowclassid])
 		);
 	}
 	
@@ -1068,8 +1068,8 @@ class __tohtml_Controller_Core extends Controller {
 				for ($i = 0; $i < $info_count; $i ++) {
 					if (isset($allinfo[$i]['URL'])) $allinfo[$i]['url'] = $allinfo[$i]['URL'];
 					$classid = $allinfo[$i][$this->dbconfig['sys_field']['class_id']];
-					$allinfo[$i]['URL'] = Myhtml::createhtml -> getinfourl($classid, $allinfo[$i]);
-					$allinfo[$i]['CLASS_URL'] = Myhtml::createhtml -> getclassurl($classid);
+					$allinfo[$i]['URL'] = Myhtml::getinfourl($classid, $allinfo[$i]);
+					$allinfo[$i]['CLASS_URL'] = Myhtml::getclassurl($classid);
 				}
 				
 			}else{
@@ -1224,7 +1224,7 @@ class __tohtml_Controller_Core extends Controller {
 	 * @return boolean true/false
 	 */
 	protected function _echo_editblock_html($tpl_id,$data=null,$type=null){
-			$html = Myhtml::createhtml -> createhtml($tpl_id,false,$data,$type);
+			$html = Myhtml::createhtml($tpl_id,false,$data,$type);
 			if (!preg_match("/<base([^>]+)href([ ]+)?=.*>/is",$html)){
 				//添加base href
 				$oldlen = strlen($html);

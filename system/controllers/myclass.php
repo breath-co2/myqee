@@ -55,7 +55,7 @@ class Myclass_Controller_Core extends Controller {
 					$cachetime = $myclass['cover_cachetime'];
 				}
 			}else{
-				$url = Myhtml::createhtml -> getclassurl($myclass);
+				$url = Myhtml::getclassurl($myclass);
 				header('location:'.$url);
 				exit;
 			}
@@ -70,7 +70,7 @@ class Myclass_Controller_Core extends Controller {
 						$cachetime = $myclass['list_cachetime'];
 					}
 				}else{
-					$url = Myhtml::createhtml -> getclassurl($myclass,$thepage);
+					$url = Myhtml::getclassurl($myclass,$thepage);
 					//header('location:'.$url);
 					//exit;
 				}
@@ -258,7 +258,7 @@ class Myclass_Controller_Core extends Controller {
 				}
 				$allinfo = $allinfo->limit($limit,$offset) -> get($tablename) -> result_array ( FALSE );
 				
-				$myclass['url'] = Myhtml::createhtml -> getclassurl($myclass);
+				$myclass['url'] = Myhtml::getclassurl($myclass);
 				
 				//附加URL地址
 //				echo Myqee::db()->last_query();

@@ -553,7 +553,7 @@ class _myqee_view_create{
 						$data[$varname] = array();
 					}
 					if ($block['tlp_id']){
-						$blockhtml = Myhtml::createhtml -> createhtml($blockinfo['tlp_id'],null,$data);
+						$blockhtml = Myhtml::createhtml($blockinfo['tlp_id'],null,$data);
 					}elseif($block['template']){
 						$templage = $block['engie']?$block['engie']:'default';
 						$engine = Myqee::config('template.engine');
