@@ -88,7 +88,7 @@ class Myinfo_Controller_Core extends Controller {
 			//数据表不存在栏目ID字段，取消执行
 			myqee::show_error('数据表不存在ID字段，请联系管理员！',SITE_URL);
 		}
-		if ( !Myee::db($this->dbconfig['database'])->table_exists($this->dbconfig['tablename']]) ){
+		if ( !Myqee::db($this->dbconfig['database'])->table_exists($this->dbconfig['tablename']) ){
 			//数据表不存在，取消执行
 			myqee::show_error('数据表不存在，请联系管理员！',SITE_URL);
 		}

@@ -165,7 +165,7 @@ echo form::dropdown('search[limit]',array(''=>'','10'=>'10','20'=>'20','30'=>'30
 			</optgroup>
 		</select> &nbsp;或&nbsp;
 		<?php echo Form::classlist('moveclassid',$classtree,'',0,'移动或复制到以下栏目','color:red');?><input onclick="submitbox('select_id','<?php echo Myqee::url("info/copy/{$class['dbname']}/{{moveclassid}}/[id]/");?>'.replace('{{moveclassid}}',$('moveclassid').value),'hiddenFrame')" type="button" value="复制" class="btns" /><input onclick="submitbox('select_id','<?php echo Myqee::url("info/move/{$class['dbname']}/{{moveclassid}}/[id]/");?>'.replace('{{moveclassid}}',$('moveclassid').value),'hiddenFrame')"  type="button" value="移动" class="btns" />
-         &nbsp;或&nbsp; <?php echo form::dropdown('specialid',$specials);?><input onclick="submitbox('select_id','<?php echo Myqee::url("info/copy2special/{$class['dbname']}/{{specialid}}/[id]/");?>'.replace('{{specialid}}',$('specialid').value),'hiddenFrame')" type="button" value="复制" class="btns" /
+         &nbsp;或&nbsp; <?php echo form::dropdown('specialid',$specials);?><input onclick="submitbox('select_id','<?php echo Myqee::url("info/copy2special/{$class['dbname']}/{{specialid}}/[id]/");?>'.replace('{{specialid}}',$('specialid').value),'hiddenFrame')" type="button" value="复制" class="btns" />
 	</td>
 	<td class="td1" width="160" align="center">
 		共 <font color="red"><?php echo $total;?></font> 条信息

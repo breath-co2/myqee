@@ -1,4 +1,4 @@
-g1<?php
+<?php
 /**
  * Myqee Core.
  *
@@ -947,20 +947,7 @@ abstract class Myqee {
 	}
 	
 	public static function api_load($path, $file) {
-		if (! self::$internal_cache ['api'] [$path] [$file]) {
-			$file = MYQEEPATH . 'api/' . trim ( $path, './\\' ) . '/' . ltrim ( $file, './\\' );
-			if (! file_exists ( $file )) {
-				return FALSE;
-			}
-			if (include ($file)) {
-				self::$internal_cache ['api'] [$path] [$file] = TRUE;
-				return true;
-			} else {
-				return FALSE;
-			}
-		} else {
-			return true;
-		}
+		return self::find_file('api/'.$path,$file,true);
 	}
 	
 	/**
@@ -1017,6 +1004,9 @@ abstract class Myqee {
 					// Stop searching
 					break;
 				}
+			}
+			if ($required === TRUE) {
+				require $found;
 			}
 		}
 		
