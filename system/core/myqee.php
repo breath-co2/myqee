@@ -947,7 +947,9 @@ abstract class Myqee {
 	}
 	
 	public static function api_load($path, $file) {
-		return self::find_file('api/'.$path,$file,true);
+		$filename = self::find_file('api/'.$path,$file,true);
+		require $filename;
+		return $filename;
 	}
 	
 	/**
@@ -1004,9 +1006,6 @@ abstract class Myqee {
 					// Stop searching
 					break;
 				}
-			}
-			if ($required === TRUE) {
-				require $found;
 			}
 		}
 		

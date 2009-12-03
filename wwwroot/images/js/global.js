@@ -170,23 +170,35 @@ MyQEE.goback = function(go,goUrl){
 
 /**
  * 输出Flash
- * @param id flash显示的容器ID，传入NULL时采用document.write输出
+ * @param id flashID或容器ID，传入NULL时采用document.write输出
  * @param url flash url地址
  * @param w 宽度 可用百分比
  * @param h 高度 同上
  * @param p 是否不透明，0为透明，1表示不透明
- * @param r 右键菜单 0为显示菜单，1为屏蔽
- * @param v 传递falshvar参数
+ * @param rightmenu 右键菜单 0为显示菜单，1为屏蔽
+ * @param flashvars 传递falshvar参数
+ * @param other 其它自定义参数，用object传递
  * @return
  */
- MyQEE.flash = function(id,url,w,h,p,r,v){
-	var o=$(id);
+ MyQEE.flash = function(id,url,w,h,p,rightmenu,flashvars,other){
+	id=id||'';
+	var obj=MyQEE.$(id);
 	p=(!p)?'Transparent':'Opaque';
-	r=(!r)?true:false;
-	v=(!v)?'':v;
-	var tmphtml='<object filetype="swf" classid="clsid:D27CDB6E-AE6D-11cf-96B8-444553540000" codebase="http://fpdownload.macromedia.com/pub/shockwave/cabs/flash/swflash.cab#version=8,0,0,0" width="'+w+'" height="'+h+'"><param name="movie" value="'+url+'"><param name="AllowScriptAccess" value="never"><param name="wmode" value="'+p+'"><param name="menu" value="'+r+'"><param name="FlashVars" value="'+v+'"><embed src="'+url+'" AllowScriptAccess="never" width="'+w+'" height="'+h+'" wmode="'+p+'" FlashVars="'+v+'" menu="'+r+'" type="application/x-shockwave-flash"></embed></object>';
-	if (o!=null){
-		o.innerHTML = tmphtml;
+	rightmenu=(!rightmenu)?true:false;
+	flashvars=flashvars||'';
+	if(typeof other !='object'){
+		other = {};
+	}
+	other['AllowScriptAccess'] = other['AllowScriptAccess']||'sameDomain';
+	var str1='',str2='';
+	for(var k in other){
+		str1+='<param name="'+k+'" value="'+other[k]+'">';
+		str2+=' '+k+'"="'+other[k]+'"';
+	}
+
+	var tmphtml='<object id="'+(obj?id+'_flash"':id)+'" filetype="swf" classid="clsid:D27CDB6E-AE6D-11cf-96B8-444553540000" codebase="http://fpdownload.macromedia.com/pub/shockwave/cabs/flash/swflash.cab#version=9,0,0,0" width="'+w+'" height="'+h+'"><param name="movie" value="'+url+'"><param name="AllowScriptAccess" value="never"><param name="wmode" value="'+p+'"><param name="menu" value="'+rightmenu+'"><param name="flashvars" value="'+flashvars+'">'+str1+'<embed name="'+(obj?id+'_flash':id)+'" src="'+url+'" width="'+w+'" height="'+h+'" wmode="'+p+'" flashvars="'+flashvars+'" menu="'+rightmenu+'"'+str2+' type="application/x-shockwave-flash"></embed></object>';
+	if (obj!=null){
+		obj.innerHTML = tmphtml;
 	}else{
 		document.write(tmphtml);
 	}
@@ -196,7 +208,7 @@ MyQEE.tag = function(thisid,titlePrefix,mainPrefix,searchID,classname){
 	var mainobj;
 	if (searchID)
 	{
-		mainobj = $(searchID) || document.body;
+		mainobj = MyQEE.$(searchID) || document.body;
 	}else{
 		mainobj = document.body;
 	}
@@ -208,7 +220,7 @@ MyQEE.tag = function(thisid,titlePrefix,mainPrefix,searchID,classname){
 			if (el[i].id.substr(0,titlePrefix.length+1) == titlePrefix+'_')
 			{
 				var thisTitleId = el[i].id.substr(titlePrefix.length);
-				var mainobj = $(mainPrefix + thisTitleId);
+				var mainobj = MyQEE.$(mainPrefix + thisTitleId);
 				if (el[i].id != thisid)
 				{
 					el[i].className = '';
@@ -234,7 +246,7 @@ MyQEE.copytext = function(str,alertinfo){
 	if (is_ie){
 		window.clipboardData.setData("Text",str);
 	}else{
-		var flashObj=$("flashCopyDiv");
+		var flashObj=MyQEE.$("flashCopyDiv");
 		if (!flashObj){
 			flashObj = document.createElement("div");
 			flashObj.id='flashCopyDiv';
