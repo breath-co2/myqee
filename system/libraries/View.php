@@ -88,22 +88,8 @@ class View_Core {
 			$ext = EXT;
 		}
 		$this->myqee_filetype = $ext;
-		if (defined('MY_MODULE_PATH')){
-			$myqee_filename = MODULEPATH .MY_MODULE_PATH. '/views' . $this -> template_group.'/'.$name . $ext;
-			if (file_exists($myqee_filename)){
-				$this -> myqee_filename = $myqee_filename;
-				return $this;
-			}else{
-				$myqee_filename = MYQEEPATH .'modules/'.MY_MODULE_PATH. '/views' . $this -> template_group.'/'.$name . $ext;
-				if (file_exists($myqee_filename)){
-					$this -> myqee_filename = $myqee_filename;
-					return $this;
-				}
-			}
-		}
 		
-		$myqee_filename = MYAPPPATH . 'views' . $this -> template_group.'/'.$name . $ext;
-		if (file_exists($myqee_filename)){
+		if (($myqee_filename = Myqee::find_file('views'.$this->template_group,$name,$ext))){
 			$this -> myqee_filename = $myqee_filename;
 		}else{
 			$myqee_filename = MYQEEPATH . 'views/'.$name . $ext;
