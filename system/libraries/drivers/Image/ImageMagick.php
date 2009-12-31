@@ -204,6 +204,11 @@ class Image_ImageMagick_Driver extends Image_Driver {
 		return TRUE;
 	}
 
+
+	public function watermark($config){
+		return $this;
+	}
+
 	protected function properties()
 	{
 		return array_slice(getimagesize($this->tmp_image), 0, 2, FALSE);

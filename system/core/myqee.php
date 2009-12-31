@@ -102,7 +102,29 @@ abstract class myqee_root{
 			Myqee::internal_cache_load('find_file_paths');
 		}
 		
-		$pathinfo = ltrim ( $_SERVER ["PATH_INFO"], '/' );
+		if (isset($_SERVER['PATH_INFO']) AND $_SERVER['PATH_INFO'])
+		{
+			$pathinfo = $_SERVER ["PATH_INFO"];
+		}
+		elseif (isset($_SERVER['ORIG_PATH_INFO']) AND $_SERVER['ORIG_PATH_INFO'])
+		{
+			$pathinfo = $_SERVER["ORIG_PATH_INFO"];
+		}
+		elseif (isset($_SERVER['PHP_SELF']) AND $_SERVER['PHP_SELF'])
+		{
+			$pathinfo = $_SERVER ["PHP_SELF"];
+		}
+		if (isset($_SERVER['SCRIPT_NAME']) AND $_SERVER['SCRIPT_NAME'])
+		{
+			// Clean up PATH_INFO fallbacks
+			// PATH_INFO may be formatted for ISAPI instead of CGI on IIS
+			if (strncmp($pathinfo, $_SERVER['SCRIPT_NAME'], strlen($_SERVER['SCRIPT_NAME'])) === 0)
+			{
+				// Remove the front controller from the current uri
+				$pathinfo = (string) substr($pathinfo, strlen($_SERVER['SCRIPT_NAME']));
+			}
+		}
+		$pathinfo = trim($pathinfo,'/');
 		
 		if (!defined('ADMINPATH') || ADMINPATH==false) {
 			if ($myconfig ['useroutes']) {
@@ -1287,7 +1309,6 @@ abstract class Myqee {
 	
 	
 	
-	/*
 	public static function show_ok($msg = '', $gotoUrl = false, $isInHiddenFrame = false) {
 		self::show_info ( $msg, $gotoUrl, $isInHiddenFrame, 'succeed' );
 	}
@@ -1349,20 +1370,20 @@ abstract class Myqee {
 			}';
 		}
 		echo '}
-			window._alert = window.alert;
-			window.alert= function(runset) {
-				_alert(runset.message);
+			var MyQEE = {};
+			MyQEE.alert= function(runset) {
+				alert(runset.message);
 				if (runset.handler){
 					try{runset.handler()}catch(e){}
 				}
 			}
-			window.error = window.alert;
-			window.succeed = window.alert;
+			MyQEE.error = MyQEE.alert;
+			MyQEE.succeed = MyQEE.alert;
 			
-			var runWindow = window.self;
+			var runWindow = MyQEE;
 			try{
-				if (typeof (parent.', $type, ')=="function"){
-					runWindow = parent;
+				if (typeof (parent.MyQEE.', $type, ')=="function"){
+					runWindow = parent.MyQEE;
 				}
 			}catch(e){}
 			var runset = eval("("+unescape("', Tools::escape ( Tools::json_encode ( $infoarr ) ), '")+")");
@@ -1371,6 +1392,7 @@ abstract class Myqee {
 			runset.width = runset.width || 400;
 			runWindow.', $type, '(runset);
 		</script>';
+		Event::run('system.shutdown');
 		exit ();
 	}
 	
@@ -1391,9 +1413,12 @@ abstract class Myqee {
 		if (strlen ( $gotoUrl )) {
 			$view->set ( 'forward', $gotoUrl );
 		}
-		$view->render ( true );
+		$out= $view->render ( false );
+		myqee_root::output($out);
+		echo $out;
+		Event::run('system.shutdown');
 		exit ();
-	}*/
+	}
 	
 	public static function get_cookie($name) {
 		$config = Myqee::config ( 'core.cookie' );
