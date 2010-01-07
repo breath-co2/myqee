@@ -4,6 +4,7 @@
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 <title>首页 - 麦琪网</title>
 <link href="/images/skins/web/style.css" rel="stylesheet" type="text/css" />
+<script type="text/javascript" src="/images/js/global.js"></script>
 </head>
 <body>
 <div class="mainWidth">
@@ -32,15 +33,15 @@
 <div class="mainWidth">
 	<div class="mainLeft">
 		<div id="download_div">
-<span>2009-10-19</span>
+<span>2009-12-30</span>
 <h2>麦琪CMS 1.0 RC1</h2>
 <div class="address">
 <a href="/nmew/">本地下载</a>
  | <a href="#jj">了解详情</a>
  | <a href="#">开发手册</a>
 <br/><a href="3">站长站下载</a>
- | <a href="">下载中心</a>
  | <a href="">站长工具</a>
+ | <a href="">下载中心</a>
 </div>		</div>
 		<div class="clear height"></div>
 		<div class="box_1">
@@ -57,28 +58,46 @@
 	<div class="mainRight">
 		<div id="headline_div">
 			<div class="headline_text">头条回顾</div>
-			<h1><a href="#">网站头条新闻网abc闻网站头条新闻</a></h1>
-			<tt>[<a href="#">链接一</a>][<a href="#">链接二</a>][<a href="#">链接三</a>][<a href="#">链接三链接三</a>][<a href="#">链接三链接三</a>]</tt>
-		</div>
+<h1><a href="###" target="_blank">网站头条新闻网abc闻网站头条新闻</a></h1>
+<tt>
+[<a href="http://www.baidu.com/" target="_blank">链接一</a>]
+[<a href="###" target="_blank">链接二</a>]
+[<a href="#3##" target="_blank">链接三</a>]
+</tt>			</div>
 		
 		<div class="clear height"></div>
 		<div style="float:left;width:350px;padding:5px;border-bottom:1px dashed #ccc;height:234px;overflow:hidden;">
 			<ul class="ul list_1 link_1">
-				<li><a href="#">我国明确负面信用记录最长保留7年</a></li>
-				<li><a href="#">中俄签署弹道导弹发射通报等12项协定</a></li>
-				<li><a href="#">有效解决灰色清关问题</a></li>
-				<li><a href="#">吕正操逝世 系最后一位\辞世开国上将</a></li>
-				<li><a href="#">中俄签署弹道导弹发射通报等12项协定</a></li>
-				<li><a href="#">有效解决灰色清关问题</a></li>
-				<li><a href="#">吕正操逝世 系最后一位\辞世开国上将</a></li>
-				<li><a href="#">我国明确负面信用记录最长保留7年</a></li>
-				<li><a href="#">中俄签署弹道导弹发射通报等12项协定</a></li>
-			</ul>
+<li><a href="/news/2009/d10/15/2c0a24b1e1c583f3.html" target="_blank">黄金投资：金价突破788美元才能看多</a></li>			</ul>
 		</div>
 		<div style="float:right;width:340px;background:#ccc;height:245px;">
 			<noscript>不支持JavaScript</noscript>
-			<script type="text/javascript">
-			</script>
+<script type="text/javascript">
+(function(){
+var pics = '/upload/2009/12/30/cX9ZVRJjYSgzp7fiQl2D.jpg';
+var links = '';
+var texts = '/myinfo/216cec50afb604be.html';
+pics=pics.replace(/&/g,"%26");
+links=links.replace(/&/g,"%26");
+texts=texts.replace(/&/g,"%26");
+if (pics.indexOf("|")==-1){
+	pics +="|"+pics;
+	links +="|"+links;
+	texts +="|"+texts;
+}
+
+var interval_time=4;
+var focus_width=340;
+var focus_height=245;
+var text_height=0;
+var text_align="center";
+var swf_height = focus_height+text_height;
+
+var flashVars="pics="+pics+"&links="+links+"&texts="+texts+"&interval_time="+interval_time+"&borderwidth="+focus_width+"&borderheight="+focus_height+"&text_align="+text_align+"&textheight="+text_height;
+
+MyQEE.flash(null,'/images/swf/focus.swf',focus_width,swf_height,false,true,flashVars);
+})();
+</script>
 		</div>
 	</div>
 </div>

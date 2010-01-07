@@ -27,9 +27,10 @@ class Upload_Core {
 		}
 
 		if($config['filepath']){
+			$config['filepath'] = str_replace('\\','/',$config['filepath']);
 			if (substr($config['filepath'],0,1)=='/'){
 				self::$configs['filepath'] = rtrim($config['filepath'],'/').'/';
-			}elseif (MYQEE_IS_WIN===true && preg_match("\^[a-zA-Z]\:\/\.*/",$config['filepath'])){
+			}elseif (true===MYQEE_IS_WIN && preg_match("/^[a-zA-Z]\:\/.*/",$config['filepath'])){
 				self::$configs['filepath'] = rtrim($config['filepath'],'/').'/';
 			}else{
 				self::$configs['filepath'] = WWWROOT . $config['filepath'].'/';

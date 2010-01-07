@@ -3,7 +3,8 @@
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 <title><?php echo $title;?> - 麦琪网</title>
-<link href="/images/skins/web/style.css" rel="stylesheet" type="text/css" />
+<link href="{site_url}images/skins/web/style.css" rel="stylesheet" type="text/css" />
+<script type="text/javascript" src="{site_url}images/js/global.js"></script>
 </head>
 <body>
 <div class="mainWidth">

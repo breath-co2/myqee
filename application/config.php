@@ -1,7 +1,7 @@
 <?php defined('MYQEEPATH') or die('No direct script access.');
 
 $config['sitename'] = '麦琪网';
-$config['mysite_domain'] = 'localhost';		//网站默认域名
+$config['mysite_domain'] = 'web.myqee.com';		//网站默认域名
 $config['mysite_url'] = '/';				//网站默认地址
 $config['mysite_path'] = NULL;				//网站路径地址
 $config['myqee_page'] = '';				//动态页面索引页，若启用rewrite本项可设空，默认myqee.php
@@ -65,7 +65,10 @@ $config['bbs_url'] = '';					//用户bbs space URL
  *  3 - Notices
  *  4 - Debugging
  */
-$config['log_threshold'] = NULL;
+$config['log_threshold'] = null;
+
+
+$config['system_class_name'] = null;			//系统核心类名称，默认null即Myqee，可自定义为自己网站的类，可以扩展Myqee类，例如：Sina，在application/core目录下建立sina.php文件即可，内容为class Sina extends Myqee{/*可以加入自己的方法*/}
 
 
 $config['session'] = array(

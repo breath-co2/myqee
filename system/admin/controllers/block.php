@@ -46,7 +46,7 @@ class Block_Controller_Core extends Controller {
 		
 		$limit = 20;
 		
-		$db = new Database;
+		$db = new Database();
 		
 		
 		$where = array('isuse'=>1,'istpl'=>1);

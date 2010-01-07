@@ -13,6 +13,10 @@ class Index_Controller_Core extends Controller {
 		$view -> render(TRUE);
 	}
 	
+	public function test(){
+		echo 'a';
+	}
+	
 	public function pinyin(){
 		if ( !($pinyin = $_REQUEST['pinyin']) ){
 			echo '{"error":"请求为空！"}';

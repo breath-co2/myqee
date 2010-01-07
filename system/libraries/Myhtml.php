@@ -472,7 +472,8 @@ class Myhtml_Core{
 	 * @param int $pictime 幻灯播放的间隔时间
 	 * @param string $swfurl 幻灯SWF路径
 	 */
-	public static function flashimage($data,$width=300,$height=200,$showtext = false,$pictime=4,$swfurl = 'images/focus.swf'){
+	public static function flashimage($data,$width=300,$height=200,$showtext = false,$pictime=4,$swfurl = null){
+		$swfurl or $swfurl = SITE_URL.'images/swf/focus.swf';
 		$pics = $link = $text = array();
 		$width>0 or $width = 300;
 		$height>0 or $height = 200;
@@ -506,7 +507,7 @@ var swf_height = focus_height+text_height;
 
 var flashVars="pics="+pics+"&links="+links+"&texts="+texts+"&interval_time="+interval_time+"&borderwidth="+focus_width+"&borderheight="+focus_height+"&text_align="+text_align+"&textheight="+text_height;
 
-showFlash(null,',var_export($swfurl),',focus_width,swf_height,false,true,flashVars);
+MyQEE.flash(null,',var_export($swfurl),',focus_width,swf_height,false,true,flashVars);
 })();
 </script>
 ';
@@ -702,8 +703,21 @@ showFlash(null,',var_export($swfurl),',focus_width,swf_height,false,true,flashVa
 			}
 		}
 		if ($classid>0 && self::$dbconfig['sys_field']['class_id']){
-			$where[self::$dbconfig['sys_field']['class_id']]=$classid;
+			if ($class_array['list_nosonclass']==1){
+				//仅本栏目
+				$where[self::$dbconfig['sys_field']['class_id']]=$classid;
+			}else{
+				//仅子栏目 or 本栏目及子栏目
+				$sonclass_id = self::get_sonclass_id($classid,0,$class_array['list_nosonclass']==2?false:true);
+				if (!$sonclass_id)return array();
+				if (count($sonclass_id)==1){
+					$where[self::$dbconfig['sys_field']['class_id']]=$sonclass_id[0];
+				}else{
+					$inwhere[self::$dbconfig['sys_field']['class_id']] = $sonclass_id;
+				}
+			}
 		}
+		
 		if (self::$dbconfig['sys_field']['id'] && !$orderby[self::$dbconfig['sys_field']['id']]){
 			$orderby[self::$dbconfig['sys_field']['id']]='DESC';
 		}

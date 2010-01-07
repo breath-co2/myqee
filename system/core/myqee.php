@@ -4,7 +4,7 @@
  *
  * $Id: myqee.php,v 1.51 2009/11/02 01:46:14 jonwang Exp $
  *
- * @package    Calendar
+ * @package    Core
  * @author     Myqee Team
  * @copyright  (c) 2008-2009 Myqee Team
  * @license    http://myqee.com/license.html
@@ -188,7 +188,6 @@ abstract class myqee_root{
 			}
 		}
 		
-		
 		if ($myconfig ['url_suffix']) {
 			$pathinfo = preg_replace ( "/{$myconfig['url_suffix']}$/i", '', $pathinfo );
 		}
@@ -227,6 +226,17 @@ abstract class myqee_root{
 			unset ( $includepath ['a'] );
 		}
 		self::$includepath = $includepath;
+		
+	
+		if ($myconfig['system_class_name'] && preg_match("#[a-z][a-z0-9]+#i",$myconfig['system_class_name']) && ($classlower = strtolower($myconfig['system_class_name']))!='myqee'){
+			$file = Myqee::find_file('core',$classlower);
+			if ($file){
+				include $file;
+			}else{
+				eval('class '.$myconfig['system_class_name'].' extends Myqee{}');
+			}
+		}
+		
 		//加载控制器
 		self::_load_controller(FALSE);
 		
@@ -772,26 +782,26 @@ abstract class Myqee {
 	public static $charset = 'utf-8';
 	
 	//配置文件
-	private static $config = array();
+	protected static $config = array();
 	
 	//记录栏目数组
 	public static $myclass;
-	private static $plus;
+	protected static $plus;
 	public static $controller_path;
 	
 	
-	private static $internal_cache;
-	private static $include_paths;
-	private static $write_cache;
+	protected static $internal_cache;
+	protected static $include_paths;
+	protected static $write_cache;
 	
 	// Output buffering level
-	private static $buffer_level;
+	protected static $buffer_level;
 	
 	// Will be set to TRUE when an exception is caught
 	public static $has_error = FALSE;
 	
 	// Log levels
-	private static $log_levels = array ('error' => 1, 'alert' => 2, 'info' => 3, 'debug' => 4 );
+	protected static $log_levels = array ('error' => 1, 'alert' => 2, 'info' => 3, 'debug' => 4 );
 	
 	/**
 	 * @var  object  logging object
@@ -1569,7 +1579,7 @@ abstract class Myqee {
 	}
 	
 	
-	public function segment($index = 1, $default = FALSE) {
+	public static function segment($index = 1, $default = FALSE) {
 		if (is_string ( $index )) {
 			if (($key = array_search ( $index, Myqee::$arguments )) === FALSE)
 				return $default;
@@ -1581,7 +1591,7 @@ abstract class Myqee {
 		return isset ( Myqee::$arguments[$index] ) ? Myqee::$arguments[$index] : $default;
 	}
 	
-	public function segment_array($offset = 0, $associative = FALSE){
+	public static function segment_array($offset = 0, $associative = FALSE){
 		$segment = array_slice(Myqee::$arguments,$offset);
 		if ($associative){
 			$segment1= array();

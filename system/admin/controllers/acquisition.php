@@ -395,7 +395,7 @@ class Acquisition_Controller_Core extends Controller {
 			$modelconfig = (array)unserialize($db_info['modelconfig']);
 		}
 		if (empty($modelconfig)) {
-			MyqeeCMS::show_error(Myqee::lang('admin/acquisition.error.nofounddbname'));
+			MyqeeCMS::show_error(Myqee::lang('admin/acquisition.error.nofoundmodel'));
 		}
 		
 		list($database,$tablename) = explode('/',$dbname);

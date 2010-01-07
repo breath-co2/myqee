@@ -22,28 +22,32 @@ $this->view('header',array('title'=>'首页'));
 	<div class="mainRight">
 		<div id="headline_div">
 			<div class="headline_text">头条回顾</div>
-			<h1><a href="#">网站头条新闻网abc闻网站头条新闻</a></h1>
-			<tt>[<a href="#">链接一</a>][<a href="#">链接二</a>][<a href="#">链接三</a>][<a href="#">链接三链接三</a>][<a href="#">链接三链接三</a>]</tt>
-		</div>
+<?php $this->block('index',3);?>
+			</div>
 		
 		<div class="clear height"></div>
 		<div style="float:left;width:350px;padding:5px;border-bottom:1px dashed #ccc;height:234px;overflow:hidden;">
 			<ul class="ul list_1 link_1">
-				<li><a href="#">我国明确负面信用记录最长保留7年</a></li>
-				<li><a href="#">中俄签署弹道导弹发射通报等12项协定</a></li>
-				<li><a href="#">有效解决灰色清关问题</a></li>
-				<li><a href="#">吕正操逝世 系最后一位\辞世开国上将</a></li>
-				<li><a href="#">中俄签署弹道导弹发射通报等12项协定</a></li>
-				<li><a href="#">有效解决灰色清关问题</a></li>
-				<li><a href="#">吕正操逝世 系最后一位\辞世开国上将</a></li>
-				<li><a href="#">我国明确负面信用记录最长保留7年</a></li>
-				<li><a href="#">中俄签署弹道导弹发射通报等12项协定</a></li>
+<?php
+$data = Myhtml::getdata(1,'new|indexshow',9);
+if ($data){
+	foreach($data as $item){
+		echo '<li><a href="',$item['URL'],'" target="_blank">',$item['title'],'</a></li>';
+	}
+}
+?>
 			</ul>
 		</div>
 		<div style="float:right;width:340px;background:#ccc;height:245px;">
 			<noscript>不支持JavaScript</noscript>
-			<script type="text/javascript">
-			</script>
+<?php
+$data = Myhtml::getdata(1,'new|imagenews',6);
+$data1 = array();
+foreach($data as $item){
+	$data1[] = array('title'=>$item['title'],'title'=>$item['URL'],'imagepic'=>$item['image']);
+}
+Myhtml::flashimage($data1,340,245);
+?>
 		</div>
 	</div>
 </div>

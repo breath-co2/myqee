@@ -66,6 +66,7 @@ class MyqeeCMS_Core {
 		
 		$html = $view -> render(FALSE);
 		
+		myqee_root::output($html);
 		echo $html;
 		exit ();
 	}
