@@ -4,10 +4,13 @@
  *
  * $Id: myqee.php,v 1.51 2009/11/02 01:46:14 jonwang Exp $
  *
- * @package    Core
+ * @package    MyQEE Core
+ * @subpackage	core
  * @author     Myqee Team
  * @copyright  (c) 2008-2009 Myqee Team
- * @license    http://myqee.com/license.html
+ * @license    http://www.myqee.com/license.html
+ * @link		http://www.myqee.com/
+ * @since		Version 1.0
  */
 
 
@@ -67,9 +70,9 @@ function _getthistime() {
 
 /**
  * myqee setup
+ * @author jonwang
  *
  */
-
 abstract class myqee_root{
 	private static $arguments;
 	private static $includepath;
@@ -520,7 +523,6 @@ abstract class myqee_root{
 	}
 }
 
-
 abstract class Controller {
 	public $input;
 	
@@ -761,6 +763,11 @@ final class Event {
 } // End Event
 
 
+/**
+ * MyQEE 核心函数
+ * @author jonwang
+ *
+ */
 abstract class Myqee {
 	public static $db;
 	// The singleton instance of the controller
@@ -1336,7 +1343,7 @@ abstract class Myqee {
 		}
 	}
 	
-	private static function _show_info_hiddenframe($infoarr = '', $gotoUrl = false, $type = 'alert') {
+	protected static function _show_info_hiddenframe($infoarr = '', $gotoUrl = false, $type = 'alert') {
 		if (! is_array ( $infoarr )) {
 			$infoarr = array ('message' => $infoarr );
 		}
@@ -1406,7 +1413,7 @@ abstract class Myqee {
 		exit ();
 	}
 	
-	private static function _show_info_selfframe($msg = '', $gotoUrl = false) {
+	protected static function _show_info_selfframe($msg = '', $gotoUrl = false) {
 		if (! $v = Myqee::config ( 'core.systemplate.show_info' )) {
 			$v = 'show_info';
 		}
