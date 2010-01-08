@@ -576,7 +576,7 @@ class Smarty
     	if ($group===true){
     		//临时模板
  			$this -> _template = 'temp.tpl';
-    	   	$this -> template_dir = MYAPPPATH .'/temp/_temptpl_'.time().rand(0,9999999).'/';
+    	   	$this -> template_dir = MYAPPPATH .'temp/_temptpl_'.time().rand(0,9999999).'/';
     	   	
     	   	//创建临时文件
     		Tools::create_dir($this -> template_dir);
@@ -586,7 +586,7 @@ class Smarty
     	}else{
 	    	$this -> _template = $tplname;
     		$group or $group = Myqee::config('template.default');
-	    	$this -> template_dir = MYAPPPATH .'/views/'.trim($group,' ./').'/';
+	    	$this -> template_dir = MYAPPPATH .'views/'.trim($group,' ./').'/';
     	}
     	$this -> compile_dir = MYAPPPATH . 'temp/';
     	$this -> config_dir = $this -> template_dir . 'configs/';
