@@ -1,13 +1,17 @@
 <?php defined('MYQEEPATH') or die('No direct script access.');
+
 /**
- * Provides database access in a platform agnostic way, using simple query building blocks.
+ * Myqee Core.
  *
- * $Id: Database.php,v 1.13 2009/10/13 08:39:19 jonwang Exp $
+ * $Id$
  *
- * @package    Core
- * @author     Myqee Team
- * @copyright  (c) 2007-2008 Myqee Team
- * @license    http://www.myqee.com/license.html
+ * @package     MyQEE Core
+ * @subpackage	Library
+ * @author      Myqee Team
+ * @copyright   (c) 2008-2010 Myqee Team
+ * @license     http://www.myqee.com/license.html
+ * @link		http://www.myqee.com/
+ * @since		Version 1.0
  */
 class Database_Core {
 
@@ -47,7 +51,6 @@ class Database_Core {
 	protected $last_query = '';
 	public $debug = array();
 	
-	private static $instance = null;
 	private static $instances = array();
 	/**
 	 * Returns a singleton instance of Database.
@@ -55,31 +58,21 @@ class Database_Core {
 	 * @param   mixed   configuration array or DSN
 	 * @return  Database_Core
 	 */
-	public static function instance($config = array())
+	public static function & instance($name = 'default', $config = NULL)
 	{
-		// Create the instance if it does not exist
-		$instance = null;
-		if (empty($config)) {
-			$config = 'default';
+		if ( ! isset(Database::$instances[$name]))
+		{
+			// Create a new instance
+			Database::$instances[$name] = new Database($config === NULL ? $name : $config);
 		}
-		if (is_string($config)) {
-			if (!empty(self::$instances[$config]) && self::$instances[$config] instanceof  Database ) {
-				$instance = self::$instances[$config];
-			}else {
-				self::$instances[$config] = new Database($config);
-				$instance = self::$instances[$config];
-			}
-		} else {
-			$instance = new database($config);
-		}
-		
-		return $instance;
+
+		return Database::$instances[$name];
 	}
 
 	/**
 	 * Sets up the database configuration, loads the Database_Driver.
 	 *
-	 * @throws  Kohana_Database_Exception
+	 * @throws  Error_Exception
 	 */
 	public function __construct($config = array())
 	{
@@ -144,6 +137,8 @@ class Database_Core {
 
 		return FALSE;
 	}
+	
+	
 	public function version() {
 		static $version;
 		if ($version)return $version;
@@ -165,7 +160,7 @@ class Database_Core {
 	 * Runs a query into the driver and returns the result.
 	 *
 	 * @param   string  SQL query to execute
-	 * @return  object  Database_Result
+	 * @return  Database_Result
 	 */
 	public function query($sql = '')
 	{
@@ -198,7 +193,7 @@ class Database_Core {
 	 * Selects the column names for a database query.
 	 *
 	 * @param   string  string or array of column names to select
-	 * @return  object  This Database object.
+	 * @return  Database      This Database object.
 	 */
 	public function select($sql = '*')
 	{
@@ -244,7 +239,7 @@ class Database_Core {
 	 * Selects the from table(s) for a database query.
 	 *
 	 * @param   string  string or array of tables to select
-	 * @return  object  This Database object.
+	 * @return  Database      This Database object.
 	 */
 	public function from($sql)
 	{
@@ -554,7 +549,7 @@ class Database_Core {
 	 * Chooses the column to group by in a select query.
 	 *
 	 * @param   string  column name to group by
-	 * @return  object  This Database object.
+	 * @return  Database      This Database object.
 	 */
 	public function groupby($by)
 	{
@@ -789,7 +784,7 @@ class Database_Core {
 	 * @param   array   where clause
 	 * @param   string  limit clause
 	 * @param   string  offset clause
-	 * @return  object  This Database object.
+	 * @return  Database      This Database object.
 	 */
 	public function getwhere($table = '', $where = NULL, $limit = NULL, $offset = NULL)
 	{
@@ -904,7 +899,7 @@ class Database_Core {
 	 *
 	 * @param   string  table name
 	 * @param   array   array of key/value pairs to insert
-	 * @return  object  This Database object.
+	 * @return  Database      This Database object.
 	 */
 	public function insert($table = '', $set = NULL)
 	{
@@ -944,7 +939,7 @@ class Database_Core {
 	 * @param   string  Name of the column being examined
 	 * @param   mixed   An array or string to match against
 	 * @param   bool    Generate a NOT IN clause instead
-	 * @return  object  This Database object.
+	 * @return  Database      This Database object.
 	 */
 	public function in($field, $values, $not = FALSE)
 	{
@@ -976,7 +971,7 @@ class Database_Core {
 	 *
 	 * @param   string  Name of the column being examined
 	 * @param   mixed   An array or string to match against
-	 * @return  object  This Database object.
+	 * @return  Database      This Database object.
 	 */
 	public function notin($field, $values)
 	{
@@ -988,7 +983,7 @@ class Database_Core {
 	 *
 	 * @param   string  table name
 	 * @param   array   array of key/value pairs to merge
-	 * @return  object  This Database object.
+	 * @return  Database      This Database object.
 	 */
 	public function merge($table = '', $set = NULL)
 	{
@@ -1028,7 +1023,7 @@ class Database_Core {
 	 * @param   string  table name
 	 * @param   array   associative array of update values
 	 * @param   array   where clause
-	 * @return  object  This Database object.
+	 * @return  Database      This Database object.
 	 */
 	public function update($table = '', $set = NULL, $where = NULL)
 	{
@@ -1067,7 +1062,7 @@ class Database_Core {
 	 *
 	 * @param   string  table name
 	 * @param   array   where clause
-	 * @return  object  This Database object.
+	 * @return  Database      This Database object.
 	 */
 	public function delete($table = '', $where = NULL)
 	{
@@ -1270,6 +1265,12 @@ class Database_Core {
 		return $tables[$table];
 	}
 
+	/**
+	 * Get the field data for a database table, along with the field's attributes.
+	 *
+	 * @param   string  table name
+	 * @return  array
+	 */
 	public function field_data($table)
 	{
 		$this->link or $this->connect();
