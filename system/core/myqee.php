@@ -2,7 +2,7 @@
 /**
  * Myqee Core.
  *
- * $Id: myqee.php 65 2010-10-29 23:08:09Z jonwang $
+ * $Id$
  *
  * @package    MyQEE Core
  * @subpackage	core
