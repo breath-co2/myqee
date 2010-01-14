@@ -2,17 +2,16 @@
 /**
  * Myqee Core.
  *
- * $Id: myqee.php,v 1.51 2009/11/02 01:46:14 jonwang Exp $
+ * $Id: myqee.php 65 2010-10-29 23:08:09Z jonwang $
  *
  * @package    MyQEE Core
  * @subpackage	core
  * @author     Myqee Team
- * @copyright  (c) 2008-2009 Myqee Team
+ * @copyright  (c) 2008-2010 Myqee Team
  * @license    http://www.myqee.com/license.html
  * @link		http://www.myqee.com/
  * @since		Version 1.0
  */
-
 
 define('STARTTIME', _getthistime () );
 define('MYQEE_VERSION', 'V1.0 RC1');
@@ -769,8 +768,11 @@ final class Event {
  *
  */
 abstract class Myqee {
-	public static $db;
-	// The singleton instance of the controller
+	/**
+	 * 
+	 * @var object $instance
+	 * @return Myqee
+	 */
 	public static $instance;
 	
 	//控制器对象
@@ -886,12 +888,14 @@ abstract class Myqee {
 		return $array;
 	}
 	
+	/**
+	 * Returns a singleton instance of Database.
+	 * 
+	 * @param $dbconfig
+	 * @return  Database
+	 */
 	public static function & db($dbconfig = 'default') {
-		if ($dbconfig === NULL or $dbconfig === false)
-			$dbconfig = 'default';
-		if (! self::$db [$dbconfig])
-			self::$db [$dbconfig] = new Database($dbconfig);
-		return self::$db [$dbconfig];
+		return Database::instance($dbconfig);
 	}
 	
 	public static function myclass($classid = 0) {
