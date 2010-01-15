@@ -1,14 +1,16 @@
 <?php defined('MYQEEPATH') OR die('No direct access allowed.');
 /**
- * Loads and displays Kohana view files. Can also handle output of some binary
- * files, such as image, Javascript, and CSS files.
+ * 视图类
  *
- * $Id: View.php,v 1.5 2009/10/13 08:33:37 jonwang Exp $
+ * $Id$
  *
- * @package    Core
- * @author     Kohana Team
- * @copyright  (c) 2007-2008 Kohana Team
- * @license    http://kohanaphp.com/license.html
+ * @package     系统核心
+ * @subpackage	类库
+ * @author      rovewang@gmail.com
+ * @copyright   (c) 2008-2010 Myqee Team
+ * @license     http://www.myqee.com/license.html
+ * @link		http://www.myqee.com/
+ * @since		Version 1.0
  */
 class View_Core {
 
@@ -23,7 +25,7 @@ class View_Core {
 	protected $start_time;
 	
 	/**
-	 * Creates a new View using the given parameters.
+	 * 静态构造函数
 	 *
 	 * @param   string  view name
 	 * @param   array   pre-load data
@@ -55,7 +57,7 @@ class View_Core {
 		if (is_array($data) AND ! empty($data))
 		{
 			// Preload data using array_merge, to allow user extensions
-			$this->myqee_local_data = array_merge($this->myqee_local_data, $data);
+			$this->myqee_local_data = array_merge($this -> myqee_local_data, $data);
 		}
 	}
 
@@ -181,7 +183,7 @@ class View_Core {
 	}
 
 	/**
-	 * Sets a view global variable.
+	 * 设置视图全局变量
 	 *
 	 * @param   string|array  name of variable or an array of variables
 	 * @param   mixed         value when using a named variable
@@ -232,6 +234,10 @@ class View_Core {
 		if (isset($this->$key))
 			return $this->$key;
 	}
+	
+	public function &__getglobal(){
+		return View::$myqee_global_data;
+	}
 
 	/**
 	 * Magically converts view object to string.
@@ -252,7 +258,7 @@ class View_Core {
 	}
 
 	/**
-	 * Renders a view.
+	 * 输出页面
 	 *
 	 * @param   boolean   set to TRUE to echo the output instead of returning it
 	 * @param   callback  special renderer to pass the output through
@@ -267,11 +273,12 @@ class View_Core {
 		if (is_string($this->myqee_filetype))
 		{
 			// Merge global and local data, local overrides global with the same name
-			$data = array_merge(View::$myqee_global_data, $this->myqee_local_data);
+			//$data = array_merge(View::$myqee_global_data, $this->myqee_local_data);
 
 			$view = new _myqee_view_create;
+			
 			// Load the view in the controller for access to $this
-			$output = $view->_myqee_load_view($this->myqee_filename, $data);
+			$output = $view->_myqee_load_view( $this->myqee_filename ,$this->myqee_local_data );
 			
 
 			if ($renderer !== FALSE AND is_callable($renderer, TRUE))
@@ -315,41 +322,50 @@ class View_Core {
 
 class _myqee_view_create{
 	protected $data = array();
+	protected $global_data = array();
 	protected $_group_id;
 	public function __construct($group='default'){
 		$this -> _group_id = $group;
 	}
-	public function _myqee_load_view($__myqee_view_filename_, $__myqee_input_data_){
+	
+	public function _myqee_load_view($__myqee_view_filename_,$__myqee_view_data_){
 		if ($__myqee_view_filename_ == '')
 			return;
 
 		// Buffering on
 		ob_start();
-		$__ER_ = error_reporting(7);
 		
-		$this -> data = $__myqee_input_data_;
-		unset($__myqee_input_data_);
 		
-		// Import the view variables to local namespace
-		//extract($this -> data, EXTR_SKIP);
-		if (is_array($this -> data) && count($this -> data)){
+		$this -> data = $__myqee_view_data_;
+		$this -> global_data =& View::__getglobal();
+		unset($__myqee_view_data_);
+		
+		//视图局部变量
+		if ($this -> global_data){
 			foreach ($this -> data as $__k_ => $__v_){
 				if(is_string($__k_)){
-					$$__k_ =& $this -> data[$__k_];
+					$$__k_ = $this -> data[$__k_];
 				}
 			}
 			unset($__k_,$__v_);
-		}		
+		}
+		
+		//全局变量，如果同名视图局部变量已定义，则对应全局变量被忽略，但视图内仍可通过$this->global来获取
+		if ($this -> global_data){
+			foreach ($this -> global_data as $__k_ => $__v_){
+				if(is_string($__k_) && !isset($$__k_)){
+					$$__k_ =& $this -> global_data[$__k_];
+				}
+			}
+			unset($__k_,$__v_);
+		}
 
-		// Views are straight HTML pages with embedded PHP, so importing them
-		// this way insures that $this can be accessed as if the user was in
-		// the controller, which gives the easiest access to libraries in views
-		//set_error_handler(array('myqeetohtml', 'exception_handler'));
-
+		$__ER_ = error_reporting(7);
+		
 		include $__myqee_view_filename_;
 
 		error_reporting($__ER_);
-		// Fetch the output and close the buffer
+		
 		return ob_get_clean();
 	}
 	
