@@ -6,11 +6,13 @@ class Block extends Block_Core {}
 class Cache extends Cache_Core {}
 class Captcha extends Captcha_Core {}
 class Database extends Database_Core {}
-class Des extends Des_Core { }
-class Tools extends Tools_Core { }
-class Ftp extends Ftp_Core { }
-class Myhtml extends Myhtml_Core { }
-class Image extends Image_Core { }
+class Des extends Des_Core {}
+class Session extends Session_Core {}
+class Tools extends Tools_Core {}
+class Ftp extends Ftp_Core {}
+class Myhtml extends Myhtml_Core {}
+class MyqeeCMS extends MyqeeCMS_Core {}
+class Image extends Image_Core {}
 class Ucenter_Api extends Ucenter_Api_Core {}
 class Passport extends Passport_Core {}
 class Admin_Model extends Admin_Model_Core {}

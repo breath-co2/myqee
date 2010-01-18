@@ -1,6 +1,6 @@
 <?php
 /**
- * $Id: site.php,v 1.6 2009/10/19 01:32:53 jonwang Exp $
+ * $Id$
  *
  * @package    Acquisition
  * @author     Myqee Team

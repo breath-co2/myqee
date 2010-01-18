@@ -1,6 +1,6 @@
 <?php
 /**
- * $Id: tohtml.php,v 1.4 2009/09/25 07:18:13 songwubin Exp $
+ * $Id$
  *
  * @package    Core
  * @author     Myqee Team

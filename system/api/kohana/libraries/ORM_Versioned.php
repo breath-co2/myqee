@@ -3,7 +3,7 @@
  * Object Relational Mapping (ORM) "versioned" extension. Allows ORM objects to
  * be revisioned instead of updated.
  *
- * $Id: ORM_Versioned.php,v 1.1 2009/06/30 03:34:32 jonwang Exp $
+ * $Id$
  *
  * @package    ORM
  * @author     Kohana Team

@@ -1,15 +1,17 @@
 <?php defined('MYQEEPATH') or die('No direct script access.');
 
 /**
- * Loads and displays Myqee view files. Can also handle output of some binary
- * files, such as image, Javascript, and CSS files.
+ * 视图类
  *
- * $Id: View.php,v 1.13 2009/11/05 01:02:43 jonwang Exp $
+ * $Id$
  *
- * @package    Core
- * @author     Myqee Team
- * @copyright  (c) 2008-2009 Myqee Team
- * @license    http://myqee.com/license.html
+ * @package     系统核心
+ * @subpackage	类库
+ * @author      rovewang@gmail.com
+ * @copyright   (c) 2008-2010 Myqee Team
+ * @license     http://www.myqee.com/license.html
+ * @link		http://www.myqee.com/
+ * @since		Version 1.0
  */
 class View_Core {
 

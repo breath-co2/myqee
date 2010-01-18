@@ -2,7 +2,7 @@
 /**
 * Object Relational Mapping (ORM) result iterator.
 *
-* $Id: ORM_Iterator.php,v 1.1 2009/06/30 03:34:32 jonwang Exp $
+* $Id$
 *
 * @package    ORM
 * @author     Kohana Team

@@ -2,7 +2,7 @@
 /**
  * Member Model.
  *
- * $Id: member.php,v 1.1 2009/06/18 05:21:16 jonwang Exp $
+ * $Id$
  *
  * @package    Image
  * @author     Myqee Team

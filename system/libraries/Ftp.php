@@ -3,7 +3,7 @@
  * This FTP library is a simple OOP abstraction layer
  * for PHP's procedural FTP library.
  *
- * $Id: Ftp.php,v 1.1 2009/08/21 00:58:19 jonwang Exp $
+ * $Id$
  *
  * @package		Standard
  * @subpackage	Libraries

@@ -2,7 +2,7 @@
 /**
  * Pagination library.
  *
- * $Id: Pagination.php,v 1.7 2009/10/15 01:39:39 jonwang Exp $
+ * $Id$
  *
  * @package    Core
  * @author     Myqee Team

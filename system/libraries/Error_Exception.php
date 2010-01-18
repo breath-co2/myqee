@@ -1,7 +1,7 @@
 <?php defined('MYQEEPATH') or die('No direct script access.');
 /**
  *
- * $Id: Error_Exception.php,v 1.2 2009/10/15 01:40:21 jonwang Exp $
+ * $Id$
  */
 class Error_Exception extends Exception  {
 	

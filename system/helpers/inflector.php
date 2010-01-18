@@ -2,7 +2,7 @@
 /**
  * Inflector helper class.
  *
- * $Id: inflector.php,v 1.1 2009/06/30 03:30:54 jonwang Exp $
+ * $Id$
  *
  * @package    Core
  * @author     Myqee Team

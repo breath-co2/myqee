@@ -18,14 +18,14 @@ class Image_GD_Driver extends Image_Driver {
 	{
 		// Make sure that GD2 is available
 		if ( ! function_exists('gd_info'))
-			throw new Kohana_Exception('image.gd.requires_v2');
+			throw new Error_Exception('image.gd.requires_v2');
 
 		// Get the GD information
 		$info = gd_info();
 
 		// Make sure that the GD2 is installed
 		if (strpos($info['GD Version'], '2.') === FALSE)
-			throw new Kohana_Exception('image.gd.requires_v2');
+			throw new Error_Exception('image.gd.requires_v2');
 	}
 
 	public function process($image, $actions, $dir, $file, $render = FALSE)
@@ -61,11 +61,11 @@ class Image_GD_Driver extends Image_Driver {
 
 		// Make sure the image type is supported for import
 		if (empty($create) OR ! function_exists($create))
-			throw new Kohana_Exception('image.type_not_allowed', $image['file']);
+			throw new Error_Exception('image.type_not_allowed', $image['file']);
 
 		// Make sure the image type is supported for saving
 		if (empty($save) OR ! function_exists($save))
-			throw new Kohana_Exception('image.type_not_allowed', $dir.$file);
+			throw new Error_Exception('image.type_not_allowed', $dir.$file);
 
 		// Load the image
 		$this->image = $image;
@@ -312,7 +312,7 @@ class Image_GD_Driver extends Image_Driver {
 	{
 		// Make sure that the sharpening function is available
 		if ( ! function_exists('imageconvolution'))
-			throw new Kohana_Exception('image.unsupported_method', __FUNCTION__);
+			throw new Error_Exception('image.unsupported_method', __FUNCTION__);
 
 		// Amount should be in the range of 18-10
 		$amount = round(abs(-18 + ($amount * 0.08)), 2);

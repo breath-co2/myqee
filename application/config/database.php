@@ -2,9 +2,7 @@
 //2009-10-20 09:05:33
 //it is saved by myqee system,please don't edit it.
 
-$config = array (
-  'default' => 
-  array (
+$config['default'] = array (
     'name' => '默认',
     'benchmark' => true,
     'persistent' => false,
@@ -14,21 +12,20 @@ $config = array (
       'user' => 'root',
       'pass' => '123456',
       'host' => 'localhost',
-      'port' => false,
+      'port' => '3307',
       'socket' => false,
-      'database' => 'web_myqee',
+      'database' => 'myqee_web',
     ),
     'character_set' => 'utf8',
     'table_prefix' => 'mycms_',
     'object' => true,
     'cache' => false,
     'escape' => true,
-  ),
+  );
   
   
-  'bbs' => 
-  array (
-    'name' => '默认',
+$config['bbs'] = array (
+    'name' => '论坛',
     'benchmark' => true,
     'persistent' => false,
     'connection' => 
@@ -37,7 +34,7 @@ $config = array (
       'user' => 'root',
       'pass' => '',
       'host' => 'localhost',
-      'port' => false,
+      'port' => '3307',
       'socket' => false,
       'database' => 'web_myqee',
     ),
@@ -46,5 +43,4 @@ $config = array (
     'object' => true,
     'cache' => false,
     'escape' => true,
-  ),
 );

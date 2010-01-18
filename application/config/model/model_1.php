@@ -1,5 +1,5 @@
 <?php defined('MYQEEPATH') or die('No direct script access.');
-//2009-12-30 20:29:53
+//2010-01-11 09:50:09
 //it is saved by myqee system,please don't edit it.
 
 $config['dbname'] = 'default/news';
@@ -43,16 +43,24 @@ $config['adminedit'] = array (
 $config['field'] = array (
   'id' => 
   array (
-    'tag' => '新闻',
   ),
   'title' => 
   array (
+    'dbname' => '标题123',
     'input' => true,
     'editor' => true,
     'view' => true,
     'notnull' => true,
     'caiji' => true,
     'search' => true,
+    'list' => true,
+    'content' => true,
+  ),
+  'isshow' => 
+  array (
+    'input' => true,
+    'editor' => true,
+    'caiji' => true,
     'list' => true,
     'content' => true,
   ),
@@ -65,31 +73,9 @@ $config['field'] = array (
     'list' => true,
     'content' => true,
   ),
-  'isshow' => 
-  array (
-    'input' => true,
-    'editor' => true,
-    'caiji' => true,
-    'list' => true,
-    'content' => true,
-  ),
-  'iscommend' => 
-  array (
-    'input' => true,
-    'editor' => true,
-    'view' => true,
-    'jiehe' => true,
-    'list' => true,
-    'content' => true,
-  ),
-  'indexshow' => 
-  array (
-    'input' => true,
-    'editor' => true,
-    'view' => true,
-  ),
   'abstract' => 
   array (
+    'tag' => '高级',
     'input' => true,
     'editor' => true,
     'caiji' => true,
@@ -124,6 +110,15 @@ $config['field'] = array (
     'list' => true,
     'content' => true,
   ),
+  'iscommend' => 
+  array (
+    'input' => true,
+    'editor' => true,
+    'view' => true,
+    'jiehe' => true,
+    'list' => true,
+    'content' => true,
+  ),
   '#special' => 
   array (
     'dbname' => '所属专题',
@@ -137,22 +132,20 @@ $config['field_set'] = array (
   'input' => 
   array (
     'title' => 'title',
-    'image' => 'image',
     'isshow' => 'isshow',
-    'iscommend' => 'iscommend',
-    'indexshow' => 'indexshow',
+    'image' => 'image',
     'abstract' => 'abstract',
     'content' => 'content',
+    'iscommend' => 'iscommend',
   ),
   'editor' => 
   array (
     'title' => 'title',
-    'image' => 'image',
     'isshow' => 'isshow',
-    'iscommend' => 'iscommend',
-    'indexshow' => 'indexshow',
+    'image' => 'image',
     'abstract' => 'abstract',
     'content' => 'content',
+    'iscommend' => 'iscommend',
   ),
   'notnull' => 
   array (
@@ -161,8 +154,8 @@ $config['field_set'] = array (
   'caiji' => 
   array (
     'title' => 'title',
-    'image' => 'image',
     'isshow' => 'isshow',
+    'image' => 'image',
     'abstract' => 'abstract',
     'content' => 'content',
   ),
@@ -174,24 +167,24 @@ $config['field_set'] = array (
   'list' => 
   array (
     'title' => 'title',
-    'image' => 'image',
     'isshow' => 'isshow',
-    'iscommend' => 'iscommend',
+    'image' => 'image',
     'abstract' => 'abstract',
     'content' => 'content',
     'filepath' => 'filepath',
     'filename' => 'filename',
+    'iscommend' => 'iscommend',
   ),
   'content' => 
   array (
     'title' => 'title',
-    'image' => 'image',
     'isshow' => 'isshow',
-    'iscommend' => 'iscommend',
+    'image' => 'image',
     'abstract' => 'abstract',
     'content' => 'content',
     'filepath' => 'filepath',
     'filename' => 'filename',
+    'iscommend' => 'iscommend',
   ),
   'jiehe' => 
   array (

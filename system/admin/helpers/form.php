@@ -2,7 +2,7 @@
 /**
  * Form helper class.
  *
- * $Id: form.php,v 1.19 2009/11/02 01:43:30 jonwang Exp $
+ * $Id$
  *
  * @package    Core
  * @author     Myqee Team

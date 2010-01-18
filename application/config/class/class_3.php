@@ -1,5 +1,5 @@
 <?php defined('MYQEEPATH') or die('No direct script access.');
-//2009-11-09 11:30:37
+//2010-01-11 09:50:09
 //it is saved by myqee system,please don't edit it.
 
 $config['classid'] = '3';

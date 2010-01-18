@@ -2,7 +2,7 @@
 /**
  * 游戏积分API
  *
- * $Id: register.php,v 1.2 2009/06/18 07:22:33 jonwang Exp $
+ * $Id$
  *
  * @package    App
  * @author     Dianming Team

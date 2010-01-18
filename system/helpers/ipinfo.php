@@ -2,7 +2,7 @@
 /**
  * Ip info class. 获取IP相信信息
  *
- * $Id: ipinfo.php,v 1.1 2009/06/18 05:21:16 jonwang Exp $
+ * $Id$
  *
  * @package    Core
  * @author     Myqee Team

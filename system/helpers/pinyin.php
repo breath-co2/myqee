@@ -2,7 +2,7 @@
 /**
  * Array helper class.
  *
- * $Id: pinyin.php,v 1.1 2009/08/27 10:09:02 jonwang Exp $
+ * $Id$
  *
  * @package    Core
  * @author     Myqee Team

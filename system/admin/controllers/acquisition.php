@@ -1,6 +1,6 @@
 <?php
 /**
- * $Id: acquisition.php,v 1.17 2009/11/09 03:19:59 songwubin Exp $
+ * $Id$
  *
  * @package    Acquisition
  * @author     Myqee Team

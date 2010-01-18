@@ -2,7 +2,7 @@
 /**
  * Validation library.
  *
- * $Id: Validation.php,v 1.1 2009/06/30 03:34:32 jonwang Exp $
+ * $Id$
  *
  * @package    Validation
  * @author     Kohana Team

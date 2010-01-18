@@ -2,7 +2,7 @@
 /**
  * File helper class.
  *
- * $Id: Plugins.php,v 1.1 2009/11/04 08:07:34 songwubin Exp $
+ * $Id$
  *
  * @package    Core
  * @author     Myqee Team

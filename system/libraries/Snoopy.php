@@ -29,7 +29,7 @@ http://snoopy.sourceforge.net/
 
 
 
- * $Id: Snoopy.php,v 1.7 2009/11/05 03:10:42 jonwang Exp $
+ * $Id$
 *************************************************/
 
 class Snoopy_Core

@@ -51,7 +51,7 @@ class Database_Core {
 	protected $last_query = '';
 	public $debug = array();
 	
-	private static $instances = array();
+	protected static $instances = array();
 	/**
 	 * Returns a singleton instance of Database.
 	 *
@@ -659,7 +659,7 @@ class Database_Core {
 	 * @param   string        direction of the order
 	 * @return  object        This Database object.
 	 */
-	public function orderby($orderby, $direction = '')
+	public function orderby($orderby, $direction = NULL)
 	{
 		if ( ! is_array($orderby))
 		{
@@ -684,6 +684,7 @@ class Database_Core {
 
 			$this->orderby[] = $this->escape_column($column).' '.$direction;
 		}
+
 		return $this;
 	}
 
@@ -697,7 +698,11 @@ class Database_Core {
 	public function limit($limit, $offset = FALSE)
 	{
 		$this->limit  = (int) $limit;
-		$this->offset(($offset === FALSE)? 0 : $offset);
+
+		if ($offset !== NULL OR ! is_int($this->offset))
+		{
+			$this->offset($offset);
+		}
 
 		return $this;
 	}
@@ -735,6 +740,10 @@ class Database_Core {
 
 		foreach ($key as $k => $v)
 		{
+			// Add a table prefix if the column includes the table.
+			if (strpos($k, '.'))
+				$k = $this->config['table_prefix'].$k;
+
 			$this->set[$k] = $this->escape($v);
 		}
 
@@ -762,10 +771,11 @@ class Database_Core {
 		}
 
 		$sql = $this->compile_select(get_object_vars($this));
+		
+		$this->reset_select();
 
 		$result = $this->query($sql);
 
-		$this->reset_select();
 		$this->last_query = $sql;
 
 		return $result;
@@ -805,8 +815,10 @@ class Database_Core {
 
 		$sql = $this->compile_select(get_object_vars($this));
 
-		$result = $this->query($sql);
 		$this->reset_select();
+		
+		$result = $this->query($sql);
+		
 		return $result;
 	}
 
@@ -961,8 +973,9 @@ class Database_Core {
 			$values = implode(",", $escaped_values);
 		}
 
-		$this->where($this->escape_column($field).' '.($not === TRUE ? 'NOT ' : '').'IN ('.$values.')');
-
+		$where = $this->escape_column(((strpos($field,'.') !== FALSE) ? $this->config['table_prefix'] : ''). $field).' '.($not === TRUE ? 'NOT ' : '').'IN ('.$values.')';
+		$this->where[] = $this->where($where, '', 'AND ', count($this->where), -1);
+		
 		return $this;
 	}
 
@@ -1003,12 +1016,12 @@ class Database_Core {
 			$table = $this->from[0];
 		}
 
-		$sql = $this->fmerge($this->config['table_prefix'].$table, array_keys($this->set), array_values($this->set));
+		$sql = $this->_d_merge($this->config['table_prefix'].$table, array_keys($this->set), array_values($this->set));
 
 		$this->reset_write();
 		return $this->query($sql);
 	}
-	public function fmerge($table, $keys, $values)
+	protected function _d_merge($table, $keys, $values)
 	{
 		// Escape the column names
 		foreach ($keys as $key => $value)
@@ -1118,9 +1131,9 @@ class Database_Core {
 			$this->where($where);
 		}
 
-		$rs = $this->select('COUNT(*) AS records_found')->get()->result_array(FALSE);
+		$query = $this->select('COUNT(*) AS '.$this->escape_column('records_found'))->get()->result(TRUE);
 
-		return (int) $rs[0]['records_found'];
+		return (int) $query->current()->records_found;
 	}
 
 	/**

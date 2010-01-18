@@ -10,9 +10,9 @@ MySQL - 5.0.41-community-nt : Database - web_myqee
 
 /*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;
 
-CREATE DATABASE /*!32312 IF NOT EXISTS*/`web_myqee` /*!40100 DEFAULT CHARACTER SET utf8 */;
+CREATE DATABASE /*!32312 IF NOT EXISTS*/`myqee_web` /*!40100 DEFAULT CHARACTER SET utf8 */;
 
-USE `web_myqee`;
+USE `myqee_web`;
 
 /*Table structure for table `mycms_[acquisition]` */
 

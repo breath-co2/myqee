@@ -2,7 +2,7 @@
 /**
  * block library.
  *
- * $Id: Block.php,v 1.1 2009/09/11 07:53:45 jonwang Exp $
+ * $Id$
  *
  * @package    Core
  * @author     Myqee Team

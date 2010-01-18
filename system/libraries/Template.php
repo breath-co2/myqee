@@ -7,7 +7,7 @@ Myqee::auto_load('View');
 /**
  * Template library.
  *
- * $Id: Template.php,v 1.6 2009/11/05 01:26:31 jonwang Exp $
+ * $Id$
  *
  * @package    Core
  * @author     Myqee Team

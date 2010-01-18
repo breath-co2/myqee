@@ -3,7 +3,7 @@
  * Loads and displays Kohana view files. Can also handle output of some binary
  * files, such as image, Javascript, and CSS files.
  *
- * $Id: View.php,v 1.1 2009/06/30 03:34:32 jonwang Exp $
+ * $Id$
  *
  * @package    Core
  * @author     Kohana Team

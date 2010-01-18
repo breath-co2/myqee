@@ -2,7 +2,7 @@
 /**
  * Array helper class.
  *
- * $Id: arr.php,v 1.3 2009/09/07 00:58:17 jonwang Exp $
+ * $Id$
  *
  * @package    Core
  * @author     Myqee Team

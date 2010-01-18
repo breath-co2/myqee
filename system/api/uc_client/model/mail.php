@@ -4,7 +4,7 @@
 	[UCenter] (C)2001-2009 Comsenz Inc.
 	This is NOT a freeware, use is subject to license terms
 
-	$Id: mail.php,v 1.1 2009/06/18 05:21:16 jonwang Exp $
+	$Id$
 */
 
 !defined('IN_UC') && exit('Access Denied');

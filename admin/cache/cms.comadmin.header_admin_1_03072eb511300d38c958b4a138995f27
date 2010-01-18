@@ -1,0 +1,37 @@
+<script type="text/javascript">
+document.write('<div id="appendChildDiv"></div><div id="hiddenfRameDiv"><iframe src="/images/admin/block.html" width="1" height="1" name="hiddenFrame" id="hiddenFrame" style="display:none;"></iframe></div>');
+</script>
+<div id="mytopDiv">
+<iframe style="position:absolute;top:0;left:0;filter:alpha(opacity=0);opacity:0;z-index:-1" frameborder="0" width="100%" height="68"></iframe>
+<table cellspacing="0" cellpadding="0" width="100%" align="center" class="toptable" height="38">
+<tr>
+<td style="color:#FFF;line-height:1.6em;min-width:800px;">
+<div style="position:absolute;z-index:0;width:365px;height:38px;background:url(/images/admin/headerimg.png) no-repeat;_background:none;_filter:progid:DXImageTransform.Microsoft.AlphaImageLoader(src='/images/admin/headerimg.png',sizingMethod='image');"></div>
+<div style="text-align:right">欢迎：<b>admin</b>，这是您第 <b style="color:#cf0">2594</b> 次登陆。<a href="/admin/admin/edit/1.html" style="color:#ff0">修改密码</a>&nbsp;&nbsp;
+<a href="/admin/login/logout.html" style="color:#ff0;">安全退出</a>&nbsp;&nbsp;
+<br/>当前站点：<a href="/admin/site/index.html" title="站点管理器" style="color:#cf0">主站点</a>&nbsp;&nbsp;
+<br/><img src="/images/admin/spacer.gif" style="height:0px;width:800px;" /></div>
+</td>
+</tr>
+</table>
+<div class="mainTable">
+<ul class="ul menu">
+	<li id="menuLi_index"><a href="/admin/index.html" id="menu_index" onfocus="this.blur()" onmouseover="showMenu(this.id,null,null,null,null,null,null,null,true);">管理首页</a> </li>	<li id="menuLi_info"><a href="/admin/info/index.html" id="menu_info" onfocus="this.blur()" onmouseover="showMenu(this.id,null,null,null,null,null,null,null,true);">内容管理</a> </li>	<li id="menuLi_class"><a href="/admin/class/index.html" id="menu_class" onfocus="this.blur()" onmouseover="showMenu(this.id,null,null,null,null,null,null,null,true);">栏目管理</a> </li>	<li id="menuLi_model"><a href="/admin/model/index.html" id="menu_model" onfocus="this.blur()" onmouseover="showMenu(this.id,null,null,null,null,null,null,null,true);">模型管理</a> </li>	<li id="menuLi_template"><a href="/admin/template/index.html" id="menu_template" onfocus="this.blur()" onmouseover="showMenu(this.id,null,null,null,null,null,null,null,true);">模板管理</a> </li>	<li id="menuLi_task"><a href="/admin/task/index.html" id="menu_task" onfocus="this.blur()" onmouseover="showMenu(this.id,null,null,null,null,null,null,null,true);">任务管理</a> </li>	<li id="menuLi_member"><a href="/admin/member/index.html" id="menu_member" onfocus="this.blur()" onmouseover="showMenu(this.id,null,null,null,null,null,null,null,true);">用户管理</a> </li>	<li id="menuLi_plugins"><a href="/admin/plugins/index.html" id="menu_plugins" onfocus="this.blur()" onmouseover="showMenu(this.id,null,null,null,null,null,null,null,true);">插件管理</a> </li></ul>
+</div>
+<div class="clear"></div>
+<div class="line1"></div>
+<script type="text/javascript">
+(function(){
+	var obj=$('menuLi_'+page_index);
+	if (obj){
+		obj.className = 'menunow';
+	}
+})();
+</script>
+
+<div class="popupmenu_popup mainmenu" style="display:none;" id="menu_index_menu"><ul class="ul"><li><a href="/admin/index/welcome.html">管理首页</a></li><li><a href="/admin/site/index.html">站点管理</a></li><li><a href="/admin/index/config.html">参数设置</a></li><li><a href="/admin/index/cache.html">缓存管理</a></li><li><a href="/admin/index/menu.html">后台菜单</a></li><li><a href="/admin/index/runsql.html">执行SQL</a></li><li><a href="/admin/index/phpinfo.html" target="_blank">phpinfo</a></li></ul></div><div class="popupmenu_popup mainmenu" style="display:none;" id="menu_info_menu"><ul class="ul"><li><a href="/admin/info/index.html">内容管理</a></li><li><a href="/admin/block/index.html">碎片管理</a></li><li><a href="/admin/comment/index.html">评论管理</a></li><li><a href="/admin/uploadfile/index.html">上传管理</a></li><li><a href="/admin/uploadfile/up.html">上传文件</a></li><li><a href="/admin/custompage/index.html">自定义页</a></li><li><a href="/admin/customlist/">自定义列表</a></li><li><a href="/admin/mydata/index.html">数据调用</a></li><li><a href="/admin/mylink/index.html">快速链接</a></li></ul></div><div class="popupmenu_popup mainmenu" style="display:none;" id="menu_class_menu"><ul class="ul"><li><a href="/admin/class/index.html">全部栏目</a></li><li><a href="/admin/class/mylist.html">分页显示</a></li><li><a href="/admin/class/add.html">添加栏目</a></li><li><a href="/admin/class/set.html">批量设置</a></li><li><a href="/admin/class/navigation.html">导航管理</a></li><li><a href="/admin/special/index.html">专题管理</a></li><li><a href="/admin/special/add.html">添加专题</a></li></ul></div><div class="popupmenu_popup mainmenu" style="display:none;" id="menu_model_menu"><ul class="ul"><li><a href="/admin/model/index.html">模型管理</a></li><li><a href="/admin/model/inputmodel.html">导入模型</a></li><li><a href="/admin/model/dblist.html">数据表管理</a></li><li><a href="/admin/model/inputdb.html">导入数据表</a></li></ul></div><div class="popupmenu_popup mainmenu" style="display:none;" id="menu_template_menu"><ul class="ul"><li><a href="/admin/template/index.html">全部</a></li><li><a href="/admin/template/index/1/cover.html">封面</a></li><li><a href="/admin/template/index/1/list.html">列表</a></li><li><a href="/admin/template/index/1/content.html">内容</a></li><li><a href="/admin/template/index/1/search.html">搜索</a></li><li><a href="/admin/template/index/1/block.html">区块</a></li><li><a href="/admin/template/index/1/page.html">单页</a></li><li><a href="/admin/template/index/1/frame.html">框架</a></li><li><a href="/admin/template/systemp.html">系统模板</a></li><li><a href="/admin/template/inputtpl.html">导入模板</a></li><li><a href="/admin/template/grouplist.html">模板组管理</a></li></ul></div><div class="popupmenu_popup mainmenu" style="display:none;" id="menu_task_menu"><ul class="ul"><li><a href="/admin/task/index.html">任务管理</a></li><li><a href="/admin/task/tohtml.html">页面生成</a></li><li><a href="/admin/acquisition/index.html">采集管理</a></li></ul></div><div class="popupmenu_popup mainmenu" style="display:none;" id="menu_member_menu"><ul class="ul"><li><a href="/admin/member/index.html">用户列表</a></li><li><a href="/admin/member/field_config.html">字段关联</a></li><li><a href="/admin/member/data_update.html">数据同步</a></li><li><a href="/admin/member/group.html">用户组管理</a></li><li><a href="/model/dblist/member.html">用户数据表</a></li><li><a href="/admin/admin/mylist.html">管理员管理</a></li><li><a href="/admin/admin/group_list.html">管理组管理</a></li></ul></div><div class="popupmenu_popup mainmenu" style="display:none;" id="menu_plugins_menu"><ul class="ul"><li><a href="/admin/plugins/index.html">插件管理</a></li><li><a href="/admin/plugins/setup.html">安装插件</a></li></ul></div>
+</div>
+
+<div id="mytopSpacerDiv"></div>
+<div class="clear"></div>
+

@@ -1,6 +1,6 @@
 <?php
 /**
- * $Id: plugins.php,v 1.17 2009/10/26 08:53:52 songwubin Exp $
+ * $Id$
  *
  * @package    Plugins Controller
  * @author     Myqee Team

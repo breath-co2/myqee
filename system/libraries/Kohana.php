@@ -25,7 +25,7 @@ ini_set('display_errors', TRUE);
 //
 // DO NOT EDIT BELOW THIS LINE, UNLESS YOU FULLY UNDERSTAND THE IMPLICATIONS.
 // ----------------------------------------------------------------------------
-// $Id: Kohana.php,v 1.1 2009/06/30 03:34:03 jonwang Exp $
+// $Id$
 //
 
 $kohana_pathinfo = pathinfo($_SERVER['SCRIPT_FILENAME']);

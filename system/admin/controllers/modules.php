@@ -1,6 +1,6 @@
 <?php
 /**
- * $Id: modules.php,v 1.2 2009/09/17 01:28:11 jonwang Exp $
+ * $Id$
  *
  * @package    Plugins Controller
  * @author     Myqee Team

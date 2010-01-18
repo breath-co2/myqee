@@ -3,7 +3,7 @@
 /**
  * ucenter api
  *
- * $Id: uchome.php,v 1.3 2009/07/08 03:25:22 songwubin Exp $
+ * $Id$
  *
  * @package    Core
  * @author     Myqee Team

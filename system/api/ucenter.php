@@ -3,7 +3,7 @@
 /**
  * ucenter api
  *
- * $Id: ucenter.php,v 1.2 2009/06/18 07:21:27 jonwang Exp $
+ * $Id$
  *
  * @package    Core
  * @author     Myqee Team

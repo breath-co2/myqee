@@ -1,5 +1,5 @@
 <?php defined('MYQEEPATH') or die('No direct script access.');
-//2009-12-30 20:29:00
+//2010-01-11 09:50:09
 //it is saved by myqee system,please don't edit it.
 
 $config['dbname'] = 'default/news';
@@ -17,7 +17,7 @@ $config['sys_field'] = array (
   'filepath' => 'filepath',
   'filename' => 'filename',
   'iscommend' => 'iscommend',
-  'is_indexshow' => 'indexshow',
+  'writer' => 'sssf',
 );
 $config['is_member_db'] = '0';
 $config['list'] = array (
@@ -41,17 +41,6 @@ $config['list'] = array (
     array (
       1 => '是',
       0 => '<font color="red">否</font>',
-    ),
-  ),
-  'indexshow' => 
-  array (
-    'title' => '首页显示',
-    'width' => 55,
-    'align' => 'center',
-    'boolean' => 
-    array (
-      0 => '否',
-      1 => '<font color="red">是</font>',
     ),
   ),
 );
@@ -359,21 +348,16 @@ $config['edit'] = array (
       ),
     ),
   ),
-  'indexshow' => 
+  'sssf' => 
   array (
-    'title' => '首页显示',
-    'type' => 'radio',
+    'title' => '撒旦法撒旦法',
+    'type' => 'input',
     'set' => 
     array (
-      'size' => 1,
+      'class' => 'input',
+      'size' => 20,
     ),
-    'candidate' => 
-    array (
-      1 => '是',
-      0 => '否',
-    ),
-    'default' => '0',
-    'format' => 'int',
+    'format' => 'string',
     'description' => '',
     'adv' => 
     array (

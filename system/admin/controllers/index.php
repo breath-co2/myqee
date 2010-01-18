@@ -14,7 +14,16 @@ class Index_Controller_Core extends Controller {
 	}
 	
 	public function test(){
-		echo 'a';
+		$view = new View('admin/index');
+		$dd = 'bbbbbb';
+		$dd2 = 'ddddddddddd';
+		$view -> set_global('tttt','全局');
+		$view -> bind('test',$dd);
+		$view -> set_global_bind('test2',$dd2);
+		
+		$dd2 = '2222222222';
+		$view -> render(TRUE);
+		echo $dd;
 	}
 	
 	public function pinyin(){

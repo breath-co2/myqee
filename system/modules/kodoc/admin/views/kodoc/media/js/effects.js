@@ -1,4 +1,4 @@
-// $Id: effects.js 486 2007-09-04 01:49:02Z Shadowhand $
+// $Id$
 $(document).ready(function(){
 	// Opacity animations in an element with an opacity of 1.0 cause Firefox bugs
 	$('#menu').css('opacity', 0.9999);

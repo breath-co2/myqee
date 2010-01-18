@@ -1,6 +1,6 @@
 <?php
 /**
- * $Id: task.php,v 1.7 2009/09/15 09:01:56 jonwang Exp $
+ * $Id$
  *
  * @package    Core
  * @author     Myqee Team

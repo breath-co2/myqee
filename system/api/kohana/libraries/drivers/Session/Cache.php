@@ -10,7 +10,7 @@
  * Lifetime does not need to be set as it is
  * overridden by the session expiration setting.
  *
- * $Id: Cache.php,v 1.1 2009/06/30 03:34:33 jonwang Exp $
+ * $Id$
  *
  * @package    Core
  * @author     Kohana Team

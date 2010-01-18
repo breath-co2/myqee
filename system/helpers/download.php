@@ -2,7 +2,7 @@
 /**
  * Download helper class.
  *
- * $Id: download.php,v 1.4 2009/10/15 01:40:21 jonwang Exp $
+ * $Id$
  *
  * @package    Core
  * @author     Kohana Team

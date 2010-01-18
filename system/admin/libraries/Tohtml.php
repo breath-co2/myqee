@@ -2,7 +2,7 @@
 /**
  * File Tohtml class.
  *
- * $Id: Tohtml.php,v 1.1 2009/09/22 01:22:28 jonwang Exp $
+ * $Id$
  *
  * @package    Core
  * @author     Myqee Team

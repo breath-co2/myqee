@@ -4,11 +4,11 @@
  *
  * $Id$
  *
- * @package    MyQEE Core
- * @subpackage	core
- * @author     Myqee Team
- * @copyright  (c) 2008-2010 Myqee Team
- * @license    http://www.myqee.com/license.html
+ * @package     系统核心
+ * @subpackage	核心
+ * @author      rovewang@gmail.com
+ * @copyright   (c) 2008-2010 Myqee Team
+ * @license     http://www.myqee.com/license.html
  * @link		http://www.myqee.com/
  * @since		Version 1.0
  */

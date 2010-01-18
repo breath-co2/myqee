@@ -2,7 +2,7 @@
 /**
  * Router
  *
- * $Id: Router.php,v 1.1 2009/06/30 03:34:32 jonwang Exp $
+ * $Id$
  *
  * @package    Core
  * @author     Kohana Team

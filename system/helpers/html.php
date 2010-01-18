@@ -2,7 +2,7 @@
 /**
  * HTML helper class.
  *
- * $Id: html.php,v 1.3 2009/08/21 00:58:07 jonwang Exp $
+ * $Id$
  *
  * @package    Core
  * @author     Myqee Team

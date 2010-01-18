@@ -2,7 +2,7 @@
 /**
  * Validation helper class.
  *
- * $Id: valid.php,v 1.2 2009/06/18 07:22:55 jonwang Exp $
+ * $Id$
  *
  * @package    Core
  * @author     Myqee Team

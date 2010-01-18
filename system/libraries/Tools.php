@@ -4,7 +4,7 @@ defined ( 'MYQEEPATH' ) or die ( 'No direct script access.' );
 /**
  * 工具集
  *
- * $Id: Tools.php,v 1.19 2009/11/06 05:23:33 songwubin Exp $
+ * $Id$
  *
  * @package    Core
  * @author     Myqee Team

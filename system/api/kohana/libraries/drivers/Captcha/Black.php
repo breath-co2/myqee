@@ -2,7 +2,7 @@
 /**
  * Captcha driver for "black" style.
  *
- * $Id: Black.php,v 1.1 2009/06/30 03:34:33 jonwang Exp $
+ * $Id$
  *
  * @package    Captcha
  * @author     Kohana Team

@@ -1,7 +1,7 @@
 /**
  * ymPrompt.js 消息提示组件
  * @author netman8410@163.com
- * $Id: ymPrompt.js,v 1.16 2009/10/13 00:37:27 jonwang Exp $
+ * $Id$
  *
  * @editor myqee.com
  */

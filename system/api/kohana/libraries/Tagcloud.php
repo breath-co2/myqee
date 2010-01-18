@@ -4,7 +4,7 @@
  *
  * [ref-tcl]: http://en.wikipedia.org/wiki/Tag_cloud
  *
- * $Id: Tagcloud.php,v 1.1 2009/06/30 03:34:32 jonwang Exp $
+ * $Id$
  *
  * @package    Tagcloud
  * @author     Kohana Team

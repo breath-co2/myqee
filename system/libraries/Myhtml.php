@@ -2,7 +2,7 @@
 /**
  * 为前台数据提供数据调用功能
  *
- * $Id: Myhtml.php,v 1.1 2009/11/11 12:00:04 tom Exp $
+ * $Id$
  *
  * @package    Core
  * @author     Myqee Team
