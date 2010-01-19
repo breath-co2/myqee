@@ -1281,7 +1281,7 @@ class Model_Controller_Core extends Controller {
 		}
 		
 		$field = array ();
-		$fieldlist = $this->_get_fieldlist_array ( $tablename  ,$database);
+		$fieldlist = $this->_get_fieldlist_array ($database,$tablename);
 		
 		//print_r($fieldlist);exit;
 		$db_field_tmp = array_merge ( $db_field, $fieldlist );
@@ -1324,7 +1324,7 @@ class Model_Controller_Core extends Controller {
 	 * @param string $mydbname
 	 * @return array $fieldlist_array
 	 */
-	protected function _get_fieldlist_array($mydbname,$database) {
+	protected function _get_fieldlist_array($database,$mydbname) {
 		//		$fieldlist = $adminmodel -> db -> list_fields($mydbname,true);	//读取数据表字段
 		$_db = Database::instance($database);
 		$fieldlist = $_db->query ( 'show full fields from `' . $_db	->table_prefix () . $mydbname . '`' )->result_array ( FALSE ); //读取数据表字段
@@ -1366,7 +1366,7 @@ class Model_Controller_Core extends Controller {
 			MyqeeCMS::show_error ( Myqee::lang ( 'admin/model.error.nothedbname', $tablename ), false, 'goback' );
 		}
 		
-		$fieldlist_array = $this->_get_fieldlist_array ( $tablename ,$database);
+		$fieldlist_array = $this->_get_fieldlist_array ($database,$tablename);
 		//		print_r($fieldlist);
 		
 
@@ -1381,7 +1381,7 @@ class Model_Controller_Core extends Controller {
 		$fieldlist_array [$field] = ( array ) $fieldlist_array [$field];
 		$db_field [$field] = array_merge ( $fieldlist_array [$field], $db_field [$field] );
 		
-		preg_match ( "/^([^\(\)]+)(\(([0-9]+(,[0-9]+)?)\))?$/", $fieldlist_array [$field] ['type'], $dbtypeset );
+		preg_match ( "/^([^\(\)]+)(\(([0-9]+(,[0-9]+)?)\))?( unsigned)?$/", $fieldlist_array [$field] ['type'], $dbtypeset );
 		$db_field [$field] ['type'] = $dbtypeset [1];
 		$db_field [$field] ['length'] = $dbtypeset [3];
 		
@@ -1449,7 +1449,7 @@ class Model_Controller_Core extends Controller {
 		if (! $_db->table_exists ( $tablename )) {
 			MyqeeCMS::show_error ( Myqee::lang ( 'admin/model.error.nothedbname', $tablename ), true );
 		}
-		$fieldlist_array = $this->_get_fieldlist_array ( $tablename ,$database);
+		$fieldlist_array = $this->_get_fieldlist_array ($database,$tablename);
 		
 		//检验是否存在此字段
 		if ($field) {
@@ -1471,7 +1471,7 @@ class Model_Controller_Core extends Controller {
 		
 		ignore_user_abort();	//设置为即便浏览器关闭，程序照样执行直到结束
 		
-		if (! in_array ( $post ['type'], array ('varchar', 'text', 'mediumtext', 'longtext', 'tinyint', 'smallint', 'int', 'bigint', 'float', 'double' ) )) {
+		if (! in_array ( $post ['type'], array ('varchar', 'text', 'mediumtext', 'longtext', 'tinyint', 'smallint', 'mediumint' ,'int', 'bigint', 'float', 'double' ) )) {
 			$post ['type'] = 'varchar';
 		}
 		
@@ -1482,10 +1482,10 @@ class Model_Controller_Core extends Controller {
 			$post ['length'] = $post ['length'] > 0 && $post ['length'] <= 65535 ? $post ['length'] : 255;
 		} elseif ($post ['type'] == 'tinyint') {
 			$post ['length'] = $post ['length'] > 0 && $post ['length'] <= 3 ? $post ['length'] : 3;
-			//if (! ($post ['default'] > 0 && $post ['default'] <= 999))unset ( $post ['default'] );
 		} elseif ($post ['type'] == 'smallint') {
 			$post ['length'] = $post ['length'] > 0 && $post ['length'] <= 6 ? $post ['length'] : 6;
-			//if (! ($post ['default'] > 0 && $post ['default'] <= 999999))unset ( $post ['default'] );
+		} elseif ($post ['type'] == 'mediumint') {
+			$post ['length'] = $post ['length'] > 0 && $post ['length'] <= 8 ? $post ['length'] : 8;
 		} elseif ($post ['type'] == 'int') {
 			$post ['length'] = $post ['length'] > 0 && $post ['length'] <= 11 ? $post ['length'] : 11;
 			//if (! ($post ['default'] > 0 && strlen ( ( string ) $post ['default'] ) <= 11))unset ( $post ['default'] );
@@ -1545,8 +1545,10 @@ class Model_Controller_Core extends Controller {
 		
 		//处理高级分组录入项
 //		print_r($post['adv']);
-		if (is_array($post ['adv'])){
+		if ($post ['usehtml']==2 && is_array($post ['adv'])){
 			$post['adv'] = $adminmodel -> set_field_adv($post['adv'],true);
+		}else{
+			$post['adv'] = null;
 		}
 		
 		$data = array (
@@ -1603,7 +1605,9 @@ class Model_Controller_Core extends Controller {
 		
 		$this->db->update ( '[dbtable]', array ('config' => serialize ( $db_info ['config'] ) ), array ('id' => $dbid ) );
 		
-		$this->_editfield ( $tablename, $field, $newfield, $data ,$database);
+		if($_POST['ischangefield']){
+			$this->_editfield ( $database,$tablename, $field, $newfield, $data);
+		}
 		
 		//保存数据表配置文件
 		$adminmodel->save_db_config ( $dbid );
@@ -1611,12 +1615,20 @@ class Model_Controller_Core extends Controller {
 		MyqeeCMS::show_info ( Myqee::lang ( 'admin/model.info.saveok' ), true, 'goback' );
 	}
 	
-	protected function _editfield($tablename, $oldname, $newname, $dbconfig,$database) {
-		$_db = Database::instance($database);
+	protected function _editfield($database,$tablename, $oldname, $newname, $dbconfig) {
+		if ($_SESSION){
+			//关闭SESSION防止后面的操作时间过长造成对后面操作的阻塞
+			Session::instance()->write_close();
+		}
+		
+		//防止超时
+		set_time_limit(0);
+		ignore_user_abort();
+		$db = Database::instance($database);
 		$fieldtype = $dbconfig ['type'] . ($dbconfig ['length'] ? '(' . $dbconfig ['length'] . ')' : '');
-		$sql = "ALTER TABLE `" . $_db->table_prefix () . $tablename . "` " . ($oldname ? "CHANGE `{$oldname}`" : 'ADD COLUMN') . " `{$newname}` {$fieldtype} " . ($dbconfig ['isnonull'] ? 'NOT NULL' : 'NULL') . ($dbconfig ['isonly'] ? ' auto_increment' : '') . " COMMENT '{$dbconfig['comment']}'";
-		$_db->query ( $sql );
-		$dbindex = $_db->query ( 'SHOW INDEX FROM `' . $_db->table_prefix () . $tablename )->result_array ( FALSE );
+		$sql = "ALTER TABLE `" . $db->table_prefix () . $tablename . "` " . ($oldname ? "CHANGE `{$oldname}`" : 'ADD COLUMN') . " `{$newname}` {$fieldtype} " . ($dbconfig ['isnonull'] ? 'NOT NULL' : 'NULL') . ($dbconfig ['isonly'] ? ' auto_increment' : '') . " COMMENT '{$dbconfig['comment']}'";
+		$db->query ( $sql );
+		$dbindex = $db->query ( 'SHOW INDEX FROM `' . $db->table_prefix () . $tablename )->result_array ( FALSE );
 		
 		//读取索引
 		foreach ( $dbindex as $item ) {
@@ -1627,9 +1639,9 @@ class Model_Controller_Core extends Controller {
 		}
 		//创建、删除索引
 		if ($dbconfig ['iskey'] && ! $hasKey) {
-			$_db->query ( "ALTER TABLE `" . $_db->table_prefix () . $tablename . "` ADD INDEX (`{$newname}`)" );
+			$db->query ( "ALTER TABLE `" . $db->table_prefix () . $tablename . "` ADD INDEX (`{$newname}`)" );
 		} elseif (! $dbconfig ['iskey'] && $hasKey) {
-			$_db->query ( "ALTER TABLE `" . $_db->table_prefix () . $tablename . "` DROP INDEX `{$newname}`" );
+			$db->query ( "ALTER TABLE `" . $db->table_prefix () . $tablename . "` DROP INDEX `{$newname}`" );
 		}
 	
 	}
@@ -1659,7 +1671,7 @@ class Model_Controller_Core extends Controller {
 		if (! $_db->table_exists ( $tablename )) {
 			MyqeeCMS::show_error ( Myqee::lang ( 'admin/model.error.nothedbname', $tablename ), true );
 		}
-		$fieldlist_array = $this->_get_fieldlist_array ( $tablename  ,$db_info['database']);
+		$fieldlist_array = $this->_get_fieldlist_array ($database,$tablename);
 		
 		//检验是否存在此字段
 		if ($fieldlist_array [$field]) {
@@ -1695,7 +1707,7 @@ class Model_Controller_Core extends Controller {
 		if (! $_db->table_exists ( $tablename )) {
 			MyqeeCMS::show_error ( Myqee::lang ( 'admin/model.error.nothedbname', $tablename ), true );
 		}
-		$fieldlist_array = $this->_get_fieldlist_array ( $tablename  ,$db_info['database']);
+		$fieldlist_array = $this->_get_fieldlist_array ($database ,$tablename);
 		
 		if (is_array ( $_POST ['field'] )) {
 			$tmpfield = array_merge ( ( array ) $_POST ['field'], $fieldlist_array );
@@ -1711,7 +1723,7 @@ class Model_Controller_Core extends Controller {
 					preg_match ( "/^([^\(\)]+)(\(([0-9]+(,[0-9]+)?)\))?$/", $fieldlist_array [$key] ['type'], $dbtypeset );
 					$data [$key] = $fieldlist_array [$key];
 					
-					$data [$key] = array ('name' => $fieldlist_array [$key] ['name'], 'dbname' => Tools::formatstr ( $dbname ), 'iskey' => $fieldlist_array [$key] ['iskey'] ? true : false, 'type' => $dbtypeset [1], 'length' => $dbtypeset [3] );
+					$data [$key] = array ('name' => $fieldlist_array [$key] ['name'], 'dbname' => $database.'/'.$tablename, 'iskey' => $fieldlist_array [$key] ['iskey'] ? true : false, 'type' => $dbtypeset [1], 'length' => $dbtypeset [3] );
 				}
 				if ($_POST ['field'] [$key] ['dbname']) {
 					$data [$key] ['dbname'] = $_POST ['field'] [$key] ['dbname'];

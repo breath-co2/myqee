@@ -37,8 +37,11 @@ View::factory('admin/header',array('page_index'=>$page_index,'page_title'=>$page
 </td>
 </tr>
 <tr><td class="td1" align="right">数据表字段设置：</td><td class="td2">
-
-<table border="0" cellpadding="4" cellspacing="1" align="center" class="tableborder" style="width:98%;">
+<div style="width:98%;margin:auto;padding:4px 0">修改字段设置：<?php echo form::checkbox('ischangefield',1,$field['name']?false:true,'onclick="if(this.checked){$(\'filed_edit_div\').style.display=\'\'}else{$(\'filed_edit_div\').style.display=\'none\'}"')?></div>
+<table border="0" cellpadding="4" cellspacing="1" align="center" class="tableborder" style="width:98%;<?php echo $field['name']?'display:none':'';?>" id="filed_edit_div">
+<tr>
+	<th class="td2" colspan="2">字段设置</th>
+</tr>
 <tr>
 	<td class="td1" width="120" align="right">字段属性：</td>
 	<td class="td2">
@@ -59,8 +62,9 @@ View::factory('admin/header',array('page_index'=>$page_index,'page_title'=>$page
 		'text' => '小型字符型(TEXT)',
 		'mediumtext' => '中型字符型(MEDIUMTEXT)',
 		'longtext' => '大型字符型(LONGTEXT)',
-		'tinyint' => '小数值型,长度1-3(TINYINT)',
-		'smallint' => '中数值型,长度1-6(SMALLINT)',
+		'tinyint' => '超小值型,长度1-3(TINYINT)',
+		'smallint' => '小数值型,长度1-6(SMALLINT)',
+		'mediumint' => '中数值型，长度1-8(MEDIUMINT)',
 		'int' => '大数值型,长度1-11(INT)',
 		'bigint' => '超大数值型(BIGINT)',
 		'float' => '数值浮点型(FLOAT)',
@@ -259,6 +263,9 @@ echo form::input(array('name'=>'field[usehtml]','id'=>'field[usehtml]','type'=>'
 		inputs[6].value = myArray['_g']['isadd']||'1';
 		inputs[7].value = myArray['_g']['isdel']||'1';
 		inputs[8].value = myArray['_g']['isorder']||'1';
+		if (typeof(myArray['_g']['group_auto']) =='object'){
+			myArray = [myArray['_g']['group_auto']];
+		}
 	}
 	ini_field(myArray);
 	nowGroupId = '0';

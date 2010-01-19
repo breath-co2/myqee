@@ -891,7 +891,7 @@ class Admin_Model_Core extends Model {
 	 *
 	 * @return Array datable for select
 	 */
-	public function get_dbtable_forselect($includememberdb = FALSE , $additem = null){
+	public function get_dbtable_forselect($includememberdb = true , $additem = null){
 		$query = $this -> get_dbtable_array($includememberdb);
 		if (is_array($additem)){
 			$dbtable = $additem;
@@ -917,7 +917,7 @@ class Admin_Model_Core extends Model {
 	 *
 	 * @return array datable
 	 */
-	public function get_dbtable_array($includememberdb = FALSE){
+	public function get_dbtable_array($includememberdb = true){
 		$where = array('isuse'=>1);
 //		if ($this -> site_id>0){
 //			$where['siteid']=$this -> site_id;
@@ -2483,7 +2483,7 @@ class Admin_Model_Core extends Model {
 		foreach ($adv as $k=>$v){
 			
 			if ($k == '_g'){
-				if (!$isfrist && !preg_match("/^[0-9a-z_]+$/i",$v['flag'])){
+				if (!$isfrist && !preg_match("/^[a-z][0-9a-z_]*$/i",$v['flag'])){
 					continue;
 				}
 				//当前为分组
@@ -2497,52 +2497,63 @@ class Admin_Model_Core extends Model {
 					'isdel' => $v['isdel']?1:0,
 					'isorder' => $v['isorder']?1:0,
 				);
+				if (is_array($v['group_auto'])){
+					if (isset($v['group_auto']['_g'])){
+						$tmparr['_g']['group_auto'] = $this->set_field_adv($v['group_auto'],true);
+					}else{
+						$tmparr['_g']['group_auto'] = $this->_get_field_var($v['group_auto']);
+					}
+				}
 			}else{
 				if (isset($v['_g']) && is_array($v['_g'])){
 					$tmparr[$k] = $this -> set_field_adv($v);
 				}else{
-					if (!preg_match("/^[0-9a-z_]+$/i",$v['flag'])){
+					if (!preg_match("/^[a-z][0-9a-z_]*$/i",$v['flag'])){
 						continue;
 					}
-					if ($v['candidate']){
-						$tmpvalue = $v['candidate'];
-						if (!empty( $tmpvalue )){
-							$tmpvalue = explode("\n",$tmpvalue);
-							foreach ($tmpvalue as $value){
-								$value = explode('|',$value);
-								$thekey = array_shift($value);
-								if (count($value)>0){
-									$value = join('|',$value);
-								}else{
-									$value = $thekey;
-								}
-								$tmpvalue1[$thekey] = $value;
-							}
-							$tmpvalue = $tmpvalue1;
-							$v['candidate'] = $tmpvalue;
-						}
-						unset($tmpvalue,$tmpvalue1);
-					}
-					$tmparr[$k] = array(
-						'flag' => $v['flag'],
-						'name' => $v['name'],
-						'type' => $type[$v['type']]?$v['type']:'input',
-						'format' => $format[$v['format']]?$v['format']:'',
-						'editwidth' => $v['editwidth']>0||$v['editwidth']==='0'?$v['editwidth']:NULL,
-						'set' => array(
-							'size' => $v['set']['size']>0?$v['set']['size']:NULL,
-							'rows' => $v['set']['name']>0?$v['set']['name']:NULL,
-							'class' => $v['set']['class'],
-							'other' => $v['set']['other'],
-						),
-						'default' => $v['default'],
-						'candidate' => $v['candidate'],
-					);
+					$tmparr[$k] = $this->_get_field_var($v);
 				}
 			}
 			
 		}
 		return $tmparr;
+	}
+	
+	protected function _get_field_var($v){
+		if ($v['candidate']){
+			$tmpvalue = $v['candidate'];
+			if (!empty( $tmpvalue )){
+				$tmpvalue = explode("\n",$tmpvalue);
+				foreach ($tmpvalue as $value){
+					$value = explode('|',$value);
+					$thekey = array_shift($value);
+					if (count($value)>0){
+						$value = join('|',$value);
+					}else{
+						$value = $thekey;
+					}
+					$tmpvalue1[$thekey] = $value;
+				}
+				$tmpvalue = $tmpvalue1;
+				$v['candidate'] = $tmpvalue;
+			}
+			unset($tmpvalue,$tmpvalue1);
+		}
+		return array(
+			'flag' => $v['flag'],
+			'name' => $v['name'],
+			'type' => $type[$v['type']]?$v['type']:'input',
+			'format' => $format[$v['format']]?$v['format']:'',
+			'editwidth' => $v['editwidth']>0||$v['editwidth']==='0'?$v['editwidth']:NULL,
+			'set' => array(
+				'size' => $v['set']['size']>0?$v['set']['size']:NULL,
+				'rows' => $v['set']['name']>0?$v['set']['name']:NULL,
+				'class' => $v['set']['class'],
+				'other' => $v['set']['other'],
+			),
+			'default' => $v['default'],
+			'candidate' => $v['candidate'],
+		);
 	}
 	
 	

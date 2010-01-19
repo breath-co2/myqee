@@ -1128,10 +1128,20 @@ function html_rename_all(){
 			}else{
 				$html = '';
 			}
+			$fieldnamestr = explode('.',$fieldname);
+			$vstr = '';
+			foreach ($fieldnamestr as $v){
+				$vstr .= '["'.$v .'"]';
+				$html2 .= '_advValue'.$vstr.'={};'."\r\n";
+				$html2 .= '_advArr'.$vstr.'={};'."\r\n";
+			}
+			$fieldnamestr = implode('"]["',$fieldnamestr);
+			
 			$html .= '<script type="text/javascript">'."\r\n".
 			'var _mynamestr = "'.$fieldstr.'";'."\r\n".
-			'_advValue["'.$fieldname.'"] = '.$value.';'."\r\n".
-			'_advArr["'.$fieldname.'"] = '.Tools::json_encode(form::get_advfield_array($myset['adv'],$fieldname,$fieldname,$fieldstr)).';'."\r\n".
+			$html2.
+			'_advValue["'.$fieldnamestr.'"] = '.$value.';'."\r\n".
+			'_advArr["'.$fieldnamestr.'"] = '.Tools::json_encode(form::get_advfield_array($myset['adv'],$fieldname,$fieldname,$fieldstr)).';'."\r\n".
 			'document.write(add_adv_field(".'.$fieldname.'"));'."\r\n".
 			'ini_adv_field(".'.$fieldname.'");'."\r\n".
 			'</script>';
@@ -1332,6 +1342,9 @@ function html_rename_all(){
 		$myarray=array(
 			'_set'=>$arr['_g'],
 		);
+		if (isset($myarray['_set']['group_auto'])){
+			$arr = array('_groupauto'=>$myarray['_set']['group_auto']);
+		}
 		foreach ($arr as $k => $myset){
 			//设置字段
 			if ($k=='_g'){
@@ -1343,8 +1356,8 @@ function html_rename_all(){
 			$newfieldname = $fieldname.'][{{.'.$idstr.'}}]['.$k;
 
 			if (isset($myset['_g']) && is_array($myset['_g'])){
-				$myarray[$k] = form::get_advfield_array($myset,$newfieldname,$newidstr,$fieldstr);
 				$myarray[$k]['_set'] = $myset['_g'];
+				$myarray[$k] = form::get_advfield_array($myset,$newfieldname,$newidstr,$fieldstr);
 			}else{
 				$myarray[$k] = array(
 					'_set' => array(

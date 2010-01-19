@@ -56,7 +56,7 @@ class Info_Controller_Core extends Controller {
 			//处理搜索
 			$search = $_GET['search'];
 			//搜索关键词
-			if (!empty($search['keyword'])){
+			if ($search['keyword']!==''){
 				if (!$search['field'] || !$dbfield[$search['field']]){
 					$search['field'] = $sys_field['title'] ? $sys_field['title'] : key($dbfield);
 				}
@@ -85,7 +85,7 @@ class Info_Controller_Core extends Controller {
 				$per = $search['limit'];
 			}
 			
-			$total = $adminmodel -> get_userdb_count($tablename ,$where , $sys_field['class_id'] ,$otherBuilder,$database);
+			$total = $adminmodel -> get_userdb_count($database.'/'.$tablename ,$where , $sys_field['class_id'] ,$otherBuilder);
 
 			$this -> pagination = new Pagination( array(
 				'uri_segment'    => 'main',
@@ -152,7 +152,7 @@ class Info_Controller_Core extends Controller {
 				//处理搜索
 				$search = $_GET['search'];
 				//搜索关键词
-				if (!empty($search['keyword'])){
+				if ($search['keyword']!==''){
 					if (!$search['field'] || !$dbfield[$search['field']]){
 						$search['field'] = $sys_field['title'] ? $sys_field['title'] : key($dbfield);
 					}
@@ -848,7 +848,8 @@ class Info_Controller_Core extends Controller {
 			if ($myclass['dbname']!=$dbname){
 				MyqeeCMS::show_error( Myqee::lang('admin/info.error.diffdatabase'),true);
 			}
-			$sqlset = '`'.$setkey.'`='.$setvalue.',`'.$sys_field['class_name'].'`='.var_export($myclass['classname'],true);
+			$sqlset = '`'.$setkey.'`='.$setvalue;
+			if ($sys_field['class_name']) $sqlset.=',`'.$sys_field['class_name'].'`='.var_export($myclass['classname'],true);
 		}else{
 			$sqlset = '`'.$setkey.'`='.$setvalue;
 		}
@@ -858,7 +859,7 @@ class Info_Controller_Core extends Controller {
 		$doNum = $db -> query($sql) -> count();
 //		$doNum = $adminmodel -> db -> from($dbname.' a') -> set($newSet) -> in($sys_field['id'],$myId) -> update();
 		if ($doNum>0){
-			MyqeeCMS::show_info( Myqee::lang('admin/info.info.dosetsuccess',$doNum) , true , 'refresh');
+			MyqeeCMS::show_info( Myqee::lang('admin/info.info.dosetsuccess',$doNum) , true );
 		}else{
 			MyqeeCMS::show_info( Myqee::lang('admin/info.info.nodoset') , true );
 		}
