@@ -929,7 +929,6 @@ abstract class Myqee {
 			// No suffix
 			$suffix = FALSE;
 		}
-		
 		$class2 = '';
 		if ($suffix === 'Core') {
 			$type = 'libraries';
@@ -948,6 +947,10 @@ abstract class Myqee {
 			// Lowercase filename
 			$class2 = substr ( $class, 0, - 4 );
 			$file = strtolower ( $class2 );
+		} elseif ($suffix === 'Orm') {
+			$type = 'orm';
+			$class2 = substr ( $class, 0, - 4 );
+			$file = strtolower ( str_replace ( '_', '/', $class2) );
 		} elseif ($suffix === 'Driver') {
 			$type = 'libraries/drivers';
 			$file = str_replace ( '_', '/', substr ( $class, 0, - 7 ) );
