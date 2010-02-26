@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 $page_index = 'index';
 $page_title = Myqee::lang('admin/index.page_title');
 View::factory('admin/header',array('page_index'=>$page_index,'page_title'=>$page_title)) -> render(TRUE);
