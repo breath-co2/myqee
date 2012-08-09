@@ -1,0 +1,105 @@
+/*Date*/
+#calender{
+    box-shadow: 6px 6px 6px rgba(0,0,0,0.2);
+    -moz-box-shadow: 6px 6px 6px rgba(0,0,0,0.2);
+    -webkit-box-shadow: 6px 6px 6px rgba(0,0,0,0.2);
+    filter: progid:DXImageTransform.Microsoft.Shadow(Strength=6, Direction=135, Color='#cdcdcd')
+}
+
+.calender th.th {
+    font: 12px Arial, Tahoma;
+    _font: 11px Arial, Tahoma;
+    font-weight: bold;
+    color: #174ba0;
+    height: 25px;
+    background:-webkit-gradient(linear, 0 0, 0 bottom, from(#bee5fd), to(#87bddf));
+    background:-moz-linear-gradient(rgba(192,229,253,0.8), rgba(135,189,223,0.8));
+    background:linear-gradient(#bee5fd, #87bddf);
+    background:#a4c9db url(../images/calender_title_bg.gif) repeat-x left top\9; 
+}
+.calender th a {
+    color: #174ba0;
+}
+.header input {
+    background:none;
+    vertical-align: middle;
+    height: 16px;
+}
+#calender table tr:hover{
+    background:#e9e9e9;
+}
+#calender table {
+    background:#f9f9f9;
+    border: 1px solid #86B9D6;
+}
+
+#calender table .category,
+#calender table .category:hover
+ {
+    font: 12px Arial, Tahoma;
+    _font: 11px Arial, Tahoma;
+    color: #92A05A;
+    height:20px;
+    background-color: #FFFFD9;
+    
+    box-shadow: 0 3px 3px rgba(0,0,0,0.1);
+    -moz-box-shadow: 0 3px 3px rgba(0,0,0,0.1);
+    -webkit-box-shadow: 0 3px 3px rgba(0,0,0,0.1);
+    filter: progid:DXImageTransform.Microsoft.Shadow(Strength=5, Direction=90, Color='#dddddd')
+}
+.category td {
+    border-bottom: 1px solid #DEDEB8;
+}
+.expire, .expire a:link, .expire a:visited {
+    color: #999999;
+}
+.default, .default a:link, .default a:visited {
+    color: #000000;
+}
+.thismonth
+{
+    background:#f6f6f6;
+}
+.lastmonth,
+.nextmonth
+{
+    background:#e0e0e0;
+}
+.today, .today a:link, .today a:visited {
+    color: #00BB00;
+    background:#fff;
+}
+.checked, .checked a:link, .checked a:visited {
+    color: #FF0000;
+    background:#FFFFD9;
+}
+#calender_year {
+    display: none;
+    line-height: 1.3em;
+    background: #FFFFFF;
+    position: absolute;
+    z-index: 10;
+}
+#calender_year .col {
+    float: left;
+    background: #FFFFFF;
+    margin-left: 1px;
+    border: 1px solid #86B9D6;
+    padding: 4px;
+}
+#calender_month {
+    display: none;
+    background: #FFFFFF;
+    line-height: 130%;
+    border: 1px solid #86B9D6;
+    padding: 4px;
+    position: absolute;
+    z-index: 11;
+}
+#year, #month {
+    padding-right:10px;
+    background:url(../images/onbottom.gif) no-repeat center right;
+}
+
+#hourminute input{width:20px;text-align:center;}
+/*Date*/

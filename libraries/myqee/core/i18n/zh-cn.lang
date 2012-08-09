@@ -1,0 +1,27 @@
+[Core]
+Page Not Found                                      = 页面没有找到
+Internal Server Error                               = 服务器错误
+not found the project: :project                     = 没有找到指定的项目：:project
+Please rename the file config.new:EXT to config:EXT = 请先将根目录的config.new:EXT文件重命名为 config:EXT
+Please create a new project.                        = 请先创建一个项目。
+Request Method Not Allowed.                         = 不允许访问请求的方法。
+
+[Core.Page]
+First    = 首页
+Previous = 上一页
+Next     = 下一页
+Last     = 最后一页
+
+[Core.Error]
+Error Message:                                                  = 错误信息：
+The requested URL :REQUEST_URI was not found on this server.    = 当前请求的URL :REQUEST_URI 不存在。
+The requested URL :REQUEST_URI was error on this server.        = 当前请求的URL :REQUEST_URI 执行失败。
+Please rename the file config.new:EXT to config:EXT             = 请先将 config.new:EXT 重命名为 config:EXT
+Please create a new project.                                    = 请先创建一个项目。
+not found the project: :project.                                = 指定的项目“:project”不存在。
+the project: :project is not open.                              = 当前项目“:project”没有开启。
+the project dir :dir is not exist.                              = 项目目录“:dir”不存在。
+Core library lost.<br/><br/>Please check the core config.       = 系统类库丢失，请检查配置文件。
+
+captcha.requires_GD2                                            = 验证码需要GD库支持
+function imageftbbox not exist.                                 = "函数imageftbbox不存在，编译PHP的时候请注意需要加上 --with-freetype-dir=DIR"

@@ -1,0 +1,39 @@
+#!/usr/bin/env php
+<?php
+
+# 创建一个命令执行别名，key为正则表达式，value为转换后的值
+
+$aliases = array(
+    '#^svn merge (.*)$#'     => 'default svn_tools merge $1',
+    '#^svn log (.*)$#'       => 'default svn_tools analyze_merge_log $1',
+);
+
+
+
+
+
+
+
+
+
+//////////////////////////// 以下勿改 ///////////////////////////
+
+if ($aliases)
+{
+    $argv_str = implode(' ',array_slice($_SERVER['argv'], 1));
+    
+    foreach($aliases as $from=>$to)
+    {
+        if ( preg_match($from,$argv_str) )
+        {
+            $argv_str = preg_replace($from,$to,$argv_str);
+            $_SERVER['argv'] = array_merge(array($_SERVER['argv'][0]),explode(' ',$argv_str));
+            break;
+        }
+    }
+    unset($argv_str,$from,$to);
+}
+unset($aliases);
+
+
+include dirname(__FILE__).'/index.php';

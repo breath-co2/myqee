@@ -1,0 +1,29 @@
+[list main]
+ID              = 序号
+Operate         = 操作
+View            = 查看
+Edit            = 修改
+Add             = 添加
+Save            = 保存
+Del             = 删
+Delete          = 删除
+Group           = 所属组
+Explain         = 说明
+Manage          = 管理
+Close           = 关闭
+
+
+[administrator manage]
+Login Num         = 登录次数
+Last login IP     = 最后登录IP
+Add administrator = 添加管理员
+Add administrator group = 添加管理组
+Are you sure you want to delete this administrator?     = 您确定要删除此管理员？
+
+
+[login page]
+Administrator login = 管理员登录
+Username            = 用户名
+Password            = 密码
+Verification code   = 验证码
+Login               = 登录

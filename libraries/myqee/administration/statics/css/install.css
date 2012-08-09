@@ -1,0 +1,130 @@
+body {
+    background:#fff url(../images/install_main_bg.gif) repeat-x left 71px;
+}
+#headerDiv{
+    height:70px;
+    background:#000 url(../images/install_header_bg.gif) center no-repeat;
+    border-bottom:1px solid #fff;
+}
+.mainWidth{
+    width:800px;
+    margin:0 auto;
+}
+#logoDiv{
+    float:left;
+    display:inline-block;
+    padding-right:12px;
+    background:url(../images/install_logo_line.png) right center no-repeat;
+}
+#titleText{
+    float:left;
+    color:#fffad1;
+    font-size:18px;
+    font-weight:bold;
+    padding:18px 16px;
+}
+#topRightDiv
+{
+    float:right;
+    color:#fff;
+    margin-top:45px;
+}
+#bottom{
+    text-align:center;
+    color:#fff;
+    line-height:40px;
+    height:40px;
+    background:#3d3d3d url(../images/install_bottom.png) repeat-x;
+}
+#bottom a:link,#bottom a:visited{
+    color:#fff;
+}
+#bottom a:hover,#bottom a:active {
+    color:#fff;
+}
+
+#step_title{
+    height:80px;
+    overflow:hidden;
+}
+
+#step_title .big_step{
+    font-size:70px;
+    line-height:0.7em;
+    padding-right:6px;
+    color:#410e52;
+    font-family: 'Georgia';
+    font-style:italic;
+}
+#step_title .big_title{
+    font-size:32px;
+    font-weight:bold;
+    color:#410e52;
+}
+#step_title .big_desc{
+    color:#999;
+}
+
+#step_bar ul{
+    position:relative;
+}
+
+#step_bar li{
+    float:left;
+    background-image:url(../images/install_repno.gif);
+    background-position:left -66px;
+    background-repeat:no-repeat;
+    line-height:20px;
+    height:38px;
+    padding:0 0 0 18px;
+    width:120px;
+}
+#step_bar li.set_now{
+    background-position:left -26px;
+    color:#410e52;
+    font-weight:bold;
+}
+#step_bar li.set_ok{
+    background-position:left 12px;
+}
+
+#step_line{
+    position:absolute;
+    width:795px;
+    height:7px;
+    overflow:hidden;
+    background:#ccc;
+    margin:20px 0 0 5px;
+}
+
+.infoTable td,
+.infoTable th
+.infoTable tr:hover .td1,
+.infoTable td.td1,
+.infoTable td.td2
+{
+    border:1px solid #6ca400;
+    background:#c7eb81;
+    color:#418400;
+    padding:4px 6px;
+}
+.errTable{
+    border:1px solid #ffcc00;
+}
+.errTable td,
+.errTable th,
+.errTable tr:hover .td1,
+.errTable td.td1,
+.errTable td.td2
+{
+    border:1px solid #ffcc00;
+    background:#fffb94;
+    color:#ff5400;
+    padding:4px 6px;
+}
+.errTable a:link,.errTable a:visited{
+    color:#ff5400;
+}
+.errTable a:hover,.errTable a:active {
+    color:red;
+}
