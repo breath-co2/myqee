@@ -67,7 +67,7 @@ class MyQEE_HttpClient
         {
             $this->type = HttpClient::$default_type;
         }
-        elseif ( HttpClinet::is_support_curl() )
+        elseif ( HttpClient::is_support_curl() )
         {
             $this->type = HttpClient::TYPE_CURL;
         }

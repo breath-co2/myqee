@@ -200,16 +200,17 @@ function profilerdiv_reload(){
                             }
                             $tmpr++;
                         }
-                        echo "<td rowspan=\"{$tmp_row_num}\">";
+                        echo "<td rowspan=\"{$tmp_row_num}\"><div style=\"max-width:1500px;max-height:500px;padding-right:18px;overflow:auto;\">";
 
-                        if (is_array($value)){
-                            echo '<pre style="padding:0;margin:0">',
+                        if (is_array($value))
+                        {
+                            echo '<pre style="padding:0;margin:0;">',
                             htmlspecialchars(print_r($value,true)),
                             '</pre>';
                         }else{
                             echo $value;
                         }
-                        echo "</td>";
+                        echo "</div></td>";
                     }
                     echo '</td></tr>';
                 }

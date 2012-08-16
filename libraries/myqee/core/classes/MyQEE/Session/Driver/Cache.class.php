@@ -113,14 +113,14 @@ class MyQEE_Session_Driver_Cache
     public function destroy()
     {
         $sid = Core::cookie()->get($this->session_name);
-        if ( $sid && count($_SESSION) )
+        if ( $sid )
         {
             $this->driver()->delete($sid);
-
-            $_SESSION = array();
-
-            Core::cookie()->delete($this->session_name,'/');
         }
+
+        $_SESSION = array();
+
+        Core::cookie()->delete($this->session_name,'/');
     }
 
     /**
@@ -132,8 +132,16 @@ class MyQEE_Session_Driver_Cache
     {
         if ( md5(serialize($_SESSION)) != Session_Driver_Cache::$OLD_SESSION_MD5 )
         {
-            # 如果确实修改则保存
-            $this->driver()->set($this->session_id(), $_SESSION , Session::$config['expiration']>0?Session::$config['expiration']:3600);
+            if (!$_SESSION || $_SESSION===array())
+            {
+                # 清除session数据
+                $this->driver()->delete($this->session_id());
+            }
+            else
+            {
+                # 如果确实修改则保存
+                $this->driver()->set($this->session_id(), $_SESSION , Session::$config['expiration']>0?Session::$config['expiration']:3600);
+            }
         }
     }
 }

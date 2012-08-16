@@ -841,6 +841,7 @@ class MyQEE_Database_Driver_MySQL extends Database_Driver
                     if ($part !== '*')
                     {
                         // Quote each of the parts
+					    $this->_change_charset($part);
                         $part = $this->_identifier.$part.$this->_identifier;
                     }
                 }
@@ -849,17 +850,16 @@ class MyQEE_Database_Driver_MySQL extends Database_Driver
             }
             else
             {
+			    $this->_change_charset($column);
                 $column = $this->_identifier.$column.$this->_identifier;
             }
         }
 
         if ( isset($alias) )
         {
+		    $this->_change_charset($alias);
             $column .= ' AS '.$this->_identifier.$alias.$this->_identifier;
         }
-
-		# 切换编码
-		$this->_change_charset($column);
 
         return $column;
     }

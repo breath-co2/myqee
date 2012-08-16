@@ -163,7 +163,7 @@ class MyQEE_File
     	'odi'   => array('application/vnd.oasis.opendocument.image'),
     	'odm'   => array('application/vnd.oasis.opendocument.text-master'),
     	'odp'   => array('application/vnd.oasis.opendocument.presentation'),
-    	'oDIRECTORY_SEPARATOR'   => array('application/vnd.oasis.opendocument.spreaDIRECTORY_SEPARATORheet'),
+    	'ods'   => array('application/vnd.oasis.opendocument.spreadsheet'),
     	'odt'   => array('application/vnd.oasis.opendocument.text'),
     	'oga'   => array('audio/ogg'),
     	'ogg'   => array('application/ogg'),
@@ -171,7 +171,7 @@ class MyQEE_File
     	'otg'   => array('application/vnd.oasis.opendocument.graphics-template'),
     	'oth'   => array('application/vnd.oasis.opendocument.web'),
     	'otp'   => array('application/vnd.oasis.opendocument.presentation-template'),
-    	'ots'   => array('application/vnd.oasis.opendocument.spreaDIRECTORY_SEPARATORheet-template'),
+    	'ots'   => array('application/vnd.oasis.opendocument.spreadsheet-template'),
     	'ott'   => array('application/vnd.oasis.opendocument.template'),
     	'p'     => array('text/x-pascal'),
     	'pas'   => array('text/x-pascal'),
@@ -254,7 +254,7 @@ class MyQEE_File
     	'xlc'   => array('application/excel', 'application/vnd.ms-excel'),
     	'xlm'   => array('application/excel', 'application/vnd.ms-excel'),
     	'xls'   => array('application/excel', 'application/vnd.ms-excel'),
-    	'xlsx'  => array('application/vnd.openxmlformats-officedocument.spreaDIRECTORY_SEPARATORheetml.sheet'),
+    	'xlsx'  => array('application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'),
     	'xlt'   => array('application/excel', 'application/vnd.ms-excel'),
     	'xml'   => array('text/xml', 'application/xml'),
     	'xof'   => array('x-world/x-vrml'),
@@ -306,7 +306,7 @@ class MyQEE_File
         }
         else
         {
-            return File::http_call($storage ,'file/create_file', $info[0], $info[1], $data , $flags , $context);
+            return File::call_http_host($storage ,'file/create_file', $info[0], $info[1], $data , $flags , $context);
         }
     }
 
@@ -356,7 +356,7 @@ class MyQEE_File
         }
         else
         {
-            return File::http_call($storage,'file/create_dir',$info[0], $info[1], $auto_create_default_file);
+            return File::call_http_host($storage,'file/create_dir',$info[0], $info[1], $auto_create_default_file);
         }
     }
 
@@ -385,6 +385,7 @@ class MyQEE_File
                             if (!unlink($f))
                             {
                                 $rs = false;
+                                break;
                             }
                         }
                     }
@@ -413,7 +414,7 @@ class MyQEE_File
         }
         else
         {
-            return File::http_call($storage,'file/unlink',$info[0], $info[1]);
+            return File::call_http_host($storage,'file/unlink',$info[0], $info[1]);
         }
     }
 
@@ -437,7 +438,7 @@ class MyQEE_File
 
             $realpath = realpath($dir);
 
-            if ( !$realpath || in_array($realpath.DIRECTORY_SEPARATOR, File::$sys_dir) )
+            if ( !$realpath || in_array($realpath.DS, File::$sys_dir) )
             {
                 return false;
             }
@@ -447,7 +448,7 @@ class MyQEE_File
             {
                 if ( $file != '.' && $file != '..' )
                 {
-                    $tmp_dir = $dir . DIRECTORY_SEPARATOR . $file;
+                    $tmp_dir = $dir . DS . $file;
                     is_dir($tmp_dir) ? File::remove_dir($tmp_dir) : @unlink($tmp_dir);
                 }
             }
@@ -457,7 +458,7 @@ class MyQEE_File
         }
         else
         {
-            return File::http_call($storage,'file/remove_dir',$info[0], $info[1] );
+            return File::call_http_host($storage,'file/remove_dir',$info[0], $info[1] );
         }
     }
 
@@ -472,8 +473,8 @@ class MyQEE_File
      */
     public static function move_dir($fromdir, $todir, $autocoverageold = true , $storage = 'default')
     {
-        $fromdir = rtrim($fromdir,'\\/').DIRECTORY_SEPARATOR;
-        $todir   = rtrim($todir,'\\/')  .DIRECTORY_SEPARATOR;
+        $fromdir = rtrim($fromdir,'\\/').DS;
+        $todir   = rtrim($todir,'\\/')  .DS;
 
         if ( $fromdir==$todir ) return array(0,0);
 
@@ -540,7 +541,7 @@ class MyQEE_File
         }
         else
         {
-            return File::http_call($storage,'file/move_dir', $info1[0], $info1[1], $info2[0], $info2[1], $autocoverageold);
+            return File::call_http_host($storage,'file/move_dir', $info1[0], $info1[1], $info2[0], $info2[1], $autocoverageold);
         }
     }
 
@@ -556,8 +557,8 @@ class MyQEE_File
      */
     public static function copy_dir($fromdir, $todir, $autocoverageold = true , $storage = 'default')
     {
-        $fromdir = rtrim($fromdir,'\\/').DIRECTORY_SEPARATOR;
-        $todir   = rtrim($todir,'\\/')  .DIRECTORY_SEPARATOR;
+        $fromdir = rtrim($fromdir,'\\/').DS;
+        $todir   = rtrim($todir,'\\/')  .DS;
 
         if ( $fromdir==$todir ) return array(0,0);
 
@@ -621,7 +622,7 @@ class MyQEE_File
         }
         else
         {
-            return File::http_call($storage,'file/copy_dir', $info1[0], $info1[1], $info2[0], $info2[1], $autocoverageold);
+            return File::call_http_host($storage,'file/copy_dir', $info1[0], $info1[1], $info2[0], $info2[1], $autocoverageold);
         }
     }
 
@@ -688,7 +689,7 @@ class MyQEE_File
         }
         else
         {
-            return File::http_call($storage,'file/split',$info[0], $info[1], $piece_size);
+            return File::call_http_host($storage,'file/split',$info[0], $info[1], $piece_size);
         }
 	}
 
@@ -739,7 +740,7 @@ class MyQEE_File
         }
         else
         {
-            return File::http_call($storage,'file/join', $info[0], $info[1]);
+            return File::call_http_host($storage,'file/join', $info[0], $info[1]);
         }
 	}
 
@@ -879,7 +880,7 @@ class MyQEE_File
      * @param mixed $arg2
      * @return boolean mixed
      */
-    protected static function http_call($storage, $uri, $arg1 = null, $arg2 = null)
+    protected static function call_http_host($storage, $uri, $arg1 = null, $arg2 = null)
     {
         $param_arr = func_get_args();
         array_shift($param_arr); // 把 $storage 移除

@@ -101,7 +101,7 @@ class MyQEE_Cache_Driver_File
 
         $data = $this->format_data($lifetime, $value);
 
-        return File::create_file($filename, $value);
+        return File::create_file($filename, $data);
     }
 
     /**
@@ -228,7 +228,7 @@ class MyQEE_Cache_Driver_File
      */
     protected function get_filename_by_key( $key )
     {
-        return $this->dir . 'cache_file_' . preg_replace('#[^a-z0-9_\-]*#i','',$key) . '_' . md5( $key . '_&@c)ac%he_file' );
+        return $this->dir . 'cache_file_' . substr(preg_replace('#[^a-z0-9_\-]*#i','',$key),0,100) . '_' . md5( $key . '_&@c)ac%he_file' );
     }
 
     protected function get_expired_setting( $key, & $data )
