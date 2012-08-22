@@ -976,7 +976,7 @@ abstract class Bootstrap
     private static function _get_pathinfo()
     {
         # 处理base_url
-        if ( null == self::$base_url && isset($_SERVER["SCRIPT_NAME"]) && $_SERVER["SCRIPT_NAME"] )
+        if ( null === self::$base_url && isset($_SERVER["SCRIPT_NAME"]) && $_SERVER["SCRIPT_NAME"] )
         {
             $base_url_len = strrpos($_SERVER["SCRIPT_NAME"],'/');
             if ( $base_url_len )

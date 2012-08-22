@@ -851,11 +851,11 @@ class MyQEE_Database_Driver_Mongo extends Database_Driver
 
             if (substr($value,-1)=='%')
             {
-                $value = substr($value,0,-1) . '/';
+                $value = substr($value,0,-1) . '/i';
             }
             else
             {
-                $value = $value.'$/';
+                $value = $value.'$/i';
             }
 
             $value = str_replace('%','*',$value);

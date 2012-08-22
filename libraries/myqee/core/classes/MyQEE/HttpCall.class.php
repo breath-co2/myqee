@@ -113,6 +113,13 @@ class MyQEE_HttpCall
             preg_match('#^(http(?:s)?\://[^/]+/)#', $_SERVER["SCRIPT_URI"] , $m);
             $uri = $m[1].ltrim($uri,'/');
         }
+        # http://host/uri
+        $uri_arr = explode('/',$uri);
+        $scr_arr = explode('/',$_SERVER["SCRIPT_URI"]);
+        
+        $uri_arr[0] = $scr_arr[0];
+        $uri_arr[2] = $scr_arr[2];
+        $uri = implode('/', $uri_arr);
 
         $time = microtime(1);
         if ($curl_supper)
@@ -170,14 +177,8 @@ class MyQEE_HttpCall
             list($host,$port) = explode(':',$h,2);
             if (!$port)
             {
-                if (substr($url,0,8)=='https://')
-                {
-                    $port = 443;
-                }
-                else
-                {
-                    $port = 80;
-                }
+                # 默认端口
+                $port = $_SERVER["SERVER_PORT"];
             }
 
             # 一个mictime
@@ -331,14 +332,7 @@ class MyQEE_HttpCall
             list($hostname,$port) = explode(':',$host,2);
             if (!$port)
             {
-                if (substr($url,0,8)=='https://')
-                {
-                    $port = 443;
-                }
-                else
-                {
-                    $port = 80;
-                }
+                $port = $_SERVER["SERVER_PORT"];
             }
 
             # 一个mictime
