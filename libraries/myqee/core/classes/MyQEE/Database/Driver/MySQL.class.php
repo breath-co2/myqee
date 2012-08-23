@@ -189,7 +189,7 @@ class MyQEE_Database_Driver_MySQL extends Database_Driver
                     }
                     if (false===$tmplink)throw new Exception('connect mysql server error:'.$hostname);
 
-                    Core::debug()->info('mysql '.$hostname.' connection time:' . (microtime(true) - $time));
+                    Core::debug()->info('mysql '.$username.'@'.$hostname.' connection time:' . (microtime(true) - $time));
 
                     # 连接ID
                     $this->_connection_ids[$this->_connection_type] = $_connection_id;

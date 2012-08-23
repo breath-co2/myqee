@@ -180,7 +180,7 @@ class MyQEE_Database_Driver_Mongo extends Database_Driver
                         $tmplink = new Mongo("mongodb://{$hostname}:{$port}/");
                     }
 
-                    Core::debug()->info('MongoDB '.$hostname.':'.$port.' connection time:' . (microtime(true) - $time));
+                    Core::debug()->info('MongoDB '.($username?$username.'@':'').$hostname.':'.$port.' connection time:' . (microtime(true) - $time));
 
                     # 连接ID
                     $this->_connection_ids[$this->_connection_type] = $_connection_id;
