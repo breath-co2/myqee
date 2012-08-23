@@ -189,6 +189,7 @@ class MyQEE_Database_Driver_MySQLI extends Database_Driver
                     {
                         $tmplink = new mysqli($hostname, $username, $password, $database, $port);
                     }
+                    if (false===$tmplink)throw new Exception('connect mysql server error:'.$hostname);
 
                     Core::debug()->info('mysqli '.$hostname.':'.$port.' connection time:' . (microtime(true) - $time));
 
@@ -403,7 +404,7 @@ class MyQEE_Database_Driver_MySQLI extends Database_Driver
         if (true===$_set_names)
         {
             // PHP is compiled against MySQL 4.x
-            $status = (bool)mysqli_query('SET NAMES ' . $this->quote($charset), $connection);
+            $status = (bool)mysqli_query($connection,'SET NAMES ' . $this->quote($charset));
         }
         else
         {

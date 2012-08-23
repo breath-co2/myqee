@@ -6,7 +6,7 @@ HttpClient中错别字导致执行失败
 完善了MySQL类库对编码的转换处理
 完善了MongoDB的查询功能，完善了debug的显示
 优化了Bootstrap中对debug的处理
-完善了MongoDB驱动
+完善了内部调用
 
 
 V2.0 release

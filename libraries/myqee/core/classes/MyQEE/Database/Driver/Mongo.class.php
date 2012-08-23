@@ -651,11 +651,13 @@ class MyQEE_Database_Driver_Mongo extends Database_Driver
                         );
                     }
                     elseif ( isset($result['data']['_id']) && $result['data']['_id'] instanceof MongoId )
+                    {
                         $rs = array
                         (
                             (string)$result['data']['_id'] ,
                             1 ,
                         );
+                    }
                     else
                     {
                         $rs = array

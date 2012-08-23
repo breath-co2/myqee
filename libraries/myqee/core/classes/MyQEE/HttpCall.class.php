@@ -116,7 +116,7 @@ class MyQEE_HttpCall
         # http://host/uri
         $uri_arr = explode('/',$uri);
         $scr_arr = explode('/',$_SERVER["SCRIPT_URI"]);
-        
+
         $uri_arr[0] = $scr_arr[0];
         $uri_arr[2] = $scr_arr[2];
         $uri = implode('/', $uri_arr);

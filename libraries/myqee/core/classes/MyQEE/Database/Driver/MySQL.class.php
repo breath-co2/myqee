@@ -187,6 +187,7 @@ class MyQEE_Database_Driver_MySQL extends Database_Driver
                     {
                         $tmplink = mysql_pconnect($hostname . ($port && $port != 3306 ? ':' . $port : ''), $username, $password);
                     }
+                    if (false===$tmplink)throw new Exception('connect mysql server error:'.$hostname);
 
                     Core::debug()->info('mysql '.$hostname.' connection time:' . (microtime(true) - $time));
 
@@ -1314,7 +1315,7 @@ class MyQEE_Database_Driver_MySQL extends Database_Driver
             // Quote the column name
             $column = $this->_quote_identifier($column);
 
-            if ( is_string($value) and array_key_exists($value, $parameters) )
+            if ( is_string($value) && array_key_exists($value, $parameters) )
             {
                 // Use the parameter value
                 $value = $parameters[$value];
