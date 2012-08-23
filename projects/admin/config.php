@@ -5,7 +5,7 @@
  *
  * @var array
  */
-$config['libraries']['autoload'][] = 'MyQEE/Administration';
+$config['libraries']['autoload'][] = 'com.myqee.administration';
 
 /**
  * 路由配置
