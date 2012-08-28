@@ -1,0 +1,11 @@
+Icon?
+.DS_Store
+.svn
+*.debug.config.php
+*~
+/.settings
+/.buildpath
+/.project
+/config.php
+/debug.config.php
+/data/*
