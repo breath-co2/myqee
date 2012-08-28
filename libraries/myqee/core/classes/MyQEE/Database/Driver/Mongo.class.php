@@ -351,6 +351,15 @@ class MyQEE_Database_Driver_Mongo extends Database_Driver
                 $sql['data'][$op][$item[0]] = $item[1];
             }
         }
+        elseif ( $type == 'delete' )
+        {
+            $sql = array
+            (
+                'type'    => 'remove',
+                'table'   => $builder['table'],
+                'where'   => $where,
+            );
+        }
         else
         {
             $sql = array
@@ -384,7 +393,15 @@ class MyQEE_Database_Driver_Mongo extends Database_Driver
                     {
                         if ($item instanceof Database_Expression)
                         {
-                            $s[$item->value()] = 1;
+                            $v = $item->value();
+                            if ($v==='COUNT(1) AS `total_row_count`')
+                            {
+                                $sql['total_count'] = true;
+                            }
+                            else
+                            {
+                                $s[$v] = 1;
+                            }
                         }
                         elseif ($item instanceof MongoCode)
                         {
@@ -427,7 +444,14 @@ class MyQEE_Database_Driver_Mongo extends Database_Driver
                 {
                     $reduce = '';
                 }
-                $reduce = new MongoCode('function(obj,prve){prve._count++;'.$reduce.'}');
+                if (isset($sql['total_count']) && $sql['total_count'])
+                {
+                    $reduce = new MongoCode('function(obj,prve){prve._count++;if(!prve.total_count)prve.total_count=0;prve.total_count++;'.$reduce.'}');
+                }
+                else
+                {
+                    $reduce = new MongoCode('function(obj,prve){prve._count++;'.$reduce.'}');
+                }
 
                 $sql['group']['reduce'] = $reduce;
 
@@ -568,7 +592,7 @@ class MyQEE_Database_Driver_Mongo extends Database_Driver
             switch ( $type )
             {
                 case 'SELECT':
-                    if ($options['group'])
+                    if ( $options['group'] )
                     {
                         # group by
 
@@ -585,11 +609,8 @@ class MyQEE_Database_Driver_Mongo extends Database_Driver
 
                         $result = $connection->selectCollection($tablename)->group($options['group']['key'],$options['group']['initial'],$options['group']['reduce'],$option);
 
-                        $last_query = 'db.'.$tablename.'.group('.json_encode($options['group']).')';
-                        if( IS_DEBUG )
-                        {
+                        $last_query = 'db.'.$tablename.'.group({"key":'.json_encode($options['group']['key']).', "initial":'.json_encode($options['group']['initial']).', "reduce":'.(string)$options['group']['reduce'].', '.(isset($options['group']['finalize'])&&$options['group']['finalize']?'"finalize":'.(string)$options['group']['finalize']:'"cond":'.json_encode($options['group']['cond'])).'})';
 
-                        }
                         if ($result && $result['ok']==1)
                         {
                             $rs = new Database_Driver_Mongo_Result(new ArrayIterator($result['retval']), $options, $as_object ,$this->config );
@@ -608,25 +629,34 @@ class MyQEE_Database_Driver_Mongo extends Database_Driver
 
                         $result = $connection->selectCollection($tablename)->find($options['where'],(array)$options['select']);
 
-                        if ( $options['sort'] )
+                        if ( $options['total_count'] )
                         {
-                            $last_query .= '.sort('.json_encode($options['sort']).')';
-                            $result = $result->sort($options['sort']);
+                            $result = $result->count();
+                            # 仅统计count
+                            $rs = new Database_Driver_Mongo_Result(new ArrayIterator( array(array('total_row_count'=>$result)) ), $options, $as_object ,$this->config );
                         }
-
-                        if ( $options['skip'] )
+                        else
                         {
-                            $last_query .= '.skip('.json_encode($options['skip']).')';
-                            $result = $result->skip($options['skip']);
-                        }
+                            if ( $options['sort'] )
+                            {
+                                $last_query .= '.sort('.json_encode($options['sort']).')';
+                                $result = $result->sort($options['sort']);
+                            }
 
-                        if ( $options['limit'] )
-                        {
-                            $last_query .= '.limit('.json_encode($options['limit']).')';
-                            $result = $result->limit($options['limit']);
-                        }
+                            if ( $options['skip'] )
+                            {
+                                $last_query .= '.skip('.json_encode($options['skip']).')';
+                                $result = $result->skip($options['skip']);
+                            }
 
-                        $rs = new Database_Driver_Mongo_Result($result, $options, $as_object ,$this->config );
+                            if ( $options['limit'] )
+                            {
+                                $last_query .= '.limit('.json_encode($options['limit']).')';
+                                $result = $result->limit($options['limit']);
+                            }
+
+                            $rs = new Database_Driver_Mongo_Result($result, $options, $as_object ,$this->config );
+                        }
                     }
 
                     break;
@@ -682,10 +712,10 @@ class MyQEE_Database_Driver_Mongo extends Database_Driver
                     }
                     break;
                 case 'REMOVE':
-                    $result = $connection->selectCollection($tablename)->remove($options['data'] , $options['options']);
+                    $result = $connection->selectCollection($tablename)->remove($options['where']);
                     $rs = $result['n'];
 
-                    $last_query = 'db.'.$tablename.'.remove('.json_encode($options['data']).')';
+                    $last_query = 'db.'.$tablename.'.remove('.json_encode($options['where']).')';
                     break;
                 default:
                     throw new Exception('不支持的操作类型');
