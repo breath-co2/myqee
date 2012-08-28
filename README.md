@@ -112,9 +112,9 @@ API接口 [http://www.myqee.com/docs/api/default/classes/](http://www.myqee.com/
 
 MyQEE核心类库
 ----
-请查看 [https://github.com/breath-co2/myqee-lib-core](https://github.com/breath-co2/myqee-lib-core)
+请查看 [https://github.com/breath-co2/myqee-v2/tree/master/libraries/myqee/core](https://github.com/breath-co2/myqee-v2/tree/master/libraries/myqee/core)
 
 MyQEE后台类库
 ----
-请查看 [https://github.com/breath-co2/myqee-lib-administration](https://github.com/breath-co2/myqee-lib-administration)
+请查看 [https://github.com/breath-co2/myqee-v2/tree/master/libraries/myqee/administration](https://github.com/breath-co2/myqee-v2/tree/master/libraries/myqee/administration)
 
