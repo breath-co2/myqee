@@ -103,7 +103,7 @@ API接口 [http://www.myqee.com/docs/api/default/classes/](http://www.myqee.com/
 
 升级
 ====
-升级方法及注意事项请看UPGRADE.md文件
+升级方法及注意事项请看[UPGRADE.md](https://github.com/breath-co2/myqee-v2/blob/master/UPGRADE.md)文件
 
 
 类库相关

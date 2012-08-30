@@ -55,7 +55,7 @@ class MyQEE_Database_QueryBuilder
      */
     public function distinct($value = true)
     {
-        $this->_builder['distinct'] = (bool)$value;
+        $this->_builder['distinct'] = $value;
 
         return $this;
     }

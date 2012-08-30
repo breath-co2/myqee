@@ -371,6 +371,11 @@ class MyQEE_Database_Driver_Mongo extends Database_Driver
                 'skip'  => $builder['offset'],
             );
 
+            if ( $builder['distinct'] )
+            {
+                $sql['distinct'] = $builder['distinct'];
+            }
+
             // 查询
             if ( $builder['select'] )
             {
@@ -592,7 +597,30 @@ class MyQEE_Database_Driver_Mongo extends Database_Driver
             switch ( $type )
             {
                 case 'SELECT':
-                    if ( $options['group'] )
+
+                    if ( $options['distinct'] )
+                    {
+                        # 查询唯一值
+                        $result = $connection->command(
+                            array(
+                                'distinct' => $tablename,
+                                'key'      => $options['distinct'] ,
+                                'query'    => $options['where']
+                            )
+                        );
+
+                        $last_query = 'db.'.$tablename.'.distinct('.$options['distinct'].', '.json_encode($options['where']).')';
+
+                        if ( $result && $result['ok']==1 )
+                        {
+                            $rs = new Database_Driver_Mongo_Result(new ArrayIterator($result['values']), $options, $as_object ,$this->config );
+                        }
+                        else
+                        {
+                            throw new Exception($result['errmsg']);
+                        }
+                    }
+                    elseif ( $options['group'] )
                     {
                         # group by
 
@@ -757,7 +785,7 @@ class MyQEE_Database_Driver_Mongo extends Database_Driver
                     $data[0]['indexOnly']       = '';
                     $data[0]['indexBounds']     = '';
 
-                    if ( $type=='SELECT' && !$options['group'] )
+                    if ( $type=='SELECT' && !$options['group'] && is_object($result) && method_exists($result, 'explain') )
                     {
                         $re = $result->explain();
                         foreach ($re as $k=>$v)

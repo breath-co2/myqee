@@ -286,7 +286,7 @@ class MyQEE_Database_Driver_MySQLI extends Database_Driver
         {
             if ($connection_id && Database_Driver_MySQLI::$_connection_instance[$connection_id])
             {
-                Core::debug()->info('close '.$key.' mysql '.Database_Driver_MySQLI::$_current_connection_id_to_hostname[$connection_id].' connection.');
+                Core::debug()->info('close '.$key.' mysqli '.Database_Driver_MySQLI::$_current_connection_id_to_hostname[$connection_id].' connection.');
                 @mysqli_close(Database_Driver_MySQLI::$_connection_instance[$connection_id]);
 
                 unset(Database_Driver_MySQLI::$_connection_instance[$connection_id]);
@@ -870,18 +870,14 @@ class MyQEE_Database_Driver_MySQLI extends Database_Driver
 
     protected function _compile_selete($builder)
     {
-        // Callback to quote identifiers
         $quote_ident = array($this, '_quote_identifier');
 
-        // Callback to quote tables
         $quote_table = array($this, 'quote_table');
 
-        // Start a selection query
         $query = 'SELECT ';
 
-        if ( $builder['distinct'] === true )
+        if ( $builder['distinct'] )
         {
-            // Select only unique results
             $query .= 'DISTINCT ';
         }
 
@@ -889,12 +885,10 @@ class MyQEE_Database_Driver_MySQLI extends Database_Driver
 
         if ( empty($builder['select']) )
         {
-            // Select all columns
             $query .= '*';
         }
         else
         {
-            // Select all columns
             $query .= implode(', ', array_unique(array_map($quote_ident, $builder['select'])));
         }
 
