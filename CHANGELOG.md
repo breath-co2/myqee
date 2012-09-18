@@ -1,6 +1,11 @@
 V2.0.2
 --------------------------
 * 完善数据库的MongoDB驱动，修复remove方法，group的sql语句Debug输出完善，增加对count_records()的支持
+* MongoDB支持Multikeys多值查询，比如$db->where('value.arr',1)->where('value.arr',2);这样的查询，将会生成 {$and:[{'value.arr':1},{'value.arr':2}]} 这样的条件，参阅 [http://www.mongodb.org/display/DOCS/Multikeys](http://www.mongodb.org/display/DOCS/Multikeys)
+* 完善数据库values()方法，完善文件操作类库，HttpCall和HttpClient的Curl驱动增加$connecttimeout_ms 连接超时参数
+* 增加runtime实时配置，动态设置MySQL的slave数据库的weight，这样可以改变集群下服务器的命中率，包括Memache的weight，Redis的weight等都可实时监控，当其中有服务器宕机时，可及时移除，当恢复时再加入列表，这些都无需额外复杂的配置，可选择程序内动态执行或contab执行，修改$config['runtime_runtype'] = auto 或 contab
+* 修复在命令行下调用File类库保存文件时可能失败的BUG，此BUG会出现在多服务器列表的情况下，单机服务器不会受影响
+* jQuery类库更新为1.8.1
 
 
 V2.0.1

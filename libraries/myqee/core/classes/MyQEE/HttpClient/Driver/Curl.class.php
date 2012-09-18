@@ -36,6 +36,13 @@ class MyQEE_HttpClient_Driver_Curl
      */
     protected $multi_exec_num = 100;
 
+    /**
+     * 默认连接超时时间，毫秒
+     *
+     * @var int
+     */
+    protected static $connecttimeout_ms = 3000;
+
     const ERROR_HOST = '请求的URL错误';
 
     const ERROR_GET = 'GET请求错误';
@@ -252,6 +259,7 @@ class MyQEE_HttpClient_Driver_Curl
         curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_TIMEOUT, $timeout);
+        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT_MS, HttpClient_Driver_Curl::$connecttimeout_ms);
 
         if ( preg_match('#^https://#i', $the_url) )
         {
@@ -298,9 +306,9 @@ class MyQEE_HttpClient_Driver_Curl
         }
 
         # 设置POST数据
-        if (isset($this->_post_data[$the_url]))
+        if (isset($this->_post_data[$url]))
         {
-            curl_setopt($ch , CURLOPT_POSTFIELDS , $this->_post_data[$the_url]);
+            curl_setopt($ch , CURLOPT_POSTFIELDS , $this->_post_data[$url]);
         }
 
         return $ch;

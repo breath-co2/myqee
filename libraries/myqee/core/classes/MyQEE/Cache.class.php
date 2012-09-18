@@ -147,16 +147,23 @@ class MyQEE_Cache
         {
             $this->config = Core::config('cache.' . $name);
         }
+
         if ( ! isset($this->config['prefix']) )
         {
             $this->config['prefix'] = '';
         }
-        $driver = 'Cache_Driver_' . $this->config['driver'];
 
-        if ( !class_exists($driver, true) )
+        if ( !isset($this->config['driver']) )
+        {
+            $this->config['driver'] = Cache::DRIVER_FILE;
+        }
+
+        $driver = 'Cache_Driver_' . $this->config['driver'];
+        if (!class_exists($driver,true))
         {
             throw new Exception('指定的缓存驱动' . $driver . '不存在！');
         }
+
         $this->driver = new $driver($this->config['driver_config']);
     }
 

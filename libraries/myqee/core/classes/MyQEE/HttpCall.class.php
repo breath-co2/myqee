@@ -14,6 +14,13 @@ class MyQEE_HttpCall
 
     protected $hosts = array();
 
+    /**
+     * 默认连接超时时间，毫秒
+     *
+     * @var int
+     */
+    protected static $connecttimeout_ms = 3000;
+
     public function __construct($group=null)
     {
         if (!$group)$group = 'default';
@@ -154,7 +161,7 @@ class MyQEE_HttpCall
     /**
      * 通过CURL执行
      *
-     * @param string $hosts
+     * @param array $hosts
      * @param string $url
      * @param array $param_arr
      * @return array
@@ -191,7 +198,7 @@ class MyQEE_HttpCall
             $hash = self::get_hash($vars,$rstr,$mictime);
 
             # 创建一个curl对象
-            $current = HttpCall::_create_curl($host, $port, $url, 10 , $hash ,$vars,$mictime,$rstr);
+            $current = HttpCall::_create_curl($host, $port, $url, 10, $hash, $vars, $mictime, $rstr);
 
             # 列队数控制
             curl_multi_add_handle($mh, $current);
@@ -286,6 +293,7 @@ class MyQEE_HttpCall
         curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_TIMEOUT, $timeout);
+        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT_MS, HttpCall::$connecttimeout_ms);
         curl_setopt($ch, CURLOPT_POST, true );
         curl_setopt($ch, CURLOPT_POSTFIELDS, $vars );
         curl_setopt($ch, CURLOPT_DNS_CACHE_TIMEOUT, 86400 );
@@ -300,6 +308,7 @@ class MyQEE_HttpCall
         {
             if (!$port)$port = 80;
         }
+
         curl_setopt($ch, CURLOPT_PORT, $port);
         curl_setopt($ch, CURLOPT_USERAGENT, 'MyQEE System Call');
         curl_setopt($ch, CURLOPT_HTTPHEADER, array('Expect:','Host: '.$m[2],'X-Myqee-System-Hash: '.$hash,'X-Myqee-System-Time: '.$mictime,'X-Myqee-System-Rstr: '.$rstr,'X-Myqee-System-Debug: '.(IS_DEBUG?1:0)));

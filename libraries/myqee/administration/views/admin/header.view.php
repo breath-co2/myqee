@@ -12,7 +12,7 @@ MyQEE.Url = {
 };
 </script>
 <script type="text/javascript" src="<?php echo Core::url('statics/js/global.js');?>"></script>
-<script type="text/javascript" src="<?php echo Core::url('statics/jquery/js/jquery-1.6.2.min.js');?>"></script>
+<script type="text/javascript" src="<?php echo Core::url('statics/jquery/js/jquery-1.8.1.min.js');?>"></script>
 <script type="text/javascript" src="<?php echo Core::url('statics/js/ymPrompt/ymPrompt.js');?>"></script>
 <link rel="stylesheet" type="text/css" href="<?php echo Core::url('statics/js/ymPrompt/skin/simple/ymPrompt.css');?>" />
 <link rel="stylesheet" type="text/css" href="<?php echo Core::url('statics/css/global.css');?>" />

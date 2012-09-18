@@ -235,7 +235,7 @@ abstract class Bootstrap
      *
      * @var float
      */
-    const VERSION = '1.9.1';
+    const VERSION = '1.9.1.1';
 
     /**
      * 系统所在的根目录
@@ -395,12 +395,6 @@ abstract class Bootstrap
         }
         self::_include_config_file( self::$config['core'] , DIR_SYSTEM.'config'.EXT );
 
-        # 读Debug配置
-        if ( isset(self::$config['core']['debug_config']) && self::$config['core']['debug_config'] && is_file(DIR_SYSTEM.'debug.config'.EXT) )
-        {
-            self::_include_config_file( self::$config['core'] , DIR_SYSTEM.'debug.config'.EXT );
-        }
-
         # 本地调试模式
         if ( isset( self::$config['core']['local_debug_cfg'] ) && self::$config['core']['local_debug_cfg'] )
         {
@@ -417,6 +411,13 @@ abstract class Bootstrap
         else
         {
             $open_debug = 0;
+        }
+
+        # 读Debug配置
+        if ( $open_debug && is_file(DIR_SYSTEM.'debug.config'.EXT) )
+        {
+            # 本地debug配置打开
+            self::_include_config_file( self::$config['core'] , DIR_SYSTEM.'debug.config'.EXT );
         }
 
         # 在线调试

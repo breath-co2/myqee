@@ -201,6 +201,8 @@ class MyQEE_Database_Driver_MySQL extends Database_Driver
                 }
                 catch ( Exception $e )
                 {
+                    if (IS_DEBUG)Core::debug()->error($username.'@'.$hostname.':'.$port,'connect mysql server error');
+
                     $last_error = $e;
                     if (2===$e->getCode() && preg_match('#(Unknown database|Access denied for user)#i', $e->getMessage()))
                     {

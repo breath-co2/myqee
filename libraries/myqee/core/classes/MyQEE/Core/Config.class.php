@@ -116,6 +116,7 @@ class MyQEE_Core_Config
                     'value'    => gzcompress(serialize($value),9),
                 );
                 $status = $db->replace( $this->tablename , $data );
+                $status = $status[1];
             }
             if ($status)
             {
@@ -274,7 +275,9 @@ class MyQEE_Core_Config
             }
 
             // 写缓存
-            File::create_file($tmpfile, serialize($this->config));
+            $rs = File::create_file($tmpfile, serialize($this->config));
+
+            if (IS_DEBUG)Core::debug()->log('save extends config cache '.($rs?'success':'fail').'.');
         }
     }
 
@@ -289,6 +292,10 @@ class MyQEE_Core_Config
             # 所有项目的配置文件
             $tmpfile[] = DIR_DATA.$project.'/extends_config.txt';
         }
-        File::unlink($tmpfile);
+
+        $rs = File::unlink($tmpfile);
+
+        if (IS_DEBUG)Core::debug()->log('clear extends config cache '.($rs?'success':'fail').'.');
+        return $rs;
     }
 }

@@ -39,6 +39,12 @@ if (!MyQEE.isinFrame()){
 MyQEE.iniHtml();
 
 </script>
+<script type="text/javascript" src="<?php echo Core::url('statics/jquery/js/jquery.tablesorter.min.js');?>"></script>
+
+<script type="text/javascript">
+$('table.mainTable').tablesorter();
+</script>
+
 <script type="text/javascript" src="<?php echo Core::url('statics/js/tooltip.js');?>"></script>
 </body>
 </html>

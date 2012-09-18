@@ -31,7 +31,7 @@ class MyQEE_Database extends Database_QueryBuilder
      * @var string
      */
     const TYPE_Mongo  = 'Mongo';
-    
+
     /**
      * SQLite驱动类型
      *
@@ -89,7 +89,7 @@ class MyQEE_Database extends Database_QueryBuilder
             $i_name = '.config_'.md5(serialize($config_name));
         }
 
-        if ( ! isset(Database::$instances[$i_name]) )
+        if ( !isset(Database::$instances[$i_name]) )
         {
             Database::$instances[$i_name] = new Database($config_name);
         }
@@ -296,7 +296,7 @@ class MyQEE_Database extends Database_QueryBuilder
         if ( $value )
         {
             $this->columns(array_keys($value));
-            $this->values(array_values($value));
+            $this->values($value);
         }
         $sql = $this->compile('insert');
 
@@ -376,7 +376,7 @@ class MyQEE_Database extends Database_QueryBuilder
         if ( $value )
         {
             $this->columns(array_keys($value));
-            $this->values(array_values($value));
+            $this->values($value);
         }
         if ( $where )
         {
