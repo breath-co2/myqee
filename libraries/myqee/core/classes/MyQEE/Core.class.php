@@ -123,17 +123,17 @@ abstract class MyQEE_Core extends Bootstrap
         }
 
         # 检查Bootstrap版本
-        if ( version_compare(Bootstrap::VERSION, '1.9' ,'<') )
+        if ( version_compare(Bootstrap::VERSION, '1.9.2' ,'<') )
         {
             Core::show_500('系统Bootstrap版本太低，请先升级Bootstrap。');
             exit();
         }
 
-        Core::debug()->info('当前项目：' . INITIAL_PROJECT_NAME);
-
         if ( IS_DEBUG )
         {
-            Core::debug()->group('系统加载目录');
+            Core::debug()->info(INITIAL_PROJECT_NAME,'project');
+
+            Core::debug()->group('include path');
             foreach ( Core::$include_path as $value )
             {
                 Core::debug()->log(Core::debug_path($value));
@@ -141,7 +141,7 @@ abstract class MyQEE_Core extends Bootstrap
             Core::debug()->groupEnd();
         }
 
-        if ( (IS_CLI || IS_DEBUG ) && class_exists('ErrException', true) )
+        if ( (IS_CLI || IS_DEBUG) && class_exists('ErrException', true) )
         {
             # 注册脚本
             register_shutdown_function(array('ErrException', 'shutdown_handler'));
@@ -345,9 +345,8 @@ abstract class MyQEE_Core extends Bootstrap
      * @param string $file 文件
      * @param string $ext 后缀 例如：.html
      * @param boolean $auto_require 是否自动加载上来，对config,i18n无效
-     * @param string $project 跨项目读取文件
      */
-    public static function find_file($dir, $file, $ext = null, $auto_require = false, $project = null)
+    public static function find_file($dir, $file, $ext = null, $auto_require = false)
     {
         # 寻找到的文件
         $found_files = array();
@@ -388,7 +387,7 @@ abstract class MyQEE_Core extends Bootstrap
             {
                 $dir .= '/[shell]';
             }
-            elseif ( CORE::$is_admin_url )
+            elseif ( IS_ADMIN_MODE )
             {
                 $dir .= '/[admin]';
             }
@@ -423,16 +422,8 @@ abstract class MyQEE_Core extends Bootstrap
         }
         if ( ! $found_files )
         {
-            if ( is_string($project) )
-            {
-                # 获取指定项目目录
-                $include_path = Core::project_include_path($project);
-            }
-            else
-            {
-                # 采用当前项目目录
-                $include_path = Core::$include_path;
-            }
+            # 采用当前项目目录
+            $include_path = Core::$include_path;
 
             foreach ( $include_path as $path )
             {
@@ -481,17 +472,11 @@ abstract class MyQEE_Core extends Bootstrap
      * @return Core_Config
      * @return array
      */
-    public static function config($key = null, $project = null)
+    public static function config($key = null)
     {
         if ( null===$key )
         {
             return Core::factory('Core_Config');
-        }
-
-        if ( $project && $project!=Core::$project )
-        {
-            # 指定了项目且和当前项目不相同
-            return Core::project_config($key, $project);
         }
 
         $c = explode('.', $key);
@@ -499,7 +484,7 @@ abstract class MyQEE_Core extends Bootstrap
         if ( ! array_key_exists($cname, Core::$config) )
         {
             $config = array();
-            $thefiles = Core::find_file('config', $cname, null);
+            $thefiles = Core::find_file('config', $cname);
             if ( is_array($thefiles) )
             {
                 if ( count($thefiles) > 1 )
@@ -558,18 +543,23 @@ abstract class MyQEE_Core extends Bootstrap
     /**
      * 返回URL对象
      *
-     * @param string $url URL，若不传，则返回的是Core_Url
-     * @return Core_Url
+     * @param string $url URL
+     * @param bool $return_full_url 返回完整的URL，带http(s)://开头
      * @return string
      */
-    public static function url($url = null)
+    public static function url($url = null , $return_full_url = false)
     {
-        $obj = Core::factory('Core_Url');
-        if (null!==$url)
+        list($url,$query) = explode('?', $url , 2);
+
+        $url = Bootstrap::$base_url. ltrim($url,'/') . ($url!='' && substr($url,-1)!='/' && false===strpos($url,'.') && self::$config['core']['url_suffix']?self::$config['core']['url_suffix']:'') . ($query?'?'.$query:'');
+
+        // 返回完整URL
+        if ( $return_full_url && !preg_match('#^http(s)?://#i', $url) )
         {
-            return $obj->site($url);
+            $url = HttpIO::PROTOCOL . '://' . $_SERVER["HTTP_HOST"] . $url;
         }
-        return $obj;
+
+        return $url;
     }
 
     /**
@@ -664,13 +654,13 @@ abstract class MyQEE_Core extends Bootstrap
     {
         $value = array
         (
-            ':time'    => date('Y-m-d H:i:s'),            //当前时间
+            ':time'    => date('Y-m-d H:i:s'),             //当前时间
             ':url'     => $_SERVER['SCRIPT_URI'],          //请求的URL
             ':msg'     => $msg,                            //日志信息
             ':type'    => $type,                           //日志类型
             ':host'    => $_SERVER["SERVER_ADDR"],         //服务器
             ':port'    => $_SERVER["SERVER_PORT"],         //端口
-            ':ip'      => HttpIO::IP,                     //请求的IP
+            ':ip'      => HttpIO::IP,                      //请求的IP
             ':agent'   => $_SERVER["HTTP_USER_AGENT"],     //客户端信息
             ':referer' => $_SERVER["HTTP_REFERER"],        //来源页面
         );
@@ -688,7 +678,7 @@ abstract class MyQEE_Core extends Bootstrap
         static $debug = null;
         if ( null === $debug )
         {
-            if ( ! IS_CLI && IS_DEBUG && class_exists('Debug', true) )
+            if ( !IS_CLI && IS_DEBUG && ( false!==strpos($_SERVER["HTTP_USER_AGENT"],'FirePHP') || isset($_SERVER["HTTP_X_FIREPHP_VERSION"]) ) && class_exists('Debug', true) )
             {
                 $debug = Debug::instance();
             }
@@ -993,128 +983,6 @@ abstract class MyQEE_Core extends Bootstrap
     }
 
     /**
-     * 获取指定项目的指定key的配置
-     *
-     * @param string $key
-     * @param string $project 跨项目读取配置，若本项目内的不需要传
-     * @return 返回配置
-     */
-    protected static function project_config($key, $project)
-    {
-        $c = explode('.', $key);
-        $cname = array_shift($c);
-        if ( ! isset(Core::$config_projects[$project]) || ! array_key_exists($cname, Core::$config_projects[$project]) )
-        {
-            $config = array();
-            $thefiles = Core::find_file('config', $cname, null, false, $project);
-            if ( is_array($thefiles) )
-            {
-                if ( count($thefiles) > 1 )
-                {
-                    krsort($thefiles); //逆向排序
-                }
-                foreach ( $thefiles as $thefile )
-                {
-                    if ( $thefile )
-                    {
-                        include $thefile;
-                    }
-                }
-            }
-            if ( ! isset(Core::$config_projects[$project][$cname]) )
-            {
-                Core::$config_projects[$project][$cname] = $config;
-            }
-        }
-        $v = Core::$config_projects[$project][$cname];
-        foreach ( $c as $i )
-        {
-            if ( ! isset($v[$i]) ) return null;
-            $v = $v[$i];
-        }
-        return $v;
-    }
-
-    /**
-     * 获取指定项目包含的目录
-     *
-     * @param string $project
-     */
-    public static function project_include_path($project)
-    {
-        static $project_include_path = array();
-        if ( isset($project_include_path[$project]) ) return $project_include_path[$project];
-
-        $project_config = Core::config('core.projects.' . $project);
-        if ( ! $project_config )
-        {
-            $project_include_path[$project] = array();
-            return $project_include_path[$project];
-        }
-
-        $project_dir = realpath(DIR_PROJECT . $project_config['dir']);
-        if ( ! is_dir($project_dir) )
-        {
-            $project_include_path[$project] = array();
-            return $project_include_path[$project];
-        }
-
-        $included = array();
-        $project_dir .= DS;
-        $project_config_file = $project_dir . 'config' . EXT;
-        if ( is_file($project_config_file) )
-        {
-            $config = array();
-            Core::_include_config_file( $config, $project_config_file);
-            if ( isset($config['autoload']) && $config['autoload'] )
-            {
-                $included = (array)$config['autoload'];
-            }
-        }
-        # 自动加载配置
-        if ( isset($project_config['autoload']) && is_array($project_config['autoload']) && $project_config['autoload'] )
-        {
-            $included = array_merge($included, $project_config['autoload']);
-        }
-        if ( isset($config['excluded']) && $config['excluded'] )
-        {
-            # 排除的目录
-            if ( ! is_array($config['excluded']) )
-            {
-                $config['excluded'] = array($config['excluded']);
-            }
-            $included = array_diff($included, $config['excluded']);
-        }
-        $library_dir = array($project_dir);
-
-        foreach ( $included as $path )
-        {
-            if ( $path[0] == '/' || preg_match('#^[a-z]:(\\|/).*$#', $path) )
-            {
-                $path = realpath($path);
-            }
-            else
-            {
-                $path = realpath(DIR_LIBRARY . $path);
-            }
-            if ( $path )
-            {
-                $library_dir[] = $path . DS;
-            }
-        }
-        # 系统核心库
-        $core_path = realpath(DIR_LIBRARY . 'MyQEE/Core');
-        if ( $core_path )
-        {
-            $library_dir[] = $core_path . DS;
-        }
-        # 排除重复路径
-        $library_dir = array_unique($library_dir);
-        $project_include_path[$project] = $library_dir;
-        return $project_include_path[$project];
-    }
-
-    /**
      * 根据$objName返回一个实例化并静态存储的对象
      *
      * @param string $objName
@@ -1164,101 +1032,6 @@ abstract class MyQEE_Core extends Bootstrap
         {
             Core::debug()->info('本次释放内存：' . ( memory_get_usage() - $old_memory) );
         }
-    }
-
-    /**
-     * 包含一个指定的项目
-     *
-     * 会合并待加入项目的配置（当前项目配置优先），本方法只允许执行一次
-     *
-     * [!!] 请确保加入的项目和当前项目没有冲突，否则会出现程序异常
-     *
-     * @param string $project
-     */
-    public static function include_project( $project )
-    {
-        static $run = null;
-        if ( null!==$run )return false;
-        $run = true;
-
-        /*
-        下面主要合并两个项目的配置，和重新整理2个项目的包含目录
-        例如，当前项目包含目录为
-        array(
-        	'a',	//通常第一个都是项目目录
-        	'b',
-        	'c',	//Core目录
-        )
-        待加入的项目包含目录为
-        array(
-        	'aa',
-        	'bb',
-        	'cc',	//Core目录
-        	'c'		//Core目录
-        )
-        则整理后目录为
-        array(
-        	'a',
-        	'b',
-        	'aa',
-        	'bb',
-        	'c',
-        	'cc,
-        )
-        若当前项目的目录和待加入项目的目录优先级存在差异时，则按当前项目优先级处理
-         */
-
-        # 切换到指定项目
-        Core::set_project($project);
-        $p_libs = Core::$include_path;
-
-        $p_project_dir = array(array_shift($p_libs));
-        $p_core_dir = array();
-        if ( self::$project_config['libraries']['core'] && is_array(self::$project_config['libraries']['core']) )
-        {
-            foreach ( self::$project_config['libraries']['core'] as $item )
-            {
-                $core_path = realpath( DIR_LIBRARY . $item );
-                if ( $core_path )
-                {
-                    $p_core_dir[] = $core_path . DS;
-                }
-            }
-        }
-        # 将核心的类库排除掉
-        $p_libs = array_diff($p_libs, $p_core_dir);
-        $p_config = Core::$project_config;
-
-        # 返回项目
-        Core::reset_project();
-
-        # 将新项目的配置合并到当前项目，当前项目的配置优先
-        Core::$project_config = Core::_merge_project_config( Core::$project_config , $p_config );
-
-        $core_dir = array();
-        if ( self::$project_config['libraries']['core'] && is_array(self::$project_config['libraries']['core']) )
-        {
-            foreach ( self::$project_config['libraries']['core'] as $item )
-            {
-                $core_path = realpath( DIR_LIBRARY . $item );
-                if ( $core_path )
-                {
-                    $core_dir[] = $core_path . DS;
-                }
-            }
-        }
-        # 将核心的类库排除掉
-        $new_libs = array_diff(Core::$include_path, $core_dir);
-
-        //                      移除掉核心目录 , 待加入项目目录   ， 项目核心目录 ，待加入项目和当前项目差异的核心目录
-        $new_libs = array_merge($new_libs    , $p_project_dir ,  $core_dir  , array_diff($p_core_dir,$core_dir) );
-
-        # 排除重复路径
-        $new_libs = array_unique( $new_libs );
-
-        Core::$include_path = $new_libs;
-
-        return true;
     }
 
     /**

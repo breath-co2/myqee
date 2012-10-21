@@ -5,7 +5,7 @@
  * @author jonwang
  *
  */
-class Controller_MyQEE__Login extends Controller
+abstract class Controller_MyQEE__Login extends Controller
 {
     protected $message = '';
 

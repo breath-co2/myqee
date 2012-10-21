@@ -30,16 +30,15 @@ class Controller_MyQEE__Admin__P extends Controller
      */
     public function action_default()
     {
-        if ( ! $this->project )
+        if ( !$this->project )
         {
             Core::show_404( '请指定项目' );
         }
-        define( 'IN_ADMIN', true );
 
         # 切换到指定项目
         Core::set_project( $this->project );
 
         # 执行项目的后台
-        HttpIO::execute( ltrim( $this->uri, '/' ), true, true, false, 'admin' );
+        HttpIO::execute( ltrim( $this->uri, '/' ) );
     }
 }

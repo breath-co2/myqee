@@ -19,16 +19,7 @@ if (!defined('_HTTPIO_METHOD'))
     define('_HTTPIO_IS_AJAX',$is_ajax);
     unset($is_ajax);
 
-    if ( !empty($_SERVER['HTTPS']) && filter_var($_SERVER['HTTPS'], FILTER_VALIDATE_BOOLEAN) )
-    {
-        $protocol = 'https';
-    }
-    else
-    {
-        $protocol = 'http';
-    }
-    define('_HTTPIO_PROTOCOL',$protocol);
-    unset($protocol);
+    define('_HTTPIO_PROTOCOL',Core::protocol());
 
     if ( isset($_SERVER['HTTP_X_FORWARDED_FOR']) )
     {
@@ -569,7 +560,7 @@ class MyQEE_HttpIO
      * @param string $controller_dir 指定控制器目录，命令行下默认为shell，网站运行为controllers
      * @return string
      */
-    public static function execute($uri, $print = true, $use_route = true, $is_internal = false, $controller_dir = null)
+    public static function execute($uri, $print = true, $use_route = true, $is_internal = false)
     {
         $ob_open = false;
         if ( ! $print && ! IS_CLI )
@@ -579,7 +570,7 @@ class MyQEE_HttpIO
         }
         $params = false;
         # 路由设置
-        if ( IS_CLI != true && true === $use_route && Core::$project_config['route'] && ($route = Core::route()->get($uri)) )
+        if ( IS_CLI != true && true === $use_route && Core::config('core.route') && ($route = Core::route()->get($uri)) )
         {
             $params = $route;
             # 默认控制器
@@ -589,7 +580,7 @@ class MyQEE_HttpIO
             }
             else
             {
-                $params['controller'] = Core::$project_config['default_controller'];
+                $params['controller'] = Core::config('core.default_controller');
             }
 
             $dir = 'controllers';
@@ -602,7 +593,7 @@ class MyQEE_HttpIO
             {
                 $file = '[shell]/'.$params['controller'];
             }
-            elseif ( Core::$is_admin_url )
+            elseif ( IS_ADMIN_MODE )
             {
                 $file = '[admin]/'.$params['controller'];
             }
@@ -611,15 +602,9 @@ class MyQEE_HttpIO
                 $file = $params['controller'];
             }
 
-            if ( $controller_dir && preg_match('#^[a-zA-Z0-9_]+$#', $controller_dir) )
+            if ( !Core::find_file($dir, $file, null, true) )
             {
-                $dir = $controller_dir;
-                $file = strtolower(str_replace('__', '/', $file));
-            }
-
-            if ( ! Core::find_file($dir, $file, null, true) )
-            {
-                Core::debug()->error('没有找到控制器：' . $params['controller']);
+                Core::debug()->error($params['controller'],'controller not found');
                 if($ob_open)ob_end_clean();
                 return false;
             }
@@ -632,7 +617,7 @@ class MyQEE_HttpIO
         }
         else
         {
-            $params = HttpIO::find_controller($uri, $controller_dir,$is_internal);
+            $params = HttpIO::find_controller($uri,$is_internal);
 
             if ( !IS_CLI && null===HttpIO::$uri && HttpIO::METHOD=='GET' && !$is_internal && isset($params['need_redirect']) && $params['need_redirect']==true)
             {
@@ -647,7 +632,7 @@ class MyQEE_HttpIO
         }
         if ( false === $params )
         {
-            Core::debug()->error('没有找到指定页面');
+            Core::debug()->error('page not found');
             if ($ob_open)ob_end_clean();
             return false;
         }
@@ -680,7 +665,7 @@ class MyQEE_HttpIO
         $action_name = $params['action'];
         if ( ! $action_name )
         {
-            $action_name = $prefix . '_' . Core::$project_config['default_action'];
+            $action_name = $prefix . '_' . Core::config('core.default_action');
         }
         else
         {
@@ -688,9 +673,9 @@ class MyQEE_HttpIO
         }
 
         # 如果不存在控制器类则抛404页面
-        if ( ! class_exists($controller_name, false) )
+        if ( !class_exists($controller_name, false) )
         {
-            Core::debug()->error('控制器：' . $controller_name . '不存在。');
+            Core::debug()->error('controller ' . $controller_name . ' not exists');
             if ($ob_open)ob_end_clean();
             return false;
         }
@@ -698,7 +683,16 @@ class MyQEE_HttpIO
         # 构造新控制器
         if ( ! isset(HttpIO::$controlers[$controller_name]) )
         {
-            HttpIO::$controlers[$controller_name] = new $controller_name();
+            $ref_class = new ReflectionClass($controller_name);
+            if ( $ref_class->isInstantiable() )
+            {
+                HttpIO::$controlers[$controller_name] = new $controller_name();
+            }
+            else
+            {
+                if (IS_DEBUG)Core::debug()->error('controller ' . $controller_name . ' can not instantiable.');
+                return false;
+            }
         }
         $old_current_controller = HttpIO::$current_controller;
         HttpIO::$current_controller = $controller = HttpIO::$controlers[$controller_name];
@@ -729,7 +723,7 @@ class MyQEE_HttpIO
                 $arguments = array($action_name, $arguments);
                 if ( ! method_exists($controller, $action_name) )
                 {
-                    Core::debug()->error('控制器：' . $controller_name . '方法：' . $action_name . '不存在。');
+                    if (IS_DEBUG)Core::debug()->error('controller ' . $controller_name . ' action ' . $action_name . ' not exists');
                     if ($ob_open)ob_end_clean();
                     return false;
                 }
@@ -740,7 +734,7 @@ class MyQEE_HttpIO
         $ispublicmethod = new ReflectionMethod($controller, $action_name);
         if ( ! $ispublicmethod->isPublic() )
         {
-            Core::debug()->error('控制器：' . $controller_name . '方法：' . $action_name . '受保护。');
+            if (IS_DEBUG)Core::debug()->error('controller ' . $controller_name . ' action ' . $action_name . ' is not public');
             if ($ob_open)ob_end_clean();
             return false;
         }
@@ -846,10 +840,9 @@ class MyQEE_HttpIO
      * 查找控制器文件
      *
      * @param string $path_info
-     * @param string $dir 指定控制器目录，命令行下默认为shell，网站运行为controllers
      * @return array 返回控制器后的参数数组
      */
-    protected static function find_controller($uri, $dir = null, $is_internal =false)
+    protected static function find_controller($uri,$is_internal =false)
     {
         # 包含目录
         if ( isset(Core::$file_list[Core::$project]) )
@@ -868,15 +861,11 @@ class MyQEE_HttpIO
             # 系统调用目录
             $confolder = 'controllers'.DS.'[system]';
         }
-        elseif ( $dir && preg_match('#^[a-zA-Z0-9_]+$#', $dir) )
-        {
-            $confolder = 'controllers'.DS.'['.$dir.']';
-        }
         else if ( IS_CLI )
         {
             $confolder = 'controllers'.DS.'[shell]';
         }
-        else if ( Core::$is_admin_url )
+        else if ( IS_ADMIN_MODE )
         {
             $confolder = 'controllers'.DS.'[admin]';
         }
@@ -892,7 +881,7 @@ class MyQEE_HttpIO
         $arguments = explode( '/', $new_uri );
 
         # 默认控制器
-        $default_controller = strtolower(Core::$project_config['default_controller']);
+        $default_controller = strtolower(Core::config('core.default_controller'));
 
         # 记录存在的目录
         $pathArr = array();

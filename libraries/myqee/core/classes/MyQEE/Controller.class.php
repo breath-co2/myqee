@@ -139,7 +139,7 @@ class MyQEE_Controller
         }
         else
         {
-            View::factory((Core::$is_admin_url?'admin/':'').'message',$out)->render(true);
+            View::factory((IS_ADMIN_MODE?'admin/':'').'message',$out)->render(true);
         }
 
         if ( method_exists($this,'after') )

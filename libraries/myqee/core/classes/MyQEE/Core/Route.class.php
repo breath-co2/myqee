@@ -61,11 +61,11 @@ class MyQEE_Core_Route
 
     protected function _comp()
     {
-        Core_Route::$route = Core::$project_config['route'];
-        if ( Core::$project_config['route'] )
+        Core_Route::$route = Core::config('core.route');
+        if ( Core_Route::$route )
         {
             # 构造路由正则
-            foreach ( Core::$project_config['route'] as $k => $v )
+            foreach ( Core_Route::$route as $k => $v )
             {
                 Core_Route::$regex[Core::$project][$k] = Core_Route::_compile($v);
             }
@@ -115,7 +115,7 @@ class MyQEE_Core_Route
         Core::debug()->log(array('URI:' => $uri, 'Route:' => Core_Route::$regex[Core::$project][$route]));
         if ( ! preg_match(Core_Route::$regex[Core::$project][$route], $uri, $matches) )
         {
-            Core::debug()->error('↑未匹配到当前路由。');
+            Core::debug()->info('↑未匹配到当前路由。');
             Core::debug()->groupEnd();
             return false;
         }
@@ -133,9 +133,10 @@ class MyQEE_Core_Route
             $params[$key] = $value;
         }
 
-        if ( isset(Core::$project_config['route'][$route]) && is_array(Core::$project_config['route'][$route]['default']) )
+        $route_config = Core::config('core.route'.$route);
+        if ( $route_config && is_array($route_config['default']) )
         {
-            foreach ( Core::$project_config['route'][$route]['default'] as $key => $value )
+            foreach ( $route_config['default'] as $key => $value )
             {
                 if ( ! isset($params[$key]) or $params[$key] === '' )
                 {

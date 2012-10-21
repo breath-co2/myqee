@@ -114,15 +114,40 @@ class MyQEE_HttpCall
         static $curl_supper = null;
         if (null===$curl_supper)$curl_supper = function_exists('\curl_init');
 
+        if (IS_CLI)
+        {
+            $project_config = Core::config('core.projects'.Core::$project);
+            $script = $project_config['url'];
+            if (is_array($script))$script = current($script);
+            if ( isset($project_config['url_admin']) )
+            {
+                $script .= ltrim($project_config['url_admin'],'/');
+            }
+            if ( false===strpos($uri, '://') )
+            {
+                $url_site = Core::config('core.url.site');
+                if ( !$url_site )
+                {
+                    throw new Exception(__('your core config $config[\'url\'][\'site\'] is not defined.check config:ext',array(':ext'=>EXT)));
+                }
+
+                $script = $url_site . ltrim($script, '/');
+            }
+        }
+        else
+        {
+            $script = $_SERVER["SCRIPT_URI"];
+        }
+
         $uri = Core::url($uri);
         if ( false===strpos($uri, '://') )
         {
-            preg_match('#^(http(?:s)?\://[^/]+/)#', $_SERVER["SCRIPT_URI"] , $m);
+            preg_match('#^(http(?:s)?\://[^/]+/)#', $script , $m);
             $uri = $m[1].ltrim($uri,'/');
         }
         # http://host/uri
         $uri_arr = explode('/',$uri);
-        $scr_arr = explode('/',$_SERVER["SCRIPT_URI"]);
+        $scr_arr = explode('/',$script);
 
         $uri_arr[0] = $scr_arr[0];
         $uri_arr[2] = $scr_arr[2];

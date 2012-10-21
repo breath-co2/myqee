@@ -150,7 +150,7 @@ function __load_boot__()
         # 当在项目初始化之前发生错误（比如项目不存在），调用系统Core类库
         Bootstrap::$include_path = array
         (
-        	DIR_LIBRARY . 'MyQEE' . DS . 'Core' . DS,
+        	DIR_LIBRARY . 'myqee' . DS . 'core' . DS,
     	);
 
     	# 注册自动加载类
@@ -235,7 +235,7 @@ abstract class Bootstrap
      *
      * @var float
      */
-    const VERSION = '1.9.1.1';
+    const VERSION = '1.9.2';
 
     /**
      * 系统所在的根目录
@@ -274,13 +274,6 @@ abstract class Bootstrap
     public static $project;
 
     /**
-     * 当前项目配置
-     *
-     * @var array
-     */
-    public static $project_config;
-
-    /**
      * 当前项目目录
      *
      * @var string
@@ -300,20 +293,6 @@ abstract class Bootstrap
      * @var array('project_name'=>array(...))
      */
     public static $file_list = array();
-
-    /**
-     * 当前请求是否admin类型请求
-     *
-     * @var boolean
-     */
-    public static $is_admin_url = false;
-
-    /**
-     * 当前请求的URL的路径索引
-     *
-     * @var int
-     */
-    public static $curren_uri_index = 0;
 
     /**
      * 包含目录
@@ -460,9 +439,18 @@ abstract class Bootstrap
             self::_throw_sys_error_msg( __('Please create a new project.') );
         }
 
-        if ( isset(self::$config['core']['base_url']) && null!==self::$config['core']['base_url'] )
+        if ( isset(self::$config['core']['url']['site']) && null!==self::$config['core']['url']['site'] )
         {
-            self::$base_url = self::$config['core']['base_url'];
+            define('URL_SITE', self::$config['core']['url']['site']);
+        }
+        elseif ( !IS_CLI )
+        {
+            $script_arr = explode('/',$_SERVER['SCRIPT_URI']);
+            define('URL_SITE', $script_arr[0].'//'.$script_arr[2].'/');
+        }
+        else
+        {
+            define('URL_SITE', '/');
         }
 
         if ( isset(self::$config['core']['url']['assets']) )
@@ -476,6 +464,19 @@ abstract class Bootstrap
         define('URL_ASSETS', $assets_url);
         unset($assets_url);
 
+        // 设置错误等级
+        if ( isset(self::$config['core']['error_reporting'] ) )
+        {
+            @error_reporting( self::$config['core']['error_reporting'] );
+        }
+
+        // 时区设置
+        if ( isset( self::$config['core']['timezone'] ) )
+        {
+            @date_default_timezone_set( self::$config['core']['timezone'] );
+        }
+
+        $is_admin_url = false;
         $now_project = null;
         if ( IS_CLI )
         {
@@ -530,7 +531,6 @@ abstract class Bootstrap
                     if ( self::_check_is_this_url( $u, self::$path_info ) )
                     {
                         $project_url = $u;
-                        self::$curren_uri_index = $index;
                         break;
                     }
                 }
@@ -546,17 +546,23 @@ abstract class Bootstrap
                         if ( self::_check_is_this_url( $item['url_admin'], $tmp_pathinfo ) )
                         {
                             self::$path_info = $tmp_pathinfo;
-                            self::$is_admin_url = true;
+                            $is_admin_url = true;
                         }
                     }
 
                     self::$project_url = $project_url;
-                    $project_config = $item;
                     $now_project = $k;
                     break;
                 }
             }
         }
+
+        /**
+         * 是否后台管理模式
+         *
+         * @var boolean
+         */
+        define('IS_ADMIN_MODE', $is_admin_url);
 
         if ( !$now_project )
         {
@@ -588,6 +594,7 @@ abstract class Bootstrap
          */
         define( 'INITIAL_PROJECT_NAME', $now_project );
 
+        // 设置项目
         self::set_project( $now_project );
 
         # 注册自动加载类
@@ -608,46 +615,36 @@ abstract class Bootstrap
         {
             return true;
         }
+
         static $core_config = null;
-        if ( null===$core_config )
+
+        if (null===$core_config)
         {
             # 记录原始Core配置
             $core_config = self::$config['core'];
         }
 
-        if ( ! isset( $core_config['projects'][$project] ) )
+        if ( !isset($core_config['projects'][$project] ) )
         {
             self::_throw_sys_error_msg( __('not found the project: :project.',array(':project'=>$project) ) );
         }
-        if ( ! $core_config['projects'][$project]['isuse'] )
+        if ( !$core_config['projects'][$project]['isuse'] )
         {
             self::_throw_sys_error_msg( __('the project: :project is not open.' , array(':project'=>'$project') ) );
         }
-
-        # 获取core里项目配置
-        $project_config = $core_config['projects'][$project];
-
-        # 项目路径
-        $project_dir = realpath( DIR_PROJECT . $project_config['dir'] );
-        if ( ! $project_dir || ! is_dir( $project_dir ) )
-        {
-            self::_throw_sys_error_msg( __('the project dir :dir is not exist.' , array(':dir'=>$project_config['dir'])) );
-        }
-        $project_dir .= DS;
-        self::$project_dir = $project_dir;
 
         # 记录所有项目设置，当切换回项目时，使用此设置还原
         static $all_prjects_setting = array();
 
         if ( self::$project )
         {
-            # 记录上一个项目设置
+            // 记录上一个项目设置
             $all_prjects_setting[self::$project] = array
             (
                 'config'         => self::$config,
-                'project_config' => self::$project_config,
                 'include_path'   => self::$include_path,
                 'file_list'      => self::$file_list,
+                'project_dir'    => self::$project_dir,
             );
         }
 
@@ -655,7 +652,7 @@ abstract class Bootstrap
         self::$project = $project;
 
         # 记录debug信息
-        if ( class_exists( 'Core', false ) )
+        if ( IS_DEBUG && class_exists( 'Core', false ) )
         {
             Core::debug()->info( '程序已切换到了新项目：' . $project );
         }
@@ -664,72 +661,40 @@ abstract class Bootstrap
         {
             # 还原配置
             self::$config         = $all_prjects_setting[$project]['config'];
-            self::$project_config = $all_prjects_setting[$project]['project_config'];
             self::$include_path   = $all_prjects_setting[$project]['include_path'];
             self::$file_list      = $all_prjects_setting[$project]['file_list'];
+            self::$project_dir    = $all_prjects_setting[$project]['project_dir'];
         }
         else
         {
-            # 合并配置
-            $config = $core_config['projects'][$project] + self::$config['core'];
+            self::$config = array
+            (
+                'core' => $core_config,
+            );
+
+            # 项目路径
+            $project_dir = realpath( DIR_PROJECT . $core_config['projects']['dir'] );
+            if ( !$project_dir || !is_dir( $project_dir ) )
+            {
+                self::_throw_sys_error_msg( __('the project dir :dir is not exist.' , array(':dir'=>$core_config['projects']['dir'])) );
+            }
+            $project_dir .= DS;
+            self::$project_dir = $project_dir;
 
             # 读取项目配置
             if ( is_file( $project_dir . 'config' . EXT ) )
             {
-                self::_include_config_file( $config, $project_dir . 'config' . EXT );
+                self::_include_config_file( self::$config['core'], $project_dir . 'config' . EXT );
             }
+
             # 读取DEBUG配置
-            if ( isset(self::$config['core']['debug_config']) && self::$config['core']['debug_config'] && is_file($project_dir.'debug.config'.EXT) )
+            if ( isset($core_config['debug_config']) && $core_config['debug_config'] && is_file($project_dir.'debug.config'.EXT) )
             {
-                self::_include_config_file( $config , $project_dir.'debug.config'.EXT );
+                self::_include_config_file( self::$config['core'] , $project_dir.'debug.config'.EXT );
             }
-
-            # 清理项目配置
-            self::$project_config = $config;
-            self::$config = array
-            (
-            	'core' => & self::$project_config,
-            );
-            unset($config);
-
-            # Builder构建，处理 self::$file_list
-            if ( self::$project_config['use_bulider'] === 'auto' )
-            {
-                if ( IS_DEBUG )
-                {
-                    $usebulider = false;
-                }
-                else
-                {
-                    $usebulider = true;
-                }
-            }
-            else
-            {
-                $usebulider = (boolean)self::$project_config['use_bulider'];
-            }
-
-            $project_filelist = DIR_BULIDER . self::$project . DS . 'project_all_files_list' . EXT;
-            if ( true === $usebulider && ! IS_CLI && is_file( $project_filelist ) )
-            {
-                # 读取文件列表
-                self::_include_config_file( self::$file_list, $project_filelist );
-            }
-
 
             # 设置包含目录
             self::$include_path = self::get_project_include_path($project);
-        }
-
-        if ( isset( self::$project_config['error_reporting'] ) )
-        {
-            error_reporting( self::$project_config['error_reporting'] );
-        }
-
-        # 时区设置
-        if ( isset( self::$project_config['timezone'] ) )
-        {
-            date_default_timezone_set( self::$project_config['timezone'] );
         }
 
         if ( class_exists('Core',false) )
@@ -764,9 +729,9 @@ abstract class Bootstrap
         {
             # 调试类库目录
             $debug_libraries = null;
-            if ( isset( self::$project_config['libraries']['debug'] ) )
+            if ( isset( self::$config['core']['libraries']['debug'] ) )
             {
-                $debug_libraries = self::$project_config['libraries']['debug'];
+                $debug_libraries = self::$config['core']['libraries']['debug'];
             }
             elseif ( isset( self::$config['core']['libraries']['debug'] ) )
             {
@@ -804,33 +769,33 @@ abstract class Bootstrap
         }
 
         # 自动加载类库
-        if ( isset( self::$project_config['libraries']['autoload'] ) )
+        if ( isset( self::$config['core']['libraries']['autoload'] ) )
         {
-            $included = (array)self::$project_config['libraries']['autoload'];
+            $included = (array)self::$config['core']['libraries']['autoload'];
         }
         else
         {
         	$included = array();
         }
 
-        if ( self::$is_admin_url )
+        if ( IS_ADMIN_MODE )
         {
             # 后台管理加载项
-            if ( isset( self::$project_config['libraries']['admin'] ) && is_array( self::$project_config['libraries']['admin'] ) )
+            if ( isset( self::$config['core']['libraries']['admin'] ) && is_array( self::$config['core']['libraries']['admin'] ) )
             {
-                $included = array_merge($included,self::$project_config['libraries']['admin']);
+                $included = array_merge($included,self::$config['core']['libraries']['admin']);
             }
         }
 
         # 扩展配置
-        if ( isset( self::$project_config['excluded'] ) && self::$project_config['excluded'] )
+        if ( isset( self::$config['core']['excluded'] ) && self::$config['core']['excluded'] )
         {
             # 排除的目录
-            if ( ! is_array( self::$project_config['excluded'] ) )
+            if ( ! is_array( self::$config['core']['excluded'] ) )
             {
-                self::$project_config['excluded'] = array( self::$project_config['excluded'] );
+                self::$config['core']['excluded'] = array( self::$config['core']['excluded'] );
             }
-            $included = array_diff( $included, self::$project_config['excluded'] );
+            $included = array_diff( $included, self::$config['core']['excluded'] );
         }
 
         foreach ( $included as $path )
@@ -852,9 +817,9 @@ abstract class Bootstrap
 
         # 系统核心库
         $core_dir = array();
-        if ( self::$project_config['libraries']['core'] && is_array(self::$project_config['libraries']['core']) )
+        if ( self::$config['core']['libraries']['core'] && is_array(self::$config['core']['libraries']['core']) )
         {
-            foreach ( self::$project_config['libraries']['core'] as $path )
+            foreach ( self::$config['core']['libraries']['core'] as $path )
             {
                 $path = str_replace('.','/',substr($path,4));
                 $core_path = realpath( DIR_LIBRARY . $path );
@@ -891,23 +856,45 @@ abstract class Bootstrap
 
     /**
      * 返回协议类型
+     *
      * 当在命令行里执行，则返回null
+     *
      * @return null/http/https
      */
     public static function protocol()
     {
-        if ( IS_CLI )
+        static $protocol = null;
+        if (null===$protocol)
         {
-            return null;
+
+            if ( IS_CLI )
+            {
+                return null;
+            }
+            else
+            {
+                $https_key = Core::config('core.server_httpson_key');
+                if ($https_key)
+                {
+                    $https_key = strtoupper($https_key);
+                }
+                else
+                {
+                    $https_key = 'HTTPS';
+                }
+                if ( !empty($_SERVER[$https_key]) && filter_var($_SERVER[$https_key], FILTER_VALIDATE_BOOLEAN) )
+                {
+
+                    $protocol = 'https';
+                }
+                else
+                {
+                    $protocol = 'http';
+                }
+            }
         }
-        elseif ( isset( $_SERVER['HTTPS'] ) && $_SERVER['HTTPS'] === 'on' )
-        {
-            return 'https';
-        }
-        else
-        {
-            return 'http';
-        }
+
+        return $protocol;
     }
 
     /**
@@ -976,6 +963,19 @@ abstract class Bootstrap
      */
     private static function _get_pathinfo()
     {
+        # 当没有$_SERVER["SCRIPT_URL"] 时拼接起来
+        if ( !isset($_SERVER["SCRIPT_URL"]) )
+        {
+            $tmp_uri = explode('?', $_SERVER["REQUEST_URI"] ,2);
+            $_SERVER["SCRIPT_URL"] = $tmp_uri[0];
+        }
+
+        # 当没有$_SERVER["SCRIPT_URI"] 时拼接起来
+        if ( !isset($_SERVER["SCRIPT_URI"]) )
+        {
+            $_SERVER["SCRIPT_URI"] = (isset($_SERVER["HTTPS"]) && $_SERVER["HTTPS"]=='on'?'https':'http').'://'.$_SERVER["HTTP_HOST"].$_SERVER["SCRIPT_URL"];
+        }
+
         # 处理base_url
         if ( null === self::$base_url && isset($_SERVER["SCRIPT_NAME"]) && $_SERVER["SCRIPT_NAME"] )
         {

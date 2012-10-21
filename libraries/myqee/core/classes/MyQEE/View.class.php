@@ -155,7 +155,6 @@ class MyQEE_View
      *
      * @param string $keystr
      */
-    /*
     public static function tag($keystr)
     {
         // 获取当前的Tag
@@ -172,7 +171,6 @@ class MyQEE_View
             }
         }
     }
-    */
 
     /**
      * 获取指定key的Tag
@@ -180,7 +178,6 @@ class MyQEE_View
      * @param string $keystr
      * @return array
      */
-     /*
     public static function get_tag($keystr)
     {
         # 判断是否调试输出
@@ -226,7 +223,6 @@ class MyQEE_View
         }
     }
 
-    */
     protected static function capture($myqee_view_filename, array $myqee_view_data)
     {
         // Import the view variables to local namespace
@@ -260,7 +256,6 @@ class MyQEE_View
     }
 }
 
-/*
 class _view_tag_current
 {
     private $tag_name;
@@ -281,7 +276,6 @@ class _view_tag_current
      * $this->run();
      * $this->run('arg1','arg2');
      */
-/*
     public function run($c = null)
     {
         if ( is_array($c) && func_num_args()==1 )
@@ -317,4 +311,3 @@ class _view_tag_current
     }
 }
 
-*/
