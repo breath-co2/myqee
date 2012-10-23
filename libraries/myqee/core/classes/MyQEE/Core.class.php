@@ -204,17 +204,24 @@ abstract class MyQEE_Core extends Bootstrap
 
         Core::$arguments = explode('/', trim(Core::$path_info, '/ '));
 
-        # 执行
-        $output = HttpIO::execute(Core::$path_info, false);
-
-        if ( false===$output )
+        try
         {
-            # 抛出404错误
-            Core::show_404();
-            exit();
-        }
+            # 执行
+            $output = HttpIO::execute(Core::$path_info, false);
 
-        Core::$output = $output;
+            if ( false===$output )
+            {
+                # 抛出404错误
+                Core::show_404();
+                exit();
+            }
+        
+            Core::$output = $output;
+        }
+        catch (Exception $e)
+        {
+            Core::show_500($e);
+        }
     }
 
     /**
@@ -839,7 +846,14 @@ abstract class MyQEE_Core extends Bootstrap
 
         if ( IS_CLI )
         {
-            echo $msg . CRLF;
+            if ( $msg instanceof Exception )
+            {
+                echo $msg->getMessage() . CRLF;
+            }
+            else
+            {
+                echo $msg . CRLF;
+            }
             exit();
         }
 
