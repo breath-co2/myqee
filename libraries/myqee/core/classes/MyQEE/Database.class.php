@@ -73,6 +73,19 @@ class MyQEE_Database extends Database_QueryBuilder
     protected $is_auto_use_master = false;
 
     /**
+     * 记录慢查询
+     *
+     *   array
+     *   (
+     *       //    执行时的时间    耗时(单位毫秒)   查询语句
+     *       array(1351691389,   1200          ,'select * from test;'),
+     *   )
+     *
+     * @var array
+     */
+    protected static $slow_querys = array();
+
+    /**
      * 返回数据库实例化对象
      *
      * @param string $config_name
@@ -191,7 +204,41 @@ class MyQEE_Database extends Database_QueryBuilder
         {
             $use_master = true;
         }
-        return $this->driver->query($sql, $as_object, $use_master);
+
+        static $slow_query_mtime = null;
+        if ( null===$slow_query_mtime )
+        {
+            if (IS_CLI)
+            {
+                $slow_query_mtime = false;
+            }
+            else
+            {
+                $slow_query_mtime = (int)Core::config('core.slow_query_mtime');
+            }
+        }
+
+        if ($slow_query_mtime)$stime = microtime(1);
+
+        $rs = $this->driver->query($sql, $as_object, $use_master);
+
+        if ( $slow_query_mtime>0 )
+        {
+            $etime = microtime(1);
+            $time = 1000*($etime-$stime);
+            if ( $time>$slow_query_mtime )
+            {
+                // 记录慢查询
+                Database::$slow_querys[] = array
+                (
+                    (int)$stime,
+                    $time,
+                    $this->driver->last_query(),            // 不用$sql是因为比如MongoDB这样的会在driver里再处理
+                );
+            }
+        }
+
+        return $rs;
     }
 
     /**
@@ -523,5 +570,28 @@ class MyQEE_Database extends Database_QueryBuilder
                 $database->close_connect();
             }
         }
+
+        // 执行保存慢查询方法
+        Database::save_slow_query();
+    }
+
+    /**
+     * 记录慢查询
+     *
+     * @return boolean
+     */
+    protected static function save_slow_query()
+    {
+        if (!Database::$slow_querys)return true;
+
+        // 记录URL信息
+        $data = "\n".str_pad(HttpIO::METHOD,4,' ') .' '. date('H:i:s',TIME) .' - '. str_pad((int)(1000*(microtime(1)-START_TIME)),6,' ',STR_PAD_LEFT) . ' - '. str_pad(HttpIO::IP,15) .' '.$_SERVER["SCRIPT_URI"] .(''!==$_SERVER["QUERY_STRING"]?'?'.$_SERVER["QUERY_STRING"]:'') . (HttpIO::METHOD=='POST'?'   POST:'.json_encode(HttpIO::POST()):'') ."\n";
+        foreach (Database::$slow_querys as $item)
+        {
+            $data .= '     ' . date('H:i:s',$item[0]).' - '.str_pad((int)$item[1],6,' ',STR_PAD_LEFT) . ' - ' . $item[2] . "\n";
+        }
+
+        // 写入文件
+        File::create_file(DIR_LOG.'slow_query/'.date('Y/m_d',TIME),$data,FILE_APPEND);
     }
 }

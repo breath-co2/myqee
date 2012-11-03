@@ -111,16 +111,17 @@ class MyQEE_Cache_Driver_Redis
                     $action = 'connect';
                 }
 
+                $time = microtime(1);
                 $status = Cache_Driver_Redis::$redis[$config_name]->$action($server['host'], $server['port'],$server['timeout']);
-
+                $time = microtime(1)-$time;
                 if ($status)
                 {
-                    if (IS_DEBUG)Core::debug()->info('connect redis server '.$server['host'].':'.$server['port']);
+                    if (IS_DEBUG)Core::debug()->info('connect redis server '.$server['host'].':'.$server['port'] . ' time:'.$time);
                     break;
                 }
                 else
                 {
-                    if (IS_DEBUG)Core::debug()->error('error connect redis server '.$server['host'].':'.$server['port']);
+                    if (IS_DEBUG)Core::debug()->error('error connect redis server '.$server['host'].':'.$server['port'] . ' time:'.$time);
                 }
             }
         }
@@ -167,6 +168,7 @@ class MyQEE_Cache_Driver_Redis
     {
         $this->_connect();
 
+        $time = microtime(1);
         if ( is_array($key) )
         {
             # redis多取
@@ -182,16 +184,19 @@ class MyQEE_Cache_Driver_Redis
             $return = $this->_redis->get($key);
             Cache_Driver_Redis::_de_format_data($return);
         }
+        $time = microtime(1) - $time;
 
         if ( false===$return )
         {
             Core::debug()->error($key,'redis mis key');
+            Core::debug()->info($time,'use time');
 
             return false;
         }
         else
         {
             Core::debug()->info($key,'redis hit key');
+            Core::debug()->info($time,'use time');
         }
 
         return $return;

@@ -180,6 +180,13 @@ class MyQEE_Database_Driver_Mongo extends Database_Driver
                         $tmplink = new Mongo("mongodb://{$hostname}:{$port}/");
                     }
 
+                    if ( method_exists($tmplink,'setReadPreference') )
+                    {
+                        // (PECL mongo >=1.3.0)
+                        // http://www.php.net/manual/en/mongo.setreadpreference.php
+                        $tmplink->setReadPreference(Mongo::RP_SECONDARY_PREFERRED);
+                    }
+
                     Core::debug()->info('MongoDB '.($username?$username.'@':'').$hostname.':'.$port.' connection time:' . (microtime(true) - $time));
 
                     # 连接ID
@@ -410,10 +417,6 @@ class MyQEE_Database_Driver_Mongo extends Database_Driver
                                 $s[$v] = 1;
                             }
                         }
-                        elseif ($item instanceof MongoCode)
-                        {
-                            $sql['code'] = $item;
-                        }
                         elseif (method_exists($item, '__toString'))
                         {
                             $s[(string)$item] = 1;
@@ -436,41 +439,18 @@ class MyQEE_Database_Driver_Mongo extends Database_Driver
             // group by
             if ( $builder['group_by'] )
             {
-                foreach ($builder['group_by'] as $item)
-                {
-                    $sql['group']['key'][$item] = true;
-                }
+                $sql['$group'] = array();
 
-                $sql['group']['initial'] = array('_count'=>0);
-
-                if ($sql['code'] && $sql['code'] instanceof MongoCode)
+                if ( 1===count($builder['group_by']) )
                 {
-                    $reduce = '('.(string)$sql['code'].')(obj,prve);';
+                    $sql['$group']['_id'] = '$'.current($builder['group_by']);
                 }
                 else
                 {
-                    $reduce = '';
-                }
-                if (isset($sql['total_count']) && $sql['total_count'])
-                {
-                    $reduce = new MongoCode('function(obj,prve){prve._count++;if(!prve.total_count)prve.total_count=0;prve.total_count++;'.$reduce.'}');
-                }
-                else
-                {
-                    $reduce = new MongoCode('function(obj,prve){prve._count++;'.$reduce.'}');
-                }
-
-                $sql['group']['reduce'] = $reduce;
-
-                if ( $sql['where'] )
-                {
-                    if ( is_object($sql['where']) && $sql['where'] instanceof MongoCode )
+                    $sql['$group']['_id'] = array();
+                    foreach ($builder['group_by'] as $item)
                     {
-                        $sql['group']['finalize'] = $sql['where'];
-                    }
-                    else
-                    {
-                        $sql['group']['cond'] = $sql['where'];
+                        $sql['$group']['_id'][$item] = '$'.$item;
                     }
                 }
             }
@@ -568,6 +548,7 @@ class MyQEE_Database_Driver_Mongo extends Database_Driver
             $use_connection_type = 'master';
         }
 
+
         # 设置连接类型
         $this->_set_connection_type($use_connection_type);
 
@@ -594,6 +575,8 @@ class MyQEE_Database_Driver_Mongo extends Database_Driver
             }
         }
 
+        $explain = null;
+
         try
         {
             switch ( $type )
@@ -613,6 +596,11 @@ class MyQEE_Database_Driver_Mongo extends Database_Driver
 
                         $last_query = 'db.'.$tablename.'.distinct('.$options['distinct'].', '.json_encode($options['where']).')';
 
+                        if( IS_DEBUG && $is_sql_debug )
+                        {
+                            $count = count($result['values']);
+                        }
+
                         if ( $result && $result['ok']==1 )
                         {
                             $rs = new Database_Driver_Mongo_Result(new ArrayIterator($result['values']), $options, $as_object ,$this->config );
@@ -622,32 +610,91 @@ class MyQEE_Database_Driver_Mongo extends Database_Driver
                             throw new Exception($result['errmsg']);
                         }
                     }
-                    elseif ( $options['group'] )
+                    elseif ( $options['$group'] )
                     {
                         # group by
-
-                        $option = array();
-                        if ($options['group']['cond'])
+                        $last_query = 'db.'.$tablename.'.aggregate(';
+                        $ops = array();
+                        if ($options['where'])
                         {
-                            $option['condition'] = $options['group']['cond'];
+                            $last_query .= '{$match: '.json_encode($options['where']).'}, ';
+                            $ops[] = array
+                            (
+                                '$match' => $options['where']
+                            );
                         }
 
-                        if ($options['group']['finalize'])
+                        $group_opt = $options['$group'];
+                        $group_opt['_count'] = array('$sum'=>1);
+                        $have_dot = false;
+                        if ($options['select'])
                         {
-                            $option['finalize'] = $options['group']['finalize'];
+                            foreach ($options['select'] as $k=>$v)
+                            {
+                                if (1===$v)
+                                {
+                                    if ( false!==strpos($k,'.') )
+                                    {
+                                        $have_dot = true;
+                                        $group_opt[str_replace('.','->',$k)] = array('$first'=>'$'.$k);
+                                    }
+                                    else
+                                    {
+                                        $group_opt[$k] = array('$first'=>'$'.$k);
+                                    }
+                                }
+                                else
+                                {
+                                    if ( false!==strpos($v,'.') )
+                                    {
+                                        $have_dot = true;
+                                        $group_opt[str_replace('.','->',$v)] = array('$first'=>'$'.$k);
+                                    }
+                                    else
+                                    {
+                                        $group_opt[$v] = array('$first'=>'$'.$k);
+                                    }
+                                }
+                            }
                         }
 
-                        $result = $connection->selectCollection($tablename)->group($options['group']['key'],$options['group']['initial'],$options['group']['reduce'],$option);
+                        $ops[] = array
+                        (
+                            '$group' => $group_opt,
+                        );
 
-                        $last_query = 'db.'.$tablename.'.group({"key":'.json_encode($options['group']['key']).', "initial":'.json_encode($options['group']['initial']).', "reduce":'.(string)$options['group']['reduce'].', '.(isset($options['group']['finalize'])&&$options['group']['finalize']?'"finalize":'.(string)$options['group']['finalize']:'"cond":'.json_encode($options['group']['cond'])).'})';
+                        $last_query .= '{$group:'.json_encode($group_opt).'}';
+                        $last_query .= ')';
 
-                        if ($result && $result['ok']==1)
+                        $result = $connection->selectCollection($tablename)->aggregate($ops);
+                        if ( false===$result )
                         {
-                            $rs = new Database_Driver_Mongo_Result(new ArrayIterator($result['retval']), $options, $as_object ,$this->config );
+                            throw new Exception('the group query has an error:'.$last_query);
                         }
                         else
                         {
-                            throw new Exception($result['errmsg']);
+                            if ($have_dot)foreach ($result as &$item)
+                            {
+                                $result2[] = array();
+                                foreach ($item as $k=>$v)
+                                {
+                                    if (false!==strpos($k,'->'))
+                                    {
+                                        $item[str_replace('->','.',$k)] = $v;
+                                        unset($item[$k]);
+                                    }
+                                }
+                            }
+                            if ($options['total_count'])
+                            {
+                                foreach ($result as &$item)
+                                {
+                                    $item['total_count'] = $item['_count'];
+                                }
+                            }
+                            $count = count($result);
+
+                            $rs = new Database_Driver_Mongo_Result(new ArrayIterator($result), $options, $as_object ,$this->config );
                         }
                     }
                     else
@@ -659,8 +706,15 @@ class MyQEE_Database_Driver_Mongo extends Database_Driver
 
                         $result = $connection->selectCollection($tablename)->find($options['where'],(array)$options['select']);
 
+                        if( IS_DEBUG && $is_sql_debug )
+                        {
+                            $explain = $result->explain();
+                            $count = $result->count();
+                        }
+
                         if ( $options['total_count'] )
                         {
+                            $last_query .= '.count()';
                             $result = $result->count();
                             # 仅统计count
                             $rs = new Database_Driver_Mongo_Result(new ArrayIterator( array(array('total_row_count'=>$result)) ), $options, $as_object ,$this->config );
@@ -692,7 +746,7 @@ class MyQEE_Database_Driver_Mongo extends Database_Driver
                     break;
                 case 'UPDATE':
                     $result = $connection->selectCollection($tablename)->update($options['where'] , $options['data'] , $options['options']);
-                    $rs = $result['n'];
+                    $count = $rs = $result['n'];
                     $last_query = 'db.'.$tablename.'.update('.json_encode($options['where']).','.json_encode($options['data']).')';
                     break;
                 case 'SAVE':
@@ -703,15 +757,17 @@ class MyQEE_Database_Driver_Mongo extends Database_Driver
 
                     if ($type=='BATCHINSERT')
                     {
+                        $count = count($options['data']);
                         # 批量插入
                         $rs = array
                         (
                             '',
-                            count($options['data']),
+                            $count,
                         );
                     }
                     elseif ( isset($result['data']['_id']) && $result['data']['_id'] instanceof MongoId )
                     {
+                        $count = 1;
                         $rs = array
                         (
                             (string)$result['data']['_id'] ,
@@ -720,6 +776,7 @@ class MyQEE_Database_Driver_Mongo extends Database_Driver
                     }
                     else
                     {
+                        $count = 0;
                         $rs = array
                         (
                             '',
@@ -779,7 +836,7 @@ class MyQEE_Database_Driver_Mongo extends Database_Driver
                     $data[0]['nscannedObjects'] = '';
                     $data[0]['n']               = '';
                     $data[0]['millis']          = '';
-                    $data[0]['row']             = count($result);
+                    $data[0]['row']             = $count;
                     $data[0]['query']           = '';
                     $data[0]['nYields']         = '';
                     $data[0]['nChunkSkips']     = '';
@@ -787,10 +844,9 @@ class MyQEE_Database_Driver_Mongo extends Database_Driver
                     $data[0]['indexOnly']       = '';
                     $data[0]['indexBounds']     = '';
 
-                    if ( $type=='SELECT' && !$options['group'] && is_object($result) && method_exists($result, 'explain') )
+                    if ( $explain )
                     {
-                        $re = $result->explain();
-                        foreach ($re as $k=>$v)
+                        foreach ($explain as $k=>$v)
                         {
                             $data[0][$k] = $v;
                         }

@@ -611,7 +611,7 @@ class MyQEE_Database_QueryBuilder
      */
     public function order_by($column, $direction = 'ASC')
     {
-        $this->_builder['order_by'][] = array($column, $direction);
+        $this->_builder['order_by'][] = array($column, strtoupper($direction));
 
         return $this;
     }

@@ -476,7 +476,7 @@ class MyQEE_Form
         $input_att['onmousewheel'] = 'return wheelcalender(event,this,' . ($attributes['time'] ? 'true' : 'false') . ');';
         unset($input_att['time']);
 
-        $tmpinput .= '<span style="white-space:nowrap;">' . Form::input($name, $value == '' ? '' : date("Y-m-d" . ($attributes['time'] ? ' H:i:s' : ''), $value > 0 ? $value : TIME ), $input_att );
+        $tmpinput .= '<span style="white-space:nowrap;">' . Form::input($name, is_numeric($value)&&$value>0? date("Y-m-d" . ($attributes['time'] ? ' H:i:s' : ''), $value > 0 ? $value : TIME ):$value, $input_att );
         if ( $showinput )
         {
             $tmpinput .= '<img src="'.Core::url('statics/images/icon/calender.png').'" style="margin-right:8px;margin-left:2px;vertical-align:middle;cursor:pointer;" title="显示时间控件" onclick="var myobj=MyQEE.$(\'' . $attributes['id'] .'\');if(myobj){if(myobj.disabled)return false;myobj.focus();myobj.onfocus(event);}" />';

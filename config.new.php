@@ -181,6 +181,26 @@ $config['local_debug_cfg'] = 'myqee.debug';
  */
 $config['use_bulider'] = false;
 
+
+/**
+ * 记录慢查询的时间，单位毫秒。0表示不记录
+ *
+ * 在shell下执行SQL不记录
+ * 慢查询将都记录在 Log目录的slow_query目录下，按年月分目录记录。类似：
+ *
+ *    GET  22:46:33 -   9037 - 127.0.0.1       http://www.test.com/abc/?a=1
+ *         22:46:33 -   3003 - SELECT * FROM `admin_member` WHERE `id` = '1'
+ *         22:46:36 -   3000 - SELECT * FROM `test` WHERE `id` = '1'
+ *
+ *  表示：
+ *    11点13分50秒GET请求的http://www.test.com/abc/?a=1页面产生的SQL
+ *    执行时的时间    耗时(单位毫秒)   查询语句
+ *
+ * @var int
+ */
+$config['slow_query_mtime'] = 2000;
+
+
 /**
  * 项目配置
  *
