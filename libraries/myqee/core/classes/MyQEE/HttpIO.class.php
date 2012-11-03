@@ -739,6 +739,12 @@ class MyQEE_HttpIO
             return false;
         }
 
+        if ( IS_DEBUG && Core::debug()->profiler()->is_open() )
+        {
+            //执行一个
+            $benchmark = Core::debug()->profiler()->start('Controller Execute',$uri);
+        }
+
         if ( ! $is_internal )
         {
             if ( method_exists($controller, 'before') )
@@ -778,6 +784,12 @@ class MyQEE_HttpIO
             {
                 $controller->after();
             }
+        }
+
+        if ( IS_DEBUG && isset($benchmark) )
+        {
+            //执行一个
+            Core::debug()->profiler()->stop();
         }
 
         # 将原来的数据重新设置回去
