@@ -393,7 +393,7 @@ class MyQEE_Database_Driver_Mongo extends Database_Driver
                     if ( is_string($item) )
                     {
                         $item = trim($item);
-                        if ( preg_match('#^(.*) as (.*)$#', $item , $m) )
+                        if ( preg_match('#^(.*) as (.*)$#i', $item , $m) )
                         {
                             $s[$m[1]] = $m[2];
                             $sql['select_as'][$m[1]] = $m[2];
@@ -439,20 +439,7 @@ class MyQEE_Database_Driver_Mongo extends Database_Driver
             // group by
             if ( $builder['group_by'] )
             {
-                $sql['$group'] = array();
-
-                if ( 1===count($builder['group_by']) )
-                {
-                    $sql['$group']['_id'] = '$'.current($builder['group_by']);
-                }
-                else
-                {
-                    $sql['$group']['_id'] = array();
-                    foreach ($builder['group_by'] as $item)
-                    {
-                        $sql['$group']['_id'][$item] = '$'.$item;
-                    }
-                }
+                $sql['group_by'] = $builder['group_by'];
             }
         }
 
@@ -610,9 +597,27 @@ class MyQEE_Database_Driver_Mongo extends Database_Driver
                             throw new Exception($result['errmsg']);
                         }
                     }
-                    elseif ( $options['$group'] )
+                    elseif ( $options['group_by'] )
                     {
+                        $select = $options['select'];
                         # group by
+                        $group_opt = array();
+                        if ( 1===count($options['group_by']) )
+                        {
+                            $k = current($options['group_by']);
+                            $group_opt['_id'] = '$'.$k;
+                            if ( !isset($select[$k]) )$select[$k] = 1;
+                        }
+                        else
+                        {
+                            $group_opt['_id'] = array();
+                            foreach ($options['group_by'] as $item)
+                            {
+                                $group_opt['_id'][$item] = '$'.$item;
+                                if ( !isset($select[$item]) )$select[$item] = 1;
+                            }
+                        }
+
                         $last_query = 'db.'.$tablename.'.aggregate(';
                         $ops = array();
                         if ($options['where'])
@@ -624,12 +629,11 @@ class MyQEE_Database_Driver_Mongo extends Database_Driver
                             );
                         }
 
-                        $group_opt = $options['$group'];
                         $group_opt['_count'] = array('$sum'=>1);
                         $have_dot = false;
-                        if ($options['select'])
+                        if ($select)
                         {
-                            foreach ($options['select'] as $k=>$v)
+                            foreach ($select as $k=>$v)
                             {
                                 if (1===$v)
                                 {
