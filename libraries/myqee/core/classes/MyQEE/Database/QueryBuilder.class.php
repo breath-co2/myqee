@@ -508,7 +508,7 @@ class MyQEE_Database_QueryBuilder
         if ( !is_object($column) )
         {
             $column = trim($column);
-            if ( preg_match('#^(.*)(>|<|>=|<=)$#', $column , $m) )
+            if ( preg_match('#^(.*)(>|<|>=|<=|\!=|<>)$#', $column , $m) )
             {
                 $column = $m[1];
                 $op = $m[2];

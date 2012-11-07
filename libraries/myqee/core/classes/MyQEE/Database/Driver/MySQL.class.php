@@ -1163,7 +1163,7 @@ class MyQEE_Database_Driver_MySQL extends Database_Driver
                             // Convert "val = NULL" to "val IS NULL"
                             $op = 'IS';
                         }
-                        elseif ( $op === '!=' )
+                        elseif ( $op === '!=' || $op === '<>' )
                         {
                             // Convert "val != NULL" to "valu IS NOT NULL"
                             $op = 'IS NOT';
