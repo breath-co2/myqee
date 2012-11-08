@@ -615,51 +615,6 @@ class MyQEE_Database_Driver_MySQLI extends Database_Driver
         }
     }
 
-    public function datatype($type)
-    {
-        static $types = array(
-            'blob'	                        => array( 'type' => 'string', 'binary' => true, 'character_maximum_length' => '65535' ),
-            'bool'	                        => array( 'type' => 'bool' ),
-            'bigint unsigned'	            => array( 'type' => 'int', 'min' => '0', 'max' => '18446744073709551615' ),
-            'datetime'	                    => array( 'type' => 'string' ),
-            'decimal unsigned'	            => array( 'type' => 'float', 'exact' => true, 'min' => '0' ),
-            'double'	                    => array( 'type' => 'float' ),
-            'double precision unsigned'	    => array( 'type' => 'float', 'min' => '0' ),
-            'double unsigned'	            => array( 'type' => 'float', 'min' => '0' ),
-            'enum'	                        => array( 'type' => 'string' ),
-            'fixed'	                        => array( 'type' => 'float', 'exact' => true ),
-            'fixed unsigned'	            => array( 'type' => 'float', 'exact' => true, 'min' => '0' ),
-            'float unsigned'	            => array( 'type' => 'float', 'min' => '0' ),
-            'int unsigned'	                => array( 'type' => 'int', 'min' => '0', 'max' => '4294967295' ),
-            'integer unsigned'	            => array( 'type' => 'int', 'min' => '0', 'max' => '4294967295' ),
-            'longblob'	                    => array( 'type' => 'string', 'binary' => true, 'character_maximum_length' => '4294967295' ),
-            'longtext'	                    => array( 'type' => 'string', 'character_maximum_length' => '4294967295' ),
-            'mediumblob'	                => array( 'type' => 'string', 'binary' => true, 'character_maximum_length' => '16777215' ),
-            'mediumint'	                    => array( 'type' => 'int', 'min' => '-8388608', 'max' => '8388607' ),
-            'mediumint unsigned'	        => array( 'type' => 'int', 'min' => '0', 'max' => '16777215' ),
-            'mediumtext'	                => array( 'type' => 'string', 'character_maximum_length' => '16777215' ),
-            'national varchar'	            => array( 'type' => 'string' ),
-            'numeric unsigned'	            => array( 'type' => 'float', 'exact' => true, 'min' => '0' ),
-            'nvarchar'	                    => array( 'type' => 'string' ),
-            'point'	                        => array( 'type' => 'string', 'binary' => true ),
-            'real unsigned'	                => array( 'type' => 'float', 'min' => '0' ),
-            'set'	                        => array( 'type' => 'string' ),
-            'smallint unsigned'	            => array( 'type' => 'int', 'min' => '0', 'max' => '65535' ),
-            'text'	                        => array( 'type' => 'string', 'character_maximum_length' => '65535' ),
-            'tinyblob'	                    => array( 'type' => 'string', 'binary' => true, 'character_maximum_length' => '255' ),
-            'tinyint'	                    => array( 'type' => 'int', 'min' => '-128', 'max' => '127' ),
-            'tinyint unsigned'	            => array( 'type' => 'int', 'min' => '0', 'max' => '255' ),
-            'tinytext'	                    => array( 'type' => 'string', 'character_maximum_length' => '255' ),
-            'year'	                        => array( 'type' => 'string' )
-        );
-
-        $type = str_replace(' zerofill', '', $type);
-
-        if ( isset($types[$type]) ) return $types[$type];
-
-        return parent::datatype($type);
-    }
-
     public function quote($value)
     {
         if ( $value === null )
@@ -880,10 +835,23 @@ class MyQEE_Database_Driver_MySQLI extends Database_Driver
 
         if ( $builder['distinct'] )
         {
-            $query .= 'DISTINCT ';
+            if (true===$builder['distinct'])
+            {
+                $query .= 'DISTINCT ';
+            }
+            else
+            {
+                $builder['select_adv'][] = array
+                (
+                    $builder['distinct'],
+                    'distinct',
+                );
+            }
         }
 
         $this->_init_as_table($builder);
+
+        $this->format_adv_select($builder);
 
         if ( empty($builder['select']) )
         {
@@ -1393,6 +1361,49 @@ class MyQEE_Database_Driver_MySQLI extends Database_Driver
         if ($alias)
         {
             $this->_as_table[] = $alias;
+        }
+    }
+
+    /**
+     * 格式化高级查询参数到select里
+     */
+    protected function format_adv_select( &$builder )
+    {
+        if ( empty($builder['adv_select']) )
+        {
+            return;
+        }
+
+        foreach ($builder['adv_select'] as $item)
+        {
+            if (!is_array($item))continue;
+
+            if ( preg_match('#^(.*) AS (.*)$#i', $item[0] , $m) )
+            {
+                $column = $this->_quote_identifier($m[1]);
+                $alias  = $m[2];
+            }
+            else
+            {
+                $column = $this->_quote_identifier($item[0]);
+                $alias = $item[0];
+            }
+
+            // 其它参数
+            $args_str = '';
+            if ( ($count_item=count($item))>2 )
+            {
+                for($i=2;$i++;$i<count($count_item))
+                {
+                    $args_str .= ','. $this->_quote_identifier($item[$i]);
+                }
+            }
+
+            $builder['select'][] = array
+            (
+                Database::expr_value(strtoupper($item[0]).'('.$column.$args_str.')'),
+                $alias,
+            );
         }
     }
 }

@@ -427,6 +427,12 @@ class MyQEE_Database_Driver_Mongo extends Database_Driver
                 $sql['select'] = $s;
             }
 
+            // 高级查询条件
+            if ( $builder['select_adv'] )
+            {
+                $sql['select_adv'] = $builder['select_adv'];
+            }
+
             // 排序
             if ( $builder['order_by'] )
             {
@@ -659,6 +665,54 @@ class MyQEE_Database_Driver_Mongo extends Database_Driver
                                         $group_opt[$v] = array('$first'=>'$'.$k);
                                     }
                                 }
+                            }
+                        }
+
+                        // 处理高级查询条件
+                        if ($options['select_adv'])foreach ($options['select_adv'] as $item)
+                        {
+                            if (!is_array($item))continue;
+
+                            if ( preg_match('#^(.*) AS (.*)$#i', $item[0] , $m) )
+                            {
+                                $column = $m[1];
+                                $alias  = $m[2];
+                            }
+                            else
+                            {
+                                $column = $alias = $item[0];
+                            }
+                            $alias = str_replace('.','->',$alias);
+                            if ( false===$have_dot && false!==strpos($alias,'.') )
+                            {
+                                $have_dot = true;
+                            }
+
+                            switch ( $item[1] )
+                            {
+                                case 'max':
+                                case 'min':
+                                case 'avg':
+                                case 'first':
+                                case 'last':
+                                    $group_opt[$alias] = array
+                                    (
+                                        '$'.$item[1] => '$'.$column,
+                                    );
+                                    break;
+                                case 'addToSet':
+                                case 'concat':
+                                    $group_opt[$alias] = array
+                                    (
+                                        '$addToSet' => '$'.$column,
+                                    );
+                                    break;
+                                case 'sum':
+                                    $group_opt[$alias] = array
+                                    (
+                                        '$sum' => isset($item[2])?$item[2]:'$'.$column,
+                                    );
+                                    break;
                             }
                         }
 

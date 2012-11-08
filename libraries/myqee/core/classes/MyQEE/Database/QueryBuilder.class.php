@@ -48,7 +48,8 @@ class MyQEE_Database_QueryBuilder
     }
 
     /**
-     * Enables or disables selecting only unique columns using "SELECT DISTINCT"
+     * 构成查询 SELECT DISTINCT
+     * 如果传的是字符串则构造出 SELECT DISTINCT(`test`) as `test` 这样的查询(MySQL)
      *
      * @param   boolean  enable or disable distinct columns
      * @return  Database
@@ -67,7 +68,7 @@ class MyQEE_Database_QueryBuilder
      * @param   ...
      * @return  Database
      */
-    public function select($columns = NULL)
+    public function select($columns = null)
     {
         if ( func_num_args() > 1 )
         {
@@ -99,6 +100,73 @@ class MyQEE_Database_QueryBuilder
 
         return $this;
     }
+
+    /**
+     * 查询最大值
+     *
+     *   $db->select_max('test');
+     *
+     * @param string $conlumn
+     * @return  Database
+     */
+    public function select_max($conlumn)
+    {
+        $this->select_adv($conlumn,'max');
+
+        return $this;
+    }
+
+    /**
+     * 查询平均值
+     *
+     *   $db->select_min('test');
+     *
+     * @param string $conlumn
+     * @return  Database
+     */
+    public function select_min($conlumn)
+    {
+        $this->select_adv($conlumn,'min');
+
+        return $this;
+    }
+
+    /**
+     * 查询平均值
+     *
+     *   $db->select_avg('test');
+     *
+     * @param string $conlumn
+     * @return  Database
+     */
+    public function select_avg($conlumn)
+    {
+        $this->select_adv($conlumn,'avg');
+
+        return $this;
+    }
+
+    /**
+     * 高级查询方式
+     *
+     * 需要相应接口支持，
+     * 目前支持MongoDB的aggregation框架Group查询：$sum,$max,$min,$avg,$last,$first等，详情见 http://docs.mongodb.org/manual/reference/aggregation/group/
+     * MySQL支持sum,max,min,svg等
+     *
+     *    $db->select_adv('test','max');        //查询最大值
+     *    $db->seleve_adv('test','sum',3);      //查询+3的总和
+     *
+     * @param string $conlumn
+     * @param string $opt
+     * @return Database
+     */
+    public function select_adv($conlumn, $opt1=null, $opt2=null)
+    {
+        $this->_builder['select_adv'][] = func_get_args();
+
+        return $this;
+    }
+
 
     /**
      * Set the columns that will be inserted.
@@ -435,6 +503,7 @@ class MyQEE_Database_QueryBuilder
     public function reset()
     {
         $this->_builder['select']     =
+        $this->_builder['select_adv'] =
         $this->_builder['from']       =
         $this->_builder['join']       =
         $this->_builder['where']      =

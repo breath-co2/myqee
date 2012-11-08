@@ -484,6 +484,41 @@ class MyQEE_Database_Driver_SQLite extends Database_Driver
         return $this->_quote_identifier($value);
     }
 
+    /**
+     * 创建一个数据库
+     *
+     * @param string $database
+     * @param string $charset 编码，不传则使用数据库连接配置相同到编码
+     * @param string $collate 整理格式
+     * @return boolean
+     * @throws Exception
+     */
+    public function create_database( $database, $charset = null, $collate=null )
+    {
+        $config = $this->config;
+        $this->config['connection']['database'] = null;
+        if (!$charset)
+        {
+            $charset = $this->config['charset'];
+        }
+        $sql = 'CREATE DATABASE '.$this->_quote_identifier($database).' DEFAULT CHARACTER SET '.$charset;
+        if ($collate)
+        {
+            $sql .= ' COLLATE '.$collate;
+        }
+        try
+        {
+            $result = $this->query($sql,null,true)->result();
+            $this->config = $config;
+            return $result;
+        }
+        catch (Exception $e)
+        {
+            $this->config = $config;
+            throw $e;
+        }
+    }
+
     protected function _quote_identifier($column)
     {
         if (is_array($column))
@@ -549,57 +584,64 @@ class MyQEE_Database_Driver_SQLite extends Database_Driver
                 {
                     if ($part !== '*')
                     {
-                        // Quote each of the parts
-                        $part = $this->_identifier.$part.$this->_identifier;
-                    }
-                }
+						// Quote each of the parts
+					    $this->_change_charset($part);
+						$part = $this->_identifier.$part.$this->_identifier;
+					}
+				}
 
-                $column = implode('.', $parts);
-            }
-            else
-            {
-                $column = $this->_identifier.$column.$this->_identifier;
-            }
-        }
+				$column = implode('.', $parts);
+			}
+			else
+			{
+			    $this->_change_charset($column);
+				$column = $this->_identifier.$column.$this->_identifier;
+			}
+		}
 
-        if ( isset($alias) )
-        {
-            $column .= ' AS '.$this->_identifier.$alias.$this->_identifier;
-        }
-
-		# 切换编码
-		$this->_change_charset($column);
+		if ( isset($alias) )
+		{
+		    $this->_change_charset($alias);
+			$column .= ' AS '.$this->_identifier.$alias.$this->_identifier;
+		}
 
         return $column;
     }
 
     protected function _compile_selete($builder)
     {
-        // Callback to quote identifiers
         $quote_ident = array($this, '_quote_identifier');
 
-        // Callback to quote tables
         $quote_table = array($this, 'quote_table');
 
-        // Start a selection query
         $query = 'SELECT ';
 
         if ( $builder['distinct'] )
         {
-            // Select only unique results
-            $query .= 'DISTINCT ';
+            if (true===$builder['distinct'])
+            {
+                $query .= 'DISTINCT ';
+            }
+            else
+            {
+                $builder['select_adv'][] = array
+                (
+                    $builder['distinct'],
+                    'distinct',
+                );
+            }
         }
 
         $this->_init_as_table($builder);
 
+        $this->format_adv_select($builder);
+
         if ( empty($builder['select']) )
         {
-            // Select all columns
             $query .= '*';
         }
         else
         {
-            // Select all columns
             $query .= implode(', ', array_unique(array_map($quote_ident, $builder['select'])));
         }
 
@@ -869,7 +911,7 @@ class MyQEE_Database_Driver_SQLite extends Database_Driver
                             // Convert "val = NULL" to "val IS NULL"
                             $op = 'IS';
                         }
-                        elseif ( $op === '!=' )
+                        elseif ( $op === '!=' || $op === '<>' )
                         {
                             // Convert "val != NULL" to "valu IS NOT NULL"
                             $op = 'IS NOT';
@@ -1102,6 +1144,49 @@ class MyQEE_Database_Driver_SQLite extends Database_Driver
         if ($alias)
         {
             $this->_as_table[] = $alias;
+        }
+    }
+
+    /**
+     * 格式化高级查询参数到select里
+     */
+    protected function format_adv_select( &$builder )
+    {
+        if ( empty($builder['adv_select']) )
+        {
+            return;
+        }
+
+        foreach ($builder['adv_select'] as $item)
+        {
+            if (!is_array($item))continue;
+
+            if ( preg_match('#^(.*) AS (.*)$#i', $item[0] , $m) )
+            {
+                $column = $this->_quote_identifier($m[1]);
+                $alias  = $m[2];
+            }
+            else
+            {
+                $column = $this->_quote_identifier($item[0]);
+                $alias = $item[0];
+            }
+
+            // 其它参数
+            $args_str = '';
+            if ( ($count_item=count($item))>2 )
+            {
+                for($i=2;$i++;$i<count($count_item))
+                {
+                    $args_str .= ','. $this->_quote_identifier($item[$i]);
+                }
+            }
+
+            $builder['select'][] = array
+            (
+                Database::expr_value(strtoupper($item[0]).'('.$column.$args_str.')'),
+                $alias,
+            );
         }
     }
 }
