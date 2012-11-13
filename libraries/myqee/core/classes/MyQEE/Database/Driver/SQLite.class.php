@@ -126,6 +126,7 @@ class MyQEE_Database_Driver_SQLite extends Database_Driver
                 {
                     $tmplink = sqlite_open($db);
                 }
+                if (false===$tmplink)throw new Exception('open sqlite error.');
 
                 if (IS_DEBUG)Core::debug()->info('sqlite '.Core::debug_path($db).' connection time:' . (microtime(true) - $time));
 
@@ -139,12 +140,20 @@ class MyQEE_Database_Driver_SQLite extends Database_Driver
             }
             catch ( Exception $e )
             {
-                if ($i==2)
+                if (IS_DEBUG)
                 {
-                    throw $e;
+                    Core::debug()->error($db,'open sqlite:'.$db.' error.');
+                    $last_error = new Exception($e->getMessage(),$e->getCode());
+                }
+                else
+                {
+                    $last_error = new Exception('open sqlite error.',$e->getCode());
                 }
 
-                $last_error = $e;
+                if ($i==2)
+                {
+                    throw $last_error;
+                }
 
                 # 3毫秒后重新连接
                 usleep(3000);

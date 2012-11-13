@@ -172,52 +172,52 @@ class MyQEE_Database_Driver_MySQL extends Database_Driver
             $_connection_id = $this->_get_connection_hash($hostname, $port, $username);
             Database_Driver_MySQL::$_current_connection_id_to_hostname[$_connection_id] = $hostname.':'.$port;
 
-            for ($i=1; $i<=2; $i++)
+            try
             {
-                # 尝试重连
-                try
+                $time = microtime(true);
+
+                if ( empty($persistent) )
                 {
-                    $time = microtime(true);
-
-                    if ( empty($persistent) )
-                    {
-                        $tmplink = mysql_connect($hostname . ($port && $port != 3306 ? ':' . $port : ''), $username, $password, true);
-                    }
-                    else
-                    {
-                        $tmplink = mysql_pconnect($hostname . ($port && $port != 3306 ? ':' . $port : ''), $username, $password);
-                    }
-                    if (false===$tmplink)throw new Exception('connect mysql server error:'.$hostname);
-
-                    Core::debug()->info('mysql '.$username.'@'.$hostname.' connection time:' . (microtime(true) - $time));
-
-                    # 连接ID
-                    $this->_connection_ids[$this->_connection_type] = $_connection_id;
-                    Database_Driver_MySQL::$_connection_instance[$_connection_id] = $tmplink;
-
-                    unset($tmplink);
-
-                    break 2;
+                    $tmplink = mysql_connect($hostname . ($port && $port != 3306 ? ':' . $port : ''), $username, $password, true);
                 }
-                catch ( Exception $e )
+                else
                 {
-                    if (IS_DEBUG)Core::debug()->error($username.'@'.$hostname.':'.$port,'connect mysql server error');
+                    $tmplink = mysql_pconnect($hostname . ($port && $port != 3306 ? ':' . $port : ''), $username, $password);
+                }
+                if (false===$tmplink)throw new Exception('connect mysql server error.');
 
-                    $last_error = $e;
-                    if (2===$e->getCode() && preg_match('#(Unknown database|Access denied for user)#i', $e->getMessage()))
-                    {
-                        // 指定的库不存在，直接返回
-                        throw $e;
-                    }
-                    else
-                    {
-                        if (2==$i && !in_array($hostname, $error_host))
-                        {
-                            $error_host[] = $hostname;
-                        }
+                Core::debug()->info('mysql '.$username.'@'.$hostname.' connection time:' . (microtime(true) - $time));
 
-                        # 3毫秒后重新连接
-                        usleep(3000);
+                # 连接ID
+                $this->_connection_ids[$this->_connection_type] = $_connection_id;
+                Database_Driver_MySQL::$_connection_instance[$_connection_id] = $tmplink;
+
+                unset($tmplink);
+
+                break;
+            }
+            catch ( Exception $e )
+            {
+                if (IS_DEBUG)
+                {
+                    Core::debug()->error($username.'@'.$hostname.':'.$port,'connect mysql server error');
+                    $last_error = new Exception($e->getMessage(),$e->getCode());
+                }
+                else
+                {
+                    $last_error = new Exception('connect mysql server error',$e->getCode());
+                }
+
+                if (2===$e->getCode() && preg_match('#(Unknown database|Access denied for user)#i', $e->getMessage()))
+                {
+                    // 指定的库不存在，直接返回
+                    throw $e;
+                }
+                else
+                {
+                    if (!in_array($hostname, $error_host))
+                    {
+                        $error_host[] = $hostname;
                     }
                 }
             }

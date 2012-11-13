@@ -153,6 +153,11 @@ class MyQEE_Database extends Database_QueryBuilder
             throw new Exception('Database Driver:' . $driver . ' not found.');
         }
 
+        if (!isset($this->config['connection']))
+        {
+            throw new Exception('Database connection not set.');
+        }
+
         if ( is_string($this->config['connection']) )
         {
             $this->config['connection'] = Database::parse_dsn($this->config['connection']);

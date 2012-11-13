@@ -166,62 +166,62 @@ class MyQEE_Database_Driver_MySQLI extends Database_Driver
                 Core::debug()->error($error_host,'error_host');
 
                 if ($last_error)throw $last_error;
-                throw new Exception('数据库链接失败');
+                throw new Exception('connect mysql server error.');
             }
 
             $_connection_id = $this->_get_connection_hash($hostname, $port, $username);
             Database_Driver_MySQLI::$_current_connection_id_to_hostname[$_connection_id] = $hostname.':'.$port;
 
-            for ($i=1; $i<=2; $i++)
+            # 尝试重连
+            try
             {
-                # 尝试重连
-                try
+                $time = microtime(true);
+                if ( empty($persistent) )
                 {
-                    $time = microtime(true);
-
-                    if ( empty($persistent) )
-                    {
-                        $tmplink = mysqli_init();
-                        mysqli_options($tmplink, MYSQLI_OPT_CONNECT_TIMEOUT, 3);
-                        mysqli_real_connect($tmplink, $hostname, $username, $password, $database, $port, null, MYSQLI_CLIENT_COMPRESS);
-                    }
-                    else
-                    {
-                        $tmplink = new mysqli($hostname, $username, $password, $database, $port);
-                    }
-                    if (false===$tmplink)throw new Exception('connect mysql server error:'.$hostname);
-
-                    Core::debug()->info('mysqli '.$username.'@'.$hostname.':'.$port.' connection time:' . (microtime(true) - $time));
-
-                    # 连接ID
-                    $this->_connection_ids[$this->_connection_type] = $_connection_id;
-                    Database_Driver_MySQLI::$_connection_instance[$_connection_id] = $tmplink;
-
-                    Database_Driver_MySQLI::$_current_databases[$_connection_id] = $database;
-
-                    unset($tmplink);
-
-                    break 2;
+                    $tmplink = mysqli_init();
+                    mysqli_options($tmplink, MYSQLI_OPT_CONNECT_TIMEOUT, 3);
+                    mysqli_real_connect($tmplink, $hostname, $username, $password, $database, $port, null, MYSQLI_CLIENT_COMPRESS);
                 }
-                catch ( Exception $e )
+                else
                 {
-                    if (IS_DEBUG)Core::debug()->error($username.'@'.$hostname.':'.$port,'connect mysqli server error');
+                    $tmplink = new mysqli($hostname, $username, $password, $database, $port);
+                }
+                if (false===$tmplink)throw new Exception('connect mysqli server error.');
 
-                    $last_error = $e;
-                    if (2===$e->getCode() && preg_match('#(Unknown database|Access denied for user)#i', $e->getMessage()))
-                    {
-                        // 指定的库不存在，直接返回
-                        throw $e;
-                    }
-                    else
-                    {
-                        if (2==$i && !in_array($hostname, $error_host))
-                        {
-                            $error_host[] = $hostname;
-                        }
+                Core::debug()->info('mysqli '.$username.'@'.$hostname.':'.$port.' connection time:' . (microtime(true) - $time));
 
-                        # 3毫秒后重新连接
-                        usleep(3000);
+                # 连接ID
+                $this->_connection_ids[$this->_connection_type] = $_connection_id;
+                Database_Driver_MySQLI::$_connection_instance[$_connection_id] = $tmplink;
+
+                Database_Driver_MySQLI::$_current_databases[$_connection_id] = $database;
+
+                unset($tmplink);
+
+                break;
+            }
+            catch ( Exception $e )
+            {
+                if (IS_DEBUG)
+                {
+                    Core::debug()->error($username.'@'.$hostname.':'.$port,'connect mysqli server error');
+                    $last_error = new Exception($e->getMessage(),$e->getCode());
+                }
+                else
+                {
+                    $last_error = new Exception('connect mysqli server error',$e->getCode());
+                }
+
+                if ( 2===$e->getCode() && preg_match('#(Unknown database|Access denied for user)#i', $e->getMessage()) )
+                {
+                    // 指定的库不存在，直接返回
+                    throw $e;
+                }
+                else
+                {
+                    if ( !in_array($hostname, $error_host) )
+                    {
+                        $error_host[] = $hostname;
                     }
                 }
             }

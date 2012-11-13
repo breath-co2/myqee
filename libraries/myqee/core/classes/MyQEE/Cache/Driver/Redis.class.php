@@ -111,9 +111,17 @@ class MyQEE_Cache_Driver_Redis
                     $action = 'connect';
                 }
 
-                $time = microtime(1);
-                $status = Cache_Driver_Redis::$redis[$config_name]->$action($server['host'], $server['port'],$server['timeout']);
-                $time = microtime(1)-$time;
+                try
+                {
+                    $time = microtime(1);
+                    $status = Cache_Driver_Redis::$redis[$config_name]->$action($server['host'], $server['port'],$server['timeout']);
+                    $time = microtime(1)-$time;
+                }
+                catch (Exception $e)
+                {
+                    $status = false;
+                }
+
                 if ($status)
                 {
                     if (IS_DEBUG)Core::debug()->info('connect redis server '.$server['host'].':'.$server['port'] . ' time:'.$time);

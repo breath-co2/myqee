@@ -103,7 +103,7 @@ class MyQEE_Database_Driver_Mongo extends Database_Driver
 
     protected function _connect()
     {
-        $database = $hostname = $port = $socket = $username = $password = $persistent = null;
+        $database = $hostname = $port = $username = $password = $persistent = $readpreference = null;
         extract($this->config['connection']);
 
         if (!$port>0)
@@ -128,7 +128,8 @@ class MyQEE_Database_Driver_Mongo extends Database_Driver
             }
             else
             {
-                $hostconfig = array(
+                $hostconfig = array
+                (
                     $hostname
                 );
             }
@@ -151,6 +152,7 @@ class MyQEE_Database_Driver_Mongo extends Database_Driver
         # 错误服务器
         static $error_host = array();
 
+        $last_error = null;
         while (true)
         {
             $hostname = $this->_get_rand_host($error_host);
@@ -158,56 +160,68 @@ class MyQEE_Database_Driver_Mongo extends Database_Driver
             {
                 Core::debug()->error($error_host,'error_host');
 
-                throw new Exception('数据库链接失败');
+                if ($last_error)throw $last_error;
+                throw new Exception('connect mongodb server error.');
             }
 
             $_connection_id = $this->_get_connection_hash($hostname, $port, $username);
             Database_Driver_Mongo::$_current_connection_id_to_hostname[$_connection_id] = $hostname.':'.$port;
 
-            for ($i=1; $i<=2; $i++)
+            try
             {
-                # 尝试重连
-                try
+                $time = microtime(true);
+
+                $options = array
+                (
+                    'replicaSet' => true,
+                );
+
+                // 长连接设计
+                if ($persistent)
                 {
-                    $time = microtime(true);
-
-                    if ($username)
-                    {
-                        $tmplink = new Mongo("mongodb://{$username}:{$password}@{$hostname}:{$port}/");
-                    }
-                    else
-                    {
-                        $tmplink = new Mongo("mongodb://{$hostname}:{$port}/");
-                    }
-
-                    if ( method_exists($tmplink,'setReadPreference') )
-                    {
-                        // (PECL mongo >=1.3.0)
-                        // http://www.php.net/manual/en/mongo.setreadpreference.php
-                        $tmplink->setReadPreference(Mongo::RP_SECONDARY_PREFERRED);
-                    }
-
-                    Core::debug()->info('MongoDB '.($username?$username.'@':'').$hostname.':'.$port.' connection time:' . (microtime(true) - $time));
-
-                    # 连接ID
-                    $this->_connection_ids[$this->_connection_type] = $_connection_id;
-                    Database_Driver_Mongo::$_connection_instance[$_connection_id] = $tmplink;
-
-                    unset($tmplink);
-
-                    break 2;
+                    $options['persist'] = is_string($persistent)?$persistent:'x';
                 }
-                catch ( Exception $e )
+
+                if ($username)
                 {
-                    if (IS_DEBUG)Core::debug()->error(($username?$username.'@':'').$hostname.':'.$port,'connect mongodb server error');
+                    $tmplink = new Mongo("mongodb://{$username}:{$password}@{$hostname}:{$port}/",$options);
+                }
+                else
+                {
+                    $tmplink = new Mongo("mongodb://{$hostname}:{$port}/",$options);
+                }
+                if (false===$tmplink)throw new Exception('connect mongodb server error.');
 
-                    if (2==$i && !in_array($hostname, $error_host))
-                    {
-                        $error_host[] = $hostname;
-                    }
+                if (null!==$readpreference)
+                {
+                    $tmplink->setReadPreference($readpreference);
+                }
 
-                    # 3毫秒后重新连接
-                    usleep(3000);
+                Core::debug()->info('MongoDB '.($username?$username.'@':'').$hostname.':'.$port.' connection time:' . (microtime(true) - $time));
+
+                # 连接ID
+                $this->_connection_ids[$this->_connection_type] = $_connection_id;
+                Database_Driver_Mongo::$_connection_instance[$_connection_id] = $tmplink;
+
+                unset($tmplink);
+
+                break;
+            }
+            catch ( Exception $e )
+            {
+                if (IS_DEBUG)
+                {
+                    Core::debug()->error(($username?$username.'@':'').$hostname.':'.$port,'connect mongodb server error');
+                    $last_error = new Exception($e->getMessage(),$e->getCode());
+                }
+                else
+                {
+                    $last_error = new Exception('connect mongodb server error',$e->getCode());
+                }
+
+                if ( !in_array($hostname, $error_host) )
+                {
+                    $error_host[] = $hostname;
                 }
             }
         }
@@ -725,12 +739,11 @@ class MyQEE_Database_Driver_Mongo extends Database_Driver
                         $last_query .= ')';
 
                         $result = $connection->selectCollection($tablename)->aggregate($ops);
-                        if ( false===$result )
+
+                        // 兼容不同版本的aggregate返回
+                        if ( $result && ($result['ok']==1||!isset($result['errmsg'])) )
                         {
-                            throw new Exception('the group query has an error:'.$last_query);
-                        }
-                        else
-                        {
+                            if ($result['ok']==1 && is_array($result['result']))$result = $result['result'];
                             if ($have_dot)foreach ($result as &$item)
                             {
                                 $result2[] = array();
@@ -753,6 +766,10 @@ class MyQEE_Database_Driver_Mongo extends Database_Driver
                             $count = count($result);
 
                             $rs = new Database_Driver_Mongo_Result(new ArrayIterator($result), $options, $as_object ,$this->config );
+                        }
+                        else
+                        {
+                            throw new Exception($result['errmsg'].'.query:'.$last_query);
                         }
                     }
                     else
