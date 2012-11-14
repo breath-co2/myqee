@@ -149,6 +149,29 @@ class MyQEE_Database_Driver_Mongo extends Database_Driver
 
         }
 
+        // 获取所有的主数据库
+        if ( is_array($this->config['connection']['hostname']) )
+        {
+            if ( is_array($this->config['connection']['hostname']['master']) )
+            {
+                $all_master_hosts = $this->config['connection']['hostname']['master'];
+            }
+            else
+            {
+                $all_master_hosts = array
+                (
+                    $this->config['connection']['hostname']['master']
+                );
+            }
+        }
+        else
+        {
+            $all_master_hosts = array
+            (
+                $this->config['connection']['hostname']
+            );
+        }
+
         # 错误服务器
         static $error_host = array();
 
@@ -171,10 +194,13 @@ class MyQEE_Database_Driver_Mongo extends Database_Driver
             {
                 $time = microtime(true);
 
-                $options = array
-                (
-                    'replicaSet' => true,
-                );
+                $options = array();
+
+                // 所有非主数据库都加上replicaSet参数
+                if ( !in_array($hostname, $all_master_hosts) )
+                {
+                    $options['replicaSet'] = true;
+                }
 
                 // 长连接设计
                 if ($persistent)
@@ -232,6 +258,9 @@ class MyQEE_Database_Driver_Mongo extends Database_Driver
      */
     public function close_connect()
     {
+        //TODO 关闭连接有bug
+
+        return ;
         if ($this->_connection_ids)foreach ($this->_connection_ids as $key=>$connection_id)
         {
             if ($connection_id && Database_Driver_Mongo::$_connection_instance[$connection_id])
