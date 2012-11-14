@@ -1,7 +1,7 @@
 <?php
 
 /**
- * MyQEE Session 类
+ * Admin Session类
  *
  * @author     jonwang(jonwang@myqee.com)
  * @category   MyQEE
@@ -18,7 +18,6 @@ class MyQEE_Session
      */
     protected static $instance;
 
-    // Protected key names (cannot be set by the user)
     protected static $protect = array('SID' => 1, '_flash_session_' => 1);
 
     public static $config;
@@ -27,6 +26,7 @@ class MyQEE_Session
 
     /**
      * Session驱动
+     *
      * @var Session_Driver_Default
      */
     protected $driver;
@@ -49,9 +49,6 @@ class MyQEE_Session
         return Session::$instance;
     }
 
-    /**
-     * On first session instance creation, sets up the driver and creates session.
-     */
     public function __construct($vars = null)
     {
         // This part only needs to be run once
@@ -100,12 +97,6 @@ class MyQEE_Session
 
             $_SESSION['SID'] = $this->driver->session_id();
 
-            if ( !isset($_SESSION['_last_actived_time_']) || TIME-600>$_SESSION['_last_actived_time_'] )
-            {
-                # 更新最后活动时间 10分钟更新一次
-                $_SESSION['_last_actived_time_'] = TIME;
-            }
-
             # 确保关闭前执行保存
             Core::register_shutdown_function(array('Session', 'write_close'));
 
@@ -114,7 +105,16 @@ class MyQEE_Session
             if ( null===Session::$member && isset($_SESSION['member_id']) && $_SESSION['member_id']>0 )
             {
                 $orm_member = new ORM_Admin_Member_Finder();
-                Session::$member = $orm_member->where('id',$_SESSION['member_id'])->find(null,true)->current();
+                $member = $orm_member->where('id',$_SESSION['member_id'])->find(null,true)->current();
+                if ( $_SESSION['member_password'] != $member->password )
+                {
+                    // 修改过密码
+                    unset($_SESSION['member_id'],$_SESSION['member_password']);
+                }
+                else
+                {
+                    Session::$member = $member;
+                }
             }
         }
     }
@@ -123,6 +123,7 @@ class MyQEE_Session
 
     /**
      * 开启SESSION
+     *
      * @return Session
      */
     public function start()
@@ -131,7 +132,7 @@ class MyQEE_Session
     }
 
     /**
-     * Get the session id.
+     * 获取SESSION ID
      *
      * @return  string
      */
@@ -141,7 +142,7 @@ class MyQEE_Session
     }
 
     /**
-     * 銷毀當前Session
+     * 销毁当前Session
      *
      * @return  void
      */
@@ -208,6 +209,10 @@ class MyQEE_Session
      */
     public function last_actived_time()
     {
+        if ( !isset($_SESSION['_last_actived_time_']) )
+        {
+            $_SESSION['_last_actived_time_'] = TIME;
+        }
         return $_SESSION['_last_actived_time_'];
     }
 
@@ -234,11 +239,17 @@ class MyQEE_Session
                 unset($_SESSION['_flash_session_']);
             }
 
-            if ( Session::$member && $_SESSION['member_id'] )
+            if ( Session::$member && Session::$member->id>0 )
             {
                 # 设置用户数据
                 $_SESSION['member_id'] = Session::$member->id;
                 $_SESSION['member_password'] = Session::$member->password;
+            }
+
+            if ( !isset($_SESSION['_last_actived_time_']) || TIME - 300 > $_SESSION['_last_actived_time_'] )
+            {
+                # 更新最后活动时间 10分钟更新一次
+                $_SESSION['_last_actived_time_'] = TIME;
             }
 
             Session::$instance->driver->write_close();
@@ -246,7 +257,11 @@ class MyQEE_Session
     }
 
     /**
-     * 设置一个session数据
+     * 设置SESSION数据
+     *
+     *     Session::instance()->set('key','value');
+     *
+     *     Session::instance()->set(array('key'=>'value','k2'=>'v2'));
      *
      * @param   string|array  key, or array of values
      * @param   mixed		 value (if keys is not an array)
@@ -271,7 +286,7 @@ class MyQEE_Session
     }
 
     /**
-     * 设置一个Session闪存数据
+     * 设置一个闪存SESSION数据，在下次请求的时候会获取后自动销毁
      *
      * @param   string|array  key, or array of values
      * @param   mixed		 value (if keys is not an array)
@@ -296,7 +311,7 @@ class MyQEE_Session
     }
 
     /**
-     * Freshen one, multiple or all flash variables.
+     * 保持闪存SESSION数据不销毁
      *
      * @param   string  variable key(s)
      * @return  void
@@ -315,7 +330,7 @@ class MyQEE_Session
     }
 
     /**
-     * Expires old flash data and removes it from the session.
+     * 标记闪存SESSION数据为过期
      *
      * @return  void
      */
@@ -340,7 +355,11 @@ class MyQEE_Session
     }
 
     /**
-     * Get a variable. Access to sub-arrays is supported with key.subkey.
+     * 获取一个SESSION数据
+     *
+     *     Session::instance()->get('key');
+     *
+     *     Session::instance()->get('key','default value');
      *
      * @param   string  variable key
      * @param   mixed   default value returned if variable does not exist
@@ -356,7 +375,7 @@ class MyQEE_Session
     }
 
     /**
-     * Get a variable, and delete it.
+     * 获取后删除相应KEY的SESSION数据
      *
      * @param   string  variable key
      * @param   mixed   default value returned if variable does not exist
@@ -371,12 +390,17 @@ class MyQEE_Session
     }
 
     /**
-     * Delete one or more variables.
+     * 删除指定key的SESSION数据
+     *
+     *     Session::instance()->delete('key');
+     *
+     *     //删除key1和key2的数据
+     *     Session::instance()->delete('key1','key2');
      *
      * @param   string  variable key(s)
      * @return  void
      */
-    public function delete()
+    public function delete($key1=null,$key2=null)
     {
         $args = func_get_args();
 
@@ -389,6 +413,9 @@ class MyQEE_Session
         }
     }
 
+    /**
+     * 获取SESSION名称
+     */
     public static function session_name()
     {
         return Session::$config['name'];

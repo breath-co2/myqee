@@ -21,7 +21,7 @@ class MyQEE_Session_Driver_Default
             $run = true;
             @ini_set('session.gc_probability', (int)Session::$config['gc_probability']);
             @ini_set('session.gc_divisor', 100);
-            @ini_set('session.gc_maxlifetime', (Session::$config['expiration'] == 0) ? 86400 : Session::$config['expiration']);
+            @ini_set('session.gc_maxlifetime', (Session::$config['expiration'] == 0) ? 2592000 : Session::$config['expiration']);
 
             // session保存接口
             if (isset(Session::$config['save_handler']) && Session::$config['save_handler'])
@@ -42,14 +42,12 @@ class MyQEE_Session_Driver_Default
     /**
      * 创建Session
      *
-     * @param   array  variables to set after creation
      * @return  void
      */
     public function create()
     {
         if ( preg_match('#^(?=.*[a-z])[a-z0-9_]++$#iD', Session::$config['name']) )
         {
-            // Name the session, this will also be the name of the cookie
             session_name(Session::$config['name']);
         }
         $this->destroy();
@@ -63,10 +61,8 @@ class MyQEE_Session_Driver_Default
             $cookieconfig['domain'] = $m[1];
         }
 
-        // Set the session cookie parameters
         session_set_cookie_params(Session::$config['expiration'], $cookieconfig['path'], $cookieconfig['domain'], $cookieconfig['secure'], $cookieconfig['httponly']);
 
-        // Start the session!
         session_start();
     }
 
@@ -87,16 +83,12 @@ class MyQEE_Session_Driver_Default
     {
         if ( session_id() !== '' )
         {
-            // Get the session name
             $name = session_name();
 
-            // Destroy the session
             session_destroy();
 
-            // Re-initialize the array
             $_SESSION = array();
 
-            // Delete the session cookie
             Core::cookie()->delete($name,'/');
         }
     }

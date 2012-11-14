@@ -18,7 +18,6 @@ class MyQEE_Session
      */
     protected static $instance;
 
-    // Protected key names (cannot be set by the user)
     protected static $protect = array('SID' => 1, '_flash_session_' => 1);
 
     public static $config;
@@ -190,6 +189,11 @@ class MyQEE_Session
         return Session::$member;
     }
 
+    /**
+     * 最后活动时间
+     *
+     * @return int
+     */
     public function last_actived_time()
     {
         if ( !isset($_SESSION['_last_actived_time_']) )
@@ -201,6 +205,7 @@ class MyQEE_Session
 
     /**
      * 此方法用于保存session数据
+     *
      * 只执行一次，系统在关闭前会执行
      *
      * @return  void
@@ -221,7 +226,7 @@ class MyQEE_Session
                 unset($_SESSION['_flash_session_']);
             }
 
-            if ( Session::$member && isset($_SESSION['member']) && $_SESSION['member'] )
+            if ( Session::$member && Session::$member->id>0 )
             {
                 # 设置用户数据
                 $member_data = Session::$member->get_field_data();
@@ -229,7 +234,7 @@ class MyQEE_Session
                 $_SESSION['member'] = $member_data;
             }
 
-            if ( !isset($_SESSION['_last_actived_time_']) || TIME - 600 > $_SESSION['_last_actived_time_'] )
+            if ( !isset($_SESSION['_last_actived_time_']) || TIME - 300 > $_SESSION['_last_actived_time_'] )
             {
                 # 更新最后活动时间 10分钟更新一次
                 $_SESSION['_last_actived_time_'] = TIME;

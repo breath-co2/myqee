@@ -140,7 +140,7 @@ class MyQEE_Session_Driver_Cache
             else
             {
                 # 如果确实修改则保存
-                $this->driver()->set($this->session_id(), $_SESSION , Session::$config['expiration']>0?Session::$config['expiration']:3600);
+                $this->driver()->set($this->session_id(), $_SESSION , Session::$config['expiration']>0?Session::$config['expiration']:2592000);
             }
         }
     }
