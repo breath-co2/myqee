@@ -685,7 +685,7 @@ abstract class MyQEE_Core extends Bootstrap
         static $debug = null;
         if ( null === $debug )
         {
-            if ( !IS_CLI && IS_DEBUG && ( false!==strpos($_SERVER["HTTP_USER_AGENT"],'FirePHP') || isset($_SERVER["HTTP_X_FIREPHP_VERSION"]) ) && class_exists('Debug', true) )
+            if ( !IS_CLI && ( IS_DEBUG || false!==strpos($_SERVER["HTTP_USER_AGENT"],'FirePHP') || isset($_SERVER["HTTP_X_FIREPHP_VERSION"]) ) && class_exists('Debug', true) )
             {
                 $debug = Debug::instance();
             }
