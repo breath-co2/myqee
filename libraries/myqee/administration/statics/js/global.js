@@ -1648,7 +1648,7 @@ MyQEE.suggest = function (obj){
         obj_div.style.display='';
         var pos = MyQEE.position(obj);
         // 显示列表
-        var html ='<div style="position:absolute;z-index:9;left:'+(pos['x']+self.correction_left)+'px;top:'+(self.correction_top+obj.clientHeight+pos['y'])+'px;min-width:'+(obj.clientWidth+self.correction_width)+'px;-moz-box-shadow: 5px 5px 5px rgba(0,0,0,0.3);-webkit-box-shadow: 5px 5px 5px rgba(0,0,0,0.3);box-shadow: 5px 5px 5px rgba(0,0,0,0.3);"><div style="background:#fff;border:1px solid #808080;"><div style="max-height:300px;overflow:auto;overflow-x:hidden;" id="_suggest_div_scroll_div"><table border="0" cellspacing="0" cellpadding="0" style="width:100%;">';
+        var html ='<div style="position:absolute;z-index:9999999;left:'+(pos['x']+self.correction_left)+'px;top:'+(self.correction_top+obj.clientHeight+pos['y'])+'px;min-width:'+(obj.clientWidth+self.correction_width)+'px;-moz-box-shadow: 5px 5px 5px rgba(0,0,0,0.3);-webkit-box-shadow: 5px 5px 5px rgba(0,0,0,0.3);box-shadow: 5px 5px 5px rgba(0,0,0,0.3);"><div style="background:#fff;border:1px solid #808080;"><div style="max-height:300px;overflow:auto;overflow-x:hidden;" id="_suggest_div_scroll_div"><table border="0" cellspacing="0" cellpadding="0" style="width:100%;">';
         for(var i in result){
             if (typeof result[i] =='undefined'){
                 break;
