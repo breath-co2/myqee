@@ -5,3 +5,5 @@
  * @var string
  */
 $config['domain'] = $_SERVER['HTTP_HOST'];
+
+$config['httponly'] = true;
