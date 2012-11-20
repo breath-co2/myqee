@@ -1,6 +1,6 @@
 <?php
 
-class Controller_MyQEE__Install extends Controller
+abstract class Controller_MyQEE__Install extends Controller
 {
     /**
      * 当前安装配置

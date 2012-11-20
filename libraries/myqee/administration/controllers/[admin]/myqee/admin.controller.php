@@ -6,7 +6,7 @@
  * @author jonwang
  *
  */
-class Controller_MyQEE__Admin extends Controller
+abstract class Controller_MyQEE__Admin extends Controller
 {
     /**
      * 页面标题

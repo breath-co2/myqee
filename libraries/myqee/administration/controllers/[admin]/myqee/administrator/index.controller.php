@@ -5,7 +5,7 @@
  * @author jonwang
  *
  */
-class Controller_MyQEE__Administrator__Index extends Controller_Admin
+abstract class Controller_MyQEE__Administrator__Index extends Controller_Admin
 {
     public function action_default()
     {

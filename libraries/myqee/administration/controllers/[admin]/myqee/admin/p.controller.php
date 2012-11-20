@@ -5,7 +5,7 @@
  * @author jonwang
  *
  */
-class Controller_MyQEE__Admin__P extends Controller
+abstract class Controller_MyQEE__Admin__P extends Controller
 {
     /**
      * 项目管理统一进入接口
