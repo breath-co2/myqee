@@ -353,11 +353,11 @@ class MyQEE_Database_Driver_Mongo extends Database_Driver
                 # 批量插入
                 $sql['type'] = 'batchinsert';
 
-                foreach ($builder['columns'] as $key=>$field)
+                foreach ($builder['columns'] as $field)
                 {
                     foreach ($builder['values'] as $k=>$v)
                     {
-                        $data[$k][$field] = $builder['values'][$k][$key];
+                        $data[$k][$field] = $builder['values'][$k][$field];
                     }
                 }
                 $sql['data'] = $data;
@@ -365,9 +365,9 @@ class MyQEE_Database_Driver_Mongo extends Database_Driver
             else
             {
                 # 单条插入
-                foreach ($builder['columns'] as $key=>$field)
+                foreach ($builder['columns'] as $field)
                 {
-                    $data[$field] = $builder['values'][0][$key];
+                    $data[$field] = $builder['values'][0][$field];
                 }
                 $sql['data'] = $data;
             }
