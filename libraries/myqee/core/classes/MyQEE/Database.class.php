@@ -452,12 +452,13 @@ class MyQEE_Database extends Database_QueryBuilder
      * 设置是否一直在主数据库上查询
      *
      * 这样设置后，select会一直停留在主数据库上，直到$this->auto_use_master(false)后才会自动判断
-     * @param boolean $autoUseMaster
+     * @param boolean $auto_use_master
      * @return Database
      */
-    public function auto_use_master($autoUseMaster = true)
+    public function auto_use_master($auto_use_master = true)
     {
-        $this->is_auto_use_master = (boolean)$autoUseMaster;
+        $this->is_auto_use_master = (boolean)$auto_use_master;
+
         return $this;
     }
 
