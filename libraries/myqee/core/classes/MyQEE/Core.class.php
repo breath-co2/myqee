@@ -133,6 +133,8 @@ abstract class MyQEE_Core extends Bootstrap
         {
             Core::debug()->info(INITIAL_PROJECT_NAME,'project');
 
+            Core::debug()->info('SERVER IP:' . $_SERVER["SERVER_ADDR"] . (function_exists('php_uname')?'. SERVER NAME:' . php_uname('a') : ''));
+
             Core::debug()->group('include path');
             foreach ( Core::$include_path as $value )
             {
@@ -215,7 +217,7 @@ abstract class MyQEE_Core extends Bootstrap
                 Core::show_404();
                 exit();
             }
-        
+
             Core::$output = $output;
         }
         catch (Exception $e)
