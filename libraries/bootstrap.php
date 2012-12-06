@@ -630,7 +630,7 @@ abstract class Bootstrap
         }
         if ( !$core_config['projects'][$project]['isuse'] )
         {
-            self::_throw_sys_error_msg( __('the project: :project is not open.' , array(':project'=>'$project') ) );
+            self::_throw_sys_error_msg( __('the project: :project is not open.' , array(':project'=>$project) ) );
         }
 
         # 记录所有项目设置，当切换回项目时，使用此设置还原
