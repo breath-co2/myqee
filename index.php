@@ -4,6 +4,9 @@ chdir(dirname(__FILE__));
 # 系统目录
 $dir_system  = './';
 
+# Core目录
+$dir_core    = './core/';
+
 # 项目目录
 $dir_project = './projects/';
 
@@ -98,6 +101,6 @@ function _load_protection($max_load_avg=24)
 }
 _load_protection();
 
-include $dir_library . 'bootstrap.php';
+include $dir_core . 'bootstrap.php';
 
 Bootstrap::setup();

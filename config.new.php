@@ -29,12 +29,6 @@ $config['libraries'] = array
     (
         'com.myqee.administration',
     ),
-
-    // 核心类库
-    'core'     => array
-    (
-        'com.myqee.core',
-    ),
 );
 
 /**
