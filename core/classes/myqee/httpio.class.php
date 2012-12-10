@@ -868,10 +868,10 @@ class MyQEE_HttpIO
         }
 
         # 处理掉2边可能有/的URI
-        $new_uri = '/'.trim($uri,'/');
+        $new_uri = trim('/'.trim($uri,'/'));
 
         # 分割参数
-        $arguments = explode( '/', trim($new_uri) );
+        $arguments = explode('/', $new_uri);
 
         # 默认控制器
         $default_controller = strtolower(Core::config('core.default_controller'));
@@ -980,7 +980,8 @@ class MyQEE_HttpIO
 
                     if ( HttpIO::check_controller_method($data,$is_internal) )
                     {
-                        return array(
+                        return array
+                        (
                             'controller'    => $data['controller'],
                             'action'        => '',
                             'arguments'     => array(),
@@ -1068,8 +1069,9 @@ class MyQEE_HttpIO
                 $tmp_file = $path . $default_controller . $ext;
                 if ( is_file($tmp_file) )
                 {
-                    $data = array(
-                        'file'         => $tmp_file,
+                    $data = array
+                    (
+                        'file'       => $tmp_file,
                         'controller' => str_replace('/','_',ltrim($left_uri.'/','/') . $default_controller),
                         'function'   => $ar_1,
                     );
