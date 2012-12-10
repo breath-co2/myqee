@@ -5,7 +5,7 @@
  * @author jonwang
  *
  */
-abstract class Controller_MyQEE__Index extends Controller_Admin
+abstract class Controller_MyQEE_Index extends Controller_Admin
 {
 
     /**

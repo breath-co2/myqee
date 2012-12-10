@@ -1,6 +1,6 @@
 <?php
 
-class Controller_Install extends Controller_MyQEE__Install
+class Controller_Install extends Controller_MyQEE_Install
 {
     public function action_default()
     {

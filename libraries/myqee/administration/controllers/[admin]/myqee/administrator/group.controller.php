@@ -5,7 +5,7 @@
  * @author jonwang
  *
  */
-abstract class Controller_MyQEE__Administrator__Group extends Controller_Admin
+abstract class Controller_MyQEE_Administrator_Group extends Controller_Admin
 {
     /**
      * 权限组列表
@@ -227,7 +227,7 @@ abstract class Controller_MyQEE__Administrator__Group extends Controller_Admin
         {
             try
             {
-                $perm_setting = Controller_Administrator__Index::check_perm_data($_POST['perm_setting']);
+                $perm_setting = Controller_Administrator_Index::check_perm_data($_POST['perm_setting']);
             }
             catch (Exception $e)
             {

@@ -95,7 +95,7 @@ return false;
                     <a href="#error4dd3f2d36e63csource1" onclick="return koggle('error4dd3f2d36e63csource1')">LIBRARY/MyQEE/Core/classes/MyQEE/Request.class.php [ 654 ]</a>
             </span>
     &raquo;
-    Controller_Docs__Index->action_trace()
+    Controller_Docs_Index->action_trace()
 </p>
     <pre id="error4dd3f2d36e63csource1" class="source collapsed"><code><pre class="source"><code><span class="line"><span class="number">649</span>         # 执行方法
 

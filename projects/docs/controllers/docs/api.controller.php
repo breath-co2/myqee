@@ -9,7 +9,7 @@
  * @copyright  Copyright (c) 2008-2012 myqee.com
  * @license    http://www.myqee.com/license.html
  */
-class Controller_Docs__Api extends Controller_Docs__Base
+class Controller_Docs_Api extends Controller_Docs_Base
 {
 
     /**
@@ -62,7 +62,7 @@ class Controller_Docs__Api extends Controller_Docs__Base
             if ( $this->dir == 'controllers' || $this->dir == 'shell' )
             {
                 $is_class = true;
-                $class_name = 'Controller_' . strtolower(str_replace('_','__',$classname));
+                $class_name = 'Controller_' . strtolower($classname);
             }
             elseif ( $this->dir == 'models' )
             {
@@ -289,7 +289,6 @@ class Controller_Docs__Api extends Controller_Docs__Base
             {
                 if ( $profix == 'controllers' || $profix == 'shell' )
                 {
-                    $m[1] = str_replace('_', '__', $m[1]);
                     if ( ! class_exists( 'Controller_' . $m[1], false ) )
                     {
                         Core::find_file( $profix, $m[1], null, true );

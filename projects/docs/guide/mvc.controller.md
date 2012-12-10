@@ -9,7 +9,7 @@
 * 前台存放在controllers目录，后台控制器放在controllers/\[admin\]/目录，命令行控制器放在controllers/\[shell\]/目录，系统内部调用控制在controllers/\[system\]/目录
 * 控制器后缀.controller.php
 * 文件名必须小写
-* 双下划线__将被存放在对应的文件夹里
+* 下划线_将被存放在对应的文件夹里
 
 > V2.0RC1-RC3用户注意
 > 此版本后台控制器后缀.admin.php 命令行控制器后缀.shell.php 
@@ -36,12 +36,12 @@
 控制器允许存放在子文件夹里，例如：
 
     // controllers/test/admin.controller.php
-    class Controller_Test__Admin extends Controller {
+    class Controller_Test_Admin extends Controller {
     
     }
      
     // controllers/product/category.controller.php
-    class Controller_Product__Category extends Controller {
+    class Controller_Product_Category extends Controller {
     
     }
 

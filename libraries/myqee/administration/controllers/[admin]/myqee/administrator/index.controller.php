@@ -5,7 +5,7 @@
  * @author jonwang
  *
  */
-abstract class Controller_MyQEE__Administrator__Index extends Controller_Admin
+abstract class Controller_MyQEE_Administrator_Index extends Controller_Admin
 {
     public function action_default()
     {
@@ -788,12 +788,12 @@ abstract class Controller_MyQEE__Administrator__Index extends Controller_Admin
                 }
 
                 # 修改权限组需要验证一下新权限
-                Controller_Administrator__Index::check_perm_data( $new_group_perm_setting );
+                Controller_Administrator_Index::check_perm_data( $new_group_perm_setting );
             }
             if ( $_POST['perm_setting'] && is_array($_POST['perm_setting']) )
             {
                 # 检查提交的额外权限
-                $perm_setting = Controller_Administrator__Index::check_perm_data($_POST['perm_setting']);
+                $perm_setting = Controller_Administrator_Index::check_perm_data($_POST['perm_setting']);
             }
 
             if ( isset($member->setting['_group_admin']) )unset($member->setting['_group_admin']);

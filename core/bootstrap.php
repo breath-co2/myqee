@@ -680,11 +680,16 @@ abstract class Bootstrap
                 'core' => $core_config,
             );
 
+            if (!isset($core_config['projects'][$project]['dir']) || !$core_config['projects'][$project]['dir'])
+            {
+                self::_throw_sys_error_msg( __('the project ":project" dir is not defined.' , array(':project'=>$project)) );
+            }
+
             # 项目路径
-            $project_dir = realpath( DIR_PROJECT . $core_config['projects']['dir'] );
+            $project_dir = realpath( DIR_PROJECT . $core_config['projects'][$project]['dir'] );
             if ( !$project_dir || !is_dir( $project_dir ) )
             {
-                self::_throw_sys_error_msg( __('the project dir :dir is not exist.' , array(':dir'=>$core_config['projects']['dir'])) );
+                self::_throw_sys_error_msg( __('the project dir :dir is not exist.' , array(':dir'=>$core_config['projects'][$project]['dir'])) );
             }
             $project_dir .= DS;
             self::$project_dir = $project_dir;

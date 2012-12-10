@@ -1,6 +1,6 @@
 <?php
 
-class Controller_RunTime extends Controller_MyQEE__RunTime
+class Controller_RunTime extends Controller_MyQEE_RunTime
 {
 
 }

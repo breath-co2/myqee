@@ -5,7 +5,7 @@
  * @author jonwang
  *
  */
-abstract class Controller_MyQEE__Admin__P extends Controller
+abstract class Controller_MyQEE_Admin_P extends Controller
 {
     /**
      * 项目管理统一进入接口
@@ -23,7 +23,7 @@ abstract class Controller_MyQEE__Admin__P extends Controller
 		),
 		# 默认值
 		'defalut' => array(
-			'controller' => 'Admin__P',
+			'controller' => 'Admin_P',
 			'action'     => 'default',
 		),
 	),

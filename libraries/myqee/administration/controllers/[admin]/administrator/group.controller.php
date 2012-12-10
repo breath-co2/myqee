@@ -1,5 +1,5 @@
 <?php
-class Controller_Administrator__Group extends Controller_MyQEE__Administrator__Group
+class Controller_Administrator_Group extends Controller_MyQEE_Administrator_Group
 {
 
 }

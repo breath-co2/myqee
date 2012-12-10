@@ -9,7 +9,7 @@
  * @copyright  Copyright (c) 2008-2012 myqee.com
  * @license    http://www.myqee.com/license.html
  */
-class Controller_Docs__Index extends Controller_Docs__Base
+class Controller_Docs_Index extends Controller_Docs_Base
 {
     /**
      * 首页

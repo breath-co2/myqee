@@ -26,7 +26,7 @@ $config['route'] = array
 		# 默认值
 		'default' => array
         (
-			'controller' => 'Admin__P',
+			'controller' => 'Admin_P',
 			'action'     => 'default',
 		),
 	),

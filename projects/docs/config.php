@@ -32,7 +32,7 @@ $config['route'] = array(
 		),
 		# 默认值
 		'default' => array(
-			'controller' => 'docs__index',
+			'controller' => 'docs_index',
 			'action'     => 'default',
 			'md_file'   => 'base.welcome',
 		),
@@ -48,7 +48,7 @@ $config['route'] = array(
 		),
 		# 默认值
 		'default' => array(
-			'controller' => 'docs__api',
+			'controller' => 'docs_api',
 			'action'     => 'api',
 		),
 	),
@@ -61,7 +61,7 @@ $config['route'] = array(
 		),
 		# 默认值
 		'default' => array(
-			'controller' => 'docs__api',
+			'controller' => 'docs_api',
 			'action'     => 'default',
 		),
 	),
@@ -74,7 +74,7 @@ $config['route'] = array(
 		),
 		# 默认值
 		'default' => array(
-			'controller' => 'docs__index',
+			'controller' => 'docs_index',
 			'action'     => 'default',
 		),
 	),

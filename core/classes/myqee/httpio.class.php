@@ -38,7 +38,8 @@ if (!defined('_HTTPIO_METHOD'))
         $ip = '';
     }
 
-    define('_HTTPIO_IP',$ip);
+    list($ip) = explode(',', $ip);    //启用代理时多IP中取第一个
+    define('_HTTPIO_IP',trim($ip));
     unset($ip);
 
     if ( isset($_SERVER['HTTP_REFERER']) )
@@ -84,7 +85,8 @@ class MyQEE_HttpIO
     const PARAM_TYPE_OLDDATA = 'old';
 
     // HTTP status codes and messages
-    protected static $messages = array(
+    protected static $messages = array
+    (
         // Informational 1xx
         100 => 'Continue',
         101 => 'Switching Protocols',
@@ -253,21 +255,21 @@ class MyQEE_HttpIO
             if ( !IS_CLI )
             {
                 # 记录一个正真的原始拷贝数据
-                HttpIO::$_GET_OLD = $_GET;
-                HttpIO::$_POST_OLD = $_POST;
-                HttpIO::$_COOKIE_OLD = $_COOKIE;
+                HttpIO::$_GET_OLD     = $_GET;
+                HttpIO::$_POST_OLD    = $_POST;
+                HttpIO::$_COOKIE_OLD  = $_COOKIE;
                 HttpIO::$_REQUEST_OLD = $_REQUEST;
 
                 # XSS安全处理
-                $_GET = HttpIO::htmlspecialchars($_GET);
-                $_POST = HttpIO::htmlspecialchars($_POST);
-                $_COOKIE = HttpIO::htmlspecialchars($_COOKIE);
+                $_GET     = HttpIO::htmlspecialchars($_GET);
+                $_POST    = HttpIO::htmlspecialchars($_POST);
+                $_COOKIE  = HttpIO::htmlspecialchars($_COOKIE);
                 $_REQUEST = HttpIO::htmlspecialchars($_REQUEST);
 
                 # 隐射
-                HttpIO::$_GET = & $_GET;
-                HttpIO::$_POST = & $_POST;
-                HttpIO::$_COOKIE = & $_COOKIE;
+                HttpIO::$_GET     = & $_GET;
+                HttpIO::$_POST    = & $_POST;
+                HttpIO::$_COOKIE  = & $_COOKIE;
                 HttpIO::$_REQUEST = & $_REQUEST;
 
                 HttpIO::$uri = Core::$path_info;
@@ -478,27 +480,6 @@ class MyQEE_HttpIO
             }
         }
         return $arr;
-    }
-
-    protected static function _get_ip()
-    {
-        if ( isset($_SERVER['HTTP_X_FORWARDED_FOR']) )
-        {
-            // Use the forwarded IP address, typically set when the
-            // client is using a proxy server.
-            return $_SERVER['HTTP_X_FORWARDED_FOR'];
-        }
-        elseif ( isset($_SERVER['HTTP_CLIENT_IP']) )
-        {
-            // Use the forwarded IP address, typically set when the
-            // client is using a proxy server.
-            return $_SERVER['HTTP_CLIENT_IP'];
-        }
-        elseif ( isset($_SERVER['REMOTE_ADDR']) )
-        {
-            // The remote IP address
-            return $_SERVER['REMOTE_ADDR'];
-        }
     }
 
     /**
@@ -890,7 +871,7 @@ class MyQEE_HttpIO
         $new_uri = '/'.trim($uri,'/');
 
         # 分割参数
-        $arguments = explode( '/', $new_uri );
+        $arguments = explode( '/', trim($new_uri) );
 
         # 默认控制器
         $default_controller = strtolower(Core::config('core.default_controller'));
@@ -990,9 +971,10 @@ class MyQEE_HttpIO
                 $tmp_file = $item . $default_controller . $ext;
                 if (is_file($tmp_file))
                 {
-                    $data = array(
-                        'file'         => $tmp_file,
-                        'controller' => trim(str_replace('/','__',trim($new_uri,'/')) . '__' . $default_controller,'_'),
+                    $data = array
+                    (
+                        'file'       => $tmp_file,
+                        'controller' => trim(str_replace('/','_',trim($new_uri,'/')).'_'.$default_controller,'_'),
                         'function'   => 'default',
                     );
 
@@ -1008,6 +990,7 @@ class MyQEE_HttpIO
                     }
                 }
             }
+            exit;
         }
 
         # 处理例1中no=2部分
@@ -1023,15 +1006,17 @@ class MyQEE_HttpIO
                 $tmp_file = $item . $con_name . $ext;
                 if (is_file($tmp_file))
                 {
-                    $data = array(
-                        'file'         => $tmp_file,
-                        'controller' => trim(str_replace('/','__',trim($new_uri_sub2,'/')) . '__' . $con_name,'_'),
+                    $data = array
+                    (
+                        'file'       => $tmp_file,
+                        'controller' => trim(str_replace('/','_',trim($new_uri_sub2,'/')).'_'.$con_name,'_'),
                         'function'   => 'index',
                     );
 
                     if ( HttpIO::check_controller_method($data,$is_internal) )
                     {
-                        return array(
+                        return array
+                        (
                             'controller'    => $data['controller'],
                             'action'        => 'index',
                             'arguments'     => array(),
@@ -1059,15 +1044,17 @@ class MyQEE_HttpIO
 
                     if ( is_file($tmp_file) )
                     {
-                        $data = array(
-                            'file'         => $tmp_file,
-                            'controller' => str_replace('/','__',ltrim($left_uri.'/','/') . $ar_1),
+                        $data = array
+                        (
+                            'file'       => $tmp_file,
+                            'controller' => str_replace('/','_',ltrim($left_uri.'/','/') . $ar_1),
                             'function'   => $ar_2,
                         );
 
                         if ( HttpIO::check_controller_method($data,$is_internal) )
                         {
-                            return array(
+                            return array
+                            (
                                 'controller'    => $data['controller'],
                                 'action'        => $ar_2,
                                 'arguments'     => $arguments_arr2,
@@ -1083,12 +1070,13 @@ class MyQEE_HttpIO
                 {
                     $data = array(
                         'file'         => $tmp_file,
-                        'controller' => str_replace('/','__',ltrim($left_uri.'/','/') . $default_controller),
+                        'controller' => str_replace('/','_',ltrim($left_uri.'/','/') . $default_controller),
                         'function'   => $ar_1,
                     );
                     if ( HttpIO::check_controller_method($data,$is_internal) )
                     {
-                        return array(
+                        return array
+                        (
                             'controller'    => $data['controller'],
                             'action'        => $ar_1,
                             'arguments'     => $arguments_arr,
@@ -1112,14 +1100,16 @@ class MyQEE_HttpIO
                 $tmp_file = $path . $ar_1 . $ext;
                 if ( is_file($tmp_file) )
                 {
-                    $data = array(
-                        'file'         => $tmp_file,
-                        'controller' => str_replace('/','__',ltrim($left_uri.'/','/') . $ar_1),
+                    $data = array
+                    (
+                        'file'       => $tmp_file,
+                        'controller' => str_replace('/','_',ltrim($left_uri.'/','/') . $ar_1),
                         'function'   => 'default',
                     );
                     if ( HttpIO::check_controller_method($data,$is_internal) )
                     {
-                        return array(
+                        return array
+                        (
                             'controller'    => $data['controller'],
                             'action'        => '',
                             'arguments'     => $arguments_arr,
@@ -1146,7 +1136,7 @@ class MyQEE_HttpIO
         $data = Array
         (
             [file] => D:\php\myqee_v2\projects\myqee\controllers\test\abc\index.controller.php
-            [controller] => test__abc__index
+            [controller] => test_abc_index
             [function] => def
         )
          */
@@ -1242,7 +1232,7 @@ class MyQEE_HttpIO
             }
             if ( HttpIO::$params['controller'] )
             {
-                $tmpstr[] = str_replace('__','/',HttpIO::$params['controller']);
+                $tmpstr[] = str_replace('_','/',HttpIO::$params['controller']);
             }
             if ( HttpIO::$params['action'] )
             {

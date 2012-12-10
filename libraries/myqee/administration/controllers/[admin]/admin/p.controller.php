@@ -1,6 +1,6 @@
 <?php
 
-class Controller_Admin__P extends Controller_MyQEE__Admin__P
+class Controller_Admin_P extends Controller_MyQEE_Admin_P
 {
 
 }

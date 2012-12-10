@@ -1,6 +1,6 @@
 <?php
 
-class Controller_Shell extends Controller_MyQEE__Shell
+class Controller_Shell extends Controller_MyQEE_Shell
 {
 
 }

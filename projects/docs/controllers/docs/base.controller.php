@@ -1,5 +1,5 @@
 <?php
-class Controller_Docs__Base extends Controller
+class Controller_Docs_Base extends Controller
 {
     /**
      * @var View

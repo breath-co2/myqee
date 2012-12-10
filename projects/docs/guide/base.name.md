@@ -8,15 +8,11 @@
 * 配置文件放在config目录，文件后缀*.config.php
 * 视图文件放在views目录，文件后缀*.view.php
 
-classes，models 中若对象含有下划线_，则文件存放在相应目录中，文件夹及文件名大小写于对象名称保持一致，例如：
+classes，models，controller 中若对象含有下划线_，则文件存放在相应目录中，文件夹及文件名都是小写，例如：
 
-* 类文件：MyTest_Lib_abc 应当存放在 classes/MyTest/Lib/abc.class.php 文件中。
-* 模块：Model_M_Test 应当存放在 models/M/Test.model.php 文件中。
-
-控制器（controllers）文件名全为小写，文件名允许出现单下划线，以双下划线__分割为文件夹，且都小写
-
-* 控制器：Controller_Abc_Def_Ghi 当存放在 controllers/abc_def_ghi.controller.php 文件中。
-* 控制器：Controller_Abc__Def_Ghi 应当存放在 controllers/abc/def_ghi.controller.php 文件中。
+* 类文件：MyTest_Lib_abc 应当存放在 classes/mytest/lib/abc.class.php 文件中。
+* 模块：Model_M_Test 应当存放在 models/m/test.model.php 文件中。
+* 控制器：Controller_Abc_Def_Ghi 当存放在 controllers/abc/def/ghi.controller.php 文件中。
 
 控制器的命名方式
 ------------
@@ -35,10 +31,10 @@ classes，models 中若对象含有下划线_，则文件存放在相应目录�
 以上可通过 http://yourhost/test/abc 访问到 action_abc 方法。
 
 文件夹支持：
-例如Controller_My__Test控制器：
+例如 Controller_My_Test 控制器：
 
     <?php
-    Controller_My__Test extends Controller
+    Controller_My_Test extends Controller
     {
         public function action_abc()
         {
@@ -46,7 +42,7 @@ classes，models 中若对象含有下划线_，则文件存放在相应目录�
         }
     }
 
-文件应当存放在controllers目录的“my”文件夹的test.controller.php文件里，而不能是controllers目录的my__test.controller.php文件。
+文件应当存放在controllers目录的“my”文件夹的test.controller.php文件里。
 以上控制器可通过http://yourhost/my/test/abc 访问到。
 
 另外，控制器可继承另外一个控制器，例如：
@@ -59,13 +55,13 @@ classes，models 中若对象含有下划线_，则文件存放在相应目录�
             echo 'test';
         }
     }
-
+    
 类文件的命名方式
 --------------
 以下划线分割为目录，文件大小写于类名称保持一致，后缀为.class.php，例如：
 
-* 类 MyTest 应该存放在 classes 的 MyTest.class.php 文件
-* 类 My_Test 应该存放于 classes 的 My目录的Test.class.php 文件
+* 类 MyTest 应该存放在 classes 的 mytest.class.php 文件
+* 类 My_Test 应该存放于 classes 的 my目录的test.class.php 文件
 
 例如：
 
@@ -81,7 +77,7 @@ classes，models 中若对象含有下划线_，则文件存放在相应目录�
         }
     }
 
-存放在classes/Mytest.class.php文件中，调用方法：
+存放在classes/mytest.class.php文件中，调用方法：
 
     $mytest = new Mytest();
     $mytest->abc();
@@ -122,7 +118,7 @@ classes，models 中若对象含有下划线_，则文件存放在相应目录�
         }
     }
 
-存放在models/Member.model.php文件中，调用方法：
+存放在models/member.model.php文件中，调用方法：
 
     $m_member = new Model_Member();
     $data = $m_member->test();

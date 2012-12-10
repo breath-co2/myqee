@@ -16,7 +16,7 @@ abstract class MyQEE_Core extends Bootstrap
      * MyQEE版本号
      * @var string
      */
-    const VERSION = '2.0.2';
+    const VERSION = '2.1beta';
 
     /**
      * 项目开发者
@@ -309,10 +309,12 @@ abstract class MyQEE_Core extends Bootstrap
      */
     public static function auto_load($class)
     {
-        if ( class_exists($class, false) ) return true;
+        if (class_exists($class, false))return true;
+
         $class = strtolower($class);
         $strpos = strpos($class, '_');
-        if ( $strpos !== false )
+
+        if ($strpos!==false)
         {
             $prefix = substr($class, 0, $strpos);
         }
@@ -322,7 +324,7 @@ abstract class MyQEE_Core extends Bootstrap
         }
         $dir = 'classes';
 
-        if ( $prefix )
+        if ($prefix)
         {
             # 处理类的前缀
             if ( $prefix=='model' )
@@ -383,25 +385,26 @@ abstract class MyQEE_Core extends Bootstrap
         # 是否只需要寻找到第一个文件
         $only_need_one_file = true;
 
-        if ( $dir == 'classes' || $dir == 'models' )
+        if ( $dir == 'classes' || $dir == 'models' || $dir == 'controllers' )
         {
-            $file = str_replace('_', '/', $file);
-        }
-        elseif ( $dir == 'controllers' )
-        {
-            if ( IS_SYSTEM_MODE )
+            $file = strtolower(str_replace('_', '/', $file));
+
+            // 控制器特殊目录
+            if ($dir=='controllers')
             {
-                $dir .= '/[system]';
+                if ( IS_SYSTEM_MODE )
+                {
+                    $dir .= '/[system]';
+                }
+                elseif ( IS_CLI )
+                {
+                    $dir .= '/[shell]';
+                }
+                elseif ( IS_ADMIN_MODE )
+                {
+                    $dir .= '/[admin]';
+                }
             }
-            elseif ( IS_CLI )
-            {
-                $dir .= '/[shell]';
-            }
-            elseif ( IS_ADMIN_MODE )
-            {
-                $dir .= '/[admin]';
-            }
-            $file = strtolower(str_replace('__', '/', $file));
         }
         elseif ( $dir == 'i18n' || $dir == 'config' )
         {
@@ -415,7 +418,7 @@ abstract class MyQEE_Core extends Bootstrap
         {
             #orm
             $file = preg_replace('#^(.*)_[a-z0-9]+$#i', '$1', $file);
-            $file = str_replace('_', '/', $file);
+            $file = strtolower(str_replace('_', '/', $file));
         }
 
         if ( isset(Core::$file_list[Core::$project]) )
@@ -711,6 +714,10 @@ abstract class MyQEE_Core extends Bootstrap
     public static function debug_path($file)
     {
         $file = str_replace('\\', DS, $file);
+        if ( strpos($file, DIR_CORE) === 0 )
+        {
+            $file = 'CORE/' . substr($file, strlen(DIR_CORE));
+        }
         if ( strpos($file, DIR_BULIDER) === 0 )
         {
             $file = 'BULIDER/' . substr($file, strlen(DIR_BULIDER));
@@ -735,7 +742,9 @@ abstract class MyQEE_Core extends Bootstrap
         {
             $file = 'SYSTEM/' . substr($file, strlen(DIR_SYSTEM));
         }
+
         $file = str_replace('\\', '/', $file);
+
         return $file;
     }
 

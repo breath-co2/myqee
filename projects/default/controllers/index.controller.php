@@ -1,5 +1,4 @@
 <?php
-
 /**
  * 首页控制器
  * @author jonwang

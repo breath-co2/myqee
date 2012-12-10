@@ -1,6 +1,6 @@
 <?php
 
-class Controller_MyQEE__Index extends Controller_Shell
+class Controller_MyQEE_Index extends Controller_Shell
 {
     public function action_default()
     {
@@ -24,9 +24,9 @@ class Controller_MyQEE__Index extends Controller_Shell
                     continue;
                 }
 
-                $controller = str_replace( DIRECTORY_SEPARATOR, '__', $controller );
+                $controller = str_replace( DIRECTORY_SEPARATOR, '_', $controller );
 
-                if ( substr('__'.$controller, -$default_controller_strlen-2) == '__'.$default_controller )
+                if ( substr('_'.$controller, -$default_controller_strlen-2) == '_'.$default_controller )
                 {
                     # 输出index.shell.php 里的方法
                     $ref = new ReflectionClass( 'Controller_'.$controller );
@@ -39,7 +39,7 @@ class Controller_MyQEE__Index extends Controller_Shell
                             $mm = substr($method,7);
                             if ($mm!=$default_action)
                             {
-                                echo '    ' . str_replace( '__',' ', $mm ) . CRLF;
+                                echo '    ' . str_replace( '_',' ', $mm ) . CRLF;
                             }
                         }
                     }
@@ -49,7 +49,7 @@ class Controller_MyQEE__Index extends Controller_Shell
                     }
                 }
 
-                echo '    ' . str_replace( '__',' ', $controller ) . CRLF;
+                echo '    ' . str_replace( '_',' ', $controller ) . CRLF;
             }
         }
     }
