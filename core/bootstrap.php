@@ -179,7 +179,7 @@ function __load_boot__()
  * @param	string  target language
  * @return	string
  */
-function __( $string, array $values = NULL )
+function __( $string, array $values = null )
 {
     static $have_core = false;
     if ( false===$have_core )
@@ -243,7 +243,7 @@ abstract class Bootstrap
      *
      * @var float
      */
-    const VERSION = '1.9.2';
+    const VERSION = '1.9.3';
 
     /**
      * 系统所在的根目录
@@ -653,6 +653,7 @@ abstract class Bootstrap
                 'include_path'   => self::$include_path,
                 'file_list'      => self::$file_list,
                 'project_dir'    => self::$project_dir,
+                'base_url'       => self::$base_url,
             );
         }
 
@@ -672,6 +673,7 @@ abstract class Bootstrap
             self::$include_path   = $all_prjects_setting[$project]['include_path'];
             self::$file_list      = $all_prjects_setting[$project]['file_list'];
             self::$project_dir    = $all_prjects_setting[$project]['project_dir'];
+            self::$base_url       = $all_prjects_setting[$project]['base_url'];
         }
         else
         {
@@ -708,6 +710,62 @@ abstract class Bootstrap
 
             # 设置包含目录
             self::$include_path = self::get_project_include_path($project);
+
+            # 处理base_url
+            if ( isset($core_config['projects'][$project]['url']) && $core_config['projects'][$project]['url'] )
+            {
+                self::$base_url = current((array)$core_config['projects'][$project]['url']);
+                foreach ((array)$core_config['projects'][$project]['url'] as $u)
+                {
+                    if ( preg_match('#^http(s)?://(.*)$#i', $u) )
+                    {
+                        if ( strtolower(substr($_SERVER['SCRIPT_URI'], 0, strlen($u)))==strtolower($u) )
+                        {
+                            self::$base_url = $u;
+                            break;
+                        }
+                    }
+                    else if (substr($u,0,1)=='/')
+                    {
+                        self::$base_url = $u;
+                        break;
+                    }
+                }
+            }
+
+            if (IS_ADMIN_MODE)
+            {
+                if (isset($core_config['projects'][$project]['url_admin']) && $core_config['projects'][$project]['url_admin'])
+                {
+                    $url = null;
+                    foreach ((array)$core_config['projects'][$project]['url_admin'] as $u)
+                    {
+                        if ( preg_match('#^http(s)?://(.*)$#i', $u) )
+                        {
+                            if ( strtolower(substr($_SERVER['SCRIPT_URI'], 0, strlen($u)))==strtolower($u) )
+                            {
+                                $url = $u;
+                                break;
+                            }
+                        }
+                        else if (substr($u,0,1)=='/')
+                        {
+                            // 拼接后台地址
+                            $url = rtrim(self::$base_url,'/').$u;
+                            break;
+                        }
+                    }
+
+                    if ($url)
+                    {
+                        self::$base_url = $url;
+                    }
+                    else
+                    {
+                        self::$base_url = rtrim(self::$base_url,'/').current((array)$core_config['projects'][$project]['url_admin']);
+                    }
+                }
+            }
         }
 
         if ( class_exists('Core',false) )
@@ -718,7 +776,7 @@ abstract class Bootstrap
                 Core::debug()->group( '当前加载目录' );
                 foreach ( self::$include_path as $value )
                 {
-                    Core::debug()->log( Core::debug_path( $value ) );
+                    Core::debug()->log( Core::debug_path($value) );
                 }
                 Core::debug()->groupEnd();
             }
@@ -912,9 +970,9 @@ abstract class Bootstrap
             }
         }
 
-        if ( !isset( $_COOKIE['_debug_open'] ) ) return false;
-        if ( !isset( self::$config['core']['debug_open_password'] ) ) return false;
-        if ( !is_array( self::$config['core']['debug_open_password'] ) ) self::$config['core']['debug_open_password'] = array( ( string ) self::$config['core']['debug_open_password'] );
+        if ( !isset($_COOKIE['_debug_open']) ) return false;
+        if ( !isset(self::$config['core']['debug_open_password']) ) return false;
+        if ( !is_array( self::$config['core']['debug_open_password']) ) self::$config['core']['debug_open_password'] = array( ( string ) self::$config['core']['debug_open_password'] );
         foreach ( self::$config['core']['debug_open_password'] as $item )
         {
             if ( $_COOKIE['_debug_open'] == self::get_debug_hash( $item ) )
@@ -932,11 +990,11 @@ abstract class Bootstrap
      * @param string $password
      * @return string
      */
-    public static function get_debug_hash( $password )
+    public static function get_debug_hash($password)
     {
         static $config_str = null;
-        if ( null === $config_str ) $config_str = var_export( self::$config['core']['debug_open_password'], true );
-        return md5( $config_str . '_open$&*@debug' . $password );
+        if (null===$config_str)$config_str = var_export(self::$config['core']['debug_open_password'],true);
+        return md5($config_str.'_open$&*@debug'.$password);
     }
 
     /**
@@ -960,53 +1018,38 @@ abstract class Bootstrap
     private static function _get_pathinfo()
     {
         # 当没有$_SERVER["SCRIPT_URL"] 时拼接起来
-        if ( !isset($_SERVER["SCRIPT_URL"]) )
+        if ( !isset($_SERVER['SCRIPT_URL']) )
         {
-            $tmp_uri = explode('?', $_SERVER["REQUEST_URI"] ,2);
-            $_SERVER["SCRIPT_URL"] = $tmp_uri[0];
+            $tmp_uri = explode('?', $_SERVER['REQUEST_URI'] ,2);
+            $_SERVER['SCRIPT_URL'] = $tmp_uri[0];
         }
 
         # 当没有$_SERVER["SCRIPT_URI"] 时拼接起来
-        if ( !isset($_SERVER["SCRIPT_URI"]) )
+        if ( !isset($_SERVER['SCRIPT_URI']) )
         {
-            $_SERVER["SCRIPT_URI"] = (isset($_SERVER["HTTPS"]) && $_SERVER["HTTPS"]=='on'?'https':'http').'://'.$_SERVER["HTTP_HOST"].$_SERVER["SCRIPT_URL"];
-        }
-
-        # 处理base_url
-        if ( null === self::$base_url && isset($_SERVER["SCRIPT_NAME"]) && $_SERVER["SCRIPT_NAME"] )
-        {
-            $base_url_len = strrpos($_SERVER["SCRIPT_NAME"],'/');
-            if ( $base_url_len )
-            {
-                $base_url = substr($_SERVER["SCRIPT_NAME"], 0 , $base_url_len);
-                if ( preg_match('#^(.*)/wwwroot$#', $base_url , $m) )
-                {
-                    # 特殊处理wwwroot目录
-                    $base_url = $m[1];
-                    $base_url_len = strlen($base_url);
-                }
-                if ( strtolower(substr($_SERVER['REQUEST_URI'],0,$base_url_len)) == strtolower($base_url) )
-                {
-                    self::$base_url = $base_url;
-                }
-            }
+            $_SERVER['SCRIPT_URI'] = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS']=='on'?'https':'http').'://'.$_SERVER['HTTP_HOST'].$_SERVER['SCRIPT_URL'];
         }
 
         if ( isset($_SERVER['PATH_INFO']) )
         {
-            $pathinfo = $_SERVER["PATH_INFO"];
+            $pathinfo = $_SERVER['PATH_INFO'];
         }
         else
         {
             if ( isset($_SERVER['REQUEST_URI']) )
             {
                 $request_uri = $_SERVER['REQUEST_URI'];
-                if ( self::$base_url )
+                $root_uri = '/'.substr($_SERVER['SCRIPT_FILENAME'],strlen($_SERVER['DOCUMENT_ROOT']));
+                $index_file = 'index'.EXT;
+                if (substr($root_uri,-strlen($index_file))==$index_file)
                 {
-                    $request_uri = substr($request_uri, strlen(self::$base_url));
+                    $root_uri = substr($root_uri,0,-strlen($index_file));
                 }
-                // 移除查询参数
-                list ( $pathinfo ) = explode( '?', $request_uri, 2 );
+                if ($root_uri && $root_uri!='/')
+                {
+                    $request_uri = substr($request_uri, strlen($root_uri));
+                }
+                list($pathinfo) = explode('?', $request_uri, 2);
             }
             elseif ( isset($_SERVER['PHP_SELF']) )
             {
@@ -1023,15 +1066,16 @@ abstract class Bootstrap
         }
 
         # 过滤pathinfo传入进来的服务器默认页
-        if ( false !== $pathinfo && ($indexpagelen = strlen( self::$config['core']['server_index_page'] )) && substr( $pathinfo, - 1 - $indexpagelen ) == '/' . self::$config['core']['server_index_page'] )
+        if ( false !== $pathinfo && ($indexpagelen = strlen( self::$config['core']['server_index_page'] )) && substr( $pathinfo, -1-$indexpagelen ) == '/' . self::$config['core']['server_index_page'] )
         {
             $pathinfo = substr( $pathinfo, 0, - $indexpagelen );
         }
-        if ( !isset($_SERVER["PATH_INFO"]) )
+        if ( !isset($_SERVER['PATH_INFO']) )
         {
-            $_SERVER["PATH_INFO"] = $pathinfo;
+            $_SERVER['PATH_INFO'] = $pathinfo;
         }
-        $pathinfo = trim( $pathinfo );
+
+        $pathinfo = trim($pathinfo);
 
         return $pathinfo;
     }
@@ -1043,7 +1087,7 @@ abstract class Bootstrap
      * @param string $pathinfo 给定的Pathinfo
      * @return boolean
      */
-    private  static function _check_is_this_url( $u, & $pathinfo )
+    private static function _check_is_this_url( $u, & $pathinfo )
     {
         if ( $u=='/' )
         {
