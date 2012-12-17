@@ -1,0 +1,222 @@
+#!/usr/bin/env php
+<?php
+# 将指定项目的assets目录和调用类库的的assets目录的文件进行合并，并输出保存到 wwwroot/assets/ 对应项目目录里
+
+# 本脚本依赖 recess 和 uglifyjs 分别处理css和js
+# recess   https://github.com/twitter/recess
+# uglifyjs https://github.com/mishoo/UglifyJS
+#
+# 安装方法：
+#
+#  npm install recess -g
+#  npm install uglify-js@1
+
+
+// 不自动执行，这样只初始化Bootstrap和Core类，而不执行Core::run()方法
+$auto_run = false;
+
+// 调用项目
+$project = 'default';
+
+include (dirname(__FILE__).'/../index.php');
+
+$include_path = Bootstrap::$include_path;
+$include_path = array_reverse($include_path);
+
+// 循环获取所有文件列表
+$file_paths = array();
+
+// 循环include path
+foreach ($include_path as $path)
+{
+    $dir = $path ."assets/";
+
+    if (is_dir($dir))
+    {
+        glob_files($file_paths,$dir,strlen($dir));
+    }
+}
+
+// 输出目录
+$out_dir = DIR_ASSETS . $project .'/';
+
+// 记录所有文件的修改时间
+$edit_times = array();
+
+
+foreach (array('css','js','other') as $type)
+{
+    if (isset($file_paths[$type]) && $file_paths[$type])
+    {
+        echo "found {$type} file count: ".count($file_paths[$type])."\n";
+    }
+}
+echo "\nbegin merege......";
+
+foreach (array('css','js','other') as $type)
+{
+    if (isset($file_paths[$type]) && $file_paths[$type])
+    {
+        foreach ($file_paths[$type] as $tmpfile => $fullpath)
+        {
+            echo "\nfile: {$tmpfile}";
+            $out_file = $out_dir . $tmpfile;
+
+            if (is_file($out_file))
+            {
+                // 已经有文件，检查下修改时间看看是否需要替换
+
+                // 读取文件最后修改时间
+                $old_out_file_filemtime = filemtime($out_file);
+
+                // 不需要更新
+                $need_renew = false;
+                if ($old_out_file_filemtime > filemtime($fullpath))
+                {
+                    if ($type=='css'||$type=='js')
+                    {
+                        if (isset($file_paths['extends'][$tmpfile]) && $file_paths['extends'][$tmpfile])
+                        {
+                            if ($old_out_file_filemtime < filemtime($file_paths['extends'][$tmpfile]))
+                            {
+                                $need_renew = true;
+                            }
+                        }
+                    }
+                }
+                else
+                {
+                    $need_renew = true;
+                }
+
+                // 无需修改
+                if (!$need_renew)
+                {
+                    echo ' not need re-merge.';
+                    continue;
+                }
+            }
+
+            echo ' begin merge ...';
+            // 内容
+            $content = file_get_contents($fullpath);
+            if ($type=='css'||$type=='js')
+            {
+                if (isset($file_paths['extends'][$tmpfile]) && $file_paths['extends'][$tmpfile])
+                {
+                    // 有扩展？读取扩展文件进行合并
+                    $content.="\r\n".file_get_contents($file_paths['extends'][$tmpfile]);
+                }
+            }
+
+            if (is_dir($out_file))
+            {
+                // 如果应该输出为文件的路径变成了文件夹，则先删除
+                File::remove_dir($out_file);
+            }
+
+            // 压缩处理
+            if ($type=='css')
+            {
+                // 尝试创建目录
+                $dir = substr($out_file,0,strrpos($out_file,'/'));
+                File::create_dir($dir);
+                // 保存文件
+                file_put_contents($out_file.'.tmp.less', $content);
+
+                exec('recess --compile '.$out_file.'.tmp.less > '.$out_file.'.out.css');
+                File::create_file($out_file,file_get_contents($out_file.'.out.css'));
+
+                // 如果不是.min.css文件，则输出一个压缩后的文件
+                if (substr($out_file,-8)!='.min.css')
+                {
+                    exec('recess --compress '.$out_file.'.tmp.less > '.substr($out_file,0,-4).'.out.min.css');
+                    File::create_file(substr($out_file,0,-4).'.min.css',file_get_contents(substr($out_file,0,-4).'.out.min.css'));
+                    exec('rm '.substr($out_file,0,-4).'.out.min.css');
+                }
+
+                // 清理文件
+                exec('rm '.$out_file.'.tmp.less && rm '.$out_file.'.out.css');
+            }
+            else
+            {
+                File::create_file($out_file, $content);
+
+                // 压缩js，输出一个.min.js文件
+                if ($type=='js' && substr($out_file,-7)!='.min.js')
+                {
+                    exec('uglifyjs '.$out_file.' -nc > '.substr($out_file,0,-3).'.min.js');
+                }
+            }
+
+            echo ' done.';
+        }
+    }
+}
+
+echo "\n\nall done.\n";
+
+
+/**
+ * 递归的读取目录下所有文件到$file_paths中
+ */
+function glob_files(&$file_paths,$dir,$dir_len)
+{
+    $files = glob( $dir .'*', GLOB_NOSORT );
+
+    if ($files)foreach ($files as $file)
+    {
+        if ($file==='.'||$file==='..'||substr($file,0,1)==='.')continue;
+
+        // 文件夹
+        if (is_dir($file))
+        {
+            glob_files($file_paths,$file.'/',$dir_len);
+            continue;
+        }
+
+        $file = str_replace('\\', '/', $file);
+        $path_rpos = strrpos($file,'/');
+
+        // 文件名
+        $file_name = substr($file,$path_rpos+1);
+
+        $rpos = strrpos($file_name,'.');
+        if ($rpos>0)
+        {
+            // 后缀
+            $suffix = strtolower(substr($file_name,$rpos+1));
+            $file_path = substr($file,$dir_len,-strlen($file_name)).$file_name;
+
+            if ($suffix=='css'||$suffix=='less'||$suffix=='js')
+            {
+                $file_name_arr = explode('.',$file_name);
+                $count_file_name_arr = count($file_name_arr);
+                if ($count_file_name_arr>=2)
+                {
+                    // 扩展
+                    if (strtolower($file_name_arr[$count_file_name_arr-2])=='extend')
+                    {
+                        unset($file_name_arr[$count_file_name_arr-2]);
+                        $parent_file_name = implode('.',$file_name_arr);
+                        $parent_file_path = substr($file,$dir_len,-strlen($file_name)).$parent_file_name;
+                        // 记录到扩展数据里
+                        $file_paths['extends'][$parent_file_path] = $file;
+                        continue;
+                    }
+                }
+
+                if ($suffix=='less')
+                {
+                    $suffix='css';     //特殊转换
+                    $file_path = substr($file_path,0,-5).'.css';
+                }
+                $file_paths[$suffix][$file_path] = $file;
+            }
+            else
+            {
+                $file_paths['other'][$file_path] = $file;
+            }
+        }
+    }
+}
