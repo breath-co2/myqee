@@ -484,85 +484,135 @@ abstract class Bootstrap
             @date_default_timezone_set( self::$config['core']['timezone'] );
         }
 
-        $is_admin_url = false;
-        $now_project = null;
-        if ( IS_CLI )
+        //获取全局$project变量
+        global $project,$admin_mode;
+
+        if ( isset($project) && $project )
         {
-            if ( isset($_SERVER['OS']) && $_SERVER['OS']=='Windows_NT' )
+            $project = (string)$project;
+
+            if (!isset(self::$config['core']['projects'][$project]))
             {
-                # 切换到UTF-8编码显示状态
-                exec('chcp 65001');
+                self::_throw_sys_error_msg( __('not found the project: :project',array(':project'=>$project)) );
             }
 
-            if ( ! isset( $_SERVER["argv"] ) )
+            // 如果有设置项目
+            $now_project = $project;
+
+            // 管理员模式
+            if ( isset($admin_mode) && true===$admin_mode )
             {
-                exit( 'Err Argv' );
+                $is_admin_url = true;
             }
-            $argv = $_SERVER["argv"];
-            //$argv[0]为文件名
-            if ( isset( $argv[1] ) )
+        }
+        else
+        {
+            $is_admin_url = false;
+            $now_project = null;
+
+            if (IS_CLI)
             {
-                $project = $argv[1];
-                if ( isset( self::$config['core']['projects'][$project] ) )
+                if ( isset($_SERVER['OS']) && $_SERVER['OS']=='Windows_NT' )
                 {
-                    $now_project = $project;
-                    $project = self::$config['core']['projects'][$project];
+                    # 切换到UTF-8编码显示状态
+                    exec('chcp 65001');
+                }
+
+                if ( ! isset( $_SERVER["argv"] ) )
+                {
+                    exit( 'Err Argv' );
+                }
+                $argv = $_SERVER["argv"];
+                //$argv[0]为文件名
+                if ( isset( $argv[1] ) )
+                {
+                    $project = $argv[1];
+                    if ( isset(self::$config['core']['projects'][$project]) )
+                    {
+                        $now_project = $project;
+                        $project = self::$config['core']['projects'][$project];
+                    }
+                    else
+                    {
+                        $project = false;
+                    }
                 }
                 else
                 {
                     $project = false;
                 }
+
+                array_shift( $argv ); //将文件名移除
+                array_shift( $argv ); //将项目名移除
+                self::$path_info = trim( implode( '/', $argv ) );
             }
             else
             {
-                $project = false;
-            }
-
-            array_shift( $argv ); //将文件名移除
-            array_shift( $argv ); //将项目名移除
-            self::$path_info = trim( implode( '/', $argv ) );
-        }
-        else
-        {
-            self::$path_info = self::_get_pathinfo();
-            $project_url = false;
-            foreach ( self::$config['core']['projects'] as $k => &$item )
-            {
-                if (!isset($item['url']))$item['url'] = array();
-                if ( !is_array($item['url']) )
+                self::$path_info = self::_get_pathinfo();
+                $project_url = false;
+                foreach ( self::$config['core']['projects'] as $k => &$item )
                 {
-                    $item['url'] = array((string)$item['url']);
-                }
-                $tmp_pathinfo = self::$path_info;
-                foreach ( $item['url'] as $index=>$u )
-                {
-                    if ( self::_check_is_this_url( $u, self::$path_info ) )
+                    if (!isset($item['url']))$item['url'] = array();
+                    if ( !is_array($item['url']) )
                     {
-                        $project_url = $u;
+                        $item['url'] = array((string)$item['url']);
+                    }
+                    $tmp_pathinfo = self::$path_info;
+                    foreach ( $item['url'] as $index=>$u )
+                    {
+                        if ( self::_check_is_this_url( $u, self::$path_info ) )
+                        {
+                            $project_url = $u;
+                            break;
+                        }
+                    }
+
+                    if ( false !== $project_url )
+                    {
+                        if ( isset($item['url_admin']) && $item['url_admin'] )
+                        {
+                            if ( !strpos($item['url_admin'],'://') )
+                            {
+                                $tmp_pathinfo = self::$path_info;
+                            }
+                            if ( self::_check_is_this_url( $item['url_admin'], $tmp_pathinfo ) )
+                            {
+                                self::$path_info = $tmp_pathinfo;
+                                $is_admin_url = true;
+                            }
+                        }
+
+                        self::$project_url = $project_url;
+                        $now_project = $k;
                         break;
                     }
                 }
+            }
 
-                if ( false !== $project_url )
+            if ( !$now_project )
+            {
+                if ( IS_CLI )
                 {
-                    if ( isset($item['url_admin']) && $item['url_admin'] )
+                    # 命令行下执行
+                    echo 'use:'.CRLF;
+                    foreach ( self::$config['core']['projects'] as $k=>$item )
                     {
-                        if ( !strpos($item['url_admin'],'://') )
-                        {
-                            $tmp_pathinfo = self::$path_info;
-                        }
-                        if ( self::_check_is_this_url( $item['url_admin'], $tmp_pathinfo ) )
-                        {
-                            self::$path_info = $tmp_pathinfo;
-                            $is_admin_url = true;
-                        }
+                        if ( isset($item['isuse']) && !$item['isuse'] )continue;
+                        echo "    ".$k.CRLF;
                     }
+                    return true;
+                }
 
-                    self::$project_url = $project_url;
-                    $now_project = $k;
-                    break;
+                if ( isset( self::$config['core']['projects']['default'] ) )
+                {
+                    $now_project = 'default';
+                }
+                else
+                {
+                    self::_throw_sys_error_msg( __('not found the project: :project',array(':project'=>$now_project)) );
                 }
             }
+
         }
 
         /**
@@ -571,30 +621,6 @@ abstract class Bootstrap
          * @var boolean
          */
         define('IS_ADMIN_MODE', $is_admin_url);
-
-        if ( !$now_project )
-        {
-            if ( IS_CLI )
-            {
-                # 命令行下执行
-                echo 'use:'.CRLF;
-                foreach ( self::$config['core']['projects'] as $k=>$item )
-                {
-                    if ( isset($item['isuse']) && !$item['isuse'] )continue;
-                    echo "    ".$k.CRLF;
-                }
-                return true;
-            }
-
-            if ( isset( self::$config['core']['projects']['default'] ) )
-            {
-                $now_project = 'default';
-            }
-            else
-            {
-                self::_throw_sys_error_msg( __('not found the project: :project',array(':project'=>$now_project)) );
-            }
-        }
 
         /**
          * 初始项目名

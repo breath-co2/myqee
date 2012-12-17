@@ -1,6 +1,8 @@
 <?php
 chdir(dirname(__FILE__));
 
+/////////////////////// 下面的变量基本上用默认值即可
+
 # 系统目录
 $dir_system  = './';
 
@@ -25,15 +27,12 @@ $dir_shell   = './shell/';
 # 临时数据目录
 $dir_temp    = './temp/';
 
-
 # LOG目录
-
 $dir_log     = $dir_data.'log/';
 
 
 
-
-
+//////////////////// 以下基本上不用修改
 
 
 
@@ -101,6 +100,20 @@ function _load_protection($max_load_avg=24)
 }
 _load_protection();
 
+
+// 是否直接执行Core::run();
+// 可在其它的文件中include此文件然后设置此变量
+// 如果设置false则只初始化Bootstrap和Core类，不会执行Core::run();方法，通常用在shell文件里
+if (!isset($auto_run))
+{
+    // 默认直接执行
+    $auto_run = true;
+}
+else
+{
+    $auto_run = (bool)$auto_run;
+}
+
 include $dir_core . 'bootstrap.php';
 
-Bootstrap::setup();
+Bootstrap::setup($auto_run);
