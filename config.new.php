@@ -1,5 +1,39 @@
 <?php
 /**
+ * 项目配置
+ *
+ * @var array
+ *
+ * url 可以是字符串也可以是数组，可以/开头，也可以http://开头。结尾不需要加/
+ */
+$config['projects'] = array
+(
+	'docs' => array
+    (
+		'name'	    => '项目手册',
+		'isuse'	    => true,
+		'dir'	    => 'docs',
+		'url'	    => '/docs',
+	),
+	'admin' => array
+    (
+		'name'	    => '后台',
+		'isuse'	    => true,
+		'dir'	    => 'admin',
+		'url'	    => '/admin',
+	    'url_admin' => '/',
+	),
+	'default' => array
+    (
+		'name'      => '默认项目',
+		'isuse'     => true,
+		'dir'       => 'default',
+		'url'	    => '/',
+	),
+);
+
+
+/**
  * 加载库
  *
  * @var array
@@ -154,7 +188,8 @@ $config['web_server_list'] = array
  *   [MyQEE]
  *   myqee.debug = On
  *
- * 即可设置为默认打开调试模式，建议本地开发时设置，生产环境不设置php.ini即可
+ *
+ * 强烈推荐在本地开发时开启此功能，方便开发。但注意：生产环境中绝不能在php.ini设置
  *
  * @var string
  */
@@ -196,35 +231,30 @@ $config['slow_query_mtime'] = 2000;
 
 
 /**
- * 项目配置
+ * nodejs 执行文件默认路径
+ * 此功能在devassets等处理css时用到，通常不用改，除非你的node安装目录不是默认目录，window系统只需要修改window的，其它系统修改other的
  *
- * @var array
+ * $config['nodejs']['exec']         中分别设置window和非window系统的默认执行目录
+ * $config['nodejs']['modules_path'] 中分别设置window和非window系统的node_modules默认目录
  *
- * url 可以是字符串也可以是数组，可以/开头，也可以http://开头。结尾不需要加/
+ * @array
  */
-$config['projects'] = array
+$config['nodejs'] = array
 (
-	'docs' => array
+    'exec' => array
+        (
+        'window' => 'c:\\Program Files\\nodejs\\node.exe',
+        'other'  => '/usr/local/bin/node',
+    ),
+    'modules_path' => array
     (
-		'name'	    => '项目手册',
-		'isuse'	    => true,
-		'dir'	    => 'docs',
-		'url'	    => '/docs',
-	),
-	'admin' => array
-    (
-		'name'	    => '后台',
-		'isuse'	    => true,
-		'dir'	    => 'admin',
-		'url'	    => '/admin',
-	    'url_admin' => '/',
-	),
-	'default' => array
-    (
-		'name'      => '默认项目',
-		'isuse'     => true,
-		'dir'       => 'default',
-		'url'	    => '/',
-	),
+        'window' => 'c:\\Program Files\\nodejs\\node_modules\\',
+        'other'  => '/usr/local/lib/node_modules/',
+    ),
 );
+
+
+
+
+
 
