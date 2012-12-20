@@ -105,7 +105,7 @@ foreach (array('css','js','other') as $type)
                 if (isset($file_paths['extends'][$tmpfile]) && $file_paths['extends'][$tmpfile])
                 {
                     // 有扩展？读取扩展文件进行合并
-                    $content.="\r\n".file_get_contents($file_paths['extends'][$tmpfile]);
+                    $content.=CRLF.file_get_contents($file_paths['extends'][$tmpfile]);
                 }
             }
 
@@ -113,6 +113,14 @@ foreach (array('css','js','other') as $type)
             {
                 // 如果应该输出为文件的路径变成了文件夹，则先删除
                 File::remove_dir($out_file);
+            }
+
+            static $node_file = null;
+            static $node_modules_path = null;
+            if (null===$node_file)
+            {
+                # 获取node的执行文件路径和node_modules的路径
+                list($node_file,$node_modules_path) = get_node_set();
             }
 
             // 压缩处理
@@ -124,19 +132,43 @@ foreach (array('css','js','other') as $type)
                 // 保存文件
                 file_put_contents($out_file.'.tmp.less', $content);
 
-                exec('recess --compile '.$out_file.'.tmp.less > '.$out_file.'.out.css');
-                File::create_file($out_file,file_get_contents($out_file.'.out.css'));
+                $cmd = 'cd '.(escapeshellcmd($node_modules_path)).' && ' . escapeshellcmd($node_file).' '.escapeshellarg('./node_modules/recess/bin/recess').' --compile '.escapeshellarg($out_file.'.tmp.less');
+
+                exec($cmd,$output,$r);
+
+                if (0===$r)
+                {
+                    # 写入文件
+                    File::create_file($out_file,implode("\r\n",$output));
+                }
+                else
+                {
+                    echo "系统执行less处理失败，请检查执行recess是否安装或模块路径是否配置正确\nrecess的安装方法见 https://github.com/twitter/recess \n执行的命令为：\n";
+                    echo $cmd ."\n";
+                    exit;
+                }
 
                 // 如果不是.min.css文件，则输出一个压缩后的文件
                 if (substr($out_file,-8)!='.min.css')
                 {
-                    exec('recess --compress '.$out_file.'.tmp.less > '.substr($out_file,0,-4).'.out.min.css');
-                    File::create_file(substr($out_file,0,-4).'.min.css',file_get_contents(substr($out_file,0,-4).'.out.min.css'));
-                    exec('rm '.substr($out_file,0,-4).'.out.min.css');
+                    $cmd = 'cd '.(escapeshellcmd($node_modules_path)).' && ' . escapeshellcmd($node_file).' '.escapeshellarg('./node_modules/recess/bin/recess').' --compress '.escapeshellarg($out_file.'.tmp.less');
+
+                    exec($cmd,$output,$r);
+                    if (0===$r)
+                    {
+                        # 写入文件
+                        File::create_file(substr($out_file,0,-4).'.min.css',implode('',$output));
+                    }
+                    else
+                    {
+                        echo "系统执行less处理失败，请检查执行recess是否安装或模块路径是否配置正确\nrecess的安装方法见 https://github.com/twitter/recess \n执行的命令为：\n";
+                        echo $cmd ."\n";
+                        exit;
+                    }
                 }
 
                 // 清理文件
-                exec('rm '.$out_file.'.tmp.less && rm '.$out_file.'.out.css');
+                exec('rm '.$out_file.'.tmp.less');
             }
             else
             {
@@ -145,7 +177,20 @@ foreach (array('css','js','other') as $type)
                 // 压缩js，输出一个.min.js文件
                 if ($type=='js' && substr($out_file,-7)!='.min.js')
                 {
-                    exec('uglifyjs '.$out_file.' -nc > '.substr($out_file,0,-3).'.min.js');
+                    $cmd = 'cd '.(escapeshellcmd($node_modules_path)).' && ' . escapeshellcmd($node_file).' '.escapeshellarg('./node_modules/uglify-js/bin/uglifyjs').' '.escapeshellarg($out_file).' -nc';
+
+                    exec($cmd,$output,$r);
+                    if (0===$r)
+                    {
+                        # 写入文件
+                        File::create_file(substr($out_file,0,-3).'.min.js',implode('',$output));
+                    }
+                    else
+                    {
+                        echo "系统执行uglifyjs处理失败，请检查执行uglifyjs是否安装或模块路径是否配置正确\nuglifyjs安装方法见 https://github.com/mishoo/UglifyJS \n执行的命令为：\n";
+                        echo $cmd ."\n";
+                        exit;
+                    }
                 }
             }
 
@@ -200,6 +245,11 @@ function glob_files(&$file_paths,$dir,$dir_len)
                         unset($file_name_arr[$count_file_name_arr-2]);
                         $parent_file_name = implode('.',$file_name_arr);
                         $parent_file_path = substr($file,$dir_len,-strlen($file_name)).$parent_file_name;
+
+                        if ($suffix=='less')
+                        {
+                            $parent_file_path = substr($file_path,0,-5).'.css';
+                        }
                         // 记录到扩展数据里
                         $file_paths['extends'][$parent_file_path] = $file;
                         continue;
@@ -208,7 +258,7 @@ function glob_files(&$file_paths,$dir,$dir_len)
 
                 if ($suffix=='less')
                 {
-                    $suffix='css';     //特殊转换
+                    $suffix='css';     //转换为css
                     $file_path = substr($file_path,0,-5).'.css';
                 }
                 $file_paths[$suffix][$file_path] = $file;
@@ -219,4 +269,78 @@ function glob_files(&$file_paths,$dir,$dir_len)
             }
         }
     }
+}
+
+/**
+ * 获取node的设置
+ *
+ * @return array(exe_file_path,modules_path)
+ */
+function get_node_set()
+{
+    # nodejs 执行程序目录
+    $node_config = Core::config('core.nodejs');
+    if (IS_WIN)
+    {
+        if (isset($node_config['exec']['window']))
+        {
+            $node_file = $node_config['exec']['window'];
+        }
+    }
+    else
+    {
+        if (isset($node_config['exec']['other']))
+        {
+            $node_file = $node_config['exec']['other'];
+        }
+    }
+    if (!$node_file)
+    {
+        $node_file = IS_WIN ? 'c:\\Program Files\\nodejs\\node.exe' : '/usr/local/bin/node';
+    }
+
+    if (IS_WIN)
+    {
+        if (isset($node_config['modules_path']['window']))
+        {
+            $node_modules_path = $node_config['modules_path']['window'];
+        }
+    }
+    else
+    {
+        if (isset($node_config['modules_path']['other']))
+        {
+            $node_modules_path = $node_config['modules_path']['other'];
+        }
+    }
+
+    # 获取node_modules目录
+    if (!$node_modules_path)
+    {
+        $node_modules_path = IS_WIN ? 'c:\\Program Files\\nodejs\\node_modules\\' : '/usr/local/lib/node_modules/';
+    }
+    $node_modules_path = explode('/', str_replace('\\', '/', rtrim($node_modules_path,'/\\')));
+    $i = count($node_modules_path)-1;
+    if ($node_modules_path[$i]=='node_modules')
+    {
+        # 将node_modules移除
+        unset($node_modules_path[$i]);
+    }
+
+    # 得到node_modules的父目录
+    $node_modules_path = implode(DS, $node_modules_path) . DS;
+
+    if (!is_dir($node_modules_path))
+    {
+        if (is_dir(DIR_SYSTEM.'node_modules'.DS))
+        {
+            $node_modules_path = DIR_SYSTEM . 'node_modules' . DS;
+        }
+        else
+        {
+            throw new Exception('node_modules目录不存在，请修改config'.EXT.'中$config[\'nodejs\'][\'modules_path\']中配置');
+        }
+    }
+
+    return array($node_file,$node_modules_path);
 }
