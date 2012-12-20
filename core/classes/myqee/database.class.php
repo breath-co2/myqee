@@ -295,6 +295,18 @@ class MyQEE_Database extends Database_QueryBuilder
     }
 
     /**
+     * 获取一条数据
+     *
+     * @param boolean $as_object 返回对象名称 默认false，即返回数组
+     * @param boolean $use_master 是否使用主数据库，不设置则自动判断
+     * @return mixed
+     */
+    public function get_one($as_object = false, $use_master = null)
+    {
+        return $this->get($as_object,$use_master)->current();
+    }
+
+    /**
      * 最后查询的SQL语句
      *
      * @return string
