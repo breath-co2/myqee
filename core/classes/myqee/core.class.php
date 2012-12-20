@@ -777,6 +777,10 @@ abstract class MyQEE_Core extends Bootstrap
     public static function show_404($msg = null)
     {
         Core::close_buffers(false);
+
+        # 避免输出的CSS头试抛出页面无法显示
+        @header( 'Content-Type: text/html;charset=' . Core::config('core.charset') ,true );
+
         HttpIO::$status = 404;
         HttpIO::send_headers();
 
@@ -836,6 +840,10 @@ abstract class MyQEE_Core extends Bootstrap
     public static function show_500($msg = null)
     {
         Core::close_buffers(false);
+
+        # 避免输出的CSS头试抛出页面无法显示
+        @header( 'Content-Type: text/html;charset=' . Core::config('core.charset') , true );
+
         HttpIO::$status = 500;
         HttpIO::send_headers();
 
