@@ -24,8 +24,11 @@ $dir_library = './libraries/';
 # SHELL目录
 $dir_shell   = './shell/';
 
+# 缓存目录
+$dir_cache   = $dir_data.'cache/';
+
 # 临时数据目录
-$dir_temp    = './temp/';
+$dir_temp    = $dir_data.'temp/';
 
 # LOG目录
 $dir_log     = $dir_data.'log/';

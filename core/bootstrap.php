@@ -63,7 +63,7 @@ define('IS_CLI',(PHP_SAPI==='cli'));
 define('IS_SYSTEM_MODE', !IS_CLI && isset($_SERVER['HTTP_X_MYQEE_SYSTEM_HASH']) ? true : false);
 
 
-if (false) $dir_system = $dir_core = $dir_project = $dir_wwwroot = $dir_data = $dir_library = $dir_bulider = $dir_shell = $dir_temp = $dir_assets = $dir_log = null;
+if (false) $dir_system = $dir_core = $dir_project = $dir_wwwroot = $dir_data = $dir_library = $dir_bulider = $dir_shell = $dir_temp = $dir_assets = $dir_log = $dir_cache = null;
 if (!isset($dir_system)) $dir_system = dirname( __FILE__ ) . '/../';
 
 /**
@@ -72,16 +72,17 @@ if (!isset($dir_system)) $dir_system = dirname( __FILE__ ) . '/../';
  */
 define( 'DIR_SYSTEM', realpath( $dir_system ) . DS );
 
-if ( !isset( $dir_core    ) ) $dir_core    = DIR_SYSTEM . 'core/';
-if ( !isset( $dir_project ) ) $dir_project = DIR_SYSTEM . 'projects/';
-if ( !isset( $dir_wwwroot ) ) $dir_wwwroot = DIR_SYSTEM . 'wwwroot/';
-if ( !isset( $dir_data    ) ) $dir_data    = DIR_SYSTEM . 'data/';
-if ( !isset( $dir_library ) ) $dir_library = DIR_SYSTEM . 'libraries/';
-if ( !isset( $dir_bulider ) ) $dir_bulider = DIR_SYSTEM . 'bulider/';
-if ( !isset( $dir_shell   ) ) $dir_shell   = DIR_SYSTEM . 'shell/';
-if ( !isset( $dir_temp    ) ) $dir_temp    = DIR_SYSTEM . 'temp/';
-if ( !isset( $dir_assets  ) ) $dir_assets  = $dir_wwwroot.'assets/';
-if ( !isset( $dir_log     ) ) $dir_log     = $dir_data  . 'log/';
+if ( !isset( $dir_core    ) ) $dir_core    = DIR_SYSTEM   . 'core/';
+if ( !isset( $dir_project ) ) $dir_project = DIR_SYSTEM   . 'projects/';
+if ( !isset( $dir_wwwroot ) ) $dir_wwwroot = DIR_SYSTEM   . 'wwwroot/';
+if ( !isset( $dir_library ) ) $dir_library = DIR_SYSTEM   . 'libraries/';
+if ( !isset( $dir_shell   ) ) $dir_shell   = DIR_SYSTEM   . 'shell/';
+if ( !isset( $dir_data    ) ) $dir_data    = DIR_SYSTEM   . 'data/';
+if ( !isset( $dir_bulider ) ) $dir_bulider = $dir_data    . 'bulider/';
+if ( !isset( $dir_temp    ) ) $dir_temp    = $dir_data    . 'temp/';
+if ( !isset( $dir_log     ) ) $dir_log     = $dir_data    . 'log/';
+if ( !isset( $dir_cache   ) ) $dir_cache   = $dir_data    . 'cache/';
+if ( !isset( $dir_assets  ) ) $dir_assets  = $dir_wwwroot . 'assets/';
 
 if ( ! realpath( $dir_project ) )
 {
@@ -122,31 +123,37 @@ define( 'DIR_LIBRARY', (realpath( $dir_library ) ? realpath( $dir_library ) : DI
  * 系统构建数据目录
  * @var string
  */
-define( 'DIR_BULIDER', (realpath( $dir_bulider ) ? realpath( $dir_bulider ) : DIR_SYSTEM . 'bulider') . DS );
+define( 'DIR_SHELL', (realpath( $dir_shell ) ? realpath( $dir_shell ) : DIR_SYSTEM . 'shell') . DS );
 
 /**
  * 系统构建数据目录
  * @var string
  */
-define( 'DIR_SHELL', (realpath( $dir_shell ) ? realpath( $dir_shell ) : DIR_SYSTEM . 'shell') . DS );
+define( 'DIR_BULIDER', (realpath( $dir_bulider ) ? realpath( $dir_bulider ) : DIR_DATA . 'bulider') . DS );
 
 /**
  * 临时文件目录
  * @var string
  */
-define( 'DIR_TEMP', (realpath( $dir_temp ) ? realpath( $dir_temp ) : DIR_SYSTEM . 'temp') . DS );
-
-/**
- * 临时文件目录
- * @var string
- */
-define( 'DIR_ASSETS', (realpath( $dir_assets ) ? realpath( $dir_assets ) : DIR_WWWROOT . 'assets') . DS );
+define( 'DIR_TEMP', (realpath( $dir_temp ) ? realpath( $dir_temp ) : DIR_DATA . 'temp') . DS );
 
 /**
  * LOG目录
  * @var string
  */
 define( 'DIR_LOG', (realpath( $dir_log ) ? realpath( $dir_log ) : DIR_DATA . 'log') . DS );
+
+/**
+ * LOG目录
+ * @var string
+ */
+define( 'DIR_CACHE', (realpath( $dir_cache ) ? realpath( $dir_cache ) : DIR_DATA . 'cache') . DS );
+
+/**
+ * 临时文件目录
+ * @var string
+ */
+define( 'DIR_ASSETS', (realpath( $dir_assets ) ? realpath( $dir_assets ) : DIR_WWWROOT . 'assets') . DS );
 
 
 unset( $dir_system, $dir_core, $dir_project, $dir_wwwroot, $dir_data, $dir_library, $dir_shell, $dir_bulider,$dir_assets );
