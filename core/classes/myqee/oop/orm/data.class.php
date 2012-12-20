@@ -133,7 +133,7 @@ class MyQEE_OOP_ORM_Data
     protected static $_all_id_field_name = array();
 
     /**
-     * 记录id数据缓存
+     * 记录id数据缓存，在SHELL脚本中运行则不记录
      *
      *   array(
      * 	     'classname' => array(1=>...,2=>...),
@@ -143,6 +143,20 @@ class MyQEE_OOP_ORM_Data
      * @var array
      */
     protected static $_id_field_cache_data = array();
+
+    /**
+     * 已缓存ID总数
+     *
+     * @var int
+     */
+    protected static $_id_field_cache_data_num = 0;
+
+    /**
+     * 最大ID数据缓存数
+     *
+     * @var int
+     */
+    protected static $max_id_cache_num = 1000;
 
     /**
      * ORM数据构造
@@ -222,7 +236,8 @@ class MyQEE_OOP_ORM_Data
      */
     public function __sleep()
     {
-        $this->__orm_sleep_data__ = array(
+        $this->__orm_sleep_data__ = array
+        (
             'v' => '1.0',
             'd' => $this->get_field_data(),
         );
@@ -821,6 +836,9 @@ class MyQEE_OOP_ORM_Data
             throw new Exception('ORM:' . get_class($orm) . '不存在ID字段，无法使用ORM系统自带的delete方法删除。');
         }
         $status = $orm->delete($where);
+
+        $this->_remove_id_cache_data();
+
         return $status;
     }
 
@@ -1137,6 +1155,9 @@ class MyQEE_OOP_ORM_Data
         {
             $this->_renew_offset_changed_value( $data , $offset , false , true );
         }
+
+        # 清除数据缓存
+        $this->_remove_id_cache_data();
     }
 
     /**
@@ -1267,6 +1288,27 @@ class MyQEE_OOP_ORM_Data
     }
 
     /**
+     * 清除ID数据缓存
+     *
+     * @return $this
+     */
+    protected function _remove_id_cache_data()
+    {
+        if (IS_CLI)return $this;
+
+        $id_field_name = $this->id_field_name();
+        $id = $this->$id_field_name;
+
+        if ( $id && isset(OOP_ORM_Data::$_id_field_cache_data[$this->_class_name][$id]) )
+        {
+            unset(OOP_ORM_Data::$_id_field_cache_data[$this->_class_name][$id]);
+            OOP_ORM_Data::$_id_field_cache_data_num -= 1;
+        }
+
+        return $this;
+    }
+
+    /**
      * 用于给ORM回调设置ORM对象
      */
     protected function __orm_callback_set_orm_(OOP_ORM $orm)
@@ -1313,13 +1355,21 @@ class MyQEE_OOP_ORM_Data
         $this->_orm_data_is_created = $created;
 
         # ID数据缓存,用于重复ID主键数据查询时直接返回
-        if ($is_field_key)
+        if (IS_CLI && $is_field_key)
         {
             $id_field_name = $this->id_field_name();
             $id = $data[$id_field_name];
+
+            if ( OOP_ORM_Data::$_id_field_cache_data_num > OOP_ORM_Data::$max_id_cache_num )
+            {
+                // 超过最大cache数则清除掉
+                OOP_ORM_Data::$_id_field_cache_data = array();
+            }
+
             if ( $id && !isset(OOP_ORM_Data::$_id_field_cache_data[$this->_class_name][$id]) )
             {
                 OOP_ORM_Data::$_id_field_cache_data[$this->_class_name][$id] = $data;
+                OOP_ORM_Data::$_id_field_cache_data_num += 1;
             }
         }
     }
@@ -1358,22 +1408,28 @@ class MyQEE_OOP_ORM_Data
      */
     public static function id_field_cache_data( $class_name , $id )
     {
+        if (IS_CLI)return null;
+
         $class_name = strtolower($class_name);
         if (is_array($id))
         {
             $tmp = array();
             foreach ($id as $tmpid)
             {
-                if (isset(OOP_ORM_Data::$_id_field_cache_data[$class_name][$tmpid]))
+                if ( isset(OOP_ORM_Data::$_id_field_cache_data[$class_name][$tmpid]) )
                 {
                     $tmp[$tmpid] = OOP_ORM_Data::$_id_field_cache_data[$class_name][$tmpid];
                 }
             }
             return $tmp;
         }
-        else
+        else if ( isset(OOP_ORM_Data::$_id_field_cache_data[$class_name][$id]) )
         {
             return OOP_ORM_Data::$_id_field_cache_data[$class_name][$id];
+        }
+        else
+        {
+            return null;
         }
     }
 }
