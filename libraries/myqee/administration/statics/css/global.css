@@ -1056,5 +1056,12 @@ p{
     font-size: 12px;
 }
 
-
+.input_select_div:after {
+    color: #bbb;
+    content: "▼";
+    font-size: 10px;
+    right:13px;
+    position: relative;
+    top:1px;
+}
 

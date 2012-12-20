@@ -531,7 +531,7 @@ class MyQEE_Form
         if (isset($attributes['size']))$attributes2['size'] = $attributes['size'];
         if (isset($attributes['style']))$attributes2['style'] = $attributes['style'];
         $attributes['style'] = 'display:none;' . $attributes['style'];
-        return Form::input(null , $options[$value] , $attributes2 ).Form::input($name , $value , $attributes );
+        return '<span class="input_select_div">'.Form::input(null , $options[$value] , $attributes2 ).Form::input($name , $value , $attributes ).'</span>';
 	}
 
 }
