@@ -17,26 +17,25 @@ API接口 [http://www.myqee.com/docs/api/default/classes/](http://www.myqee.com/
 **Apache配置样例：**
 	
 	<Virtualhost *>
+	    # 网站域名，（写入配置时请把中文注释去掉，下同）
 		ServerName www.myqee.com
-		ServerAlias myqee.com
+		
+		# DocumentRoot一定要/结尾
 		DocumentRoot "D:/php/myqee_v2/"
+		
+	    # 以下内容无需修改
+	    
+		DirectoryIndex index.html index.php
 		RewriteEngine On
 		RewriteRule .*/\..* - [F,L]
 		
-	    RewriteCond %{HTTP_HOST} !^www\.myqee\.com [NC]
-	    RewriteCond %{HTTP_HOST} !^$
-	    RewriteRule ^/(.*)       http://www.myqee.com/$1 [L,R]
-	    
-	    # 以下内容无需修改
-		RewriteRule ^/~([a-zA-Z0-9\-_]+)~(.*)$ "/projects/$1/wwwroot/$2" [L]
+	    RewriteCond %{DOCUMENT_ROOT}wwwroot/%{REQUEST_FILENAME} -f [OR]
+	    RewriteCond %{DOCUMENT_ROOT}wwwroot/%{REQUEST_FILENAME} -d
+	    RewriteRule ^/(.*)$ /wwwroot/$1 [PT,L]
 	
-	    RewriteCond %{DOCUMENT_ROOT}wwwroot%{REQUEST_FILENAME} -f [OR]
-	    RewriteCond %{DOCUMENT_ROOT}wwwroot%{REQUEST_FILENAME} -d [OR]
-	    RewriteCond %{DOCUMENT_ROOT}wwwroot%{REQUEST_FILENAME} -l
-	    RewriteRule ^/(.*)$ /wwwroot/$1 [L]
+	    RewriteRule ^/(.*)$ /index.php/$1 [PT,L]
 	    
-	    RewriteRule .* /index.php [PT,L]
-	    
+	    # 以下是一些文件的缓存设置，可修改或去掉
 	    <IfModule expires_module>
 	    	ExpiresActive On
 	    	ExpiresByType text/css "access plus 3 days"
@@ -47,7 +46,7 @@ API接口 [http://www.myqee.com/docs/api/default/classes/](http://www.myqee.com/
 		</IfModule>
 	</Virtualhost>
  
-以上参数只需要修改 ServerName 和 ServerAlias 和 DocumentRoot 以及 RewriteCond 中的域名 
+注意，请去掉中文注释
 
 若无Apache的管理权限或怕麻烦，可在系统目录example.htaccess文件重命名为".htaccess"文件开启rewrite
 （window下可以直接双击根目录的 “将example.htaccess修改为.htaccess文件” 文件修改后缀）
@@ -58,7 +57,7 @@ API接口 [http://www.myqee.com/docs/api/default/classes/](http://www.myqee.com/
 	server {
 	    set         $www /home/www/myqee;
 	    root        $www;
-	    index       index.html index.htm index.php;
+	    index       index.html index.php;
 	    listen      80;
 	    charset     utf-8;
 	    server_name www.myqee.com;
