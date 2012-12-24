@@ -20,6 +20,12 @@ $project = 'default';
 
 include (dirname(__FILE__).'/../index.php');
 
+echo "待合并目录：\n";
+foreach (Bootstrap::$include_path as $path)
+{
+    echo "  => ".Core::debug_path($path)."\n";
+}
+
 $include_path = Bootstrap::$include_path;
 $include_path = array_reverse($include_path);
 
@@ -37,6 +43,8 @@ foreach ($include_path as $path)
     }
 }
 
+echo "\n开始收集文件：\n";
+
 // 输出目录
 $out_dir = DIR_ASSETS . $project .'/';
 
@@ -48,18 +56,24 @@ foreach (array('css','js','other') as $type)
 {
     if (isset($file_paths[$type]) && $file_paths[$type])
     {
-        echo "found {$type} file count: ".count($file_paths[$type])."\n";
+        if ($type=='other')$type1 = '其它';
+        else $type1 = $type;
+        echo "  => 找到{$type1}文件: \x1b[33m".count($file_paths[$type])."\x1b[39m\n";
     }
 }
-echo "\nbegin merege......";
 
+echo "\n开始合并文件：";
+
+$done    = "[\x1b[35m忽略\x1b[39m]";
+$success = "\x1b[32m✔\x1b[39m";
+$error   = "\x1b[31m✕\x1b[39m";
+$out_dir_path = Core::debug_path($out_dir);
 foreach (array('css','js','other') as $type)
 {
     if (isset($file_paths[$type]) && $file_paths[$type])
     {
         foreach ($file_paths[$type] as $tmpfile => $fullpath)
         {
-            echo "\nfile: {$tmpfile}";
             $out_file = $out_dir . $tmpfile;
 
             if (is_file($out_file))
@@ -88,16 +102,16 @@ foreach (array('css','js','other') as $type)
                 {
                     $need_renew = true;
                 }
+                $need_renew = true;
 
                 // 无需修改
                 if (!$need_renew)
                 {
-                    echo ' not need re-merge.';
+                    echo "\n  => {$tmpfile} ".$done;
                     continue;
                 }
             }
 
-            echo ' begin merge ...';
             // 内容
             $content = file_get_contents($fullpath);
             if ($type=='css'||$type=='js')
@@ -140,6 +154,7 @@ foreach (array('css','js','other') as $type)
                 {
                     # 写入文件
                     File::create_file($out_file,implode("\r\n",$output));
+                    echo "\n  => {$out_dir_path}{$tmpfile} {$success}";
                 }
                 else
                 {
@@ -158,6 +173,7 @@ foreach (array('css','js','other') as $type)
                     {
                         # 写入文件
                         File::create_file(substr($out_file,0,-4).'.min.css',implode('',$output));
+                        echo "\n     ".$out_dir_path.substr($tmpfile,0,-4).".min.css {$success}";
                     }
                     else
                     {
@@ -173,6 +189,7 @@ foreach (array('css','js','other') as $type)
             else
             {
                 File::create_file($out_file, $content);
+                echo "\n  => {$out_dir_path}{$tmpfile} {$success}";
 
                 // 压缩js，输出一个.min.js文件
                 if ($type=='js' && substr($out_file,-7)!='.min.js')
@@ -184,6 +201,7 @@ foreach (array('css','js','other') as $type)
                     {
                         # 写入文件
                         File::create_file(substr($out_file,0,-3).'.min.js',implode('',$output));
+                        echo "\n  => ".$out_dir_path.substr($tmpfile,0,-3).".min.css {$success}";
                     }
                     else
                     {
@@ -193,13 +211,11 @@ foreach (array('css','js','other') as $type)
                     }
                 }
             }
-
-            echo ' done.';
         }
     }
 }
 
-echo "\n\nall done.\n";
+echo "\n\n全部完成\n";
 
 
 /**
