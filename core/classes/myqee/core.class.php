@@ -697,7 +697,7 @@ abstract class MyQEE_Core extends Bootstrap
             }
             else
             {
-                $debug = new MyQEE_Core_NoDebug();
+                $debug = new __NoneDebug__();
             }
         }
         return $debug;
@@ -1282,5 +1282,59 @@ abstract class MyQEE_Core extends Bootstrap
             Core::log('system request hash error', 'system-request');
             return false;
         }
+    }
+}
+
+
+/**
+ * 无debug支持类
+ *
+ */
+class __NoneDebug__
+{
+
+    public function __call($m, $v)
+    {
+        return $this;
+    }
+
+    public function log($i = null)
+    {
+        return $this;
+    }
+
+    public function info($i = null)
+    {
+        return $this;
+    }
+
+    public function error($i = null)
+    {
+        return $this;
+    }
+
+    public function group($i = null)
+    {
+        return $this;
+    }
+
+    public function groupEnd($i = null)
+    {
+        return $this;
+    }
+
+    public function table($Label = null, $Table = null)
+    {
+        return $this;
+    }
+
+    public function profiler($i = null)
+    {
+        return $this;
+    }
+
+    public function is_open()
+    {
+        return false;
     }
 }
