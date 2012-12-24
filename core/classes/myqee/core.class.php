@@ -713,34 +713,62 @@ abstract class MyQEE_Core extends Bootstrap
      */
     public static function debug_path($file)
     {
+        if (IS_CLI)
+        {
+            # 命令行下输出带色彩的前缀
+            $l = "\x1b[36m";
+            $r = "\x1b[39m";
+        }
+        else
+        {
+            $l = $r = '';
+        }
+
         $file = str_replace('\\', DS, $file);
+
         if ( strpos($file, DIR_CORE) === 0 )
         {
-            $file = 'CORE/' . substr($file, strlen(DIR_CORE));
+            $file = $l . './core/' . $r . substr($file, strlen(DIR_CORE));
         }
-        if ( strpos($file, DIR_BULIDER) === 0 )
+        elseif ( strpos($file, DIR_BULIDER) === 0 )
         {
-            $file = 'BULIDER/' . substr($file, strlen(DIR_BULIDER));
+            $file = $l . './data/bulider/' . $r . substr($file, strlen(DIR_BULIDER));
+        }
+        elseif ( strpos($file, DIR_LOG) === 0 )
+        {
+            $file = $l . './data/log/' . $r . substr($file, strlen(DIR_LOG));
+        }
+        elseif ( strpos($file, DIR_TEMP) === 0 )
+        {
+            $file = $l . './data/temp/' . $r . substr($file, strlen(DIR_TEMP));
+        }
+        elseif ( strpos($file, DIR_CACHE) === 0 )
+        {
+            $file = $l . './data/cache/' . $r . substr($file, strlen(DIR_CACHE));
         }
         elseif ( strpos($file, DIR_DATA) === 0 )
         {
-            $file = 'DATA/' . substr($file, strlen(DIR_DATA));
+            $file = $l . './data/' . $r . substr($file, strlen(DIR_DATA));
         }
         elseif ( strpos($file, DIR_LIBRARY) === 0 )
         {
-            $file = 'LIBRARY/' . substr($file, strlen(DIR_LIBRARY));
+            $file = $l . './libraries/' . $r . substr($file, strlen(DIR_LIBRARY));
         }
         elseif ( strpos($file, DIR_PROJECT) === 0 )
         {
-            $file = 'PROJECT/' . substr($file, strlen(DIR_PROJECT));
+            $file = $l . './projects/' . $r . substr($file, strlen(DIR_PROJECT));
+        }
+        elseif ( strpos($file, DIR_ASSETS) === 0 )
+        {
+            $file = $l . './wwwroot/assets/' . $r . substr($file, strlen(DIR_ASSETS));
         }
         elseif ( strpos($file, DIR_WWWROOT) === 0 )
         {
-            $file = 'WWWROOT/' . substr($file, strlen(DIR_WWWROOT));
+            $file = $l . './wwwroot/' . $r . substr($file, strlen(DIR_WWWROOT));
         }
         elseif ( strpos($file, DIR_SYSTEM) === 0 )
         {
-            $file = 'SYSTEM/' . substr($file, strlen(DIR_SYSTEM));
+            $file = $l . './' . $r . substr($file, strlen(DIR_SYSTEM));
         }
 
         $file = str_replace('\\', '/', $file);
