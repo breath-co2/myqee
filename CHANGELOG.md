@@ -1,10 +1,31 @@
 V2.1
 --------------------------
 
-* 数据库增加慢查询日志功能
-* 数据库MongoDB优化Group查询为aggregate查询（Mongo必需2.2版本以上，mongo扩展必需1.3版本）
-* 优化控制器的读取
-* 优化Debug功能，支持Chrome浏览器下FirePHP功能
+* **核心部分改动及优化**
+  * 类库、模块、ORM、控制器等文件名命名实现全统一，全部改为小写方式
+  * libraries/myqee/core类库改为根目录core/目录，并取消$config['libraries']['core']的配置项，并增加DIR_CORE常量，此常量目录为core目录
+  * libraries/bootstrap.php移动到core目录中，并修改index.php中include文件路径
+  * 完善Bootstrap::$base_url的获取
+  * 优化Session的读取
+* **控制器相关优化**
+  * 类命名优化，取消文件夹下双下划线命名方式，统一改成和class，model等相同的命名规则
+  * 修复控制器参数大小BUG
+  * 避免系统基础控制器可直接被访问到
+* **数据库相关优化：**
+  * 增加慢查询日志功能，可在config.php中设置慢查询 $config['slow_query_mtime'] 参数
+  * 各驱动优化，避免在连接数据库失败后将数据库用户名、密码等信息暴露到错误堆叠里
+  * MongoDB优化主从模式查询，改Group查询为aggregate查询（MongoDB必需2.2版本以上，MongoDB扩展必需1.3+版本）
+  * 查询where支持!=和<>，例如：$db->where('id!=',3) 或 $db->where('id<>',3); 表示查询条件为id不等于3
+  * MySQL驱动支持distinct某个字段，例如 $db->distinct('test_field')
+  * Database增加select_max(),select_min(),select_avg()等高级查询函数
+* **代码开发相关优化**
+  * 将shell目录改名bin目录，增加merge-assets等开发及部署工具
+  * 优化Debug功能，支持Chrome浏览器下FirePHP功能
+* **Administration类库**
+  * 后台类库使用全新界面，视图使用bootstrap界面框架 详见 [http://twitter.github.com/bootstrap/](http://twitter.github.com/bootstrap/)
+  * CSS采用less方式定义，方便修改
+  * JS改为模块化，更方便二次开发
+  * 支持手机版本
 
 
 
