@@ -3,8 +3,8 @@
 # 将指定项目的assets目录和调用类库的的assets目录的文件进行合并，并输出保存到 wwwroot/assets/ 对应项目目录里
 
 # 本脚本依赖 recess 和 uglifyjs 分别处理css和js
-# recess   https://github.com/twitter/recess
-# uglifyjs https://github.com/mishoo/UglifyJS
+# recess   https:#github.com/twitter/recess
+# uglifyjs https:#github.com/mishoo/UglifyJS
 #
 # 安装方法：
 #
@@ -12,10 +12,10 @@
 #  npm install uglify-js@1
 
 
-// 不自动执行，这样只初始化Bootstrap和Core类，而不执行Core::run()方法
+# 不自动执行，这样只初始化Bootstrap和Core类，而不执行Core::run()方法
 $auto_run = false;
 
-// 调用项目
+# 调用项目
 $project = 'default';
 
 include (dirname(__FILE__).'/../index.php');
@@ -29,10 +29,10 @@ foreach (Bootstrap::$include_path as $path)
 $include_path = Bootstrap::$include_path;
 $include_path = array_reverse($include_path);
 
-// 循环获取所有文件列表
+# 循环获取所有文件列表
 $file_paths = array();
 
-// 循环include path
+# 循环include path
 foreach ($include_path as $path)
 {
     $dir = $path ."assets/";
@@ -43,179 +43,262 @@ foreach ($include_path as $path)
     }
 }
 
-echo "\n开始收集文件：\n";
+echo "\n文件数:\n";
 
-// 输出目录
+# 输出目录
 $out_dir = DIR_ASSETS . $project .'/';
 
-// 记录所有文件的修改时间
+# 记录所有文件的修改时间
 $edit_times = array();
 
-
-foreach (array('css','js','other') as $type)
+# 输出信息
+foreach (array('css'=>'css ','less'=>'less','js'=>'js  ','other'=>'其它','extends'=>'扩展','modules'=>'模块') as $type=>$name)
 {
     if (isset($file_paths[$type]) && $file_paths[$type])
     {
-        if ($type=='other')$type1 = '其它';
-        else $type1 = $type;
-        echo "  => 找到{$type1}文件: \x1b[33m".count($file_paths[$type])."\x1b[39m\n";
+        echo "  => 找到{$name}文件: \x1b[33m".count($file_paths[$type])."\x1b[39m\n";
     }
 }
 
-echo "\n开始合并文件：";
+print_r($file_paths);
+
+echo "\n开始合并文件:";
 
 $done    = "[\x1b[35m忽略\x1b[39m]";
 $success = "\x1b[32m✔\x1b[39m";
 $error   = "\x1b[31m✕\x1b[39m";
 $out_dir_path = Core::debug_path($out_dir);
-foreach (array('css','js','other') as $type)
+
+# 记录需要压缩处理的文件列表
+$todo_min_files = array();
+foreach (array('css','less','js','other') as $type)
 {
-    if (isset($file_paths[$type]) && $file_paths[$type])
+    if (!isset($file_paths[$type]) || !$file_paths[$type])
     {
-        foreach ($file_paths[$type] as $tmpfile => $fullpath)
+        continue;
+    }
+
+    foreach ($file_paths[$type] as $tmpfile => $fullpath)
+    {
+        # 输出的文件名
+        $out_file = $out_dir . $tmpfile;
+
+        if (is_file($out_file))
         {
-            $out_file = $out_dir . $tmpfile;
+            # 已经有文件，检查下修改时间看看是否需要替换
 
-            if (is_file($out_file))
+            # 读取文件最后修改时间
+            $old_out_file_filemtime = filemtime($out_file);
+
+            # 不需要更新
+            $need_renew = false;
+            if ($old_out_file_filemtime > filemtime($fullpath))
             {
-                // 已经有文件，检查下修改时间看看是否需要替换
-
-                // 读取文件最后修改时间
-                $old_out_file_filemtime = filemtime($out_file);
-
-                // 不需要更新
-                $need_renew = false;
-                if ($old_out_file_filemtime > filemtime($fullpath))
+                if ($type=='css'||$type=='js')
                 {
-                    if ($type=='css'||$type=='js')
+                    # 扩展中
+                    if (isset($file_paths['extends'][$tmpfile]) && $file_paths['extends'][$tmpfile])
                     {
-                        if (isset($file_paths['extends'][$tmpfile]) && $file_paths['extends'][$tmpfile])
+                        if ($old_out_file_filemtime < filemtime($file_paths['extends'][$tmpfile]))
                         {
-                            if ($old_out_file_filemtime < filemtime($file_paths['extends'][$tmpfile]))
+                            $need_renew = true;
+                        }
+                    }
+
+                    # 模块中
+                    if (isset($file_paths['modules'][$tmpfile]) && $file_paths['modules'][$tmpfile])
+                    {
+                        foreach ($file_paths['modules'][$tmpfile] as $tmpmfile)
+                        {
+                            if ($old_out_file_filemtime < filemtime($tmpmfile))
                             {
                                 $need_renew = true;
+                                break;
                             }
                         }
                     }
                 }
-                else
-                {
-                    $need_renew = true;
-                }
-                $need_renew = true;
-
-                // 无需修改
-                if (!$need_renew)
-                {
-                    echo "\n  => {$tmpfile} ".$done;
-                    continue;
-                }
-            }
-
-            // 内容
-            $content = file_get_contents($fullpath);
-            if ($type=='css'||$type=='js')
-            {
-                if (isset($file_paths['extends'][$tmpfile]) && $file_paths['extends'][$tmpfile])
-                {
-                    // 有扩展？读取扩展文件进行合并
-                    $content.=CRLF.file_get_contents($file_paths['extends'][$tmpfile]);
-                }
-            }
-
-            if (is_dir($out_file))
-            {
-                // 如果应该输出为文件的路径变成了文件夹，则先删除
-                File::remove_dir($out_file);
-            }
-
-            static $node_file = null;
-            static $node_modules_path = null;
-            if (null===$node_file)
-            {
-                # 获取node的执行文件路径和node_modules的路径
-                list($node_file,$node_modules_path) = get_node_set();
-            }
-
-            // 压缩处理
-            if ($type=='css')
-            {
-                // 尝试创建目录
-                $dir = substr($out_file,0,strrpos($out_file,'/'));
-                File::create_dir($dir);
-                // 保存文件
-                file_put_contents($out_file.'.tmp.less', $content);
-
-                $cmd = 'cd '.(escapeshellcmd($node_modules_path)).' && ' . escapeshellcmd($node_file).' '.escapeshellarg('./node_modules/recess/bin/recess').' --compile '.escapeshellarg($out_file.'.tmp.less');
-
-                exec($cmd,$output,$r);
-
-                if (0===$r)
-                {
-                    # 写入文件
-                    File::create_file($out_file,implode("\r\n",$output));
-                    echo "\n  => {$out_dir_path}{$tmpfile} {$success}";
-                }
-                else
-                {
-                    echo "系统执行less处理失败，请检查执行recess是否安装或模块路径是否配置正确\nrecess的安装方法见 https://github.com/twitter/recess \n执行的命令为：\n";
-                    echo $cmd ."\n";
-                    exit;
-                }
-
-                // 如果不是.min.css文件，则输出一个压缩后的文件
-                if (substr($out_file,-8)!='.min.css')
-                {
-                    $cmd = 'cd '.(escapeshellcmd($node_modules_path)).' && ' . escapeshellcmd($node_file).' '.escapeshellarg('./node_modules/recess/bin/recess').' --compress '.escapeshellarg($out_file.'.tmp.less');
-
-                    exec($cmd,$output,$r);
-                    if (0===$r)
-                    {
-                        # 写入文件
-                        File::create_file(substr($out_file,0,-4).'.min.css',implode('',$output));
-                        echo "\n     ".$out_dir_path.substr($tmpfile,0,-4).".min.css {$success}";
-                    }
-                    else
-                    {
-                        echo "系统执行less处理失败，请检查执行recess是否安装或模块路径是否配置正确\nrecess的安装方法见 https://github.com/twitter/recess \n执行的命令为：\n";
-                        echo $cmd ."\n";
-                        exit;
-                    }
-                }
-
-                // 清理文件
-                exec('rm '.$out_file.'.tmp.less');
             }
             else
             {
-                File::create_file($out_file, $content);
-                echo "\n  => {$out_dir_path}{$tmpfile} {$success}";
+                $need_renew = true;
+            }
+            $need_renew = true;
 
-                // 压缩js，输出一个.min.js文件
-                if ($type=='js' && substr($out_file,-7)!='.min.js')
+            # 无需修改
+            if (!$need_renew)
+            {
+                echo "\n  => {$tmpfile} ".$done;
+                continue;
+            }
+        }
+
+        # 内容
+        $content = file_get_contents($fullpath);
+        if ($type=='css'||$type=='less'||$type=='js')
+        {
+            if (isset($file_paths['extends'][$tmpfile]) && $file_paths['extends'][$tmpfile])
+            {
+                # 读取扩展文件进行合并
+                $content .= CRLF . file_get_contents($file_paths['extends'][$tmpfile]);
+            }
+
+            # JS的模块直接合并即可，CSS利用less处理@import的文件进行合并
+            if ($type=='js')
+            {
+                if (isset($file_paths['modules'][$tmpfile]) && $file_paths['modules'][$tmpfile])foreach($file_paths['modules'][$tmpfile] as $tmpmfile)
                 {
-                    $cmd = 'cd '.(escapeshellcmd($node_modules_path)).' && ' . escapeshellcmd($node_file).' '.escapeshellarg('./node_modules/uglify-js/bin/uglifyjs').' '.escapeshellarg($out_file).' -nc';
-
-                    exec($cmd,$output,$r);
-                    if (0===$r)
-                    {
-                        # 写入文件
-                        File::create_file(substr($out_file,0,-3).'.min.js',implode('',$output));
-                        echo "\n  => ".$out_dir_path.substr($tmpfile,0,-3).".min.css {$success}";
-                    }
-                    else
-                    {
-                        echo "系统执行uglifyjs处理失败，请检查执行uglifyjs是否安装或模块路径是否配置正确\nuglifyjs安装方法见 https://github.com/mishoo/UglifyJS \n执行的命令为：\n";
-                        echo $cmd ."\n";
-                        exit;
-                    }
+                    # 读取JS模块文件进行合并
+                    $content .= CRLF.file_get_contents($tmpmfile);
                 }
             }
+
+            if (substr($out_file,-strlen($type)-5)!='.min.'.$type)
+            {
+                $todo_min_files[$type=='less'?'css':$type][$tmpfile] = $out_file;
+            }
+        }
+
+        # 如果应该输出为文件的路径变成了文件夹，则先删除
+        if (is_dir($out_file))
+        {
+            File::remove_dir($out_file);
+        }
+
+        # 写入文件
+        $rs = File::create_file($out_file, $content);
+        echo "\n  => {$out_dir_path}{$tmpfile} " . ($rs?$success:$error);
+
+        # 对于CSS或LESS文件，如果有扩展模块，则先把扩展文件写入到文件中
+        if ( ($type=='css'||$type=='less') && isset($file_paths['modules'][$tmpfile]) && $file_paths['modules'][$tmpfile])foreach ($file_paths['modules'][$tmpfile] as $filename => $tmpmfile)
+        {
+            $outm_file = $out_dir . $filename;
+            $rs = File::create_file($outm_file, file_get_contents($tmpmfile));
+            echo "\n     {$out_dir_path}{$filename} " . ($rs?$success:$error);
         }
     }
 }
 
-echo "\n\n全部完成\n";
+print_r($todo_min_files);
+
+
+
+# 处理压缩
+# ----------------------
+
+echo "\n\n准备压缩JS和CSS:\njs文件数:  \x1b[33m".count($todo_min_files['js'])."\x1b[39m\nCSS文件数: \x1b[33m".count($todo_min_files['css'])."\x1b[39m\n";
+
+
+# 读取nodejs配置
+static $node_file = null;
+static $node_modules_path = null;
+if (null===$node_file)
+{
+    # 获取node的执行文件路径和node_modules的路径
+    list($node_file,$node_modules_path) = get_node_set();
+}
+
+
+# 压缩js
+if (isset($todo_min_files['js']) && $todo_min_files['js'])foreach ($todo_min_files['js'] as $tmpname => $realfile)
+{
+    $output = '';
+
+    $cmd = 'cd '.(escapeshellcmd($node_modules_path)).' && ' . escapeshellcmd($node_file).' '.escapeshellarg('./node_modules/uglify-js/bin/uglifyjs').' '.escapeshellarg($realfile).' -nc';
+
+    exec($cmd,$output,$r);
+    if (0===$r)
+    {
+        # 写入文件
+        File::create_file(substr($realfile,0,-3).'.min.js',implode('',$output));
+        echo "  => ".$out_dir_path.substr($tmpname,0,-3).".min.js " . ($rs?$success:$error)."\n";
+    }
+    else
+    {
+        echo "系统执行uglifyjs处理失败，请检查执行uglifyjs是否安装或模块路径是否配置正确\nuglifyjs安装方法见 https:#github.com/mishoo/UglifyJS \n执行的命令为：\n";
+        echo $cmd ."\n";
+        exit;
+    }
+}
+
+# 压缩处理less和css
+if (isset($todo_min_files['css']) && $todo_min_files['css'])foreach ($todo_min_files['css'] as $tmpname => $realfile)
+{
+    $type = substr($tmpname,strrpos($tmpname,'.')+1);
+    if ($type=='less')
+    {
+        $n = 5;
+    }
+    else
+    {
+        $n = 4;
+    }
+
+    # 处理压缩
+    $output = '';
+    $cmd = 'cd '.(escapeshellcmd($node_modules_path)).' && ' . escapeshellcmd($node_file).' '.escapeshellarg('./node_modules/recess/bin/recess').' --compress '.escapeshellarg($realfile);
+    exec($cmd,$output,$r);
+    if (0===$r)
+    {
+        # 写入文件
+        File::create_file(substr($realfile,0,-$n).'.min.css',implode('',$output));
+        echo "  => ".$out_dir_path.substr($tmpname,0,-$n).".min.css " . ($rs?$success:$error)."\n";
+    }
+    else
+    {
+        echo "系统执行less处理失败，请检查执行recess是否安装或模块路径是否配置正确\nrecess的安装方法见 https:#github.com/twitter/recess \n执行的命令为：\n";
+        echo $cmd ."\n";
+        exit;
+    }
+
+    if ($type=='less')
+    {
+        # 处理LESS转换为CSS
+        $output = '';
+        $cmd = 'cd '.(escapeshellcmd($node_modules_path)).' && ' . escapeshellcmd($node_file).' '.escapeshellarg('./node_modules/recess/bin/recess').' --compile '.escapeshellarg($realfile);
+        exec($cmd,$output,$r);
+        if (0===$r)
+        {
+            # 写入文件
+            File::create_file(substr($realfile,0,-$n).'.css',implode('',$output));
+            echo "     ".$out_dir_path.substr($tmpname,0,-$n).".css " . ($rs?$success:$error)."\n";
+        }
+        else
+        {
+            echo "系统执行less处理失败，请检查执行recess是否安装或模块路径是否配置正确\nrecess的安装方法见 https:#github.com/twitter/recess \n执行的命令为：\n";
+            echo $cmd ."\n";
+            exit;
+        }
+    }
+}
+
+echo "\n清理Less文件...";
+
+if (isset($file_paths['less']) && $file_paths['less'])foreach($file_paths['less'] as $tmpname=>$tmpfile)
+{
+    File::unlink($out_dir.$tmpname);
+}
+
+if (isset($file_paths['modules']) && $file_paths['modules'])foreach($file_paths['modules'] as $tmpparenname=>$tmpfiles)
+{
+    $type = substr($tmpparenname,strrpos($tmpparenname,'.')+1);
+    if ($type=='less')
+    {
+        foreach ($tmpfiles as $tmpname => $tmpfile)
+        {
+            File::unlink($out_dir.$tmpname);
+        }
+    }
+}
+
+echo "清理完毕\n";
+
+
+
+
+
+
+echo "\n合并结束\n";
 
 
 /**
@@ -229,7 +312,7 @@ function glob_files(&$file_paths,$dir,$dir_len)
     {
         if ($file==='.'||$file==='..'||substr($file,0,1)==='.')continue;
 
-        // 文件夹
+        # 文件夹
         if (is_dir($file))
         {
             glob_files($file_paths,$file.'/',$dir_len);
@@ -239,13 +322,13 @@ function glob_files(&$file_paths,$dir,$dir_len)
         $file = str_replace('\\', '/', $file);
         $path_rpos = strrpos($file,'/');
 
-        // 文件名
+        # 文件名
         $file_name = substr($file,$path_rpos+1);
 
         $rpos = strrpos($file_name,'.');
         if ($rpos>0)
         {
-            // 后缀
+            # 后缀
             $suffix = strtolower(substr($file_name,$rpos+1));
             $file_path = substr($file,$dir_len,-strlen($file_name)).$file_name;
 
@@ -253,30 +336,37 @@ function glob_files(&$file_paths,$dir,$dir_len)
             {
                 $file_name_arr = explode('.',$file_name);
                 $count_file_name_arr = count($file_name_arr);
-                if ($count_file_name_arr>=2)
+
+                if ($count_file_name_arr>2)
                 {
-                    // 扩展
-                    if (strtolower($file_name_arr[$count_file_name_arr-2])=='extend')
+                    if ('extend' == strtolower($file_name_arr[$count_file_name_arr-2]))
                     {
+                        # 扩展
                         unset($file_name_arr[$count_file_name_arr-2]);
                         $parent_file_name = implode('.',$file_name_arr);
                         $parent_file_path = substr($file,$dir_len,-strlen($file_name)).$parent_file_name;
 
                         if ($suffix=='less')
                         {
-                            $parent_file_path = substr($file_path,0,-5).'.css';
+                            $parent_file_path = substr($file_path,0,-strlen($sub)).'.css';
                         }
-                        // 记录到扩展数据里
-                        $file_paths['extends'][$parent_file_path] = $file;
+                        # 记录到扩展数据里
+                        $file_paths['extend'][$parent_file_path] = $file;
                         continue;
                     }
                 }
-
-                if ($suffix=='less')
+                else if (($rpos_m = strrpos($file_name_arr[0],'-'))>0)
                 {
-                    $suffix='css';     //转换为css
-                    $file_path = substr($file_path,0,-5).'.css';
+                    # 横线隔开的模块
+                    $file_name_arr[0] = substr($file_name_arr[0],0,$rpos_m);
+                    $parent_file_name = implode('.',$file_name_arr);
+                    $parent_file_path = substr($file,$dir_len,-strlen($file_name)).$parent_file_name;
+
+                    # 记录到模块数据里
+                    $file_paths['modules'][$parent_file_path][$file_name] = $file;
+                    continue;
                 }
+
                 $file_paths[$suffix][$file_path] = $file;
             }
             else
