@@ -200,47 +200,29 @@ class Controller_DevAssets extends Controller
      */
     protected function get_node_set()
     {
-        # nodejs 执行程序目录
+        # nodejs 配置
         $node_config = Core::config('core.nodejs');
-        if (IS_WIN)
+
+        # 执行程序
+        if (is_array($node_config) && isset($node_config[0]) && $node_config[0])
         {
-            if (isset($node_config['exec']['window']))
-            {
-                $node_file = $node_config['exec']['window'];
-            }
+            $node_file = $node_config[0];
         }
         else
         {
-            if (isset($node_config['exec']['other']))
-            {
-                $node_file = $node_config['exec']['other'];
-            }
-        }
-        if (!$node_file)
-        {
-            $node_file = IS_WIN ? 'c:\\Program Files\\nodejs\\node.exe' : '/usr/local/bin/node';
+            $node_file = IS_WIN?'c:\\Program Files\\nodejs\\node.exe':'/usr/local/bin/node';
         }
 
-        if (IS_WIN)
+        # node_modules 路径
+        if (is_array($node_config) && isset($node_config[1]) && $node_config[1])
         {
-            if (isset($node_config['modules_path']['window']))
-            {
-                $node_modules_path = $node_config['modules_path']['window'];
-            }
+            $node_modules_path = $node_config[1];
         }
         else
         {
-            if (isset($node_config['modules_path']['other']))
-            {
-                $node_modules_path = $node_config['modules_path']['other'];
-            }
+            $node_modules_path = IS_WIN?'c:\\Program Files\\nodejs\\node_modules\\' : '/usr/local/lib/node_modules/';
         }
 
-        # 获取node_modules目录
-        if (!$node_modules_path)
-        {
-            $node_modules_path = IS_WIN ? 'c:\\Program Files\\nodejs\\node_modules\\' : '/usr/local/lib/node_modules/';
-        }
         $node_modules_path = explode('/', str_replace('\\', '/', rtrim($node_modules_path,'/\\')));
         $i = count($node_modules_path)-1;
         if ($node_modules_path[$i]=='node_modules')
@@ -260,7 +242,7 @@ class Controller_DevAssets extends Controller
             }
             else
             {
-                throw new Exception('node_modules目录不存在，请修改config'.EXT.'中$config[\'nodejs\'][\'modules_path\']中配置');
+                throw new Exception('node_modules目录不存在，请修改config'.EXT.'中$config[\'nodejs\']中配置');
             }
         }
 

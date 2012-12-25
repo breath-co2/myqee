@@ -40,7 +40,7 @@ $config['projects'] = array
  */
 $config['libraries'] = array
 (
-    // 会自动加载的类库
+    // 默认会自动加载的类库
     'autoload' => array
     (
 
@@ -58,7 +58,7 @@ $config['libraries'] = array
         'com.myqee.develop',
     ),
 
-    // 后台加载的类库
+    // 后台会加载的类库
     'admin'    => array
     (
         'com.myqee.administration',
@@ -234,23 +234,20 @@ $config['slow_query_mtime'] = 2000;
  * nodejs 执行文件默认路径
  * 此功能在devassets等处理css时用到，通常不用改，除非你的node安装目录不是默认目录，window系统只需要修改window的，其它系统修改other的
  *
- * $config['nodejs']['exec']         中分别设置window和非window系统的默认执行目录
- * $config['nodejs']['modules_path'] 中分别设置window和非window系统的node_modules默认目录
+ * 留空则使用默认值：
+ *   Window:
+ *      程序路径 c:\Program Files\nodejs\node.exe
+ *      模块路径 c:\Program Files\nodejs\node_modules\
+ *   其它系统:
+ *      程序路径 /usr/local/bin/node
+ *      模块路径 /usr/local/lib/node_modules/
  *
  * @array
  */
 $config['nodejs'] = array
 (
-    'exec' => array
-        (
-        'window' => 'c:\\Program Files\\nodejs\\node.exe',
-        'other'  => '/usr/local/bin/node',
-    ),
-    'modules_path' => array
-    (
-        'window' => 'c:\\Program Files\\nodejs\\node_modules\\',
-        'other'  => '/usr/local/lib/node_modules/',
-    ),
+    '',    // 执行脚本路径，留空则默认
+    '',    // node_modules路径，留空则默认
 );
 
 
