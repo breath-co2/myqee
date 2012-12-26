@@ -8,6 +8,7 @@
 <title><?php echo __('Internal Server Error');?></title>
 <style type="text/css">
 body{
+background:#f1f1f1;
 font-size:9pt;
 padding:10pt;
 margin:0;
@@ -20,26 +21,26 @@ font-weight:bold;
 padding:0 0 10px 0;
 line-height:1.2em;
 margin:0;
-color:#911;
+color:#a62e2e;
 _padding-left:0px;
-}
-pre{
-margin:5px;
-padding:4px 10px;
-border:1px dotted #ff9797;
-background:#fffff2;
--moz-border-radius:4px;
--webkit-border-radius:4px;
-border-radius:4px;
 }
 .box{
 border:1px solid #ccc;
-padding:10px;
-background:#ffffd6;
+padding:16px 10px;
+background:#fff;
 line-height:1.4em;
--moz-border-radius:4px;
--webkit-border-radius:4px;
-border-radius:4px;
+-moz-border-radius:8px;
+-webkit-border-radius:8px;
+border-radius:8px;
+-moz-box-shadow:2px 2px 5px #e1e1e1;
+-webkit-box-shadow:2px 2px 5px #e1e1e1;
+box-shadow:2px 2px 5px #e1e1e1;
+}
+pre{
+margin:5px 2px 0 2px;
+padding:10px;
+border:1px dotted #ff9797;
+background:#ffffe3;
 }
 </style>
 </head>
