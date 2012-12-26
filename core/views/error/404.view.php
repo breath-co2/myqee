@@ -26,7 +26,7 @@ _padding-left:0px;
 }
 .box{
 border:1px solid #ccc;
-padding:16px 10px;
+padding:12px 10px;
 background:#fff;
 line-height:1.4em;
 -moz-border-radius:8px;

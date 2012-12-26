@@ -26,7 +26,7 @@ _padding-left:0px;
 }
 .box{
 border:1px solid #ccc;
-padding:16px 10px;
+padding:12px 10px;
 background:#fff;
 line-height:1.4em;
 -moz-border-radius:8px;
@@ -38,7 +38,7 @@ box-shadow:2px 2px 5px #e1e1e1;
 }
 pre{
 margin:5px 2px 0 2px;
-padding:10px;
+padding:6px 8px;
 border:1px dotted #ff9797;
 background:#ffffe3;
 }
@@ -53,6 +53,10 @@ background:#ffffe3;
     <br />
     <b><?php echo __('Error Message:');?></b>
     <pre><?php echo $error;?></pre>
+    <div style="padding:18px 0 0 0;">
+    <b><?php echo __('Error NO:');?></b><?php echo $error_no;?>
+    <div style="color:#bbb;"><?php echo __('The error has been logged and can use this number to report the error message to the system administrator.');?></div>
+    </div>
 </div>
 </body>
 </html>
