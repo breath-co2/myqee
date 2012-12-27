@@ -8,27 +8,13 @@
  */
 $config['projects'] = array
 (
-	'docs' => array
-    (
-		'name'	    => '项目手册',
-		'isuse'	    => true,
-		'dir'	    => 'docs',
-		'url'	    => '/docs',
-	),
-	'admin' => array
-    (
-		'name'	    => '后台',
-		'isuse'	    => true,
-		'dir'	    => 'admin',
-		'url'	    => '/admin',
-	    'url_admin' => '/',
-	),
 	'default' => array
     (
 		'name'      => '默认项目',
 		'isuse'     => true,
 		'dir'       => 'default',
 		'url'	    => '/',
+	    'url_admin' => '/admin/',
 	),
 );
 
@@ -228,6 +214,35 @@ $config['use_bulider'] = false;
  * @var int
  */
 $config['slow_query_mtime'] = 2000;
+
+/**
+ * 关闭500错误页面是否记录错误数据
+ *
+ * @boolean
+ */
+$config['error500']['close'] = false;
+
+/**
+ * 500错误页面数据记录方式
+ *
+ * file     - 文件(默认方式)
+ * database - 数据库
+ * cache    - 缓存保存
+ *
+ * @string
+ */
+$config['error500']['save_type'] = 'file';
+
+/**
+ * 对应保存模式配置
+ *
+ * 例如save_type为database，则此参数为数据库的配置名
+ * 如果save_type为cache，则此参数为驱动的配置名
+ *
+ * @string
+ */
+$config['error500']['type_config'] = 'default';
+
 
 
 /**

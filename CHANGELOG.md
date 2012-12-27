@@ -1,4 +1,4 @@
-V2.1
+V3.0
 --------------------------
 
 * **核心部分改动及优化**
@@ -7,6 +7,7 @@ V2.1
   * libraries/bootstrap.php移动到core目录中，并修改index.php中include文件路径
   * 完善Bootstrap::$base_url的获取
   * 优化Session的读取
+  * 增加500错误数据收集的收集功能，可以关闭(配置中$config['error500']['close'] = true;即可)
 * **控制器相关优化**
   * 类命名优化，取消文件夹下双下划线命名方式，统一改成和class，model等相同的命名规则
   * 修复控制器参数大小BUG

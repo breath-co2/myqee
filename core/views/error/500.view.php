@@ -53,10 +53,17 @@ background:#ffffe3;
     <br />
     <b><?php echo __('Error Message:');?></b>
     <pre><?php echo $error;?></pre>
+    <?php
+    if ($error_saved)
+    {
+    ?>
     <div style="padding:18px 0 0 0;">
-    <b><?php echo __('Error NO:');?></b><?php echo $error_no;?>
-    <div style="color:#bbb;"><?php echo __('The error has been logged and can use this number to report the error message to the system administrator.');?></div>
+        <b><?php echo __('Error NO:');?></b><?php echo $error_no;?>
+        <div style="color:#bbb;"><?php echo __('The error has been logged and can use this number to report the error message to the system administrator.');?></div>
     </div>
+    <?php
+    }
+    ?>
 </div>
 </body>
 </html>

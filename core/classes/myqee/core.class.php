@@ -907,18 +907,105 @@ abstract class MyQEE_Core extends Bootstrap
 
         try
         {
-            $view = new View('error/500');
-            $error = '';
             if ( $msg instanceof Exception )
             {
-                $error .= 'Msg :' . $msg->getMessage() . CRLF . "Line:" . $msg->getLine() . CRLF . "File:" . Core::debug_path($msg->getFile());
+                $error = $msg->getMessage();
+                $trace_obj = $msg;
             }
             else
             {
-                $error .= $msg;
+                $error = $msg;
+                $trace_obj = new Exception($msg);
             }
-            $view->error = $error;
 
+            $error_config = Core::config('core.error500');
+
+            $view = new View('error/500');
+            if ($error_config && isset($error_config['close']) && $error_config['close']==true)
+            {
+                # 不记录
+                $view->error_saved = false;
+            }
+            else
+            {
+                $trace_array = array
+                (
+                    'project'     => Core::$project,
+                    'uri'         => HttpIO::$uri,
+                    'post'        => HttpIO::POST(HttpIO::PARAM_TYPE_OLDDATA),
+                    'get'         => HttpIO::GET(HttpIO::PARAM_TYPE_OLDDATA),
+                    'cookie'      => HttpIO::COOKIE(HttpIO::PARAM_TYPE_OLDDATA),
+                    'client_ip'   => HttpIO::IP,
+                    'user_agent'  => HttpIO::USER_AGENT,
+                    'referrer'    => HttpIO::REFERRER,
+                    'server_ip'   => $_SERVER["SERVER_ADDR"],
+                    'trace'       => $trace_obj->__toString(),
+                );
+
+                $date     = date('Y-m-d');
+                $no       = strtoupper(substr(md5(serialize($trace_array)),10,10));
+                $error_no = $date.'-'.$no;
+
+                # 其它数据
+                $trace_array['server_name'] = (function_exists('php_uname')? php_uname('a') : 'unknown');
+                $trace_array['time']        = TIME;
+                $trace_array['use_time']    = microtime(1) - START_TIME;
+                $trace_array['trace']       = $trace_obj;
+
+                $trace_data = base64_encode(gzcompress(serialize($trace_array),9));
+                unset($trace_array);
+
+                $view->error_saved = true;
+
+                # 记录错误日志
+                try
+                {
+                    if (isset($error_config['save_type']) && $error_config['save_type'])
+                    {
+                        $save_type = $error_config['save_type'];
+                    }
+                    else
+                    {
+                        $save_type = 'file';
+                    }
+
+                    switch ($save_type)
+                    {
+                        case 'database':
+                            $obj = new Database($error_config['type_config']?$error_config['type_config']:'default');
+                            $where = array
+                            (
+                                'time'  => strtotime($date.' 00:00:00'),
+                                'no'    => $no,
+                            );
+
+                            if ( !$obj->from('error500_log')->where($where)->get(false,true)->current() )
+                            {
+                                $where['log'] = $trace_data;
+                                $obj->insert('error500_log',$where);
+                            }
+                            break;
+                        case 'cache':
+                            $obj = new Cache($error_config['type_config']?$error_config['type_config']:'default');
+                            if ( !$obj->get($error_no) )
+                            {
+                                $obj->set($error_no,$trace_data,7*86400);
+                            }
+                            break;
+                        default:
+                            $file = DIR_LOG.'error500'.DS.str_replace('-',DS,$date).DS.$no.'.log';
+                            if (!is_file($file))
+                            {
+                                File::create_file($file, $trace_data,null,null,$error_config['type_config']?$error_config['type_config']:'default');
+                            }
+                            break;
+                    }
+                }
+                catch (Exception $e){}
+            }
+
+            $view->error_no = $error_no;
+            $view->error = $error;
             $view->render(true);
         }
         catch ( Exception $e )
