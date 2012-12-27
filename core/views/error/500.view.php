@@ -58,7 +58,7 @@ background:#ffffe3;
     {
     ?>
     <div style="padding:18px 0 0 0;">
-        <b><?php echo __('Error NO:');?></b><?php echo $error_no;?>
+        <b><?php echo __('Error NO:');?></b><input onclick="this.select();" style="border:none;width:180px;background:transparent;" readonly="readonly" value="<?php echo $error_no;?>" />
         <div style="color:#bbb;"><?php echo __('The error has been logged and can use this number to report the error message to the system administrator.');?></div>
     </div>
     <?php

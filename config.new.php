@@ -216,14 +216,14 @@ $config['use_bulider'] = false;
 $config['slow_query_mtime'] = 2000;
 
 /**
- * 关闭500错误页面是否记录错误数据
+ * 关闭错误页面记录错误数据
  *
  * @boolean
  */
 $config['error500']['close'] = false;
 
 /**
- * 500错误页面数据记录方式
+ * 错误页面数据记录方式
  *
  * file     - 文件(默认方式)
  * database - 数据库
@@ -234,7 +234,7 @@ $config['error500']['close'] = false;
 $config['error500']['save_type'] = 'file';
 
 /**
- * 对应保存模式配置
+ * 错误页面数据记录方式对应配置
  *
  * 例如save_type为database，则此参数为数据库的配置名
  * 如果save_type为cache，则此参数为驱动的配置名
@@ -247,7 +247,7 @@ $config['error500']['type_config'] = 'default';
 
 /**
  * nodejs 执行文件默认路径
- * 此功能在devassets等处理css时用到，通常不用改，除非你的node安装目录不是默认目录，window系统只需要修改window的，其它系统修改other的
+ * 此功能在devassets等处理css时用到，通常不用改，除非你的node安装目录不是默认目录
  *
  * 留空则使用默认值：
  *   Window:
