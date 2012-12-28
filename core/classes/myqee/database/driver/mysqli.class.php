@@ -204,7 +204,7 @@ class MyQEE_Database_Driver_MySQLI extends Database_Driver
             {
                 if (IS_DEBUG)
                 {
-                    Core::debug()->error($username.'@'.$hostname.':'.$port,'connect mysqli server error');
+                    Core::debug()->error($username.'@'.$hostname.':'.$port.'.Msg:'.strip_tags($e->getMessage(),'').'.Code:'.$e->getCode(),'connect mysqli server error');
                     $last_error = new Exception($e->getMessage(),$e->getCode());
                 }
                 else
