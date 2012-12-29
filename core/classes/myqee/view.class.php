@@ -19,10 +19,10 @@ class MyQEE_View
 
     protected static $_global_data = array();
 
-    function __construct($file = null, array $data = null)
+    function __construct($file = null, array $data = array())
     {
         $this->set_filename($file);
-        if ( is_array($data) )
+        if ( is_array($data) && $data )
         {
             $this->_data = $data;
         }

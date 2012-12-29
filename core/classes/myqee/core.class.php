@@ -1,6 +1,60 @@
 <?php
 
 /**
+ * 返回一个静态资源的URL路径. Core::url_assets() 的别名
+ *
+ *   echo url_assets('js/global.js');
+ *
+ * @param string $uri
+ */
+function url_assets($uri='')
+{
+    return Core::url_assets($uri);
+}
+
+/**
+ * 返回一个URL. Core::url() 的别名
+ *
+ *   echo url();    //返回首页地址
+ *
+ * @param string $uri
+ * @return string
+ */
+function url($uri='')
+{
+    return Core::url($uri);
+}
+
+/**
+ * 返回一个URL. Core::url() 的别名
+ *
+ *   echo url();    //返回首页地址
+ *
+ * @param string $uri
+ * @return string
+ */
+function log($msg , $type = 'log')
+{
+    return Core::log($msg , $type);
+}
+
+/**
+ * 读取配置数据. Core::config() 的别名
+ *
+ *   echo config('core');    //返回核心配置
+ *
+ * @param string $key
+ * @return string
+ */
+function config($key=null)
+{
+    return Core::config($key);
+}
+
+
+
+
+/**
  * MyQEE 核心类
  *
  * @author     jonwang(jonwang@myqee.com)
@@ -433,7 +487,7 @@ abstract class MyQEE_Core extends Bootstrap
                 return null;
             }
         }
-        if ( ! $found_files )
+        if ( !$found_files )
         {
             # 采用当前项目目录
             $include_path = Core::$include_path;
@@ -494,7 +548,7 @@ abstract class MyQEE_Core extends Bootstrap
 
         $c = explode('.', $key);
         $cname = array_shift($c);
-        if ( ! array_key_exists($cname, Core::$config) )
+        if ( !array_key_exists($cname, Core::$config) )
         {
             $config = array();
             $thefiles = Core::find_file('config', $cname);
@@ -512,7 +566,7 @@ abstract class MyQEE_Core extends Bootstrap
                     }
                 }
             }
-            if ( ! isset(Core::$config[$cname]) )
+            if ( !isset(Core::$config[$cname]) )
             {
                 Core::$config[$cname] = $config;
             }
@@ -520,7 +574,7 @@ abstract class MyQEE_Core extends Bootstrap
         $v = Core::$config[$cname];
         foreach ( $c as $i )
         {
-            if ( ! isset($v[$i]) ) return null;
+            if ( !isset($v[$i]) ) return null;
             $v = $v[$i];
         }
         return $v;
@@ -554,25 +608,41 @@ abstract class MyQEE_Core extends Bootstrap
     }
 
     /**
-     * 返回URL对象
+     * 返回URL路径
+     *
+     * 自3.0起可用 url() 直接快速调用此方法
+     *
+     *     Core::url('test/');
+     *     url('test/');
      *
      * @param string $url URL
-     * @param bool $return_full_url 返回完整的URL，带http(s)://开头
+     * @param bool $need_full_url 返回完整的URL，带http(s)://开头
      * @return string
      */
-    public static function url($url = null , $return_full_url = false)
+    public static function url($url = '' , $need_full_url = false)
     {
         list($url,$query) = explode('?', $url , 2);
 
         $url = Bootstrap::$base_url. ltrim($url,'/') . ($url!='' && substr($url,-1)!='/' && false===strpos($url,'.') && self::$config['core']['url_suffix']?self::$config['core']['url_suffix']:'') . ($query?'?'.$query:'');
 
         // 返回完整URL
-        if ( $return_full_url && !preg_match('#^http(s)?://#i', $url) )
+        if ( $need_full_url && !preg_match('#^http(s)?://#i', $url) )
         {
             $url = HttpIO::PROTOCOL . '://' . $_SERVER["HTTP_HOST"] . $url;
         }
 
         return $url;
+    }
+
+    /**
+     * 返回静态资源URL路径
+     * @param unknown_type $uri
+     */
+    public static function url_assets($uri = '')
+    {
+        //TODO 须加入静态资源版本号
+
+        return URL_ASSETS . ltrim($uri,'/');
     }
 
     /**
@@ -1139,7 +1209,7 @@ abstract class MyQEE_Core extends Bootstrap
      */
     public static function factory($objName, $key = '')
     {
-        if ( ! isset(Core::$instances[$objName][$key]) )
+        if ( !isset(Core::$instances[$objName][$key]) )
         {
             Core::$instances[$objName][$key] = new $objName($key);
         }
@@ -1364,7 +1434,7 @@ abstract class MyQEE_Core extends Bootstrap
                     }
                 }
 
-                if ( ! $allow )
+                if ( !$allow )
                 {
                     Core::log('system request not allow ip:' . HttpIO::IP, 'system-request');
                     return false;

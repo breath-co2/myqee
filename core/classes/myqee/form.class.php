@@ -52,7 +52,7 @@ class MyQEE_Form
         // Only accept the default character set
         $attributes['accept-charset'] = Core::$charset;
 
-        if ( ! isset($attributes['method']) )
+        if ( !isset($attributes['method']) )
         {
             // Use POST method
             $attributes['method'] = 'post';
@@ -93,7 +93,7 @@ class MyQEE_Form
         // Set the input value
         $attributes['value'] = $value;
 
-        if ( ! isset($attributes['type']) )
+        if ( !isset($attributes['type']) )
         {
             // Default type is text
             $attributes['type'] = 'text';
@@ -184,7 +184,7 @@ class MyQEE_Form
      * Creates a radio form input.
      *
      * echo Form::radio('like_cats', 1, $cats);
-     * echo Form::radio('like_cats', 0, ! $cats);
+     * echo Form::radio('like_cats', 0, !$cats);
      *
      * @param   string   input name
      * @param   string   input value
@@ -253,7 +253,7 @@ class MyQEE_Form
             $attributes['multiple'] = 'multiple';
         }
 
-        if ( ! is_array($selected) )
+        if ( !is_array($selected) )
         {
             if ( $selected === null )
             {
@@ -365,7 +365,7 @@ class MyQEE_Form
      */
     public static function image($name, $value, array $attributes = null, $index = false)
     {
-        if ( ! empty($attributes['src']) )
+        if ( !empty($attributes['src']) )
         {
             if ( strpos($attributes['src'], '://') === false )
             {

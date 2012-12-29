@@ -137,7 +137,7 @@ class MyQEE_Arr extends ArrayIterator
 	 */
 	public static function path($array, $path, $default = null, $delimiter = null)
 	{
-		if ( ! Arr::is_array($array))
+		if ( !Arr::is_array($array))
 		{
 			// This is not an array!
 			return $default;
@@ -250,7 +250,7 @@ class MyQEE_Arr extends ArrayIterator
 	*/
 	public static function set_path( & $array, $path, $value, $delimiter = null)
 	{
-		if ( ! $delimiter)
+		if (!$delimiter)
 		{
 			// Use the default delimiter
 			$delimiter = Arr::$delimiter;
@@ -270,7 +270,7 @@ class MyQEE_Arr extends ArrayIterator
 				$key = (int) $key;
 			}
 
-			if ( ! isset($array[$key]))
+			if ( !isset($array[$key]) )
 			{
 				$array[$key] = array();
 			}
@@ -484,7 +484,7 @@ class MyQEE_Arr extends ArrayIterator
 							// Associative values are replaced
 							$result[$key] = $val;
 						}
-						elseif ( ! in_array($val, $result, TRUE))
+						elseif ( !in_array($val, $result, true) )
 						{
 							// Indexed values are added only if they do not yet exist
 							$result[] = $val;

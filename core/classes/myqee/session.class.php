@@ -57,7 +57,7 @@ class MyQEE_Session
             // Load config
             Session::$config = Core::config('session');
 
-            if ( ! isset(Session::$config['name']) || ! preg_match('#^(?=.*[a-z])[a-z0-9_]++$#iD', Session::$config['name']) )
+            if ( !isset(Session::$config['name']) || !preg_match('#^(?=.*[a-z])[a-z0-9_]++$#iD', Session::$config['name']) )
             {
                 // Name the session, this will also be the name of the cookie
                 Session::$config['name'] = 'PHPSESSINID';
@@ -86,7 +86,7 @@ class MyQEE_Session
                 $this->set($vars);
             }
 
-            if ( ! isset($_SESSION['_flash_session_']) )
+            if ( !isset($_SESSION['_flash_session_']) )
             {
                 $_SESSION['_flash_session_'] = array();
             }
@@ -221,7 +221,7 @@ class MyQEE_Session
         {
             $run = true;
 
-            if ( ! $_SESSION['_flash_session_'] )
+            if ( !$_SESSION['_flash_session_'] )
             {
                 unset($_SESSION['_flash_session_']);
             }
@@ -259,7 +259,7 @@ class MyQEE_Session
     {
         if ( empty($keys) ) return false;
 
-        if ( ! is_array($keys) )
+        if ( !is_array($keys) )
         {
             $keys = array($keys => $val);
         }
@@ -284,7 +284,7 @@ class MyQEE_Session
     {
         if ( empty($keys) ) return false;
 
-        if ( ! is_array($keys) )
+        if ( !is_array($keys) )
         {
             $keys = array($keys => $val);
         }
@@ -324,7 +324,7 @@ class MyQEE_Session
      */
     protected function expire_flash()
     {
-        if ( ! empty(Session::$flash) )
+        if ( !empty(Session::$flash) )
         {
             foreach ( Session::$flash as $key => $state )
             {

@@ -311,7 +311,7 @@ class MyQEE_OOP_ORM_Data
     {
         # 获取当前设置
         $config = $this->_get_offset_config($key);
-        if ( ! $config )
+        if ( !$config )
         {
             return;
         }
@@ -721,11 +721,11 @@ class MyQEE_OOP_ORM_Data
         $this->$offset = $this->$offset + $value;
 
         $config = $this->_get_offset_config($offset);
-        if ( ! $config ) continue;
+        if ( !$config ) continue;
 
         # 虚拟字段
         if ( $config['is_virtual_field'] ) continue;
-        if ( ! isset($config['field_name']) ) continue;
+        if ( !isset($config['field_name']) ) continue;
         $field_name = $config['field_name'];
 
         $this->_value_increment[$field_name] = $value;
@@ -1029,9 +1029,9 @@ class MyQEE_OOP_ORM_Data
      */
     public function orm()
     {
-        if ( ! $this->_orm_object )
+        if ( !$this->_orm_object )
         {
-            if ( ! $this->_orm_name )
+            if ( !$this->_orm_name )
             {
                 $tmpobj = $this;
                 while ( $tmpobj )
@@ -1056,13 +1056,13 @@ class MyQEE_OOP_ORM_Data
                 }
                 unset($tmpobj);
             }
-            if ( ! $this->_orm_name )
+            if ( !$this->_orm_name )
             {
                 throw new Exception('$this->_orm_name未定义');
             }
             $orm_class_name = 'ORM_' . $this->_orm_name . '_Finder';
 
-            if ( ! class_exists($orm_class_name, true) )
+            if ( !class_exists($orm_class_name, true) )
             {
                 throw new Exception('指定的ORM对象“' . $orm_class_name . '”不存在');
             }
@@ -1103,7 +1103,7 @@ class MyQEE_OOP_ORM_Data
         $config = $this->_get_offset_config($index);
 
         # 不存在指定的配置
-        if ( ! $config ) return false;
+        if ( !$config ) return false;
 
         # 无缓存设置
         if ( !isset($config['orm']['cache']))return true;
@@ -1171,7 +1171,7 @@ class MyQEE_OOP_ORM_Data
         $this->_created_offset[$index] = true;
 
         $config = $this->_get_offset_config($index);
-        if ( ! $config )return false;
+        if ( !$config )return false;
 
         # 是否已经设置过数据
         $offset_isset = isset($this->_offset_data[$index]);
@@ -1255,7 +1255,7 @@ class MyQEE_OOP_ORM_Data
         if ( isset($config['object']) )
         {
             $object_name = $config['object']['name'];
-            if ( ! class_exists($object_name, true) )
+            if ( !class_exists($object_name, true) )
             {
                 throw new Exception('指定的对象:' . $object_name . '不存在！');
             }

@@ -30,7 +30,7 @@ class MyQEE_Session_Driver_Cache
         if ( $cache_config )
         {
             $this->cache_config = $cache_config;
-            if ( is_array($this->cache_config) && ! isset($this->cache_config['prefix']) )
+            if ( is_array($this->cache_config) && !isset($this->cache_config['prefix']) )
             {
                 $this->cache_config['prefix'] = '_session:';
             }
@@ -76,7 +76,7 @@ class MyQEE_Session_Driver_Cache
         $_SESSION = $this->driver()->get($sid);
         $this->driver()->session_mode(false);
 
-        if ( ! is_array($_SESSION) )
+        if ( !is_array($_SESSION) )
         {
             $_SESSION = array();
         }

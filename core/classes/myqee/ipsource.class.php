@@ -104,7 +104,7 @@ class MyQEE_IpSource
     protected static function _convertip_full($ip, $ipdatafile)
     {
 
-        if ( ! $fd = @fopen($ipdatafile, 'rb') )
+        if ( !$fd = @fopen($ipdatafile, 'rb') )
         {
             return 'Invalid IP data file';
         }
@@ -112,7 +112,7 @@ class MyQEE_IpSource
         $ip = explode('.', $ip);
         $ipNum = $ip[0] * 16777216 + $ip[1] * 65536 + $ip[2] * 256 + $ip[3];
 
-        if ( ! ($DataBegin = fread($fd, 4)) || ! ($DataEnd = fread($fd, 4)) ) return;
+        if ( !($DataBegin = fread($fd, 4)) || !($DataEnd = fread($fd, 4)) ) return;
         @$ipbegin = implode('', unpack('L', $DataBegin));
         if ( $ipbegin < 0 ) $ipbegin += pow(2, 32);
         @$ipend = implode('', unpack('L', $DataEnd));

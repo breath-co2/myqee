@@ -337,7 +337,7 @@ class MyQEE_HttpIO
         $data = HttpIO::_key_string(HttpIO::$$datatype, $key);
         if ( null === $data ) return null;
 
-        if ( ! $type )
+        if ( !$type )
         {
             # 未安全过滤的数据
             $data = HttpIO::htmlspecialchars_decode($data);
@@ -462,8 +462,8 @@ class MyQEE_HttpIO
 
     protected static function _key_string($arr, $key)
     {
-        if ( ! is_array($arr) ) return null;
-        if ( $key === null || $key === false || ! strlen($key) > 0 )
+        if ( !is_array($arr) )return null;
+        if ( $key === null || $key === false || !strlen($key) > 0 )
         {
             return $arr;
         }
@@ -487,7 +487,7 @@ class MyQEE_HttpIO
      */
     public static function send_headers()
     {
-        if ( ! headers_sent() )
+        if ( !headers_sent() )
         {
             if ( isset($_SERVER['SERVER_PROTOCOL']) )
             {
@@ -544,7 +544,7 @@ class MyQEE_HttpIO
     public static function execute($uri, $print = true, $use_route = true, $is_internal = false)
     {
         $ob_open = false;
-        if ( ! $print && ! IS_CLI )
+        if ( !$print && !IS_CLI )
         {
             ob_start();
             $ob_open = true;
@@ -590,11 +590,6 @@ class MyQEE_HttpIO
                 return false;
             }
             $is_use_route = true;
-            if ( Core_Route::$last_route )
-            {
-                Core_Route::$current_route = Core_Route::$last_route;
-                Core_Route::$route_list[] = Core_Route::$current_route;
-            }
         }
         else
         {
@@ -644,7 +639,7 @@ class MyQEE_HttpIO
 
         # 方法
         $action_name = $params['action'];
-        if ( ! $action_name )
+        if ( !$action_name )
         {
             $action_name = $prefix . '_' . Core::config('core.default_action');
         }
@@ -662,7 +657,7 @@ class MyQEE_HttpIO
         }
 
         # 构造新控制器
-        if ( ! isset(HttpIO::$controlers[$controller_name]) )
+        if ( !isset(HttpIO::$controlers[$controller_name]) )
         {
             $ref_class = new ReflectionClass($controller_name);
             if ( $ref_class->isInstantiable() )
@@ -680,7 +675,7 @@ class MyQEE_HttpIO
 
         # 存控制器的数据
         static $obj_params = array();
-        if ( ! isset($obj_params[$controller_name]) || ! is_array($obj_params[$controller_name]) )
+        if ( !isset($obj_params[$controller_name]) || !is_array($obj_params[$controller_name]) )
         {
             $obj_params[$controller_name] = array();
         }
@@ -695,14 +690,14 @@ class MyQEE_HttpIO
             $controller->_callback_set_vars($params);
         }
 
-        if ( ! $is_internal && ! method_exists($controller, $action_name) )
+        if ( !$is_internal && !method_exists($controller, $action_name) )
         {
             $action_name = $prefix . '_default';
-            if ( ! method_exists($controller, $action_name) )
+            if ( !method_exists($controller, $action_name) )
             {
                 $action_name = '__call';
                 $arguments = array($action_name, $arguments);
-                if ( ! method_exists($controller, $action_name) )
+                if ( !method_exists($controller, $action_name) )
                 {
                     if (IS_DEBUG)Core::debug()->error('controller ' . $controller_name . ' action ' . $action_name . ' not exists');
                     if ($ob_open)ob_end_clean();
@@ -713,7 +708,7 @@ class MyQEE_HttpIO
 
         # Method is Public?
         $ispublicmethod = new ReflectionMethod($controller, $action_name);
-        if ( ! $ispublicmethod->isPublic() )
+        if ( !$ispublicmethod->isPublic() )
         {
             if (IS_DEBUG)Core::debug()->error('controller ' . $controller_name . ' action ' . $action_name . ' is not public');
             if ($ob_open)ob_end_clean();
@@ -726,7 +721,7 @@ class MyQEE_HttpIO
             $benchmark = Core::debug()->profiler()->start('Controller Execute',$uri);
         }
 
-        if ( ! $is_internal )
+        if ( !$is_internal )
         {
             if ( method_exists($controller, 'before') )
             {
@@ -759,7 +754,7 @@ class MyQEE_HttpIO
                 break;
         }
 
-        if ( ! $is_internal )
+        if ( !$is_internal )
         {
             if ( method_exists($controller, 'after') )
             {
@@ -786,25 +781,9 @@ class MyQEE_HttpIO
         HttpIO::$current_controller = $old_current_controller;
         unset($old_current_controller);
         unset($controller);
-        if ( ! count($obj_params[$controller_name]) )
+        if ( !count($obj_params[$controller_name]) )
         {
             unset(HttpIO::$controlers[$controller_name]);
-        }
-
-        if ( true == $is_use_route )
-        {
-            # 路由列队
-            array_pop(Core_Route::$route_list);
-            if ( Core_Route::$route_list )
-            {
-                end(Core_Route::$route_list);
-                $key = key(Core_Route::$route_list);
-                Core_Route::$last_route = Core_Route::$current_route = Core_Route::$route_list[$key];
-            }
-            else
-            {
-                Core_Route::$route_list = null;
-            }
         }
 
         if ( !$print && !IS_CLI )
@@ -1266,19 +1245,19 @@ class MyQEE_HttpIO
         }
         else
         {
-            if ( ! isset($params['directory']) )
+            if ( !isset($params['directory']) )
             {
                 // Add the current directory
                 $params['directory'] = HttpIO::$params['directory'];
             }
 
-            if ( ! isset($params['controller']) )
+            if ( !isset($params['controller']) )
             {
                 // Add the current controller
                 $params['controller'] = HttpIO::$params['controller'];
             }
 
-            if ( ! isset($params['action']) )
+            if ( !isset($params['action']) )
             {
                 // Add the current action
                 $params['action'] = HttpIO::$params['action'];

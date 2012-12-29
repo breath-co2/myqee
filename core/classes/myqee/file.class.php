@@ -24,7 +24,6 @@ class MyQEE_File
         DIR_TEMP,
         DIR_WWWROOT,
         DIR_PROJECT,
-        DIR_APPS,
         DIR_SYSTEM,
         DIR_ASSETS,
     );

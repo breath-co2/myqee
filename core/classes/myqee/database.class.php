@@ -143,12 +143,12 @@ class MyQEE_Database extends Database_QueryBuilder
         }
 
         $driver = $this->config['type'];
-        if ( ! $driver )
+        if ( !$driver )
         {
             $driver = 'MySQL';
         }
         $driver = 'Database_Driver_' . $driver;
-        if ( ! class_exists($driver, true) )
+        if ( !class_exists($driver, true) )
         {
             throw new Exception('Database Driver:' . $driver . ' not found.');
         }

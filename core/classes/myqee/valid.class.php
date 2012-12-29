@@ -150,7 +150,7 @@ class MyQEE_Valid
     public static function url($url)
     {
         // Based on http://www.apps.ietf.org/rfc/rfc1738.html#sec-5
-        if ( ! preg_match(
+        if ( !preg_match(
         	'~^
 
             # scheme
@@ -185,7 +185,7 @@ class MyQEE_Valid
             $~iDx', $url, $matches) ) return false;
 
         // We matched an IP address
-        if ( ! isset($matches[1]) ) return true;
+        if ( !isset($matches[1]) ) return true;
 
         // Check maximum length of the whole hostname
         // http://en.wikipedia.org/wiki/Domain_name#cite_note-0
@@ -253,16 +253,16 @@ class MyQEE_Valid
         // Check card type
         $type = strtolower($type);
 
-        if ( ! isset($cards[$type]) ) return false;
+        if ( !isset($cards[$type]) ) return false;
 
         // Check card number length
         $length = strlen($number);
 
         // Validate the card length by the card type
-        if ( ! in_array($length, preg_split('/\D+/', $cards[$type]['length'])) ) return false;
+        if ( !in_array($length, preg_split('/\D+/', $cards[$type]['length'])) ) return false;
 
         // Check card number prefix
-        if ( ! preg_match('/^' . $cards[$type]['prefix'] . '/', $number) ) return false;
+        if ( !preg_match('/^' . $cards[$type]['prefix'] . '/', $number) ) return false;
 
         // No Luhn check required
         if ( $cards[$type]['luhn'] == false ) return TRUE;
@@ -283,7 +283,7 @@ class MyQEE_Valid
         // Converting to an integer may pass PHP_INT_MAX and result in an error!
         $number = (string)$number;
 
-        if ( ! ctype_digit($number) )
+        if ( !ctype_digit($number) )
         {
             // Luhn can only be used on numbers!
             return false;

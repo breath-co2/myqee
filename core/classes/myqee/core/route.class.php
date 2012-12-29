@@ -26,7 +26,7 @@ class MyQEE_Core_Route
      * 当前路由名
      * @var string
      */
-    protected static $current_route;
+    public static $current_route;
 
     /**
      * 各个项目的路由正则

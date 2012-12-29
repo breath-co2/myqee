@@ -317,7 +317,7 @@ abstract class MyQEE_Database_Result implements Countable, Iterator, SeekableIte
      */
     public function offsetGet($offset)
     {
-        if ( ! $this->seek($offset) ) return null;
+        if ( $this->seek($offset) ) return null;
 
         return $this->current();
     }

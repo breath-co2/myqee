@@ -130,7 +130,7 @@ class MyQEE_Cache
         {
             $config_name = $name;
         }
-        if ( ! isset(Cache::$instances[$config_name]) )
+        if ( !isset(Cache::$instances[$config_name]) )
         {
             Cache::$instances[$config_name] = new Cache($name);
         }
@@ -148,7 +148,7 @@ class MyQEE_Cache
             $this->config = Core::config('cache.' . $name);
         }
 
-        if ( ! isset($this->config['prefix']) )
+        if ( !isset($this->config['prefix']) )
         {
             $this->config['prefix'] = '';
         }
@@ -505,7 +505,7 @@ class MyQEE_Cache
         if ( substr($value, 0, 18) == '__::foRMat_CacHe::' && preg_match('#^__::foRMat_CacHe::Type=(?P<type>[a-z0-9_]+),ExpKey=(?P<expkey>[a-f0-9]{32}),Exp=(?P<exp>[0-9,~/]+),SaveTime=(?P<savetime>[0-9]+),Value=(?P<value>.*)$#', $value, $match) )
         {
             #200~250,1/100
-            if ( ! preg_match('#^([0-9]+)~([0-9]+),([0-9]+)/([0-9]+)$#', $match['exp'], $match_exp) )
+            if ( !preg_match('#^([0-9]+)~([0-9]+),([0-9]+)/([0-9]+)$#', $match['exp'], $match_exp) )
             {
                 return true;
             }

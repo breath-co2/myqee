@@ -341,7 +341,7 @@ class MyQEE_Date
         // Normalize output
         $output = trim(strtolower((string)$output));
 
-        if ( ! $output )
+        if ( !$output )
         {
             // Invalid output
             return FALSE;

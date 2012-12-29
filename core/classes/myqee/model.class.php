@@ -133,7 +133,7 @@ class MyQEE_Model
     protected function _get_cache_key(Exception $e, $trace_offset = 0)
     {
         $trace_offset = (int)$trace_offset;
-        if ( ! ($trace_offset >= 0) )
+        if ( !($trace_offset >= 0) )
         {
             $trace_offset = 0;
         }

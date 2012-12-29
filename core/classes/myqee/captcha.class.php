@@ -48,7 +48,7 @@ class MyQEE_Captcha
 
     public static function valid($mycode, $delsession = false)
     {
-        if ( ! ($code = Session::instance()->get(Captcha::$sessionname)) )
+        if ( !($code = Session::instance()->get(Captcha::$sessionname)) )
         {
             return 0;
         }
@@ -177,7 +177,7 @@ class MyQEE_Captcha
             $angle = mt_rand(- 40, 20);
             // Scale the character size on image height
             $size = $default_size / 10 * mt_rand(8, 12);
-            if ( ! function_exists('imageftbbox') ) Core::show_500(__('function imageftbbox not exist.'));
+            if ( !function_exists('imageftbbox') ) Core::show_500(__('function imageftbbox not exist.'));
             $box = imageftbbox($size, $angle, $font, Captcha::$response[$i]);
 
             // Calculate character starting coordinates
@@ -240,13 +240,13 @@ class MyQEE_Captcha
     protected function image_create($background = null)
     {
         // Check for GD2 support
-        if ( ! function_exists('imagegd2') ) Core::show_500(__('captcha.requires_GD2'));
+        if ( !function_exists('imagegd2') ) Core::show_500(__('captcha.requires_GD2'));
 
         // Create a new image (black)
         Captcha::$image = imagecreatetruecolor(Captcha::$config['width'], Captcha::$config['height']);
 
         // Use a background image
-        if ( ! empty($background) )
+        if ( !empty($background) )
         {
             /*
             // Create the image using the right function for the filetype
@@ -279,7 +279,7 @@ class MyQEE_Captcha
         $directions = array('horizontal', 'vertical');
 
         // Pick a random direction if needed
-        if ( ! in_array($direction, $directions) )
+        if ( !in_array($direction, $directions) )
         {
             $direction = $directions[array_rand($directions)];
 

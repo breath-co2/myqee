@@ -167,7 +167,7 @@ class MyQEE_Pagination
         if ( $this->current_page === null or isset($config['current_page']) or isset($config['total_items']) or isset($config['items_per_page']) )
         {
             // Retrieve the current page number
-            if ( ! empty($this->config['current_page']['page']) )
+            if ( !empty($this->config['current_page']['page']) )
             {
                 // The current page number has been set manually
                 $this->current_page = (int)$this->config['current_page']['page'];
@@ -255,7 +255,7 @@ class MyQEE_Pagination
     public function valid_page($page)
     {
         $page = (int)$page;
-        if ( ! $page > 0 ) return FALSE;
+        if ( !$page > 0 ) return FALSE;
 
         return $page > 0 and $page <= $this->total_pages;
     }
@@ -277,7 +277,7 @@ class MyQEE_Pagination
             $view = $this->config['view'];
         }
 
-        if ( ! $view instanceof View )
+        if ( !$view instanceof View )
         {
             // Load the view file
             $view = View::factory($view);

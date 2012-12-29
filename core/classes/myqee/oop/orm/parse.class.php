@@ -31,7 +31,7 @@ abstract class MyQEE_OOP_ORM_Parse
 
         foreach ( $setting as $key => &$field_config )
         {
-            if ( ! is_array($field_config) )
+            if ( !is_array($field_config) )
             {
                 if ( null === $field_config ) $field_config = $key;
                 $field_config = array('field_name' => $field_config);
@@ -129,15 +129,15 @@ abstract class MyQEE_OOP_ORM_Parse
      */
     protected static function _check_orm($key, &$field_config)
     {
-        if ( ! isset($field_config['orm']) )
+        if ( !isset($field_config['orm']) )
         {
             return;
         }
-        if ( $field_config['orm'] && ! is_array($field_config['orm']) )
+        if ( $field_config['orm'] && !is_array($field_config['orm']) )
         {
             $field_config['orm'] = array('name' => (string)$field_config['orm']['name']);
         }
-        elseif ( ! isset($field_config['orm']['name']) )
+        elseif ( !isset($field_config['orm']['name']) )
         {
             unset($field_config['orm']);
             return;
@@ -156,23 +156,23 @@ abstract class MyQEE_OOP_ORM_Parse
      */
     protected static function _check_data($key, &$field_config)
     {
-        if ( ! isset($field_config['data']) )
+        if ( !isset($field_config['data']) )
         {
             return;
         }
-        if ( ! is_array($field_config['data']) )
+        if ( !is_array($field_config['data']) )
         {
             Core::debug()->error($field_config,'ORM字段:'.$key.'配置错误，data属性应该为数组');
             unset($field_config['data']);
             return;
         }
-        if ( ! isset($field_config['data']['driver']) )
+        if ( !isset($field_config['data']['driver']) )
         {
             Core::debug()->error($field_config,'ORM字段:'.$key.'配置错误，data属性缺少driver');
             unset($field_config['data']);
             return;
         }
-        if ( isset($field_config['data']['mapping']) && ! is_array($field_config['data']['mapping']) )
+        if ( isset($field_config['data']['mapping']) && !is_array($field_config['data']['mapping']) )
         {
             Core::debug()->error($field_config,'ORM字段:'.$key.'配置错误，data属性的mapping应该为数组');
             unset($field_config['data']['mapping']);
@@ -192,7 +192,7 @@ abstract class MyQEE_OOP_ORM_Parse
 
     protected static function _check_object($key, &$field_config)
     {
-        if ( ! isset($field_config['object']) )
+        if ( !isset($field_config['object']) )
         {
             return;
         }
@@ -200,13 +200,13 @@ abstract class MyQEE_OOP_ORM_Parse
         {
             $field_config['object'] = array('name' => $field_config['object']);
         }
-        elseif ( ! is_array($field_config['object']) )
+        elseif ( !is_array($field_config['object']) )
         {
             Core::debug()->error('ORM字段配置错误，object属性应为数组');
             unset($field_config['object']);
             return;
         }
-        if ( ! isset($field_config['object']['name']) )
+        if ( !isset($field_config['object']['name']) )
         {
             Core::debug()->error('ORM字段配置错误，object属性的name必须设置');
             unset($field_config['object']);
@@ -223,12 +223,12 @@ abstract class MyQEE_OOP_ORM_Parse
      */
     protected static function _parse_database($config)
     {
-        if ( ! isset($config['database']) )
+        if ( !isset($config['database']) )
         {
             $config['database'] = 'default';
         }
 
-        if ( ! isset($config['tablename']) )
+        if ( !isset($config['tablename']) )
         {
             throw new Exception('配置错误，缺少表名称.');
         }
@@ -654,7 +654,7 @@ abstract class MyQEE_OOP_ORM_Parse
 
         # 映射ORM对象
         $obj_name = 'ORM_' . $orm_config['name'] . '_Finder';
-        if ( ! class_exists($obj_name, true) )
+        if ( !class_exists($obj_name, true) )
         {
             throw new Exception('指定的ORM:' . $orm_config['name'] . '不存在！');
         }

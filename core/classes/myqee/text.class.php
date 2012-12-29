@@ -102,7 +102,7 @@ class MyQEE_Text
 
         // Don't preserve words. The limit is considered the top limit.
         // No strings with a length longer than $limit should be returned.
-        if ( ! preg_match('/^.{0,' . $limit . '}\s/us', $str, $matches) ) return $end_char;
+        if ( !preg_match('/^.{0,' . $limit . '}\s/us', $str, $matches) ) return $end_char;
 
         return rtrim($matches[0]) . ((strlen($matches[0]) === strlen($str)) ? '' : $end_char);
     }
@@ -194,12 +194,12 @@ class MyQEE_Text
                 break;
             default :
                 $pool = (string)$type;
-                $utf8 = ! UTF8::is_ascii($pool);
+                $utf8 = !UTF8::is_ascii($pool);
                 break;
         }
 
         // Split the pool into an array of characters
-        $pool = ($utf8 === TRUE) ? UTF8::str_split($pool, 1) : str_split($pool, 1);
+        $pool = ($utf8 === true) ? UTF8::str_split($pool, 1) : str_split($pool, 1);
 
         // Largest pool key
         $max = count($pool) - 1;
@@ -301,7 +301,7 @@ class MyQEE_Text
             foreach ( $words as $w )
             {
                 // Once a difference is found, break out of the loops
-                if ( ! isset($w[$i]) or $w[$i] !== $word[$i] ) break 2;
+                if ( !isset($w[$i]) || $w[$i] !== $word[$i] ) break 2;
             }
         }
 

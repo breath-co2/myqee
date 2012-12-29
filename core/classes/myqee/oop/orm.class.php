@@ -80,7 +80,7 @@ abstract class MyQEE_OOP_ORM
     public function __construct($data = null)
     {
         # 检查$this->orm_name变量
-        if ( ! isset($this->_orm_name) )
+        if ( !isset($this->_orm_name) )
         {
             $tmpobj = $this;
             while ( $tmpobj )
@@ -105,7 +105,7 @@ abstract class MyQEE_OOP_ORM
             }
             unset($tmpobj);
         }
-        if ( ! $this->_orm_name )
+        if ( !$this->_orm_name )
         {
             throw new Exception('请先定义$this->_orm_name变量');
         }
@@ -142,7 +142,7 @@ abstract class MyQEE_OOP_ORM
     public function create($data = null, $is_field_key = false)
     {
         $orm_data_name = $this->get_orm_name('data');
-        if ( ! $orm_data_name )
+        if ( !$orm_data_name )
         {
             throw new Exception(get_class($this) . ' 没有定义data返回对象');
         }

@@ -63,7 +63,7 @@ class MyQEE_UTF8
             // Remove control characters
             $var = self::strip_ascii_ctrl($var);
 
-            if ( ! self::is_ascii($var) )
+            if ( !self::is_ascii($var) )
             {
                 // Disable notices
                 $ER = error_reporting(~ E_NOTICE);
@@ -95,7 +95,7 @@ class MyQEE_UTF8
             $str = implode($str);
         }
 
-        return ! preg_match('/[^\x00-\x7F]/S', $str);
+        return !preg_match('/[^\x00-\x7F]/S', $str);
     }
 
     /**
@@ -136,12 +136,12 @@ class MyQEE_UTF8
      */
     public static function transliterate_to_ascii($str, $case = 0)
     {
-        static $UTF8_LOWER_ACCENTS = NULL;
-        static $UTF8_UPPER_ACCENTS = NULL;
+        static $UTF8_LOWER_ACCENTS = null;
+        static $UTF8_UPPER_ACCENTS = null;
 
         if ( $case <= 0 )
         {
-            if ( $UTF8_LOWER_ACCENTS === NULL )
+            if ( $UTF8_LOWER_ACCENTS === null )
             {
                 $UTF8_LOWER_ACCENTS = array(
                     'à' => 'a',
@@ -256,7 +256,7 @@ class MyQEE_UTF8
 
         if ( $case >= 0 )
         {
-            if ( $UTF8_UPPER_ACCENTS === NULL )
+            if ( $UTF8_UPPER_ACCENTS === null )
             {
                 $UTF8_UPPER_ACCENTS = array(
                     'À' => 'A',
@@ -469,23 +469,23 @@ class MyQEE_UTF8
      * @uses	IS_MBSTRING
      * @uses	Kohana::$charset
      */
-    public static function substr($str, $offset, $length = NULL)
+    public static function substr($str, $offset, $length = null)
     {
-        if ( IS_MBSTRING ) return ($length === NULL) ? mb_substr($str, $offset, mb_strlen($str), Core::$charset) : mb_substr($str, $offset, $length, Core::$charset);
+        if ( IS_MBSTRING ) return ($length === null) ? mb_substr($str, $offset, mb_strlen($str), Core::$charset) : mb_substr($str, $offset, $length, Core::$charset);
 
-        if ( UTF8::is_ascii($str) ) return ($length === NULL) ? substr($str, $offset) : substr($str, $offset, $length);
+        if ( UTF8::is_ascii($str) ) return ($length === null) ? substr($str, $offset) : substr($str, $offset, $length);
 
         // Normalize params
         $str = (string)$str;
         $strlen = UTF8::strlen($str);
         $offset = (int)($offset < 0) ? max(0, $strlen + $offset) : $offset; // Normalize to positive offset
-        $length = ($length === NULL) ? NULL : (int)$length;
+        $length = ($length === null) ? null : (int)$length;
 
         // Impossible
         if ( $length === 0 or $offset >= $strlen or ($length < 0 and $length <= $offset - $strlen) ) return '';
 
         // Whole string
-        if ( $offset == 0 and ($length === NULL or $length >= $strlen) ) return $str;
+        if ( $offset == 0 and ($length === null or $length >= $strlen) ) return $str;
 
         // Build regex
         $regex = '^';
@@ -501,7 +501,7 @@ class MyQEE_UTF8
         }
 
         // Create a length expression
-        if ( $length === NULL )
+        if ( $length === null )
         {
             $regex .= '(.*)'; // No length set, grab it all
         }
@@ -543,11 +543,11 @@ class MyQEE_UTF8
      * @param   integer  offset
      * @return  string
      */
-    public static function substr_replace($str, $replacement, $offset, $length = NULL)
+    public static function substr_replace($str, $replacement, $offset, $length = null)
     {
-        if ( UTF8::is_ascii($str) ) return ($length === NULL) ? substr_replace($str, $replacement, $offset) : substr_replace($str, $replacement, $offset, $length);
+        if ( UTF8::is_ascii($str) ) return ($length === null) ? substr_replace($str, $replacement, $offset) : substr_replace($str, $replacement, $offset, $length);
 
-        $length = ($length === NULL) ? UTF8::strlen($str) : (int)$length;
+        $length = ($length === null) ? UTF8::strlen($str) : (int)$length;
         preg_match_all('/./us', $str, $str_array);
         preg_match_all('/./us', $replacement, $replacement_array);
 
@@ -572,9 +572,9 @@ class MyQEE_UTF8
 
         if ( UTF8::is_ascii($str) ) return strtolower($str);
 
-        static $UTF8_UPPER_TO_LOWER = NULL;
+        static $UTF8_UPPER_TO_LOWER = null;
 
-        if ( $UTF8_UPPER_TO_LOWER === NULL )
+        if ( $UTF8_UPPER_TO_LOWER === null )
         {
             $UTF8_UPPER_TO_LOWER = array(
                 0x0041 => 0x0061,
@@ -823,9 +823,9 @@ class MyQEE_UTF8
 
         if ( UTF8::is_ascii($str) ) return strtoupper($str);
 
-        static $UTF8_LOWER_TO_UPPER = NULL;
+        static $UTF8_LOWER_TO_UPPER = null;
 
-        if ( $UTF8_LOWER_TO_UPPER === NULL )
+        if ( $UTF8_LOWER_TO_UPPER === null )
         {
             $UTF8_LOWER_TO_UPPER = array(
                 0x0061 => 0x0041,
@@ -1134,7 +1134,7 @@ class MyQEE_UTF8
      * @return  string		if the input was a string
      * @return  array		 if the input was an array
      */
-    public static function str_ireplace($search, $replace, $str, & $count = NULL)
+    public static function str_ireplace($search, $replace, $str, & $count = null)
     {
         if ( UTF8::is_ascii($search) and UTF8::is_ascii($replace) and UTF8::is_ascii($str) ) return str_ireplace($search, $replace, $str, $count);
 
@@ -1236,13 +1236,13 @@ class MyQEE_UTF8
      * @param   integer  length of the string to examine
      * @return  integer  length of the initial segment that contains characters in the mask
      */
-    public static function strspn($str, $mask, $offset = NULL, $length = NULL)
+    public static function strspn($str, $mask, $offset = null, $length = null)
     {
         if ( $str == '' or $mask == '' ) return 0;
 
-        if ( UTF8::is_ascii($str) and UTF8::is_ascii($mask) ) return ($offset === NULL) ? strspn($str, $mask) : (($length === NULL) ? strspn($str, $mask, $offset) : strspn($str, $mask, $offset, $length));
+        if ( UTF8::is_ascii($str) and UTF8::is_ascii($mask) ) return ($offset === null) ? strspn($str, $mask) : (($length === null) ? strspn($str, $mask, $offset) : strspn($str, $mask, $offset, $length));
 
-        if ( $offset !== NULL or $length !== NULL )
+        if ( $offset !== null or $length !== null )
         {
             $str = UTF8::substr($str, $offset, $length);
         }
@@ -1268,13 +1268,13 @@ class MyQEE_UTF8
      * @param   integer  length of the string to examine
      * @return  integer  length of the initial segment that contains characters not in the mask
      */
-    public static function strcspn($str, $mask, $offset = NULL, $length = NULL)
+    public static function strcspn($str, $mask, $offset = null, $length = null)
     {
         if ( $str == '' or $mask == '' ) return 0;
 
-        if ( UTF8::is_ascii($str) and UTF8::is_ascii($mask) ) return ($offset === NULL) ? strcspn($str, $mask) : (($length === NULL) ? strcspn($str, $mask, $offset) : strcspn($str, $mask, $offset, $length));
+        if ( UTF8::is_ascii($str) and UTF8::is_ascii($mask) ) return ($offset === null) ? strcspn($str, $mask) : (($length === null) ? strcspn($str, $mask, $offset) : strcspn($str, $mask, $offset, $length));
 
-        if ( $offset !== NULL or $length !== NULL )
+        if ( $offset !== null or $length !== null )
         {
             $str = UTF8::substr($str, $offset, $length);
         }
@@ -1393,9 +1393,9 @@ class MyQEE_UTF8
      * @param   string   string of characters to remove
      * @return  string
      */
-    public static function trim($str, $charlist = NULL)
+    public static function trim($str, $charlist = null)
     {
-        if ( $charlist === NULL ) return trim($str);
+        if ( $charlist === null ) return trim($str);
 
         return UTF8::ltrim(UTF8::rtrim($str, $charlist), $charlist);
     }
@@ -1411,9 +1411,9 @@ class MyQEE_UTF8
      * @param   string   string of characters to remove
      * @return  string
      */
-    public static function ltrim($str, $charlist = NULL)
+    public static function ltrim($str, $charlist = null)
     {
-        if ( $charlist === NULL ) return ltrim($str);
+        if ( $charlist === null ) return ltrim($str);
 
         if ( UTF8::is_ascii($charlist) ) return ltrim($str, $charlist);
 
@@ -1433,9 +1433,9 @@ class MyQEE_UTF8
      * @param   string   string of characters to remove
      * @return  string
      */
-    public static function rtrim($str, $charlist = NULL)
+    public static function rtrim($str, $charlist = null)
     {
-        if ( $charlist === NULL ) return rtrim($str);
+        if ( $charlist === null ) return rtrim($str);
 
         if ( UTF8::is_ascii($charlist) ) return rtrim($str, $charlist);
 
@@ -1458,9 +1458,9 @@ class MyQEE_UTF8
     {
         $ord0 = ord($chr);
 
-        if ( $ord0 >= 0 and $ord0 <= 127 ) return $ord0;
+        if ( $ord0 >= 0 && $ord0 <= 127 ) return $ord0;
 
-        if ( ! isset($chr[1]) )
+        if ( !isset($chr[1]) )
         {
             trigger_error('Short sequence - at least 2 bytes expected, only 1 seen', E_USER_WARNING);
             return FALSE;
@@ -1468,9 +1468,9 @@ class MyQEE_UTF8
 
         $ord1 = ord($chr[1]);
 
-        if ( $ord0 >= 192 and $ord0 <= 223 ) return ($ord0 - 192) * 64 + ($ord1 - 128);
+        if ( $ord0 >= 192 && $ord0 <= 223 ) return ($ord0 - 192) * 64 + ($ord1 - 128);
 
-        if ( ! isset($chr[2]) )
+        if ( !isset($chr[2]) )
         {
             trigger_error('Short sequence - at least 3 bytes expected, only 2 seen', E_USER_WARNING);
             return FALSE;
@@ -1478,9 +1478,9 @@ class MyQEE_UTF8
 
         $ord2 = ord($chr[2]);
 
-        if ( $ord0 >= 224 and $ord0 <= 239 ) return ($ord0 - 224) * 4096 + ($ord1 - 128) * 64 + ($ord2 - 128);
+        if ( $ord0 >= 224 && $ord0 <= 239 ) return ($ord0 - 224) * 4096 + ($ord1 - 128) * 64 + ($ord2 - 128);
 
-        if ( ! isset($chr[3]) )
+        if ( !isset($chr[3]) )
         {
             trigger_error('Short sequence - at least 4 bytes expected, only 3 seen', E_USER_WARNING);
             return FALSE;
@@ -1488,9 +1488,9 @@ class MyQEE_UTF8
 
         $ord3 = ord($chr[3]);
 
-        if ( $ord0 >= 240 and $ord0 <= 247 ) return ($ord0 - 240) * 262144 + ($ord1 - 128) * 4096 + ($ord2 - 128) * 64 + ($ord3 - 128);
+        if ( $ord0 >= 240 && $ord0 <= 247 ) return ($ord0 - 240) * 262144 + ($ord1 - 128) * 4096 + ($ord2 - 128) * 64 + ($ord3 - 128);
 
-        if ( ! isset($chr[4]) )
+        if ( !isset($chr[4]) )
         {
             trigger_error('Short sequence - at least 5 bytes expected, only 4 seen', E_USER_WARNING);
             return FALSE;
@@ -1498,17 +1498,17 @@ class MyQEE_UTF8
 
         $ord4 = ord($chr[4]);
 
-        if ( $ord0 >= 248 and $ord0 <= 251 ) return ($ord0 - 248) * 16777216 + ($ord1 - 128) * 262144 + ($ord2 - 128) * 4096 + ($ord3 - 128) * 64 + ($ord4 - 128);
+        if ( $ord0 >= 248 && $ord0 <= 251 ) return ($ord0 - 248) * 16777216 + ($ord1 - 128) * 262144 + ($ord2 - 128) * 4096 + ($ord3 - 128) * 64 + ($ord4 - 128);
 
-        if ( ! isset($chr[5]) )
+        if ( !isset($chr[5]) )
         {
             trigger_error('Short sequence - at least 6 bytes expected, only 5 seen', E_USER_WARNING);
             return FALSE;
         }
 
-        if ( $ord0 >= 252 and $ord0 <= 253 ) return ($ord0 - 252) * 1073741824 + ($ord1 - 128) * 16777216 + ($ord2 - 128) * 262144 + ($ord3 - 128) * 4096 + ($ord4 - 128) * 64 + (ord($chr[5]) - 128);
+        if ( $ord0 >= 252 && $ord0 <= 253 ) return ($ord0 - 252) * 1073741824 + ($ord1 - 128) * 16777216 + ($ord2 - 128) * 262144 + ($ord3 - 128) * 4096 + ($ord4 - 128) * 64 + (ord($chr[5]) - 128);
 
-        if ( $ord0 >= 254 and $ord0 <= 255 )
+        if ( $ord0 >= 254 && $ord0 <= 255 )
         {
             trigger_error('Invalid UTF-8 with surrogate ordinal ' . $ord0, E_USER_WARNING);
             return FALSE;

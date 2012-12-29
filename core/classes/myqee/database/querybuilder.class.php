@@ -78,7 +78,7 @@ class MyQEE_Database_QueryBuilder
         {
             $columns = explode(',', $columns);
         }
-        elseif ( ! is_array($columns) )
+        elseif ( is_array($columns) )
         {
             $columns = array($columns);
         }
@@ -314,7 +314,7 @@ class MyQEE_Database_QueryBuilder
         {
             $tables = explode(',', $tables);
         }
-        elseif ( ! is_array($tables) )
+        elseif ( is_array($tables) )
         {
             $tables = array($tables);
         }
