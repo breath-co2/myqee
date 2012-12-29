@@ -21,14 +21,14 @@ function help()
     echo <<<EOF
 读取LOG/error500/中的压缩格式化的数据
 =====================================
-使用方法: $ \x1b[36merror500-log\x1b[39m \x1b[33m[ErrorNo]\x1b[39m
+使用方法: $ \x1b[36mview-error500-log\x1b[39m \x1b[33m[ErrorNo]\x1b[39m
 
 OPTIONS:
   -d [date] \x1b[32m清除指定日期log\x1b[39m
 
 EXAMPLE:
-  $ \x1b[36merror500-log\x1b[39m \x1b[33m2012-12-27-96699DBC65\x1b[39m
-  $ \x1b[36merror500-log\x1b[39m \x1b[33m-d 2012-12-27\x1b[39m
+  $ \x1b[36mview-error500-log\x1b[39m \x1b[33m2012-12-27-96699DBC65\x1b[39m
+  $ \x1b[36mview-error500-log\x1b[39m \x1b[33m-d 2012-12-27\x1b[39m
 
 EOF;
     exit;
