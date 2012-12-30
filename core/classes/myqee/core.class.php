@@ -26,19 +26,6 @@ function url($uri='')
 }
 
 /**
- * 返回一个URL. Core::url() 的别名
- *
- *   echo url();    //返回首页地址
- *
- * @param string $uri
- * @return string
- */
-function log($msg , $type = 'log')
-{
-    return Core::log($msg , $type);
-}
-
-/**
  * 读取配置数据. Core::config() 的别名
  *
  *   echo config('core');    //返回核心配置
@@ -1328,7 +1315,7 @@ abstract class MyQEE_Core extends Bootstrap
     {
         foreach (Core::$include_path as $path)
         {
-            $file = $path . 'ini' . EXT;
+            $file = $path . 'config' . EXT;
             if (is_file($file))
             {
                 Core::_include_file($file,true);
