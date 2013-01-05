@@ -13,43 +13,60 @@ abstract class Controller_MyQEE_Admin extends Controller
      *
      * @var string
      */
-    protected $page_title;
+    public $page_title;
 
     /**
-     * 导航目录
+     * jQuery版本,留空则使用系统自带的
      *
-     * 数组形式
-     *   array(
-     *   	'目录1',
-     *   	array(
-     *   		'innerHTML'=>'目录2',
-     *   	),
-     *   	array(
-     *   		'innerHTML'=>'目录3',
-     *   		'href' => 'url2',
-     *   	),
-     *   	'目录4',
-     *   )
+     *   例如:
+     *   1.8.3则加载 jquery/jquery-1.8.3.min.js
+     *   留空则加载   jquery/jquery.min.js
      *
-     * @var array
+     * @var string
      */
-    protected $location;
+    public $jquery_version = '';
 
     /**
-     * 快速菜单
+     * bootstrap版本,留空则使用系统自带的
      *
-     * array(
-     *     'test/url1' => '测试菜单',
-     *     'test/url12' => '测试菜单2',
-     * )
+     *   例如:
+     *   2.2.2则加载 bootstrap/2.2.2/bootstrap.min.js
+     *   留空则加载   bootstrap/bootstrap.min.js
      *
-     * @var array
+     * @var string
      */
-    protected $quick_menu;
+    public $bootstrap_version = '';
+
+
+    /**
+     * 页眉HTML
+     *
+     * @var strng
+     */
+    public $header_html = '';
+
+    /**
+     * 页脚HTML
+     *
+     * @var strng
+     */
+    public $footer_html = '';
+
+    /**
+     * 编码
+     * @var string
+     */
+    public $charset = 'utf-8';
 
     function __construct()
     {
         $this->check_login();
+
+        $charset = config('core.charset');
+        if ($charset)
+        {
+            $this->charset = $charset;
+        }
     }
 
     /**
@@ -90,7 +107,7 @@ abstract class Controller_MyQEE_Admin extends Controller
             if ( HttpIO::IS_AJAX )
             {
                 # AJAX 请求
-                $this->message($e->getMessage(),-1);
+                $this->show_message($e->getMessage(),-1);
             }
             else
             {
@@ -113,7 +130,8 @@ abstract class Controller_MyQEE_Admin extends Controller
         if ( HttpIO::METHOD=='POST' )
         {
             Database::instance(Model_Admin::DATABASE)->insert( Core::config('admin/log.tablename'),
-                array(
+                array
+                (
                     'uri'      => $_SERVER["REQUEST_URI"],
                 	'type'     => 'log',
                     'ip'       => HttpIO::IP,
@@ -126,13 +144,13 @@ abstract class Controller_MyQEE_Admin extends Controller
 
         if ( !is_file(DIR_DATA . Core::$project . '/install.lock') && $install_file = Core::find_file('controllers', 'install') )
         {
-            self::message('为保证系统安全请在data目录下创建安装锁文件：'.Core::$project.'/install.lock<br><br>或删除后台安装文件：'.Core::debug_path($install_file).'<br><br>设置完毕后方可进入后台',-1);
+            $this->show_message('为保证系统安全请在data目录下创建安装锁文件：'.Core::$project.'/install.lock<br><br>或删除后台安装文件：'.Core::debug_path($install_file).'<br><br>设置完毕后方可进入后台',-1);
         }
 
         # 不允许非超管跨项目访问
         if ( $this->session()->member()->project!=Core::$project && !$this->session()->member()->is_super_admin )
         {
-            self::message('通道受限，您不具备此项目的操作权限，请联系管理员',-1);
+            $this->show_message('通道受限，您不具备此项目的操作权限，请联系管理员',-1);
         }
 
         ob_start();
@@ -144,9 +162,9 @@ abstract class Controller_MyQEE_Admin extends Controller
 
         if ( !HttpIO::IS_AJAX )
         {
-            $this->run_header();
+            $this->header();
             echo $output;
-            $this->run_bottom();
+            $this->footer();
         }
         else
         {
@@ -157,13 +175,13 @@ abstract class Controller_MyQEE_Admin extends Controller
     /**
      * 输出头部视图
      */
-    protected function run_header()
+    protected function header()
     {
         $menu = array();
-        $admin_menu = Core::config('admin/menu/'.$this->session()->member()->get_menu_config(),$this->project?$this->project:null);
-        $url = Core::url( HttpIO::$uri );
+        $admin_menu = Core::config('admin/menu/'.$this->session()->member()->get_menu_config());
+        $url        = Core::url( HttpIO::$uri );
         $page_title = $this->page_title;
-        $location = $this->location;
+        $location   = $this->location;
 
         $this->header_check_perm($admin_menu);
         $menu = $this->header_get_sub_menu($admin_menu,$url);
@@ -199,7 +217,8 @@ abstract class Controller_MyQEE_Admin extends Controller
         {
             $i=0;
             $tmp_menu = $admin_menu;
-            foreach ($menu as $key){
+            foreach ($menu as $key)
+            {
                 $i++;
                 $tmp_menu = $tmp_menu[$key];
                 if ($i==$this_key_len)
@@ -211,13 +230,15 @@ abstract class Controller_MyQEE_Admin extends Controller
         }
 
         $view = new View('admin/header');
-        $view->menu       = $menu;
-        $view->top_menu   = $top_menu;
-        $view->page_title = $page_title;
-        $view->location   = $location;
-        $view->admin_menu = $admin_menu;
-        $view->quick_menu = $this->quick_menu;
-        $view->url        = $url;
+        $view->jquery_version    = $this->jquery_version;
+        $view->bootstrap_version = $this->bootstrap_version;
+        $view->header_html       = $this->header_html;
+        $view->menu              = $menu;
+        $view->top_menu          = $top_menu;
+        $view->page_title        = $page_title;
+        $view->location          = $location;
+        $view->admin_menu        = $admin_menu;
+        $view->url               = $url;
 
         $view->render(true);
     }
@@ -225,40 +246,44 @@ abstract class Controller_MyQEE_Admin extends Controller
     /**
      * 输出尾部视图
      */
-    protected function run_bottom()
+    protected function footer()
     {
-        $view = new View('admin/bottom');
+        $view = new View('admin/footer');
+        $view->footer_html = $this->footer_html;
         $view->render(true);
     }
 
-    public function message($msg,$code=0,$outdata=null)
+    public function show_message($msg, $code=0, $data=array())
     {
         if (HttpIO::IS_AJAX)
         {
-            if ( is_array($msg) )
+            if (is_array($msg))
             {
                 $data = $msg;
             }
             else
             {
-                $data = array(
+                $data = array
+                (
                     'code' => $code,
-                    'msg' => (string)$msg,
+                    'msg'  => (string)$msg,
                 );
             }
-            if (is_array($outdata))foreach ($outdata as $k=>$v)
+            if (is_array($data))foreach ($data as $k=>$v)
             {
                 $data[$k] = $v;
             }
+
             @header('Content-Type:application/json');
             echo json_encode($data);
         }
         else
         {
-            echo '<div style="padding:6px">';
+            echo '<div class="message">';
             echo $msg;
             echo '</div>';
         }
+
         $this->after();
         exit;
     }
@@ -281,7 +306,7 @@ abstract class Controller_MyQEE_Admin extends Controller
                 if ( isset($v['href']) && $v['href']==$url )
                 {
                     # 如果当前URL和$v['href']的设置完全相同，则返回
-                    $menu = array($k);
+                    $menu  = array($k);
                     $found = true;
                     break;
                 }
@@ -315,11 +340,12 @@ abstract class Controller_MyQEE_Admin extends Controller
                 }
             }
         }
-        if ( $menu )
+
+        if ($menu)
         {
             return $menu;
         }
-        elseif( $sub_menu )
+        elseif($sub_menu)
         {
             return $sub_menu;
         }
