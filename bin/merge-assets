@@ -76,7 +76,7 @@ foreach ($include_path as $path)
         glob_files($file_paths,$dir,strlen($dir));
     }
 }
-
+//print_r($file_paths);exit;
 echo "\n文件数:\n";
 
 # 输出目录
@@ -127,7 +127,7 @@ foreach (array('css','less','js','other') as $type)
 
             if (false===$recreate)
             {
-                if ($old_out_file_filemtime > filemtime($fullpath))
+                if (true===$fullpath || $old_out_file_filemtime > filemtime($fullpath))
                 {
                     if ($type=='css'||$type=='js')
                     {
@@ -173,7 +173,15 @@ foreach (array('css','less','js','other') as $type)
         }
 
         # 内容
-        $content = file_get_contents($fullpath);
+        if (true===$fullpath)
+        {
+            $content = '';
+        }
+        else
+        {
+            $content = file_get_contents($fullpath);
+        }
+
         if ($type=='css'||$type=='less'||$type=='js')
         {
             if (isset($file_paths['extends'][$tmpfile]) && $file_paths['extends'][$tmpfile])
@@ -197,7 +205,6 @@ foreach (array('css','less','js','other') as $type)
                 $todo_min_files[$type=='less'?'css':$type][$tmpfile] = $out_file;
             }
         }
-
         # 如果应该输出为文件的路径变成了文件夹，则先删除
         if (is_dir($out_file))
         {
@@ -205,7 +212,7 @@ foreach (array('css','less','js','other') as $type)
         }
 
         # 写入文件
-        $rs = File::create_file($out_file, $content);
+        $rs = File::create_file($out_file, trim($content));
         echo "\n  => {$out_dir_path}{$tmpfile} " . ($rs?$success:$error);
 
         # 对于CSS或LESS文件，如果有扩展模块，则先把扩展文件写入到文件中
@@ -385,6 +392,8 @@ function glob_files(&$file_paths,$dir,$dir_len)
                         }
                         # 记录到扩展数据里
                         $file_paths['extend'][$parent_file_path] = $file;
+
+                        if (!$file_paths[$suffix][$parent_file_path]) $file_paths[$suffix][$parent_file_path] = true;
                         continue;
                     }
                 }
@@ -397,6 +406,7 @@ function glob_files(&$file_paths,$dir,$dir_len)
 
                     # 记录到模块数据里
                     $file_paths['modules'][$parent_file_path][$file_name] = $file;
+                    if (!$file_paths[$suffix][$parent_file_path]) $file_paths[$suffix][$parent_file_path] = true;
                     continue;
                 }
 
