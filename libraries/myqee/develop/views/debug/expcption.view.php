@@ -84,9 +84,21 @@ return false;
 <?php endforeach ?>
 </ol>
 </div>
-<h2><a href="#<?php echo $env_id = $error_id.'environment' ?>" onclick="return koggle('<?php echo $env_id ?>')">Environment</a></h2>
+<?php $env_id = $error_id.'environment';?>
+<h2 onclick="return koggle('<?php echo $env_id ?>');" style="cursor:pointer;" onmouseover="this.getElementsByTagName('A')[0].style.color='#f0ff00';" onmouseout="this.getElementsByTagName('A')[0].style.color='';"><a href="#<?php echo $env_id; ?>" onclick="return false">Environment</a></h2>
 <div id="<?php echo $env_id ?>" class="content collapsed">
-	<?php $included = get_included_files() ?>
+	<?php $included = Core::$include_path; ?>
+	<h3><a href="#<?php echo $env_id = $error_id.'environment_include_path' ?>" onclick="return koggle('<?php echo $env_id ?>')">Include path</a> (<?php echo count($included) ?>)</h3>
+	<div id="<?php echo $env_id ?>" class="collapsed">
+		<table cellspacing="0">
+			<?php foreach ($included as $file): ?>
+			<tr>
+				<td><code><?php echo Core::debug_path($file) ?></code></td>
+			</tr>
+				<?php endforeach ?>
+		</table>
+	</div>
+	<?php $included = get_included_files(); ?>
 	<h3><a href="#<?php echo $env_id = $error_id.'environment_included' ?>" onclick="return koggle('<?php echo $env_id ?>')">Included files</a> (<?php echo count($included) ?>)</h3>
 	<div id="<?php echo $env_id ?>" class="collapsed">
 		<table cellspacing="0">
@@ -97,31 +109,31 @@ return false;
 				<?php endforeach ?>
 		</table>
 	</div>
-		<?php $included = get_loaded_extensions() ?>
-		<h3><a href="#<?php echo $env_id = $error_id.'environment_loaded' ?>" onclick="return koggle('<?php echo $env_id ?>')">Loaded extensions</a> (<?php echo count($included) ?>)</h3>
-		<div id="<?php echo $env_id ?>" class="collapsed">
-			<table cellspacing="0">
-				<?php foreach ($included as $file): ?>
-				<tr>
-					<td><code><?php echo Core::debug_path($file) ?></code></td>
-				</tr>
-				<?php endforeach ?>
-			</table>
-		</div>
-		<?php foreach (array('_SESSION', '_GET', '_POST', '_FILES', '_COOKIE', '_SERVER') as $var): ?>
-		<?php if (empty($GLOBALS[$var]) OR ! is_array($GLOBALS[$var])) continue ?>
-		<h3><a href="#<?php echo $env_id = $error_id.'environment'.strtolower($var) ?>" onclick="return koggle('<?php echo $env_id ?>')">$<?php echo $var ?></a></h3>
-		<div id="<?php echo $env_id ?>" class="collapsed">
-			<table cellspacing="0">
-				<?php foreach ($GLOBALS[$var] as $key => $value): ?>
-				<tr>
-					<td><code><?php echo $key ?></code></td>
-					<td><pre style="padding:0;margin:0;"><?php echo ErrException::dump($value) ?></pre></td>
-				</tr>
-				<?php endforeach ?>
-			</table>
-		</div>
-		<?php endforeach ?>
+	<?php $included = get_loaded_extensions() ?>
+	<h3><a href="#<?php echo $env_id = $error_id.'environment_loaded' ?>" onclick="return koggle('<?php echo $env_id ?>')">Loaded extensions</a> (<?php echo count($included) ?>)</h3>
+	<div id="<?php echo $env_id ?>" class="collapsed">
+		<table cellspacing="0">
+			<?php foreach ($included as $file): ?>
+			<tr>
+				<td><code><?php echo Core::debug_path($file) ?></code></td>
+			</tr>
+			<?php endforeach ?>
+		</table>
 	</div>
+	<?php foreach (array('_SESSION', '_GET', '_POST', '_FILES', '_COOKIE', '_SERVER') as $var): ?>
+	<?php if (empty($GLOBALS[$var]) OR ! is_array($GLOBALS[$var])) continue ?>
+	<h3><a href="#<?php echo $env_id = $error_id.'environment'.strtolower($var) ?>" onclick="return koggle('<?php echo $env_id ?>')">$<?php echo $var ?></a></h3>
+	<div id="<?php echo $env_id ?>" class="collapsed">
+		<table cellspacing="0">
+			<?php foreach ($GLOBALS[$var] as $key => $value): ?>
+			<tr>
+				<td><code><?php echo $key ?></code></td>
+				<td><pre style="padding:0;margin:0;"><?php echo ErrException::dump($value) ?></pre></td>
+			</tr>
+			<?php endforeach ?>
+		</table>
+	</div>
+	<?php endforeach ?>
+</div>
 </div>
 </div>
