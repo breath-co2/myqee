@@ -10,10 +10,33 @@ class Controller_DevAssets extends Controller
 {
     protected $allow_suffix = 'js|css|jpg|png|gif|bmp|html|htm|mp4|swf|zip';
 
+    /**
+     * 文件名
+     *
+     * @var sting
+     */
+    protected $file;
+
+    /**
+     * 文件类型
+     *
+     * @var string
+     */
+    protected $type;
+
+    /**
+     * 项目
+     *
+     * @var string
+     */
+    protected $project;
+
     public function before()
     {
-        $this->project = $this->action;
-
+        if ($this->action!='default')
+        {
+            $this->project = array_shift($this->arguments);
+        }
         $arguments = $this->arguments;
         $f = array_pop($arguments);
         if ( $f && preg_match('#^([a-zA-Z0-9_/\-\.]+).('.$this->allow_suffix.')$#i', $f,$m) )
@@ -189,7 +212,7 @@ class Controller_DevAssets extends Controller
         }
         else
         {
-            Core::show_404();
+            Core::show_404(__('Assets files : %s not found.',array('%s'=>$this->file.'.'.$this->type)));
         }
     }
 

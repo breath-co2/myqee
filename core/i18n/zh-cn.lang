@@ -28,6 +28,13 @@ The error has been logged and can use this number to report the error message to
 captcha.requires_GD2                                            = 验证码需要GD库支持
 function imageftbbox not exist.                                 = "函数imageftbbox不存在，编译PHP的时候请注意需要加上 --with-freetype-dir=DIR"
 
+
+Assets files : %s not found.             = 静态资源“%s”文件不存在
+
+
+
+
+
 [Core.Upload]
 upload_userfile_not_set             = 未找到定义的文件域上传。
 upload_file_exceeds_limit           = 上传文件超出PHP配置文件中允许的最大长度。
