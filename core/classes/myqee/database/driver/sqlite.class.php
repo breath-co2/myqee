@@ -231,6 +231,13 @@ class MyQEE_Database_Driver_SQLite extends Database_Driver
         }
     }
 
+    /**
+     * 设置编码
+     *
+     * @param string $charset
+     * @throws Exception
+     * @return void|boolean
+     */
     public function set_charset($charset)
     {
         if (!$charset)return;
@@ -595,7 +602,7 @@ class MyQEE_Database_Driver_SQLite extends Database_Driver
                     {
 						// Quote each of the parts
 					    $this->_change_charset($part);
-						$part = $this->_identifier.$part.$this->_identifier;
+						$part = $this->_identifier.str_replace($this->_identifier,'',$part).$this->_identifier;
 					}
 				}
 
@@ -604,14 +611,14 @@ class MyQEE_Database_Driver_SQLite extends Database_Driver
 			else
 			{
 			    $this->_change_charset($column);
-				$column = $this->_identifier.$column.$this->_identifier;
+				$column = $this->_identifier.str_replace($this->_identifier,'',$column).$this->_identifier;
 			}
 		}
 
 		if ( isset($alias) )
 		{
 		    $this->_change_charset($alias);
-			$column .= ' AS '.$this->_identifier.$alias.$this->_identifier;
+			$column .= ' AS '.$this->_identifier.str_replace($this->_identifier,'',$alias).$this->_identifier;
 		}
 
         return $column;
@@ -1170,7 +1177,12 @@ class MyQEE_Database_Driver_SQLite extends Database_Driver
         {
             if (!is_array($item))continue;
 
-            if ( preg_match('#^(.*) AS (.*)$#i', $item[0] , $m) )
+            if (is_array($item[0]))
+            {
+                $column = $item[0][0];
+                $alias  = $item[0][1];
+            }
+            else if ( preg_match('#^(.*) AS (.*)$#i', $item[0] , $m) )
             {
                 $column = $this->_quote_identifier($m[1]);
                 $alias  = $m[2];
@@ -1193,7 +1205,7 @@ class MyQEE_Database_Driver_SQLite extends Database_Driver
 
             $builder['select'][] = array
             (
-                Database::expr_value(strtoupper($item[0]).'('.$column.$args_str.')'),
+                Database::expr_value(strtoupper($item[1]).'('.$this->_quote_identifier($column.$args_str).')'),
                 $alias,
             );
         }

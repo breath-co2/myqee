@@ -166,7 +166,7 @@ class MyQEE_Database_Driver_MySQL extends Database_Driver
                 Core::debug()->error($error_host,'error_host');
 
                 if ($last_error)throw $last_error;
-                throw new Exception('数据库链接失败');
+                throw new Exception('connect mysql server error.');
             }
 
             $_connection_id = $this->_get_connection_hash($hostname, $port, $username);
@@ -186,7 +186,7 @@ class MyQEE_Database_Driver_MySQL extends Database_Driver
                 }
                 if (false===$tmplink)throw new Exception('connect mysql server error.');
 
-                Core::debug()->info('mysql '.$username.'@'.$hostname.' connection time:' . (microtime(true) - $time));
+                Core::debug()->info('mysql://'.$username.'@'.$hostname.'/ connection time:' . (microtime(true) - $time));
 
                 # 连接ID
                 $this->_connection_ids[$this->_connection_type] = $_connection_id;
@@ -327,6 +327,12 @@ class MyQEE_Database_Driver_MySQL extends Database_Driver
             if ( !mysql_select_db($database,$connection) )
             {
                 throw new Exception('选择数据表错误:' . mysql_error($connection) . mysql_errno($connection));
+            }
+
+            if (IS_DEBUG)
+            {
+                $host = $this->_get_hostname_by_connection_hash($this->connection_id());
+                $benchmark = Core::debug()->info(($host['username']?$host['username'].'@':'') . $host['hostname'] . ($host['port'] && $host['port']!='3306'?':'.$host['port']:'').'select to db:'.$database);
             }
 
             # 记录当前已选中的数据库
@@ -800,7 +806,7 @@ class MyQEE_Database_Driver_MySQL extends Database_Driver
                     {
                         // Quote each of the parts
 					    $this->_change_charset($part);
-                        $part = $this->_identifier.$part.$this->_identifier;
+						$part = $this->_identifier.str_replace($this->_identifier,'',$part).$this->_identifier;
                     }
                 }
 
@@ -809,14 +815,14 @@ class MyQEE_Database_Driver_MySQL extends Database_Driver
             else
             {
 			    $this->_change_charset($column);
-                $column = $this->_identifier.$column.$this->_identifier;
+				$column = $this->_identifier.str_replace($this->_identifier,'',$column).$this->_identifier;
             }
         }
 
         if ( isset($alias) )
         {
 		    $this->_change_charset($alias);
-            $column .= ' AS '.$this->_identifier.$alias.$this->_identifier;
+			$column .= ' AS '.$this->_identifier.str_replace($this->_identifier,'',$alias).$this->_identifier;
         }
 
         return $column;
@@ -1375,7 +1381,12 @@ class MyQEE_Database_Driver_MySQL extends Database_Driver
         {
             if (!is_array($item))continue;
 
-            if ( preg_match('#^(.*) AS (.*)$#i', $item[0] , $m) )
+            if (is_array($item[0]))
+            {
+                $column = $item[0][0];
+                $alias  = $item[0][1];
+            }
+            else if ( preg_match('#^(.*) AS (.*)$#i', $item[0] , $m) )
             {
                 $column = $this->_quote_identifier($m[1]);
                 $alias  = $m[2];
@@ -1398,7 +1409,7 @@ class MyQEE_Database_Driver_MySQL extends Database_Driver
 
             $builder['select'][] = array
             (
-                Database::expr_value(strtoupper($item[0]).'('.$column.$args_str.')'),
+                Database::expr_value(strtoupper($item[1]).'('.$this->_quote_identifier($column.$args_str).')'),
                 $alias,
             );
         }

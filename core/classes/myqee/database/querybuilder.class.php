@@ -160,7 +160,7 @@ class MyQEE_Database_QueryBuilder
      * @param string $opt
      * @return Database
      */
-    public function select_adv($conlumn, $opt1=null, $opt2=null)
+    public function select_adv($conlumn, $type, $opt1=null, $opt2=null)
     {
         $this->_builder['select_adv'][] = func_get_args();
 

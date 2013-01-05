@@ -470,12 +470,6 @@ class MyQEE_Database_Driver_Mongo extends Database_Driver
                 $sql['select'] = $s;
             }
 
-            // 高级查询条件
-            if ( $builder['select_adv'] )
-            {
-                $sql['select_adv'] = $builder['select_adv'];
-            }
-
             // 排序
             if ( $builder['order_by'] )
             {
@@ -490,6 +484,19 @@ class MyQEE_Database_Driver_Mongo extends Database_Driver
             {
                 $sql['group_by'] = $builder['group_by'];
             }
+
+            // 高级查询条件
+            if ( $builder['select_adv'] )
+            {
+                $sql['select_adv'] = $builder['select_adv'];
+
+                // 分组统计
+                if (!$builder['group_by'])
+                {
+                    $sql['group_by'] = array('0');
+                }
+            }
+
         }
 
         return $sql;
@@ -763,8 +770,21 @@ class MyQEE_Database_Driver_Mongo extends Database_Driver
                         (
                             '$group' => $group_opt,
                         );
+                        $last_query .= '{$group:'.json_encode($group_opt);
 
-                        $last_query .= '{$group:'.json_encode($group_opt).'}';
+                        if (isset($options['limit']) && $options['limit']>0)
+                        {
+                            $ops[]['$limit'] = $options['limit'];
+                            $last_query .= ',$limit:'.$options['limit'];
+                        }
+
+                        if (isset($options['offset']) && $options['offset']>0)
+                        {
+                            $ops[]['$skip'] = $options['offset'];
+                            $last_query .= ',$skip:'.$options['offset'];
+                        }
+
+                        $last_query .= '}';
                         $last_query .= ')';
 
                         $result = $connection->selectCollection($tablename)->aggregate($ops);
