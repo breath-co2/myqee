@@ -851,7 +851,7 @@ class MyQEE_Database_Driver_MySQLI extends Database_Driver
 
         $this->_init_as_table($builder);
 
-        $this->format_adv_select($builder);
+        $this->format_select_adv($builder);
 
         if ( empty($builder['select']) )
         {
@@ -1367,14 +1367,14 @@ class MyQEE_Database_Driver_MySQLI extends Database_Driver
     /**
      * 格式化高级查询参数到select里
      */
-    protected function format_adv_select( &$builder )
+    protected function format_select_adv( &$builder )
     {
-        if ( empty($builder['adv_select']) )
+        if ( empty($builder['select_adv']) )
         {
             return;
         }
 
-        foreach ($builder['adv_select'] as $item)
+        foreach ($builder['select_adv'] as $item)
         {
             if (!is_array($item))continue;
 
