@@ -474,6 +474,7 @@ abstract class MyQEE_Core extends Bootstrap
                 return null;
             }
         }
+
         if ( !$found_files )
         {
             # 采用当前项目目录
@@ -490,6 +491,7 @@ abstract class MyQEE_Core extends Bootstrap
                         $found_files[] = $tmpfile_debug;
                     }
                 }
+
                 $tmpfile = $path . $dir . DS . $file . $ext;
                 if ( is_file($tmpfile) )
                 {
@@ -629,7 +631,17 @@ abstract class MyQEE_Core extends Bootstrap
     {
         //TODO 须加入静态资源版本号
 
-        return URL_ASSETS . ltrim($uri,'/');
+        if (IS_DEBUG & 1)
+        {
+            # 本地调试环境
+            $url_asstes = '/devassets/'.Core::$project.'/';
+        }
+        else
+        {
+            $url_asstes = URL_ASSETS;
+        }
+
+        return $url_asstes . ltrim($uri,'/');
     }
 
     /**
@@ -710,7 +722,7 @@ abstract class MyQEE_Core extends Bootstrap
     */
     protected static function write_log($file , $data , $type = 'log')
     {
-        return @file_put_contents(DIR_LOG.$file, $data.CRLF , FILE_APPEND)?true:false;
+        return false===@file_put_contents(DIR_LOG.$file, $data.CRLF , FILE_APPEND)?true:false;
     }
 
     /**
@@ -763,18 +775,26 @@ abstract class MyQEE_Core extends Bootstrap
     /**
      * 将真实路径地址输出为调试地址
      *
-     * 显示结果类似 SYSPATH/libraries/Database.php
+     * 显示结果类似 ./system/libraries/Database.class.php
      *
-     * @param   string  path to debug
-     * @return  string
+     * @param  string  path to debug
+     * @param  boolean $highlight 是否返回高亮前缀
+     * @return string
      */
-    public static function debug_path($file)
+    public static function debug_path($file,$highlight=false)
     {
-        if (IS_CLI)
+        if ($highlight)
         {
-            # 命令行下输出带色彩的前缀
-            $l = "\x1b[36m";
-            $r = "\x1b[39m";
+            if (IS_CLI)
+            {
+                # 命令行下输出带色彩的前缀
+                $l = "\x1b[36m";
+                $r = "\x1b[39m";
+            }
+            else
+            {
+                $l = $r = '';
+            }
         }
         else
         {
