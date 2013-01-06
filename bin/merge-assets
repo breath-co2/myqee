@@ -109,19 +109,21 @@ foreach (array('css'=>'css ','less'=>'less','js'=>'js  ','extends'=>'扩展','mo
         $changed_count = 0;
         foreach ($file_paths[$type] as $files)
         {
+            if (true===$files)continue;
             $files = (array)$files;
             $all_count += count($files);
             foreach ($files as $file)
             {
                 $new_md5 = $file_paths['file_md5'][$file];
                 $file2 = Core::debug_path($file);
-                if (!isset($old_md5[$file2]) || $old_md5[$file2]!=$md5)
+                if (!isset($old_md5[$file2]) || $old_md5[$file2]!=$new_md5)
                 {
                     $changed_files[] = $file;
                     $changed_count += 1;
                 }
             }
         }
+
         echo "  => {$name}: \x1b[35m".$changed_count."\x1b[39m/\x1b[36m".$all_count."\x1b[39m\n";
     }
 }
@@ -158,36 +160,53 @@ foreach (array('css','less','js','other') as $type)
             $file_dir = '';
         }
 
-        if (is_file($out_file))
+
+        if ($recreate)
         {
-            # 已经有文件，检查下修改时间看看是否需要替换
-
-            # 读取文件最后修改时间
-            $old_out_file_filemtime = filemtime($out_file);
-
-            $need_renew = false;
-
-            if (false===$recreate)
+            $need_renew = true;
+        }
+        else
+        {
+            if ( is_file($out_file) )
             {
-                if (true===$fullpath || $old_out_file_filemtime > filemtime($fullpath))
+                if (true!==$fullpath)
                 {
-                    if ($type=='css'||$type=='js')
-                    {
-                        # 扩展中
-                        if (isset($file_paths['extends'][$tmpfile]) && $file_paths['extends'][$tmpfile])
-                        {
-                            if ($old_out_file_filemtime < filemtime($file_paths['extends'][$tmpfile]))
-                            {
-                                $need_renew = true;
-                            }
-                        }
+                    $fulldebugpath = Core::debug_path($fullpath);
+                }
 
-                        # 模块中
-                        if (isset($file_paths['modules'][$tmpfile]) && $file_paths['modules'][$tmpfile])
+                if (true!==$fullpath && (!isset($old_md5[$fulldebugpath]) || $old_md5[$fulldebugpath]!=$file_paths['file_md5'][$fullpath]))
+                {
+                    $need_renew = true;
+                }
+                else
+                {
+                    $need_renew = false;
+
+                    # 获取所有依赖文件
+                    if (isset($file_paths['extends'][$tmpfile]) && $file_paths['extends'][$tmpfile])
+                    {
+                        $tmpexfulldebugpath = Core::debug_path($file_paths['extends'][$tmpfile]);
+
+                        if (!isset($old_md5[$tmpexfulldebugpath]) || $old_md5[$tmpexfulldebugpath]!=$file_paths['file_md5'][$file_paths['extends'][$tmpfile]])
                         {
-                            foreach ($file_paths['modules'][$tmpfile] as $tmpmfile)
+                            $need_renew = true;
+                        }
+                    }
+
+                    if ( false===$need_renew && isset($file_paths['modules'][$tmpfile]) && $file_paths['modules'][$tmpfile])foreach ($file_paths['modules'][$tmpfile] as $tmpfile2=>$tmpexfullpath)
+                    {
+                        $tmpexfulldebugpath = Core::debug_path($tmpexfullpath);
+                        if (!isset($old_md5[$tmpexfulldebugpath]) || $old_md5[$tmpexfulldebugpath]!=$file_paths['file_md5'][$tmpexfullpath])
+                        {
+                            $need_renew = true;
+                            break;
+                        }
+                        else
+                        {
+                            if (isset($file_paths['extends'][$tmpfile2]) && $file_paths['extends'][$tmpfile2])
                             {
-                                if ($old_out_file_filemtime < filemtime($tmpmfile))
+                                $tmpexfulldebugpath = Core::debug_path($file_paths['extends'][$tmpfile2]);
+                                if (!isset($old_md5[$tmpexfulldebugpath]) || $old_md5[$tmpexfulldebugpath]!=$file_paths['file_md5'][$file_paths['extends'][$tmpfile2]])
                                 {
                                     $need_renew = true;
                                     break;
@@ -196,22 +215,18 @@ foreach (array('css','less','js','other') as $type)
                         }
                     }
                 }
-                else
-                {
-                    $need_renew = true;
-                }
             }
             else
             {
                 $need_renew = true;
             }
+        }
 
-            # 无需修改
-            if (!$need_renew)
-            {
-                // echo "\n  => {$out_dir_path}{$tmpfile} ".$done;
-                // continue;
-            }
+        # 无需修改
+        if (!$need_renew)
+        {
+            echo "\n  => {$out_dir_path}{$tmpfile} ".$done;
+            continue;
         }
 
         # 内容
@@ -389,6 +404,18 @@ if (isset($file_paths['modules']) && $file_paths['modules'])foreach($file_paths[
     }
 }
 
+$file_md5 = array();
+foreach ($file_paths['file_md5'] as $tmpfile=>$md5)
+{
+    $file_md5[Core::debug_path($tmpfile)] = $md5;
+}
+asort($file_md5);
+$content = serialize($file_md5);
+if (md5($content)!=md5_file($cachefile))
+{
+    # 保存MD5列表
+    File::create_file($cachefile,$content);
+}
 
 echo "\n\n合并结束\n";
 
