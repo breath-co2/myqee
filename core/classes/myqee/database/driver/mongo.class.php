@@ -772,16 +772,22 @@ class MyQEE_Database_Driver_Mongo extends Database_Driver
                         );
                         $last_query .= '{$group:'.json_encode($group_opt);
 
+                        if (isset($options['sort']) && $options['sort'])
+                        {
+                            $ops[]['$sort'] = $options['sort'];
+                            $last_query .= ',$sort:'.json_encode($options['sort']);
+                        }
+
+                        if (isset($options['skip']) && $options['skip']>0)
+                        {
+                            $ops[]['$skip'] = $options['skip'];
+                            $last_query .= ',$skip:'.$options['skip'];
+                        }
+
                         if (isset($options['limit']) && $options['limit']>0)
                         {
                             $ops[]['$limit'] = $options['limit'];
                             $last_query .= ',$limit:'.$options['limit'];
-                        }
-
-                        if (isset($options['offset']) && $options['offset']>0)
-                        {
-                            $ops[]['$skip'] = $options['offset'];
-                            $last_query .= ',$skip:'.$options['offset'];
                         }
 
                         $last_query .= '}';
