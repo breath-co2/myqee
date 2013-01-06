@@ -48,7 +48,7 @@ include (dirname(__FILE__).'/../index.php');
 echo "待合并目录：\n";
 foreach (Bootstrap::$include_path as $path)
 {
-    echo "  => ".Core::debug_path($path)."\n";
+    echo "  => ".Core::debug_path($path,true)."\n";
 }
 
 if (in_array('-r',$argv))
@@ -76,8 +76,10 @@ foreach ($include_path as $path)
         glob_files($file_paths,$dir,strlen($dir));
     }
 }
-//print_r($file_paths);exit;
-echo "\n文件数:\n";
+
+// print_r($file_paths);exit;
+
+echo "\n修改数/文件数:\n";
 
 # 输出目录
 $out_dir = DIR_ASSETS . $project .'/';
@@ -85,22 +87,54 @@ $out_dir = DIR_ASSETS . $project .'/';
 # 记录所有文件的修改时间
 $edit_times = array();
 
+# md5存放的文件
+$cachefile = DIR_CACHE . 'asset_md5_by_proect_'.$project;
+if (is_file($cachefile))
+{
+    $old_md5 = (array)unserialize(file_get_contents($cachefile));
+}
+else
+{
+    $old_md5 = array();
+}
+
+# 修改的文件数
+$changed_files = array();
 # 输出信息
-foreach (array('css'=>'css ','less'=>'less','js'=>'js  ','other'=>'其它','extends'=>'扩展','modules'=>'模块') as $type=>$name)
+foreach (array('css'=>'css ','less'=>'less','js'=>'js  ','extends'=>'扩展','modules'=>'模块','other'=>'其它') as $type=>$name)
 {
     if (isset($file_paths[$type]) && $file_paths[$type])
     {
-        echo "  => 找到{$name}文件: \x1b[33m".count($file_paths[$type])."\x1b[39m\n";
+        $all_count = 0;
+        $changed_count = 0;
+        foreach ($file_paths[$type] as $files)
+        {
+            $files = (array)$files;
+            $all_count += count($files);
+            foreach ($files as $file)
+            {
+                $new_md5 = $file_paths['file_md5'][$file];
+                $file2 = Core::debug_path($file);
+                if (!isset($old_md5[$file2]) || $old_md5[$file2]!=$md5)
+                {
+                    $changed_files[] = $file;
+                    $changed_count += 1;
+                }
+            }
+        }
+        echo "  => {$name}: \x1b[35m".$changed_count."\x1b[39m/\x1b[36m".$all_count."\x1b[39m\n";
     }
 }
 
+echo "总修改数 : \x1b[35m".count($changed_files)."\x1b[39m/\x1b[36m".count($file_paths['file_md5'])."\x1b[39m\n";
 
 echo "\n开始合并文件:";
 
 $done    = "[\x1b[35m未修改\x1b[39m]";
 $success = "\x1b[32m✔\x1b[39m";
 $error   = "\x1b[31m✕\x1b[39m";
-$out_dir_path = Core::debug_path($out_dir);
+
+$out_dir_path = Core::debug_path($out_dir, true);
 
 # 记录需要压缩处理的文件列表
 $todo_min_files = array();
@@ -115,6 +149,14 @@ foreach (array('css','less','js','other') as $type)
     {
         # 输出的文件名
         $out_file = $out_dir . $tmpfile;
+        if (false!==strrpos($tmpfile,'/'))
+        {
+            $file_dir = substr($tmpfile,0,strrpos($tmpfile,'/')+1);
+        }
+        else
+        {
+            $file_dir = '';
+        }
 
         if (is_file($out_file))
         {
@@ -167,8 +209,8 @@ foreach (array('css','less','js','other') as $type)
             # 无需修改
             if (!$need_renew)
             {
-                echo "\n  => {$out_dir_path}{$tmpfile} ".$done;
-                continue;
+                // echo "\n  => {$out_dir_path}{$tmpfile} ".$done;
+                // continue;
             }
         }
 
@@ -191,12 +233,18 @@ foreach (array('css','less','js','other') as $type)
             }
 
             # JS的模块直接合并即可，CSS利用less处理@import的文件进行合并
-            if ($type=='js')
+            if ($type=='css'||$type=='js')
             {
-                if (isset($file_paths['modules'][$tmpfile]) && $file_paths['modules'][$tmpfile])foreach($file_paths['modules'][$tmpfile] as $tmpmfile)
+                if (isset($file_paths['modules'][$tmpfile]) && $file_paths['modules'][$tmpfile])foreach($file_paths['modules'][$tmpfile] as $modfile => $tmpmfile)
                 {
                     # 读取JS模块文件进行合并
                     $content .= CRLF.file_get_contents($tmpmfile);
+
+                    # 扩展
+                    if (isset($file_paths['extends'][$modfile]) && $file_paths['extends'][$modfile])
+                    {
+                        $content .= CRLF . file_get_contents($file_paths['extends'][$modfile]);
+                    }
                 }
             }
 
@@ -215,16 +263,20 @@ foreach (array('css','less','js','other') as $type)
         $rs = File::create_file($out_file, trim($content));
         echo "\n  => {$out_dir_path}{$tmpfile} " . ($rs?$success:$error);
 
-        # 对于CSS或LESS文件，如果有扩展模块，则先把扩展文件写入到文件中
-        if ( ($type=='css'||$type=='less') && isset($file_paths['modules'][$tmpfile]) && $file_paths['modules'][$tmpfile])foreach ($file_paths['modules'][$tmpfile] as $filename => $tmpmfile)
+        # 对于LESS文件，如果有扩展模块，则先把扩展文件写入到文件中，再在后面由recess来处理
+        if ( $type=='less' && isset($file_paths['modules'][$tmpfile]) && $file_paths['modules'][$tmpfile])foreach ($file_paths['modules'][$tmpfile] as $modfile => $tmpmfile)
         {
-            $outm_file = $out_dir . $filename;
-            $rs = File::create_file($outm_file, file_get_contents($tmpmfile));
-            echo "\n     {$out_dir_path}{$filename} " . ($rs?$success:$error);
+            $outm_file = $out_dir . $modfile;
+            $continue = file_get_contents($tmpmfile);
+            if (isset($file_paths['extends'][$modfile]) && $file_paths['extends'][$modfile])
+            {
+                $content .= CRLF . file_get_contents($file_paths['extends'][$modfile]);
+            }
+            $rs = File::create_file($outm_file, trim($continue));
+            echo "\n     {$out_dir_path}{$modfile} " . ($rs?$success:$error);
         }
     }
 }
-
 
 
 # 处理压缩
@@ -359,30 +411,48 @@ function glob_files(&$file_paths,$dir,$dir_len)
             continue;
         }
 
+        # 将文件列表加入到all数组里
+        $file_paths['file_md5'][$file] = md5_file($file);
+
         $file = str_replace('\\', '/', $file);
         $path_rpos = strrpos($file,'/');
 
         # 文件名
         $file_name = substr($file,$path_rpos+1);
+        $file_path = substr($file,$dir_len,-strlen($file_name)).$file_name;
 
         $rpos = strrpos($file_name,'.');
         if ($rpos>0)
         {
             # 后缀
             $suffix = strtolower(substr($file_name,$rpos+1));
-            $file_path = substr($file,$dir_len,-strlen($file_name)).$file_name;
 
             if ($suffix=='css'||$suffix=='less'||$suffix=='js')
             {
+                # 处理CSS，JS文件
                 $file_name_arr = explode('.',$file_name);
                 $count_file_name_arr = count($file_name_arr);
 
-                if ($count_file_name_arr>2)
+                if ($count_file_name_arr>=3)
                 {
-                    if ('extend' == strtolower($file_name_arr[$count_file_name_arr-2]))
+                    $type = strtolower($file_name_arr[1]);
+                    if ('extend'==$type || 'mod'==$type)
                     {
-                        # 扩展
-                        unset($file_name_arr[$count_file_name_arr-2]);
+                        if ('extend'==$type)
+                        {
+                            if ($count_file_name_arr==3)
+                            {
+                                unset($file_name_arr[1]);
+                            }
+                            else
+                            {
+                                $file_name_arr[1] = 'mod';
+                            }
+                        }
+                        else
+                        {
+                            $file_name_arr = array($file_name_arr[0],$file_name_arr[count($file_name_arr)-1]);
+                        }
                         $parent_file_name = implode('.',$file_name_arr);
                         $parent_file_path = substr($file,$dir_len,-strlen($file_name)).$parent_file_name;
 
@@ -390,24 +460,22 @@ function glob_files(&$file_paths,$dir,$dir_len)
                         {
                             $parent_file_path = substr($file_path,0,-strlen($sub)).'.css';
                         }
-                        # 记录到扩展数据里
-                        $file_paths['extend'][$parent_file_path] = $file;
 
-                        if (!$file_paths[$suffix][$parent_file_path]) $file_paths[$suffix][$parent_file_path] = true;
+                        if ('mod'==$type)
+                        {
+                            $file_paths['modules'][$parent_file_path][substr($file,$dir_len,-strlen($file_name)).$file_name] = $file;
+                        }
+                        else
+                        {
+                            $file_paths['extends'][$parent_file_path] = $file;
+                        }
+
+                        if ($count_file_name_arr==3 && !$file_paths[$suffix][$parent_file_path])
+                        {
+                            $file_paths[$suffix][$parent_file_path] = true;
+                        }
                         continue;
                     }
-                }
-                else if (($rpos_m = strrpos($file_name_arr[0],'-'))>0)
-                {
-                    # 横线隔开的模块
-                    $file_name_arr[0] = substr($file_name_arr[0],0,$rpos_m);
-                    $parent_file_name = implode('.',$file_name_arr);
-                    $parent_file_path = substr($file,$dir_len,-strlen($file_name)).$parent_file_name;
-
-                    # 记录到模块数据里
-                    $file_paths['modules'][$parent_file_path][$file_name] = $file;
-                    if (!$file_paths[$suffix][$parent_file_path]) $file_paths[$suffix][$parent_file_path] = true;
-                    continue;
                 }
 
                 $file_paths[$suffix][$file_path] = $file;
@@ -416,6 +484,10 @@ function glob_files(&$file_paths,$dir,$dir_len)
             {
                 $file_paths['other'][$file_path] = $file;
             }
+        }
+        else
+        {
+            $file_paths['other'][$file_path] = $file;
         }
     }
 }
