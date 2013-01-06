@@ -291,7 +291,7 @@ class MyQEE_File
                 File::create_dir($dir);
             }
 
-            if ( @file_put_contents($file, $data , $flags , $context) )
+            if ( false!==@file_put_contents($file, $data , $flags , $context) )
             {
                 @chmod($file, 0666);
 
