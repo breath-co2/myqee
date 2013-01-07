@@ -108,6 +108,15 @@ foreach (Bootstrap::$include_path as $path)
 $include_path = Bootstrap::$include_path;
 $include_path = array_reverse($include_path);
 
+# 允许的后缀
+$allow_suffix = Core::config('core.asset_allow_suffix');
+if (!$allow_suffix)
+{
+    $allow_suffix = 'js|css|jpg|jpeg|png|gif|bmp|pdf|html|htm|mp4|swf';
+}
+$allow_suffix = explode('|',$allow_suffix);
+
+
 # 循环获取所有文件列表
 $file_paths = array();
 
@@ -475,6 +484,8 @@ exit;
  */
 function glob_files(&$file_paths,$dir,$dir_len)
 {
+    global $allow_suffix;
+
     $files = glob( $dir .'*', GLOB_NOSORT );
 
     if ($files)foreach ($files as $file)
@@ -557,14 +568,10 @@ function glob_files(&$file_paths,$dir,$dir_len)
 
                 $file_paths[$suffix][$file_path] = $file;
             }
-            else
+            elseif (in_array($suffix,$allow_suffix))
             {
                 $file_paths['other'][$file_path] = $file;
             }
-        }
-        else
-        {
-            $file_paths['other'][$file_path] = $file;
         }
     }
 }

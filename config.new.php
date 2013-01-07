@@ -244,6 +244,13 @@ $config['error500']['save_type'] = 'file';
 $config['error500']['type_config'] = 'default';
 
 
+/**
+ * assets允许的文件后缀名，用|隔开
+ *
+ *
+ * @var string
+ */
+$config['asset_allow_suffix'] = 'js|css|jpg|jpeg|png|gif|bmp|pdf|html|htm|mp4|swf';
 
 /**
  * nodejs 执行文件默认路径
