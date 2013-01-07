@@ -3,8 +3,8 @@
 # 将指定项目的assets目录和调用类库的的assets目录的文件进行合并，并输出保存到 wwwroot/assets/ 对应项目目录里
 
 # 本脚本依赖 recess 和 uglifyjs 分别处理css和js
-# recess   https:#github.com/twitter/recess
-# uglifyjs https:#github.com/mishoo/UglifyJS
+# recess   https://github.com/twitter/recess
+# uglifyjs https://github.com/mishoo/UglifyJS
 #
 # 安装方法：
 #
@@ -74,7 +74,7 @@ if (in_array('-a',$argv))
 
     if (isset($config['projects']) && is_array($config['projects']))foreach ($config['projects'] as $key => $project_config)
     {
-        $cmd = trim($_ . ' ' . $key . ' ' . implode(' ', $argv)).' 2>&1';
+        $cmd = trim($_ . ' ' . $key . ' ' . implode(' ', $argv));
 
         echo "\n\n\n\n--------------------------生成{$key}项目assets文件--------------------------\n\n";
         $handle = popen($cmd,'r');
@@ -169,11 +169,11 @@ foreach (array('css'=>'css ','less'=>'less','js'=>'js  ','extends'=>'扩展','mo
             }
         }
 
-        echo "  => {$name}: \x1b[35m".$changed_count."\x1b[39m/\x1b[36m".$all_count."\x1b[39m\n";
+        echo "  => {$name}: \x1b[33m".$changed_count."\x1b[39m/\x1b[36m".$all_count."\x1b[39m\n";
     }
 }
 
-echo "总修改数 : \x1b[35m".count($changed_files)."\x1b[39m/\x1b[36m".count($file_paths['file_md5'])."\x1b[39m\n";
+echo "总修改数 : \x1b[33m".count($changed_files)."\x1b[39m/\x1b[36m".count($file_paths['file_md5'])."\x1b[39m\n";
 
 echo "\n开始合并文件:";
 
@@ -270,7 +270,7 @@ foreach (array('css','less','js','other') as $type)
         # 无需修改
         if (!$need_renew)
         {
-            echo "\n  => {$out_dir_path}{$tmpfile} ".$done;
+            // echo "\n  => {$out_dir_path}{$tmpfile} ".$done;
             continue;
         }
 
@@ -337,6 +337,7 @@ foreach (array('css','less','js','other') as $type)
         }
     }
 }
+echo "\n合并结束";
 
 
 # 处理压缩
@@ -430,11 +431,13 @@ if (isset($todo_min_files['css']) && $todo_min_files['css'])foreach ($todo_min_f
     }
 }
 
-echo "\n清理Less文件";
-
-if (isset($file_paths['less']) && $file_paths['less'])foreach($file_paths['less'] as $tmpname=>$tmpfile)
+if (isset($file_paths['less']) && $file_paths['less'])
 {
-    File::unlink($out_dir.$tmpname);
+    echo "\n清理Less文件";
+    foreach($file_paths['less'] as $tmpname=>$tmpfile)
+    {
+        File::unlink($out_dir.$tmpname);
+    }
 }
 
 if (isset($file_paths['modules']) && $file_paths['modules'])foreach($file_paths['modules'] as $tmpparenname=>$tmpfiles)
@@ -462,7 +465,7 @@ if (!is_file($cachefile) || md5($content)!=md5_file($cachefile))
     File::create_file($cachefile,$content);
 }
 
-echo "\n\n合并结束\n";
+echo "\n\n全部操作完成\n";
 
 exit;
 
