@@ -64,9 +64,9 @@ class MyQEE_Session_Driver_Cache
         $_SESSION = array();
         $sid = Core::cookie()->get($this->session_name);
 
-        if ( !$sid || !$this->_check_session_id($sid) )
+        if ( !$sid || !Session::check_session_id($sid) )
         {
-            $sid = md5(TIME . '_^_^_' . rand(1000, 99999999).'_IP:'.HttpIO::IP);
+            $sid = Session::create_session_id();
 
             # 将session存入cookie
             Core::cookie()->set($this->session_name, $sid, null, $cookieconfig['path'], $cookieconfig['domain'], $cookieconfig['secure'], $cookieconfig['httponly']);
@@ -94,15 +94,6 @@ class MyQEE_Session_Driver_Cache
     public function session_id()
     {
         return Session_Driver_Cache::$Session_ID;
-    }
-
-    /**
-     * 判断是否有效的sessionid
-     * @param string $sid
-     */
-    protected static function _check_session_id($sid)
-    {
-        return (bool)preg_match('/^[a-fA-F\d]{32}$/', $sid);
     }
 
     /**

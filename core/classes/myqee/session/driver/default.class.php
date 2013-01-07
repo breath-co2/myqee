@@ -61,6 +61,24 @@ class MyQEE_Session_Driver_Default
             $cookieconfig['domain'] = $m[1];
         }
 
+        $sname = session_name();
+        if (isset($_COOKIE[$sname]) && $_COOKIE[$sname])
+        {
+            $old_sid = $_COOKIE[$sname];
+
+            # 校验Session ID
+            if (!Session::check_session_id($old_sid))
+            {
+                # 如果检验的Session ID不合法，则重新生成一个
+                session_id( Session::create_session_id() );
+            }
+        }
+        else
+        {
+            # 设置Session ID
+            session_id( Session::create_session_id() );
+        }
+
         session_set_cookie_params(Session::$config['expiration'], $cookieconfig['path'], $cookieconfig['domain'], $cookieconfig['secure'], $cookieconfig['httponly']);
 
         session_start();
