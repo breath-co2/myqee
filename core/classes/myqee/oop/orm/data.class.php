@@ -311,7 +311,7 @@ class MyQEE_OOP_ORM_Data
     {
         # 获取当前设置
         $config = $this->_get_offset_config($key);
-        if ( !$config )
+        if ( ! $config )
         {
             return;
         }
@@ -721,11 +721,11 @@ class MyQEE_OOP_ORM_Data
         $this->$offset = $this->$offset + $value;
 
         $config = $this->_get_offset_config($offset);
-        if ( !$config ) continue;
+        if ( ! $config ) continue;
 
         # 虚拟字段
         if ( $config['is_virtual_field'] ) continue;
-        if ( !isset($config['field_name']) ) continue;
+        if ( ! isset($config['field_name']) ) continue;
         $field_name = $config['field_name'];
 
         $this->_value_increment[$field_name] = $value;
@@ -847,9 +847,10 @@ class MyQEE_OOP_ORM_Data
      *
      * 会排除掉虚拟数据，此数据可直接用户数据库的update
      *
+     * @param $field_name 字段名，如果不传则获取所有filed_data数据
      * @return array
      */
-    public function get_field_data()
+    public function get_field_data($field_name=null)
     {
         # 获取全部字段数据
         $data = array();
@@ -862,7 +863,18 @@ class MyQEE_OOP_ORM_Data
         # 其它没有构造过的数据，合并到老数据里
         $data = array_merge( $this->_original_field_data , $data );
 
-        return $data;
+        if (null===$field_name)
+        {
+            return $data;
+        }
+        elseif ($field_name && isset($data[$field_name]))
+        {
+            return $data[$field_name];
+        }
+        else
+        {
+            return null;
+        }
     }
 
     /**
@@ -1029,9 +1041,9 @@ class MyQEE_OOP_ORM_Data
      */
     public function orm()
     {
-        if ( !$this->_orm_object )
+        if ( ! $this->_orm_object )
         {
-            if ( !$this->_orm_name )
+            if ( ! $this->_orm_name )
             {
                 $tmpobj = $this;
                 while ( $tmpobj )
@@ -1056,13 +1068,13 @@ class MyQEE_OOP_ORM_Data
                 }
                 unset($tmpobj);
             }
-            if ( !$this->_orm_name )
+            if ( ! $this->_orm_name )
             {
                 throw new Exception('$this->_orm_name未定义');
             }
             $orm_class_name = 'ORM_' . $this->_orm_name . '_Finder';
 
-            if ( !class_exists($orm_class_name, true) )
+            if ( ! class_exists($orm_class_name, true) )
             {
                 throw new Exception('指定的ORM对象“' . $orm_class_name . '”不存在');
             }
@@ -1103,7 +1115,7 @@ class MyQEE_OOP_ORM_Data
         $config = $this->_get_offset_config($index);
 
         # 不存在指定的配置
-        if ( !$config ) return false;
+        if ( ! $config ) return false;
 
         # 无缓存设置
         if ( !isset($config['orm']['cache']))return true;
@@ -1171,12 +1183,12 @@ class MyQEE_OOP_ORM_Data
         $this->_created_offset[$index] = true;
 
         $config = $this->_get_offset_config($index);
-        if ( !$config )return false;
+        if (!$config)return false;
 
         # 是否已经设置过数据
         $offset_isset = isset($this->_offset_data[$index]);
 
-        if ( $offset_isset )
+        if ($offset_isset)
         {
             $offset_data = $data = $this->_offset_data[$index];
             if ( is_object($data) && $data instanceof stdClass )

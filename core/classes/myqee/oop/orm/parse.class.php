@@ -133,7 +133,7 @@ abstract class MyQEE_OOP_ORM_Parse
         {
             return;
         }
-        if ( $field_config['orm'] && !is_array($field_config['orm']) )
+        if ( $field_config['orm'] && ! is_array($field_config['orm']) )
         {
             $field_config['orm'] = array('name' => (string)$field_config['orm']['name']);
         }
@@ -172,21 +172,18 @@ abstract class MyQEE_OOP_ORM_Parse
             unset($field_config['data']);
             return;
         }
-        if ( isset($field_config['data']['mapping']) && !is_array($field_config['data']['mapping']) )
+        if ( isset($field_config['data']['mapping']) && ! is_array($field_config['data']['mapping']) )
         {
             Core::debug()->error($field_config,'ORM字段:'.$key.'配置错误，data属性的mapping应该为数组');
             unset($field_config['data']['mapping']);
             return;
         }
-        # 数据驱动
+
         $run = '_parse_' . $field_config['data']['driver'];
         if ( method_exists('OOP_ORM_Parse', $run) )
         {
+            # 处理数据解析
             $field_config = OOP_ORM_Parse::$run($field_config);
-        }
-        else
-        {
-            throw new Exception('指定的解析方法不存在。');
         }
     }
 
@@ -200,7 +197,7 @@ abstract class MyQEE_OOP_ORM_Parse
         {
             $field_config['object'] = array('name' => $field_config['object']);
         }
-        elseif ( !is_array($field_config['object']) )
+        elseif ( ! is_array($field_config['object']) )
         {
             Core::debug()->error('ORM字段配置错误，object属性应为数组');
             unset($field_config['object']);
@@ -437,7 +434,7 @@ abstract class MyQEE_OOP_ORM_Parse
             }
         }
 
-        $fun = '_get_data_'.strtolower($config['driver']);
+        $fun = '_get_data_'.strtolower($config['driver'],$obj);
 
         return OOP_ORM_Parse::$fun($config);
     }
@@ -448,7 +445,7 @@ abstract class MyQEE_OOP_ORM_Parse
      * @param array $config
      * @return array
      */
-    protected static function _get_data_database($config)
+    protected static function _get_data_database($config,$obj)
     {
         $data = Database::instance($config['database'])->from($config['tablename']);
 
@@ -497,13 +494,18 @@ abstract class MyQEE_OOP_ORM_Parse
      * @param array $config
      * @return array
      */
-    protected static function _get_data_function($config)
+    protected static function _get_data_function($config,$obj)
     {
         $callfun = $config['function'];
         $args = $config['arguments'];
 
         if (is_array($callfun))
         {
+            # 对$this做特殊处理
+            if (is_string($callfun[0]) && strtolower($callfun[0])=='$this')
+            {
+                $callfun[0] = $obj;
+            }
             return call_user_func_array($callfun, $args);
         }
         else
@@ -518,7 +520,7 @@ abstract class MyQEE_OOP_ORM_Parse
      * @param array $config
      * @return array
      */
-    protected static function _get_data_httpget($config)
+    protected static function _get_data_httpget($config,$obj)
     {
         if (isset($config['method']) && strtolower($config['method'])=='post' )
         {
@@ -654,7 +656,7 @@ abstract class MyQEE_OOP_ORM_Parse
 
         # 映射ORM对象
         $obj_name = 'ORM_' . $orm_config['name'] . '_Finder';
-        if ( !class_exists($obj_name, true) )
+        if ( ! class_exists($obj_name, true) )
         {
             throw new Exception('指定的ORM:' . $orm_config['name'] . '不存在！');
         }
