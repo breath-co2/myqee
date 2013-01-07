@@ -88,6 +88,8 @@ class MyQEE_Database extends Database_QueryBuilder
     /**
      * 返回数据库实例化对象
      *
+     * 支持 Database::instance('mysqli://root:123456@127.0.0.1/myqee/'); 的方式
+     *
      * @param string $config_name
      * @return Database
      */
@@ -110,7 +112,9 @@ class MyQEE_Database extends Database_QueryBuilder
     }
 
     /**
-     * Sets the initial columns to select from.
+     * new Database('default');
+     * 支持
+     * new Database('mysqli://root:123456@127.0.0.1/myqee/'); 的方式
      *
      * @param   array  column list
      * @return  void
@@ -121,10 +125,25 @@ class MyQEE_Database extends Database_QueryBuilder
         {
             $this->config = $config_name;
         }
+        elseif (false!==strpos($config_name,'://'))
+        {
+            list($type) = explode('://', $config_name);
+
+            $this->config = array
+            (
+                'type'         => $type,
+                'connection'   => $config_name,
+                'table_prefix' => '',
+                'charset'      => 'utf8',
+                'caching'      => false,
+                'profiling'    => true,
+            );
+        }
         else
         {
             $this->config = Core::config('database.' . $config_name);
         }
+
         $this->config['charset'] = strtoupper($this->config['charset']);
         if ( !isset($this->config['auto_change_charset']) )
         {
@@ -567,7 +586,7 @@ class MyQEE_Database extends Database_QueryBuilder
             if ( isset($connection['path']) && $connection['path'] )
             {
                 // Strip leading slash
-                $db['database'] = substr($connection['path'], 1);
+                $db['database'] = trim(trim(substr($connection['path'], 1),'/'));
             }
         }
 

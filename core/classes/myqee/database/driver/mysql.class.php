@@ -176,17 +176,36 @@ class MyQEE_Database_Driver_MySQL extends Database_Driver
             {
                 $time = microtime(true);
 
-                if ( empty($persistent) )
+                $error_code = 0;
+                $error_msg  = '';
+                try
                 {
-                    $tmplink = mysql_connect($hostname . ($port && $port != 3306 ? ':' . $port : ''), $username, $password, true);
+                    if ( empty($persistent) )
+                    {
+                        $tmplink = mysql_connect($hostname . ($port && $port != 3306 ? ':' . $port : ''), $username, $password, true);
+                    }
+                    else
+                    {
+                        $tmplink = mysql_pconnect($hostname . ($port && $port != 3306 ? ':' . $port : ''), $username, $password);
+                    }
                 }
-                else
+                catch (Exception $e)
                 {
-                    $tmplink = mysql_pconnect($hostname . ($port && $port != 3306 ? ':' . $port : ''), $username, $password);
+                    $error_msg     = $e->getMessage();
+                    $error_code    = $e->getCode();
+                    $tmplink       = false;
                 }
-                if (false===$tmplink)throw new Exception('connect mysql server error.');
 
-                Core::debug()->info('mysql://'.$username.'@'.$hostname.'/ connection time:' . (microtime(true) - $time));
+                if (false===$tmplink)
+                {
+                    if ( !( $error_msg && 2===$error_code && preg_match('#(Unknown database|Access denied for user)#i', $error_msg)) )
+                    {
+                        $error_msg = 'connect mysql server error.';
+                    }
+                    throw new Exception($error_msg, $error_code);
+                }
+
+                if (IS_DEBUG)Core::debug()->info('mysql://'.$username.'@'.$hostname.'/ connection time:' . (microtime(true) - $time));
 
                 # 连接ID
                 $this->_connection_ids[$this->_connection_type] = $_connection_id;
@@ -208,10 +227,10 @@ class MyQEE_Database_Driver_MySQL extends Database_Driver
                     $last_error = new Exception('connect mysql server error',$e->getCode());
                 }
 
-                if (2===$e->getCode() && preg_match('#(Unknown database|Access denied for user)#i', $e->getMessage()))
+                if (2===$e->getCode() && preg_match('#(Unknown database|Access denied for user)#i', $e->getMessage(),$m))
                 {
                     // 指定的库不存在，直接返回
-                    throw $e;
+                    throw new Exception(strtolower($m[1])=='unknown database'?__('The mysql database does not exist'):__('The mysql database account or password error'));
                 }
                 else
                 {

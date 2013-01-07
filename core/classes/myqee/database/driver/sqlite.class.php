@@ -118,15 +118,32 @@ class MyQEE_Database_Driver_SQLite extends Database_Driver
                 Database_Driver_SQLite::$_current_connection_id_to_db[$_connection_id] = Core::debug_path($db);
 
                 $time = microtime(true);
-                if ($persistent)
+                try
                 {
-                    $tmplink = sqlite_popen($db);
+                    if ($persistent)
+                    {
+                        $tmplink = sqlite_popen($db);
+                    }
+                    else
+                    {
+                        $tmplink = sqlite_open($db);
+                    }
                 }
-                else
+                catch (Exception $e)
                 {
-                    $tmplink = sqlite_open($db);
+                    $error_msg     = $e->getMessage();
+                    $error_code    = $e->getCode();
+                    $tmplink       = false;
                 }
-                if (false===$tmplink)throw new Exception('open sqlite error.');
+
+                if (false===$tmplink)
+                {
+                    if (!IS_DEBUG)
+                    {
+                        $error_msg = 'open sqlite error.';
+                    }
+                    throw new Exception($error_msg, $error_code);
+                }
 
                 if (IS_DEBUG)Core::debug()->info('sqlite '.Core::debug_path($db).' connection time:' . (microtime(true) - $time));
 

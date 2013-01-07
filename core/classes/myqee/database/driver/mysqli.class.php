@@ -175,19 +175,39 @@ class MyQEE_Database_Driver_MySQLI extends Database_Driver
             try
             {
                 $time = microtime(true);
-                if ( empty($persistent) )
-                {
-                    $tmplink = mysqli_init();
-                    mysqli_options($tmplink, MYSQLI_OPT_CONNECT_TIMEOUT, 3);
-                    mysqli_real_connect($tmplink, $hostname, $username, $password, $database, $port, null, MYSQLI_CLIENT_COMPRESS);
-                }
-                else
-                {
-                    $tmplink = new mysqli($hostname, $username, $password, $database, $port);
-                }
-                if (false===$tmplink)throw new Exception('connect mysqli server error.');
 
-                Core::debug()->info('mysqli://'.$username.'@'.$hostname.':'.$port.'/'.$database.'/ connection time:' . (microtime(true) - $time));
+                $error_code = 0;
+                $error_msg  = '';
+                try
+                {
+                    if ( empty($persistent) )
+                    {
+                        $tmplink = mysqli_init();
+                        mysqli_options($tmplink, MYSQLI_OPT_CONNECT_TIMEOUT, 3);
+                        mysqli_real_connect($tmplink, $hostname, $username, $password, $database, $port, null, MYSQLI_CLIENT_COMPRESS);
+                    }
+                    else
+                    {
+                        $tmplink = new mysqli($hostname, $username, $password, $database, $port);
+                    }
+                }
+                catch (Exception $e)
+                {
+                    $error_msg     = $e->getMessage();
+                    $error_code    = $e->getCode();
+                    $tmplink       = false;
+                }
+
+                if (false===$tmplink)
+                {
+                    if ( !( $error_msg && 2===$error_code && preg_match('#(Unknown database|Access denied for user)#i', $error_msg)) )
+                    {
+                        $error_msg = 'connect mysqli server error.';
+                    }
+                    throw new Exception($error_msg, $error_code);
+                }
+
+                if (IS_DEBUG)Core::debug()->info('mysqli://'.$username.'@'.$hostname.':'.$port.'/'.$database.'/ connection time:' . (microtime(true) - $time));
 
                 # 连接ID
                 $this->_connection_ids[$this->_connection_type] = $_connection_id;
@@ -211,10 +231,10 @@ class MyQEE_Database_Driver_MySQLI extends Database_Driver
                     $last_error = new Exception('connect mysqli server error',$e->getCode());
                 }
 
-                if ( 2===$e->getCode() && preg_match('#(Unknown database|Access denied for user)#i', $e->getMessage()) )
+                if ( 2===$e->getCode() && preg_match('#(Unknown database|Access denied for user)#i', $e->getMessage() , $m) )
                 {
                     // 指定的库不存在，直接返回
-                    throw $e;
+                    throw new Exception(strtolower($m[1])=='unknown database'?__('The mysql database does not exist'):__('The mysql database account or password error'));
                 }
                 else
                 {

@@ -208,15 +208,34 @@ class MyQEE_Database_Driver_Mongo extends Database_Driver
                     $options['persist'] = is_string($persistent)?$persistent:'x';
                 }
 
-                if ($username)
+                $error_code = 0;
+                $error_msg  = '';
+                try
                 {
-                    $tmplink = new Mongo("mongodb://{$username}:{$password}@{$hostname}:{$port}/",$options);
+                    if ($username)
+                    {
+                        $tmplink = new Mongo("mongodb://{$username}:{$password}@{$hostname}:{$port}/",$options);
+                    }
+                    else
+                    {
+                        $tmplink = new Mongo("mongodb://{$hostname}:{$port}/",$options);
+                    }
                 }
-                else
+                catch (Exception $e)
                 {
-                    $tmplink = new Mongo("mongodb://{$hostname}:{$port}/",$options);
+                    $error_msg     = $e->getMessage();
+                    $error_code    = $e->getCode();
+                    $tmplink       = false;
                 }
-                if (false===$tmplink)throw new Exception('connect mongodb server error.');
+
+                if (false===$tmplink)
+                {
+                    if (!IS_DEBUG)
+                    {
+                        $error_msg = 'connect mongodb server error.';
+                    }
+                    throw new Exception($error_msg, $error_code);
+                }
 
                 if (null!==$readpreference)
                 {
