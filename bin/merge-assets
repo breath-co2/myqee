@@ -17,9 +17,8 @@ $auto_run = false;
 
 
 $argv = $_SERVER['argv'];
-array_shift($argv);
 
-if (!isset($argv[0]) || !$argv[0])
+if (!isset($argv[1]) || !$argv[1])
 {
     help();
 }
@@ -32,13 +31,68 @@ function help()
 
 OPTIONS:
   -r \x1b[32m全部重新生成\x1b[39m
+  -a \x1b[32m全部项目\x1b[39m
 
 EXAMPLE:
-  $ \x1b[36mmerge-assets\x1b[39m \x1b[33mdefault\x1b[39m
+  生成全部项目assets文件:      \x1b[36mmerge-assets\x1b[39m \x1b[33m-a\x1b[39m
+  全部项目重新生成文件  :      \x1b[36mmerge-assets\x1b[39m \x1b[33m-a -r\x1b[39m
+  生成default项目文件   :      \x1b[36mmerge-assets\x1b[39m \x1b[33mdefault\x1b[39m
 
 EOF;
     exit;
 }
+
+if (in_array('-r',$argv))
+{
+    $key = array_search('-r',$argv);
+    $recreate = true;
+}
+else
+{
+    $recreate = false;
+}
+
+if (in_array('-a',$argv))
+{
+    $_ = $_SERVER['_'];
+
+    if ($_==$argv[0])
+    {
+        unset($argv[0]);
+    }
+    else
+    {
+        $_ .= ' ' . array_shift($argv);
+    }
+
+    # 全部项目
+    $key = array_search('-a',$argv);
+    unset($argv[$key]);
+
+    $config = array();
+    include (dirname(__FILE__).'/../config.php');
+
+    if (isset($config['projects']) && is_array($config['projects']))foreach ($config['projects'] as $key => $project_config)
+    {
+        $cmd = trim($_ . ' ' . $key . ' ' . implode(' ', $argv)).' 2>&1';
+
+        echo "\n\n\n\n--------------------------生成{$key}项目assets文件--------------------------\n\n";
+        $handle = popen($cmd,'r');
+        while (($read = fread($handle, 128))!==false)
+        {
+            echo $read;
+            if (feof($handle))break;
+        }
+
+        pclose($handle);
+    }
+
+
+    exit;
+}
+
+# 移除文件名
+array_shift($argv);
 
 # 调用项目
 $project = $argv[0];
@@ -49,15 +103,6 @@ echo "待合并目录：\n";
 foreach (Bootstrap::$include_path as $path)
 {
     echo "  => ".Core::debug_path($path,true)."\n";
-}
-
-if (in_array('-r',$argv))
-{
-    $recreate = true;
-}
-else
-{
-    $recreate = false;
 }
 
 $include_path = Bootstrap::$include_path;
@@ -411,13 +456,15 @@ foreach ($file_paths['file_md5'] as $tmpfile=>$md5)
 }
 asort($file_md5);
 $content = serialize($file_md5);
-if (md5($content)!=md5_file($cachefile))
+if (!is_file($cachefile) || md5($content)!=md5_file($cachefile))
 {
     # 保存MD5列表
     File::create_file($cachefile,$content);
 }
 
 echo "\n\n合并结束\n";
+
+exit;
 
 
 /**
