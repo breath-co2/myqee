@@ -17,9 +17,11 @@ CREATE TABLE `cache` (
 
 
 
-$config = array(
-    'default' => array(
-        'database' => 'default',
+$config = array
+(
+    'default' => array
+    (
+        'database'  => 'default',
         'tablename' => 'cache',
     ),
 );
