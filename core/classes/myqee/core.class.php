@@ -166,7 +166,7 @@ abstract class MyQEE_Core extends Bootstrap
         # 检查Bootstrap版本
         if ( version_compare(Bootstrap::VERSION, '1.9.2' ,'<') )
         {
-            Core::show_500('系统Bootstrap版本太低，请先升级Bootstrap。');
+            Core::show_500(__('System Bootstrap version is too low, please upgrade Bootstrap.'));
             exit();
         }
 
@@ -1252,11 +1252,11 @@ abstract class MyQEE_Core extends Bootstrap
 
         if ( IS_CLI )
         {
-            echo '本次释放内存：' . ( memory_get_usage() - $old_memory ) . "\n";
+            echo __('The release memory:') . ( memory_get_usage() - $old_memory ) . "\n";
         }
         else if ( IS_DEBUG )
         {
-            Core::debug()->info('本次释放内存：' . ( memory_get_usage() - $old_memory) );
+            Core::debug()->info(__('The release memory:') . ( memory_get_usage() - $old_memory) );
         }
     }
 

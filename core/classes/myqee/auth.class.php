@@ -75,7 +75,7 @@ class MyQEE_Auth
 
         if (!$member)
         {
-            throw new Exception('用户不存在');
+            throw new Exception(__('The user does not exist'));
         }
 
         if ( $member->check_password($password) )
@@ -84,7 +84,7 @@ class MyQEE_Auth
         }
         else
         {
-            throw new Exception('输入的密码错误');
+            throw new Exception(__('Enter the wrong password'));
         }
     }
 
