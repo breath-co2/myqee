@@ -15,6 +15,16 @@ margin:0;
 color:#111;
 font-family:Arial,sans-serif,Helvetica,"宋体";
 }
+a,a:link,a:visited
+{
+    color:#689e00;
+    text-decoration:underline;
+}
+a:hover,a:active
+{
+    color:#a62e2e;
+    text-decoration:underline;
+}
 h1{
 font-size:14pt;
 font-weight:bold;
@@ -60,6 +70,8 @@ background:#ffffe3;
     <div style="padding:18px 0 0 0;">
         <b><?php echo __('Error NO:');?></b><input onclick="this.select();" style="border:none;width:180px;background:transparent;" readonly="readonly" value="<?php echo $error_no;?>" />
         <div style="color:#bbb;"><?php echo __('The error has been logged and can use this number to report the error message to the system administrator.');?></div>
+        <br />
+        <a href="javascript:history.go(-1);"><?php echo __('Back');?></a>&nbsp;&nbsp;|&nbsp;&nbsp;<a href="<?php echo Core::url('/');?>"><?php echo __('Goto Home Page');?></a>
     </div>
     <?php
     }

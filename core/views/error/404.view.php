@@ -15,6 +15,16 @@ margin:0;
 color:#111;
 font-family:Arial,sans-serif,Helvetica,"宋体";
 }
+a,a:link,a:visited
+{
+    color:#689e00;
+    text-decoration:underline;
+}
+a:hover,a:active
+{
+    color:#a62e2e;
+    text-decoration:underline;
+}
 h1{
 font-size:14pt;
 font-weight:bold;
@@ -42,6 +52,9 @@ box-shadow:2px 2px 5px #e1e1e1;
 <h1><?php echo $message;?></h1>
 <div class="box">
     <?php echo __('The requested URL :REQUEST_URI was not found on this server.', array(':REQUEST_URI'=>$REQUEST_URI) );?>
+
+    <br /><br />
+    <a href="javascript:history.go(-1);"><?php echo __('Back');?></a>&nbsp;&nbsp;|&nbsp;&nbsp;<a href="<?php echo Core::url('/');?>"><?php echo __('Goto Home Page');?></a>
 </div>
 </body>
 </html>
