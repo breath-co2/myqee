@@ -6,9 +6,11 @@ Please rename the file config.new:EXT to config:EXT = 请先将根目录的confi
 Please create a new project.                        = 请先创建一个项目。
 Request Method Not Allowed.                         = 不允许访问请求的方法。
 The release memory:                                 = 本次释放内存：
-The mysql database does not exist                         = 数据库不存在
-The mysql database account or password error                  = 数据库账号或密码错误
+The mysql database does not exist                   = 数据库不存在
+Library :lib not exist.                             = 指定的类库“:lib”不存在
+The mysql database account or password error                   = 数据库账号或密码错误
 System Bootstrap version is too low, please upgrade Bootstrap. = 系统Bootstrap版本太低，请先升级Bootstrap。
+Permission denied : :file                                      = 文件无权限：:file
 
 
 [Core.Page]
@@ -29,23 +31,14 @@ not found the project: :project.                                = 指定的项�
 the project: :project is not open.                              = 当前项目“:project”没有开启。
 the project dir :dir is not exist.                              = 项目目录“:dir”不存在。
 Core library lost.<br/><br/>Please check the core config.       = 系统类库丢失，请检查配置文件。
+Back                                                            = 返回上一页
+Goto Home Page                                                  = 返回首页
 The error has been logged and can use this number to report the error message to the system administrator.    = 错误已记录，可将此编号汇报给系统管理员以查询详细错误信息。
 
 
 [Core.Image]
 captcha.requires_GD2                                            = 验证码需要GD库支持
 function imageftbbox not exist.                                 = "函数imageftbbox不存在，编译PHP的时候请注意需要加上 --with-freetype-dir=DIR"
-
-
-[Core.Assets]
-Assets files : %s not found.                                                                           = 静态资源“%s”文件不存在
-Special characters of the file exists allowed                                                          = 文件存在不允许的特殊字符
-File suffix %s not allow.                                                                              = 不允许文件后缀“%s”
-Systems perform less handling failed,RsCode:%s                                                         = 系统执行less处理失败,RsCode:%s
-Please check no recess module installed or not set node_modules path                                   = 请检查是不是没安装recess模块或没有设定对node_modules路径
-the node_modules directory does not exist, modify the config:ext :config configure                     = node_modules目录不存在，请修改config:ext中:config中配置
-Systems perform less processing failed, please check the implementation of the recess command          = 系统执行less处理失败，请检查执行recess命令
-The system does not allow you to execute exec function, you can not call the node processing less file = 您的系统不允许执行exec函数，无法调用node处理less文件
 
 
 [Core.Auth]
