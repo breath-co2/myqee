@@ -57,19 +57,13 @@ abstract class MyQEE_Core extends Bootstrap
      * MyQEE版本号
      * @var string
      */
-    const VERSION = '2.1beta';
+    const VERSION = '3.1.1dev';
 
     /**
      * 项目开发者
      * @var string
      */
     const CODER = 'jonwang(jonwang@myqee.com)';
-
-    /**
-     * 缓冲区包含数
-     * @var int
-     */
-    protected static $buffer_level = 0;
 
     /**
      * 页面编码
@@ -107,6 +101,12 @@ abstract class MyQEE_Core extends Bootstrap
         'orm'          => '.orm',
         'views'        => '.view',
     );
+
+    /**
+     * 缓冲区包含数
+     * @var int
+     */
+    protected static $buffer_level = 0;
 
     /**
      * 页面在关闭前需要执行的方法列队
@@ -242,6 +242,7 @@ abstract class MyQEE_Core extends Bootstrap
             return;
         }
         $run = true;
+
         # 加入debug信息
         Core::debug()->log(Core::$path_info, 'PathInfo');
 
@@ -629,19 +630,23 @@ abstract class MyQEE_Core extends Bootstrap
      */
     public static function url_assets($uri = '')
     {
-        //TODO 须加入静态资源版本号
+        $url = ltrim($uri,'./ ');
 
         if (IS_DEBUG & 1)
         {
             # 本地调试环境
-            $url_asstes = '/devassets/'.Core::$project.'/';
+            $url_asstes = '/assets/devmode/'.Core::$project.'/';
         }
         else
         {
             $url_asstes = URL_ASSETS;
+
+            list($file,$query) = explode('?', $uri.'?',2);
+
+            $uri = $file .'?'.(strlen($query)>0?$query.'&':'').Core::get_asset_hash($file);
         }
 
-        return $url_asstes . ltrim($uri,'/');
+        return $url_asstes . $url;
     }
 
     /**
@@ -778,7 +783,7 @@ abstract class MyQEE_Core extends Bootstrap
      * 显示结果类似 ./system/libraries/Database.class.php
      *
      * @param  string  path to debug
-     * @param  boolean $highlight 是否返回高亮前缀
+     * @param  boolean $highlight 是否返回高亮前缀，可以传字符颜色，比如#f00
      * @return string
      */
     public static function debug_path($file,$highlight=false)
@@ -793,7 +798,8 @@ abstract class MyQEE_Core extends Bootstrap
             }
             else
             {
-                $l = $r = '';
+                $l = '<span style="color:'.(is_string($highlight) && preg_match('/^[a-z0-9#\(\)\.,]+$/i',$highlight) ?$highlight:'#a00').'">';
+                $r = '</span>';
             }
         }
         else
@@ -855,17 +861,17 @@ abstract class MyQEE_Core extends Bootstrap
 
     /**
      * Closes all open output buffers, either by flushing or cleaning all
-     * open buffers, including the Kohana output buffer.
+     * open buffers, including the myqee output buffer.
      *
      * @param   boolean  disable to clear buffers, rather than flushing
      * @return  void
      */
-    public static function close_buffers($flush = TRUE)
+    public static function close_buffers($flush = true)
     {
         if ( ob_get_level() > Core::$buffer_level )
         {
             // Set the close function
-            $close = ($flush === TRUE) ? 'ob_end_flush' : 'ob_end_clean';
+            $close = ($flush === true) ? 'ob_end_flush' : 'ob_end_clean';
             while ( ob_get_level() > Core::$buffer_level )
             {
                 $close();
@@ -877,6 +883,7 @@ abstract class MyQEE_Core extends Bootstrap
 
     /**
      * 404，可直接将Exception对象传给$msg
+     *
      * @param string/Exception $msg
      */
     public static function show_404($msg = null)
@@ -971,6 +978,7 @@ abstract class MyQEE_Core extends Bootstrap
 
         if ( IS_CLI )
         {
+            echo "\x1b[36m";
             if ( $msg instanceof Exception )
             {
                 echo $msg->getMessage() . CRLF;
@@ -979,6 +987,9 @@ abstract class MyQEE_Core extends Bootstrap
             {
                 echo $msg . CRLF;
             }
+
+            echo "\x1b[39m";
+            echo CRLF;
             exit();
         }
 
@@ -1009,9 +1020,10 @@ abstract class MyQEE_Core extends Bootstrap
                 (
                     'project'     => Core::$project,
                     'uri'         => HttpIO::$uri,
-                    'post'        => HttpIO::POST(HttpIO::PARAM_TYPE_OLDDATA),
-                    'get'         => HttpIO::GET(HttpIO::PARAM_TYPE_OLDDATA),
-                    'cookie'      => HttpIO::COOKIE(HttpIO::PARAM_TYPE_OLDDATA),
+                    'url'         => HttpIO::PROTOCOL.'://'.$_SERVER['HTTP_HOST'].$_SERVER["REQUEST_URI"],
+                    'post'        => HttpIO::POST(null,HttpIO::PARAM_TYPE_OLDDATA),
+                    'get'         => $_SERVER['QUERY_STRING'],
+                    'cookie'      => HttpIO::COOKIE(null,HttpIO::PARAM_TYPE_OLDDATA),
                     'client_ip'   => HttpIO::IP,
                     'user_agent'  => HttpIO::USER_AGENT,
                     'referrer'    => HttpIO::REFERRER,
@@ -1307,8 +1319,9 @@ abstract class MyQEE_Core extends Bootstrap
         $lib_dir = realpath( $dir );
         if ( !$lib_dir )
         {
-            return false;
+            throw new Exception(__('Library :lib not exist.',array(':lib'=>$lib)));
         }
+
         $lib_dir .= DS;
         $old_include_path = Core::$include_path;
         if ( in_array($lib_dir, $old_include_path ) )
@@ -1474,6 +1487,17 @@ abstract class MyQEE_Core extends Bootstrap
             Core::log('system request hash error', 'system-request');
             return false;
         }
+    }
+
+    /**
+     * 获取asset文件MD5号
+     *
+     * @param string $file
+     * @return md5
+     */
+    public static function get_asset_hash($file)
+    {
+        return '';
     }
 }
 
