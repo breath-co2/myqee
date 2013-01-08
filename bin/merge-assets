@@ -100,12 +100,12 @@ $project = $argv[0];
 include (dirname(__FILE__).'/../index.php');
 
 echo "待合并目录：\n";
-foreach (Bootstrap::$include_path as $path)
+foreach (Core::$include_path as $path)
 {
     echo "  => ".Core::debug_path($path,true)."\n";
 }
 
-$include_path = Bootstrap::$include_path;
+$include_path = Core::$include_path;
 $include_path = array_reverse($include_path);
 
 # 允许的后缀
@@ -136,10 +136,7 @@ foreach ($include_path as $path)
 echo "\n修改数/文件数:\n";
 
 # 输出目录
-$out_dir = DIR_ASSETS . $project .'/';
-
-# 记录所有文件的修改时间
-$edit_times = array();
+$out_dir = DIR_ASSETS . $project .'/'
 
 # md5存放的文件
 $cachefile = DIR_CACHE . 'asset_md5_by_proect_'.$project;
@@ -466,6 +463,8 @@ foreach ($file_paths['file_md5'] as $tmpfile=>$md5)
 {
     $file_md5[Core::debug_path($tmpfile)] = $md5;
 }
+# 排序2次的用途是保证一些特殊情况下排序能得到纠正，比如有2个key分别是 test1.js 和 test.js 在排序时会有bug
+asort($file_md5);
 asort($file_md5);
 $content = serialize($file_md5);
 if (!is_file($cachefile) || md5($content)!=md5_file($cachefile))
@@ -546,7 +545,7 @@ function glob_files(&$file_paths,$dir,$dir_len)
 
                         if ($suffix=='less')
                         {
-                            $parent_file_path = substr($file_path,0,-strlen($sub)).'.css';
+                            $parent_file_path = substr($file_path,0,-strlen($type)).'.css';
                         }
 
                         if ('mod'==$type)

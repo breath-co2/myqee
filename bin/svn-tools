@@ -87,26 +87,7 @@ class Svn_Tools
 
         if (!self::$config)
         {
-            printf("请检查svn-tools.ini配置文件\n");
-            exit;
-        }
-
-        if (!isset(self::$config['trunk-url']) || !self::$config['trunk-url'])
-        {
-            printf("请配置trunk路径:trunk-url\n");
-            exit;
-        }
-
-        if (!isset(self::$config['trunk-url']) || !self::$config['trunk-url'])
-        {
-            printf("请配置工作路径:working-url\n");
-            exit;
-        }
-
-        if (!isset(self::$config['trunk-url']) || !self::$config['trunk-url'])
-        {
-            printf("请配置trunk文件目录:trunk-dir\n");
-            exit;
+            self::$config = array();
         }
 
         if (!isset(self::$config['verbose']))self::$config['verbose'] = 0;
@@ -117,7 +98,7 @@ class Svn_Tools
     {
         if ( isset($msg) )
         {
-            printf("%s\n\n", $msg);
+            printf("\x1b[33m%s\x1b[39m\n\n", $msg);
         }
 
         $name = basename(__FILE__);
@@ -131,8 +112,8 @@ Avaliable options:
         --working-url=<URL>
 
 Examples:
-    %s merge -v 1033:1036          \x1b[36m(把1034,1035,1036版本合并进trunk ，注意不包含1033)\x1b[39m
-    %s merge -v 1055               \x1b[36m(把1055版本合并进trunk)\x1b[39m
+    %s merge -v 1033:1036          \x1b[34m(把1034,1035,1036版本合并进trunk ，注意不包含1033)\x1b[39m
+    %s merge -v 1055               \x1b[34m(把1055版本合并进trunk)\x1b[39m
     %s merge --trunk-url=<TRUNK-URL>  --working-url=<WORKING-URL> -v
     %s merge --trunk-url=<TRUNK-URL>  --working-url=<WORKING-URL> -v -p wwwroot
 ", $name, $name , $name, $name , $name);
@@ -153,7 +134,7 @@ Examples:
 
         if ( !is_dir(self::$SVNMERGE_TRUNK_DIR) )
         {
-            echo "trunk-dir error\n";
+            echo "trunk-dir 错误，请配置svn-tools.ini中trunk-dir参数\n";
             exit;
         }
 
@@ -292,11 +273,11 @@ Examples:
         }
 
         // check
-        if ( ! isset(self::$config['trunk-url']) )
+        if ( !isset(self::$config['trunk-url']) || !self::$config['trunk-url'] )
         {
             self::usage('Please specify trunk url with --trunk-url=<URL> option.');
         }
-        if ( ! isset(self::$config['working-url']) )
+        if ( !isset(self::$config['working-url']) || !self::$config['working-url'] )
         {
             self::usage('Please specify trunk url with --trunk-url=<URL> option.');
         }
@@ -351,7 +332,7 @@ Examples:
 
             self::analyzer($working_revisions, $merge_logs, $merge_top_revisions, $working_logs);
 
-            if ( ! posix_isatty(STDOUT) )
+            if ( !posix_isatty(STDOUT) )
             {
                 break;
             }

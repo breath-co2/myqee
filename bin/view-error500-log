@@ -27,8 +27,9 @@ OPTIONS:
   -d [date] \x1b[32m清除指定日期log\x1b[39m
 
 EXAMPLE:
-  $ \x1b[36mview-error500-log\x1b[39m \x1b[33m2012-12-27-96699DBC65\x1b[39m
-  $ \x1b[36mview-error500-log\x1b[39m \x1b[33m-d 2012-12-27\x1b[39m
+  $ \x1b[36mview-error500-log\x1b[39m \x1b[33m2012-12-27-96699DBC65\x1b[39m         查看LOG
+  $ \x1b[36mview-error500-log\x1b[39m \x1b[33m2012-12-27-96699DBC65 -r\x1b[39m      查看完毕立即删除
+  $ \x1b[36mview-error500-log\x1b[39m \x1b[33m-d 2012-12-27\x1b[39m                 删除指定日期LOG
 
 EOF;
     exit;
@@ -138,14 +139,64 @@ else
         exit;
     }
 
-    $file = DIR_LOG . 'error500' . DS . $m[1] . DS . $m[2] . '.log';
+    $file = DIR_LOG . 'error500' . DS . str_replace('-',DS,$m[1]) . DS . $m[2] . '.log';
 
     if (is_file($file))
     {
         $data = @unserialize(gzuncompress(base64_decode(file_get_contents($file))));
         if ($data)
         {
-            print_r($data);
+            $obj = $data['trace'];
+
+            echo "\x1b[32m当前项目  ：\x1b[33m{$data['project']} (".Core::config('core.projects.'.$data['project'].'.name').")\x1b[39m\n";
+            echo "\x1b[32m请求URI   ：\x1b[33m{$data['uri']}\x1b[39m\n";
+            echo "\x1b[32m引用页    ：\x1b[33m{$data['referrer']}\x1b[39m\n";
+            echo "\x1b[32m浏览器信息：\x1b[33m{$data['user_agent']}\x1b[39m\n";
+            echo "\x1b[32m服务器名  ：\x1b[33m{$data['server_name']}\x1b[39m\n";
+            echo "\x1b[32m服务器IP  ：\x1b[33m{$data['server_ip']}\x1b[39m\n";
+            echo "\x1b[32m用户IP    ：\x1b[33m{$data['client_ip']}\x1b[39m\n";
+            echo "\x1b[32m请求时间  ：\x1b[33m".date('Y-m-d H:i:s',$data['time'])."\x1b[39m\n";
+            echo "\x1b[32m执行时间  ：\x1b[33m{$data['use_time']}\x1b[39m\n";
+            if ($data['get'])
+            {
+                echo "\n\x1b[32m================================ GET =======================================\x1b[39m";
+                print_r($data['get']);
+                echo "\n";
+            }
+            if ($data['post'])
+            {
+                echo "\n\x1b[32m================================ POST ======================================\x1b[39m";
+                print_r($data['post']);
+                echo "\n";
+            }
+            if ($data['cookie'])
+            {
+                echo "\n\x1b[32m================================ COOKIE ====================================\x1b[39m";
+                print_r($data['cookie']);
+                echo "\n";
+            }
+            echo "\n\n";
+            echo "\x1b[32m================================ Trace =====================================\x1b[39m";
+            echo "\n" . (string)$obj . "\n\n\n";
+        }
+        else
+        {
+            echo "data error.\n";
+        }
+
+        if (in_array('-r',$argv))
+        {
+            echo "\x1b[36m";
+            # 删除当前日志
+            if (File::unlink($file))
+            {
+                echo "日志删除成功\n";
+            }
+            else
+            {
+                echo "日志删除失败，可能没有权限\n";
+            }
+            echo "\x1b[39m";
         }
     }
     else
