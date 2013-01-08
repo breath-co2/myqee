@@ -231,7 +231,7 @@ if ( Core::debug()->profiler('filelist')->is_open() ){
         </tr>
             <?php foreach ($includepath as $value): ?>
         <tr class="final profiler_mark profiler_memory">
-            <td style="width:88%"><?php echo Core::debug_path($value); ?></td>
+            <td style="width:88%"><?php echo Core::debug_path($value,true); ?></td>
         </tr>
             <?php endforeach ?>
 </table><table class="profiler"><tr class="profiler_group">
@@ -241,7 +241,7 @@ if ( Core::debug()->profiler('filelist')->is_open() ){
         <tr class="final profiler_mark profiler_memory">
             <td class="profiler_average" style="width:4%;text-align:center;"><?php echo ($i+1); ?></td>
             <td style="width:8%"><?php echo Profiler::bytes(filesize($value));?></td>
-            <td style="width:88%"><?php echo Core::debug_path($value); ?></td>
+            <td style="width:88%"><?php echo Core::debug_path($value,true); ?></td>
         </tr>
             <?php endforeach ?>
 </table><?php

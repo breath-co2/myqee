@@ -1,4 +1,7 @@
 <?php
+// 输出一个隐藏的div，在源代码中便于阅读的字符串
+echo "<div style=\"display:none\">\r\n\r\n\r\n\r\n\r\n\r\n\r\n========================== Track String ==========================\r\n",str_replace(array(DIR_CORE,DIR_LIBRARY,DIR_WWWROOT,DIR_SYSTEM),array('./core/','./libraries/','./wwwroot/','./'),$e->__toString()),"\r\n\r\n\r\n\r\n\r\n\r\n\r\n</div>";
+
 $error_id = uniqid('error');
 ?>
 <style type="text/css">
@@ -46,9 +49,9 @@ return false;
 
 <div style="padding:0 10px;">
 <div id="expction_div">
-<h1><span class="type"><?php echo $type ?> [ <?php echo $code ?> ]:</span> <span class="message"><?php echo $message ?></span></h1>
+<h1><span class="type"><?php echo $type ?> [ <?php echo $code ?> ]:</span> <span class="message"><?php echo str_replace(DIR_SYSTEM,'./',$message); ?></span></h1>
 <div id="<?php echo $error_id ?>" class="content">
-<p><span class="file"><?php echo Core::debug_path($file) ?> [ <?php echo $line ?> ]</span></p>
+<p><span class="file"><?php echo Core::debug_path($file,'#a00') ?> [ <?php echo $line ?> ]</span></p>
 <?php echo ErrException::debug_source($file, $line) ?>
 <ol class="trace">
 <?php foreach (ErrException::trace($trace) as $i => $step): ?>
@@ -56,7 +59,7 @@ return false;
 <p>
 	<span class="file">
 		<?php if ($step['file']): $source_id = $error_id.'source'.$i; ?>
-			<a href="#<?php echo $source_id ?>" onclick="return koggle('<?php echo $source_id ?>')"><?php echo Core::debug_path($step['file']) ?> [ <?php echo $step['line'] ?> ]</a>
+			<a href="#<?php echo $source_id ?>" onclick="return koggle('<?php echo $source_id ?>')"><?php echo Core::debug_path($step['file'],'#a00') ?> [ <?php echo $step['line'] ?> ]</a>
 		<?php else: ?>
 			{PHP internal call}
 		<?php endif ?>
@@ -93,7 +96,7 @@ return false;
 		<table cellspacing="0">
 			<?php foreach ($included as $file): ?>
 			<tr>
-				<td><code><?php echo Core::debug_path($file) ?></code></td>
+				<td><code><?php echo Core::debug_path($file,'#a00') ?></code></td>
 			</tr>
 				<?php endforeach ?>
 		</table>
@@ -104,7 +107,7 @@ return false;
 		<table cellspacing="0">
 			<?php foreach ($included as $file): ?>
 			<tr>
-				<td><code><?php echo Core::debug_path($file) ?></code></td>
+				<td><code><?php echo Core::debug_path($file,'#a00') ?></code></td>
 			</tr>
 				<?php endforeach ?>
 		</table>
@@ -115,7 +118,7 @@ return false;
 		<table cellspacing="0">
 			<?php foreach ($included as $file): ?>
 			<tr>
-				<td><code><?php echo Core::debug_path($file) ?></code></td>
+				<td><code><?php echo Core::debug_path($file,'#a00') ?></code></td>
 			</tr>
 			<?php endforeach ?>
 		</table>
