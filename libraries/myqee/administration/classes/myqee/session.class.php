@@ -57,6 +57,11 @@ class MyQEE_Session
             // Load config
             Session::$config = Core::config('session');
 
+            if (!isset(Session::$config['check_string']) || !Session::$config['check_string'])
+            {
+                Session::$config['check_string'] = '&$@de23#$%@.d3l-3=!#1';
+            }
+
             if ( ! isset(Session::$config['name']) || ! preg_match('#^(?=.*[a-z])[a-z0-9_]++$#iD', Session::$config['name']) )
             {
                 // Name the session, this will also be the name of the cookie
@@ -419,5 +424,45 @@ class MyQEE_Session
     public static function session_name()
     {
         return Session::$config['name'];
+    }
+
+    /**
+     * 生成一个新的Session ID
+     *
+     * @return string 返回一个32长度的session id
+     */
+    public static function create_session_id()
+    {
+        # 获取一个唯一字符
+        $mt_str = substr(md5(microtime(1).'d2^2**(fgGs@.d3l-'.mt_rand(1, 9999999).HttpIO::IP),2,28);
+
+        # 校验位
+        $mt_str .= substr(md5('doe9%32'.$mt_str.Session::$config['check_string']),8,4);
+
+        return $mt_str;
+    }
+
+    /**
+     * 检查当前Session ID是否合法
+     *
+     * @param string $sid
+     * @return boolean
+     */
+    public static function check_session_id($sid)
+    {
+        if (strlen($sid)!=32)return false;
+        if (!preg_match('/^[a-fA-F\d]{32}$/', $sid))return false;
+
+        $mt_str = substr($sid,0,28);
+        $check_str = substr($sid,-4);
+
+        if (substr(md5('doe9%32'.$mt_str.Session::$config['check_string']),8,4) === $check_str)
+        {
+            return true;
+        }
+        else
+        {
+            return false;
+        }
     }
 }
