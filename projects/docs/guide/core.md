@@ -148,7 +148,7 @@ Core::find_file($dir, $file, $ext = null, $auto_require = false, $project = null
 若没有找到指定文件，则返回false。
 注意，config,i18n文件夹返回的是所有符合条件的文件的数组，而其它则是返回优先级最高的那个文件。
 比如：在libraries/MyQEE/Core/classes/和project/default/classes/分别都有一个Test.class.php 则系统将会返回project/default/classes/的Test.class.php的实际路径。
-而config和i18n的则不一样，它会返回所有文件的数组，不过是你通常不需要直接使用这个Core::find_file()去获取config和i18n文件，而是直接使用Core::config()货Core::i18n()来获取相关数据。
+而config和i18n的则不一样，它会返回所有文件的数组，不过是你通常不需要直接使用这个Core::find_file()去获取config和i18n文件，而是直接使用Core::config()来获取相关数据。
 
 一些简单例子：
 
@@ -192,10 +192,6 @@ Core::cookie()
 Core::route()
 ---------------
 返回一个实例化后的路由对象，其它同上
-
-Core::i18n()
----------------
-返回一个实例化后的多国语言对象，其它同上
 
 Core::url()
 ---------------

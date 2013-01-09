@@ -75,12 +75,18 @@ $config['url']['assets'] = '/assets/';
 $config['debug_config'] = false;
 
 /**
- * 开启调试模式的密码，支持多个
+ * 用于 http://domain/opendebugger 页面开启在线debug功能
  *
- * @example $config['debug_open_password'] = array('pw1','pw2');
+ * key为用户名，value为密码
+ * 支持多个，留空则关闭此功能
+ *
+ * @example $config['debug_open_password'] = array('user1'=>'pw1','user2'=>'pw2');
  * @var array
  */
-$config['debug_open_password'] = array();
+$config['debug_open_password'] = array
+(
+    //'myqee' => '123456',
+);
 
 /**
  * 页面编码

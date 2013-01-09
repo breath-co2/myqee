@@ -18,7 +18,12 @@ class Controller_OpenDebugger extends Controller
 
     public function before()
     {
-        $this->password = Core::config( 'core.debug_open_password' );
+        $this->password = Core::config('core.debug_open_password');
+
+        if (!is_array($this->password) || !$this->password)
+        {
+            Core::show_404();
+        }
     }
 
     public function action_default()
@@ -35,59 +40,64 @@ class Controller_OpenDebugger extends Controller
 
     public function action_login()
     {
+        $debug_user = $_POST['debug_user'];
         $debug_hash = $_POST['debug_hash'];
-        if ( in_array( $debug_hash, $this->password ) )
+        if ( isset($this->password[$debug_user]) && $this->password[$debug_user]==$debug_hash )
         {
-            Core::cookie()->set( '_debug_open', Core::get_debug_hash( $debug_hash ), null, '/' );
+            Core::cookie()->set( '_debug_open', Core::get_debug_hash( $debug_user , $debug_hash ), null, '/' );
+
+            if ( isset($_POST['forward']) && $_POST['forward'] )
+            {
+                $this->redirect( HttpIO::POST('forward',HttpIO::PARAM_TYPE_URL) );
+            }
+            else
+            {
+                $this->redirect('/opendebugger');
+            }
         }
-        $this->redirect( '/opendebugger' );
+        else
+        {
+            $this->redirect( '/opendebugger' . ( isset($_POST['forward']) && $_POST['forward']?'?forward='.urlencode(HttpIO::POST('forward',HttpIO::PARAM_TYPE_URL)):'') );
+        }
     }
 
     public function action_logout()
     {
-        Core::cookie()->delete( '_debug_open', '/' );
+        Core::cookie()->delete('_debug_open','/');
         $this->redirect( '/opendebugger' );
     }
 
     protected function debug()
     {
         $url = Core::url( '/opendebugger/login' );
-        echo <<<EOF
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="zh-CN" lang="zh-CN">
-<head>
-<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-<title>我要调试</title>
-</head>
-<body>
-<form method="post" action="{$url}" name="form1" id="form1">
-<input type="hidden" name="action" value="login" />
-认证密码:<input type="password" name="debug_hash" /><input type="submit" name="submit" value="我要调试" />
-</form>
-<script type="text/javascript">
-document.forms['form1']['debug_hash'].focus();
-</script>
-</body>
-</html>
-EOF;
+        $str = '';
+        if (isset($_GET['forward']) && $_GET['forward'])
+        {
+            $str = Form::hidden('forward',$_GET['forward']);
+        }
+
+        $view = new View('opendebugger');
+        $view->str  = $str;
+        $view->url  = $url;
+        $view->open = true;
+        $view->render();
     }
 
     protected function nodebug()
     {
-        $url = Core::url( '/opendebugger/logout' );
-        echo <<<EOF
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="zh-CN" lang="zh-CN">
-<head>
-<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-<title>我不想调试</title>
-</head>
-<body>
-<form method="post" action="{$url}" name="form1">
-<input type="submit" name="submit" value="我不想调试" />
-</form>
-</body>
-</html>
-EOF;
+        $url = Core::url('/opendebugger/logout');
+
+        $str = '';
+        if (isset($_GET['forward']) && $_GET['forward'])
+        {
+            $forward = HttpIO::GET('forward',HttpIO::PARAM_TYPE_URL);
+            $str = '<a href="'.$forward.'">'.$forward.'</a>';
+        }
+
+        $view = new View('opendebugger');
+        $view->str  = $str;
+        $view->url  = $url;
+        $view->open = false;
+        $view->render();
     }
 }

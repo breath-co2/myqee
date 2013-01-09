@@ -1,45 +1,52 @@
 <?php
 /**
- * 启动时间
- * @var mixed
+ * 当前系统启动时间
+ *
+ * @var int
  */
-define( 'START_TIME', microtime( TRUE ) );
+define('START_TIME', microtime(1));
 
 /**
  * 启动内存
+ *
  * @var int 启动所用内存
  */
 define( 'START_MEMORY', memory_get_usage() );
 
 /**
  * PHP文件后缀
+ *
  * @var string
  */
 define( 'EXT', '.php' );
 
 /**
- * 当前时间
- * @var integer
+ * 系统当前时间
+ *
+ * @var int
  */
 define( 'TIME', time() );
 
 /**
- * 目录分隔符
+ * 目录分隔符简写
+ *
  * @var string
  */
 define( 'DS', DIRECTORY_SEPARATOR );
 
 /**
  * 是否WIN系统
- * @var string
+ *
+ * @var boolean
  */
-define( 'IS_WIN', DS === '\\' ? true : false );
+define('IS_WIN', DS==='\\'?true:false);
 
 /**
- * 换行符
+ * CRLF换行符
+ *
  * @var string
  */
-define( 'CRLF', "\r\n" );
+define('CRLF', "\r\n");
 
 /**
  * 服务器是否支持mbstring
@@ -62,101 +69,83 @@ define('IS_CLI',(PHP_SAPI==='cli'));
  */
 define('IS_SYSTEM_MODE', !IS_CLI && isset($_SERVER['HTTP_X_MYQEE_SYSTEM_HASH']) ? true : false);
 
-
-if (false) $dir_system = $dir_core = $dir_project = $dir_wwwroot = $dir_data = $dir_library = $dir_bulider = $dir_shell = $dir_temp = $dir_assets = $dir_log = $dir_cache = null;
-if (!isset($dir_system)) $dir_system = dirname( __FILE__ ) . '/../';
-
 /**
- * 系统目录
+ * 站点目录
+ *
  * @var string
  */
-define( 'DIR_SYSTEM', realpath( $dir_system ) . DS );
+define('DIR_SYSTEM', realpath(__DIR__.DS.'..'.DS).DS);
 
-if ( !isset( $dir_core    ) ) $dir_core    = DIR_SYSTEM   . 'core/';
-if ( !isset( $dir_project ) ) $dir_project = DIR_SYSTEM   . 'projects/';
-if ( !isset( $dir_wwwroot ) ) $dir_wwwroot = DIR_SYSTEM   . 'wwwroot/';
-if ( !isset( $dir_library ) ) $dir_library = DIR_SYSTEM   . 'libraries/';
-if ( !isset( $dir_shell   ) ) $dir_shell   = DIR_SYSTEM   . 'shell/';
-if ( !isset( $dir_data    ) ) $dir_data    = DIR_SYSTEM   . 'data/';
-if ( !isset( $dir_bulider ) ) $dir_bulider = $dir_data    . 'bulider/';
-if ( !isset( $dir_temp    ) ) $dir_temp    = $dir_data    . 'temp/';
-if ( !isset( $dir_log     ) ) $dir_log     = $dir_data    . 'log/';
-if ( !isset( $dir_cache   ) ) $dir_cache   = $dir_data    . 'cache/';
-if ( !isset( $dir_assets  ) ) $dir_assets  = $dir_wwwroot . 'assets/';
-
-if ( ! realpath( $dir_project ) )
-{
-    $dir_project = dirname( __FILE__ ) . DS . '../';
-}
+/**
+ * Core目录
+ *
+ * @var string
+ */
+define('DIR_CORE', DIR_SYSTEM.'core'.DS);
 
 /**
  * 项目目录
+ *
  * @var string
- */
-define( 'DIR_CORE', (realpath( $dir_core ) ? realpath( $dir_core ) : DIR_SYSTEM . 'core') . DS );
+*/
+define('DIR_PROJECT', DIR_SYSTEM.'projects'.DS);
 
 /**
- * 项目目录
+ * Global公用类库目录
+ *
  * @var string
- */
-define( 'DIR_PROJECT', (realpath( $dir_project ) ? realpath( $dir_project ) : DIR_SYSTEM . 'projects') . DS );
+*/
+define('DIR_GLOBAL', DIR_SYSTEM.'global'.DS);
 
 /**
- * WWWROOR根目录
+ * 模块目录
+ *
  * @var string
  */
-define( 'DIR_WWWROOT', (realpath( $dir_wwwroot ) ? realpath( $dir_wwwroot ) : DIR_SYSTEM . 'wwwroot') . DS );
+define('DIR_LIBRARY', DIR_SYSTEM.'libraries'.DS);
 
 /**
- * 数据目录
+ * Data目录
+ *
  * @var string
- */
-define( 'DIR_DATA', (realpath( $dir_data ) ? realpath( $dir_data ) : DIR_SYSTEM . 'data') . DS );
+*/
+define('DIR_DATA', DIR_SYSTEM.'data'.DS);
 
 /**
- * 库文件目录
+ * Cache目录
+ *
  * @var string
- */
-define( 'DIR_LIBRARY', (realpath( $dir_library ) ? realpath( $dir_library ) : DIR_SYSTEM . 'libraries') . DS );
+*/
+define('DIR_CACHE', DIR_DATA.'cache'.DS);
 
 /**
- * 系统构建数据目录
+ * Temp目录
+ *
  * @var string
- */
-define( 'DIR_SHELL', (realpath( $dir_shell ) ? realpath( $dir_shell ) : DIR_SYSTEM . 'shell') . DS );
+*/
+define('DIR_TEMP', DIR_DATA.'temp'.DS);
 
 /**
- * 系统构建数据目录
+ * Log目录
+ *
  * @var string
- */
-define( 'DIR_BULIDER', (realpath( $dir_bulider ) ? realpath( $dir_bulider ) : DIR_DATA . 'bulider') . DS );
+*/
+define('DIR_LOG', DIR_DATA.'log'.DS);
 
 /**
- * 临时文件目录
+ * WWW目录
+ *
  * @var string
- */
-define( 'DIR_TEMP', (realpath( $dir_temp ) ? realpath( $dir_temp ) : DIR_DATA . 'temp') . DS );
+*/
+define('DIR_WWWROOT', DIR_SYSTEM.'wwwroot'.DS);
 
 /**
- * LOG目录
+ * WWW目录
+ *
  * @var string
- */
-define( 'DIR_LOG', (realpath( $dir_log ) ? realpath( $dir_log ) : DIR_DATA . 'log') . DS );
+*/
+define('DIR_ASSETS', DIR_WWWROOT.'assets'.DS);
 
-/**
- * LOG目录
- * @var string
- */
-define( 'DIR_CACHE', (realpath( $dir_cache ) ? realpath( $dir_cache ) : DIR_DATA . 'cache') . DS );
-
-/**
- * 临时文件目录
- * @var string
- */
-define( 'DIR_ASSETS', (realpath( $dir_assets ) ? realpath( $dir_assets ) : DIR_WWWROOT . 'assets') . DS );
-
-
-unset( $dir_system, $dir_core, $dir_project, $dir_wwwroot, $dir_data, $dir_library, $dir_shell, $dir_bulider,$dir_assets );
 
 function __load_boot__()
 {
@@ -175,7 +164,8 @@ function __load_boot__()
 
 
 /**
- * 语言包
+ * 输出语言包
+ *
  * [strtr](http://php.net/strtr) is used for replacing parameters.
  *
  * __('Welcome back, :user', array(':user' => $username));
@@ -188,18 +178,19 @@ function __load_boot__()
  */
 function __( $string, array $values = null )
 {
-    static $have_core = false;
-    if ( false===$have_core )
+    static $have_i18n_class = false;
+
+    if ( false===$have_i18n_class )
     {
-        __load_boot__();
-        $have_core = (boolean)class_exists('Core',true);
-    }
-    if ($have_core)
-    {
-        $string = Core::i18n()->get( $string );
+        $have_i18n_class = (boolean)class_exists('I18n',true);
     }
 
-    return empty( $values ) ? $string : strtr( $string, $values );
+    if ($have_i18n_class)
+    {
+        $string = I18n::get($string);
+    }
+
+    return empty($values)?$string:strtr($string,$values);
 }
 
 /**
@@ -226,14 +217,14 @@ if ( MAGIC_QUOTES_GPC )
         }
         return $string;
     }
-    $_GET = _stripcslashes( $_GET );
-    $_POST = _stripcslashes( $_POST );
-    $_COOKIE = _stripcslashes( $_COOKIE );
+    $_GET     = _stripcslashes( $_GET );
+    $_POST    = _stripcslashes( $_POST );
+    $_COOKIE  = _stripcslashes( $_COOKIE );
     $_REQUEST = _stripcslashes( $_REQUEST );
 }
 
 /**
- * 系统基础初始化类
+ * Bootstrap
  *
  * @author     jonwang(jonwang@myqee.com)
  * @category   MyQEE
@@ -253,6 +244,18 @@ abstract class Bootstrap
     const VERSION = '1.9.3';
 
     /**
+     * 包含目录
+     *
+     * array(
+     * 	 'test1',
+     * 	 'test2',
+     * )
+     *
+     * @var array
+     */
+    public static $include_path;
+
+    /**
      * 系统所在的根目录
      *
      * @var string
@@ -264,7 +267,7 @@ abstract class Bootstrap
      *
      * @var array
      */
-    protected static $config = array();
+    public static $config = array();
 
     /**
      * 所有项目的config配置
@@ -310,26 +313,14 @@ abstract class Bootstrap
     public static $file_list = array();
 
     /**
-     * 包含目录
-     *
-     * array(
-     * 	 'test1',
-     * 	 'test2',
-     * )
-     *
-     * @var array
-     */
-    public static $include_path;
-
-    /**
      * 自动加载类
      * @param string $class 类名称
      */
     public static function auto_load( $class )
     {
-        if ( class_exists( $class, false ) ) return true;
+        if ( class_exists($class, false) ) return true;
         static $core_loaded = false;
-        if ( ! $core_loaded )
+        if ( !$core_loaded )
         {
             $core_loaded = class_exists( 'Core', false );
         }
@@ -357,7 +348,7 @@ abstract class Bootstrap
         foreach ( self::$include_path as $path )
         {
             $tmpfile = $path . $file;
-            if ( is_file( $tmpfile ) )
+            if ( is_file($tmpfile) )
             {
                 require $tmpfile;
                 return true;
@@ -383,7 +374,7 @@ abstract class Bootstrap
         $run = true;
 
         # 读取系统配置
-        if ( !is_file( DIR_SYSTEM . 'config' . EXT ) )
+        if ( !is_file(DIR_SYSTEM . 'config' . EXT) )
         {
             self::_throw_sys_error_msg( __('Please rename the file config.new:EXT to config:EXT' , array(':EXT'=>EXT)) );
         }
@@ -525,7 +516,7 @@ abstract class Bootstrap
                     exec('chcp 65001');
                 }
 
-                if ( ! isset( $_SERVER["argv"] ) )
+                if ( !isset( $_SERVER["argv"] ) )
                 {
                     exit( 'Err Argv' );
                 }
@@ -843,7 +834,7 @@ abstract class Bootstrap
             }
             if ( $debug_libraries )
             {
-                if ( ! is_array( $debug_libraries ) )
+                if ( !is_array( $debug_libraries ) )
                 {
                     $debug_libraries = array( (string) $debug_libraries );
                 }
@@ -895,7 +886,7 @@ abstract class Bootstrap
         if ( isset( self::$config['core']['excluded'] ) && self::$config['core']['excluded'] )
         {
             # 排除的目录
-            if ( ! is_array( self::$config['core']['excluded'] ) )
+            if ( !is_array( self::$config['core']['excluded'] ) )
             {
                 self::$config['core']['excluded'] = array( self::$config['core']['excluded'] );
             }
@@ -1005,10 +996,10 @@ abstract class Bootstrap
 
         if ( !isset($_COOKIE['_debug_open']) ) return false;
         if ( !isset(self::$config['core']['debug_open_password']) ) return false;
-        if ( !is_array( self::$config['core']['debug_open_password']) ) self::$config['core']['debug_open_password'] = array( ( string ) self::$config['core']['debug_open_password'] );
-        foreach ( self::$config['core']['debug_open_password'] as $item )
+        if ( !is_array( self::$config['core']['debug_open_password']) ) self::$config['core']['debug_open_password'] = array( (string) self::$config['core']['debug_open_password'] );
+        foreach ( self::$config['core']['debug_open_password'] as $username => $password )
         {
-            if ( $_COOKIE['_debug_open'] == self::get_debug_hash( $item ) )
+            if ( $_COOKIE['_debug_open'] == self::get_debug_hash( $username , $password ) )
             {
                 return true;
             }
@@ -1023,11 +1014,11 @@ abstract class Bootstrap
      * @param string $password
      * @return string
      */
-    public static function get_debug_hash($password)
+    public static function get_debug_hash($username,$password)
     {
         static $config_str = null;
         if (null===$config_str)$config_str = var_export(self::$config['core']['debug_open_password'],true);
-        return md5($config_str.'_open$&*@debug'.$password);
+        return md5($config_str.'_open$&*@debug'.$username.'_'.$password);
     }
 
     /**

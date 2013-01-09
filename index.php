@@ -1,42 +1,5 @@
 <?php
-chdir(dirname(__FILE__));
-
-/////////////////////// 下面的变量基本上用默认值即可
-
-# 系统目录
-$dir_system  = './';
-
-# Core目录
-$dir_core    = './core/';
-
-# 项目目录
-$dir_project = './projects/';
-
-# www根目录
-$dir_wwwroot = './wwwroot/';
-
-# 数据目录
-$dir_data    = './data/';
-
-# 类库目录
-$dir_library = './libraries/';
-
-# SHELL目录
-$dir_shell   = './shell/';
-
-# 缓存目录
-$dir_cache   = $dir_data.'cache/';
-
-# 临时数据目录
-$dir_temp    = $dir_data.'temp/';
-
-# LOG目录
-$dir_log     = $dir_data.'log/';
-
-
-
-//////////////////// 以下基本上不用修改
-
+@chdir(dirname(__FILE__));
 
 
 /**
@@ -88,7 +51,7 @@ function _load_protection($max_load_avg=24)
 
     $msg = sprintf($msg_tpl, $time, $host, $load, $argv_or_uri);
 
-    if ( @is_dir($dir_log) )
+    if ( is_dir($dir_log) && is_writeable($dir_log."php-server-overload.log") )
     {
         @file_put_contents( $dir_log."php-server-overload.log", $msg, FILE_APPEND );
     }
@@ -117,6 +80,6 @@ else
     $auto_run = (bool)$auto_run;
 }
 
-include $dir_core . 'bootstrap.php';
+include dirname(__FILE__).'/core/bootstrap.php';
 
 Bootstrap::setup($auto_run);

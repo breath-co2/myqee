@@ -590,14 +590,6 @@ abstract class MyQEE_Core extends Bootstrap
     }
 
     /**
-     * @return Core_I18n
-     */
-    public static function i18n($lang = null)
-    {
-        return Core::factory('Core_I18n', $lang);
-    }
-
-    /**
      * 返回URL路径
      *
      * 自3.0起可用 url() 直接快速调用此方法
@@ -727,7 +719,7 @@ abstract class MyQEE_Core extends Bootstrap
     */
     protected static function write_log($file , $data , $type = 'log')
     {
-        return false===@file_put_contents(DIR_LOG.$file, $data.CRLF , FILE_APPEND)?true:false;
+        return File::create_file(DIR_LOG.$file, $data.CRLF , FILE_APPEND);
     }
 
     /**
@@ -771,7 +763,7 @@ abstract class MyQEE_Core extends Bootstrap
             }
             else
             {
-                $debug = new __NoneDebug__();
+                $debug = new _NoDebug();
             }
         }
         return $debug;
@@ -1503,12 +1495,17 @@ abstract class MyQEE_Core extends Bootstrap
 
 
 /**
- * 无debug支持类
+ * 无调试对象
  *
+ * @author     jonwang(jonwang@myqee.com)
+ * @category   Core
+ * @package    Classes
+ * @subpackage Core
+ * @copyright  Copyright (c) 2008-2012 myqee.com
+ * @license    http://www.myqee.com/license.html
  */
-class __NoneDebug__
+class _NoDebug
 {
-
     public function __call($m, $v)
     {
         return $this;
@@ -1554,3 +1551,4 @@ class __NoneDebug__
         return false;
     }
 }
+
