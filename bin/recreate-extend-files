@@ -1,0 +1,229 @@
+#!/usr/bin/env php
+<?php
+#批量生成extend文件，生成的extend文件可提供给不支持eval的系统进行include加载
+
+define('EXT', '.php');
+
+
+define('DIR_SYSTEM',realpath(__DIR__.'/../').'/');
+
+$dir_system_len = strlen(DIR_SYSTEM);
+
+foreach (array('core','global') as $lib)
+{
+    paste_files($lib, 'classes'     , DIR_SYSTEM .'core/classes/');
+    paste_files($lib, 'orm'         , DIR_SYSTEM .'core/orm/');
+    paste_files($lib, 'controllers' , DIR_SYSTEM .'core/controllers/');
+    paste_files($lib, 'models'      , DIR_SYSTEM .'core/models/');
+}
+
+// 处理类库
+foreach ( glob( DIR_SYSTEM.'libraries/*', GLOB_NOSORT )  as $file )
+{
+    if ( $file[0] == '.' ) continue;
+
+    if (is_dir($file))
+    {
+        foreach ( glob( preg_quote($file).'/*', GLOB_NOSORT )  as $the_lib )
+        {
+            if ( $the_lib[0] == '.' ) continue;
+
+            if (is_dir($the_lib))
+            {
+                $lib_path = substr($the_lib,$dir_system_len);
+
+                // 清除目录
+                // remove_dir(DIR_SYSTEM .$lib_path. '/extend_files/');
+
+                // 处理classes
+                paste_files( $lib_path, 'classes'     , DIR_SYSTEM .$lib_path.'/classes/');
+                paste_files( $lib_path, 'orm'         , DIR_SYSTEM .$lib_path.'/orm/');
+                paste_files( $lib_path, 'controllers' , DIR_SYSTEM .$lib_path.'/controllers/');
+                paste_files( $lib_path, 'models'      , DIR_SYSTEM .$lib_path.'/models/');
+            }
+        }
+    }
+}
+
+
+
+
+
+
+
+
+
+
+/**
+ * 解析class类文件
+ */
+function paste_files($lib,$dir,$class_dir,$p_dir='')
+{
+    if (is_dir($class_dir))
+    {
+        $dirArr = array
+        (
+            'orm'         => '.orm'.EXT,
+            'classes'     => '.class'.EXT,
+            'controllers' => '.controller'.EXT,
+            'models'      => '.model'.EXT,
+        );
+        if (!isset($dirArr[$dir]))
+        {
+            echo 'dir '.$dir.' not defined'."\n";
+            return;
+        }
+
+        $ext = $dirArr[$dir];
+        $ext_len = strlen($ext);
+        $dir_len = strlen($class_dir);
+
+        echo 'found class dir '.$class_dir."\n";
+
+        $files = glob( preg_quote($class_dir).'*', GLOB_NOSORT );
+
+        foreach ( $files as $file )
+        {
+            if ( $file[0] == '.' ) continue;
+
+            $file_name = substr($file,$dir_len);
+            if (is_dir($file))
+            {
+                paste_files($lib , $dir , $file.'/' , $p_dir.'/'.$file_name);
+                continue;
+            }
+
+            if (substr($file,-$ext_len)!=$ext)continue;
+
+
+            $content = file_get_contents($file);
+
+            // 匹配类名称
+            if (preg_match('#namespace ([a-z0-9_\\\\]+)(?:;| |\{|\r|\n)(?:.*)(abstract )?class ([a-z0-9_]+)( |\r|\n)#Uis', $content,$m))
+            {
+                $namespace = $m[1];
+                $classname = $m[3];
+                $abstract  = $m[2];
+            }
+            else
+            {
+                // 如果没有匹配到，则用文件名来命名
+                echo '-------------no match file '.$file.' ------------'."\n";
+                continue;
+            }
+
+            $str = "<?php\r\n\r\n{$abstract}class {$classname} extends {$namespace}_{$classname}\r\n{\r\n\r\n}";
+
+            if ($dir=='orm')
+            {
+                // ORM 需要特殊处理
+                if ( preg_match('#^ORM_([a-z0-9_]+)_(Data|Finder|Result|Index)$#i', $classname ,$m2) )
+                {
+                    $obj_key = array('data'=>'Data','finder'=>'Finder','result'=>'Result','index'=>'Index');
+                    if ( isset($obj_key[strtolower($m2[2])]) ) unset($obj_key[strtolower($m2[2])]);
+
+                    foreach ($obj_key as $item)
+                    {
+                        if (preg_match('#(abstract )?class ORM_'.$m2[1].'_'.$item.'#i', $content,$m3))
+                        {
+                            $abstract  = $m3[1];
+                            $classname = 'ORM_'.$m2[1].'_'.$item;
+                            $str .= "\r\n\r\n\r\n{$abstract}class {$classname} extends {$namespace}_{$classname}\r\n{\r\n\r\n}";
+                        }
+                    }
+                }
+                else
+                {
+                    echo '-------------no match orm '.$file.' ------------'."\n";
+                }
+            }
+
+            $to_dir = DIR_SYSTEM.$lib.'/extend_files/'.$dir.'/'.ltrim($p_dir.'/','/');
+            if (!is_dir($to_dir))
+            {
+                create_dir($to_dir);
+            }
+
+            $e_file = $to_dir.$file_name;
+
+            if ( is_file($e_file) && md5($str)!=md5_file($e_file) )
+            {
+                if (@file_put_contents($e_file, $str))
+                {
+                    echo 'success wirte file:'.$e_file."\n";
+                }
+                else
+                {
+                    echo 'fail wirte file:'.$e_file."\n";
+                }
+            }
+            else
+            {
+                echo "not change:{$e_file}\n";
+            }
+        }
+    }
+    else
+    {
+        echo 'not found class dir '.$class_dir."\n\n";
+    }
+}
+
+/**
+ * 创建文件夹
+ */
+function create_dir($dir)
+{
+    if (!is_dir($dir))
+    {
+        if ( substr($dir,0,strlen(DIR_SYSTEM))==DIR_SYSTEM )
+        {
+            $temp = explode('/', str_replace('\\', '/', substr($dir,strlen(DIR_SYSTEM)) ) );
+            $cur_dir = DIR_SYSTEM;
+        }
+        else
+        {
+            $temp = explode('/', str_replace('\\', '/', $dir) );
+            $cur_dir = '';
+        }
+        for( $i = 0; $i < count($temp); $i ++ )
+        {
+            $cur_dir .= $temp[$i] . '/';
+            if ( !is_dir($cur_dir) )
+            {
+                if ( @mkdir($cur_dir, 0755) )
+                {
+                }
+                else
+                {
+                    return false;
+                }
+            }
+        }
+    }
+    return true;
+}
+
+// 删除目录
+function remove_dir($dir)
+{
+    if (!is_dir($dir))
+    {
+        return true;
+    }
+
+    $realpath = realpath($dir);
+
+    $handle = opendir($dir);
+    while ( ($file = readdir($handle)) !== false )
+    {
+        if ( $file != '.' && $file != '..' )
+        {
+            $tmp_dir = $dir . '/' . $file;
+            is_dir($tmp_dir) ? remove_dir($tmp_dir) : @unlink($tmp_dir);
+        }
+    }
+    closedir($handle);
+
+    return @\rmdir($dir);
+}
