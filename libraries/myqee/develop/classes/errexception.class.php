@@ -15,7 +15,7 @@ define( 'E_DATABASE_ERROR', 44 );
  * @copyright  Copyright (c) 2008-2012 myqee.com
  * @license    http://www.myqee.com/license.html
  */
-class MyQEE_ErrException extends Exception
+class Library_MyQEE_Develop_ErrException extends Exception
 {
 
     // Template file

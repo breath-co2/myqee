@@ -1,6 +1,6 @@
 <?php
 
-class MyQEE_Debug extends FB
+class Library_MyQEE_Develop_Debug extends FB
 {
 
     /**

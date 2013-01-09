@@ -8,7 +8,7 @@
  * @package    System
  * @subpackage Core
  */
-class MyQEE_Profiler
+class Library_MyQEE_Develop_Profiler
 {
 
     protected $type;
@@ -56,20 +56,20 @@ class MyQEE_Profiler
     {
         if ( ! $this->is_open() ) return $this;
         static $counter = 0;
-        
+
         // Create a unique token based on the counter
         $token = 'kp/' . base_convert( $counter ++, 10, 32 );
-        
-        Profiler::$_marks[$token] = array( 'group' => $group, 'name' => ( string ) $name, 
+
+        Profiler::$_marks[$token] = array( 'group' => $group, 'name' => ( string ) $name,
 
         // Start the benchmark
-        'start_time' => microtime( TRUE ), 'start_memory' => memory_get_usage(), 
+        'start_time' => microtime( TRUE ), 'start_memory' => memory_get_usage(),
 
         // Set the stop keys without values
         'stop_time' => FALSE, 'stop_memory' => FALSE );
-        
+
         $this->token = $token;
-        
+
         return $this;
     }
 
@@ -92,16 +92,16 @@ class MyQEE_Profiler
                 $mydata = self::total( $this->token );
                 $maxlen = 10;
                 $strlen = $maxlen + 70;
-                
+
                 echo "\x1b[1;32;44m";
                 echo "\n" . str_pad( Profiler::$_marks[$this->token]['group'] . ' - ' . Profiler::$_marks[$this->token]['name'], $strlen, '-', STR_PAD_BOTH );
                 $str = "\x1b[36m";
                 $str .= "\nTime:\x1b[33m";
                 $str .= number_format( $mydata[0], 6 ) . "s	";
-                
+
                 $str .= "\x1b[36mMemory:\x1b[33m";
                 $str .= number_format( $mydata[1] / 1024, 4 ) . 'kb';
-                
+
                 echo str_pad( $str, $strlen + 21, ' ' );
                 echo "\n" . str_pad( '', $strlen, ' ' );
                 echo "\x1b[0;36m";
@@ -170,10 +170,10 @@ class MyQEE_Profiler
         }
         $run = true;
         $profiler = Profiler::instance()->start( 'Core', 'System SetUp' );
-        Profiler::$_marks[$profiler->get_token()] = array( 'group' => 'Core', 'name' => 'System SetUp', 
+        Profiler::$_marks[$profiler->get_token()] = array( 'group' => 'Core', 'name' => 'System SetUp',
 
         // Start the benchmark
-        'start_time' => START_TIME, 'start_memory' => START_MEMORY, 
+        'start_time' => START_TIME, 'start_memory' => START_MEMORY,
 
         // Set the stop keys without values
         'stop_time' => FALSE, 'stop_memory' => FALSE );
@@ -200,13 +200,13 @@ class MyQEE_Profiler
     public static function groups()
     {
         $groups = array();
-        
+
         foreach ( Profiler::$_marks as $token => $mark )
         {
             // Sort the tokens by the group and name
             $groups[$mark['group']][$mark['name']][] = $token;
         }
-        
+
         return $groups;
     }
 
@@ -220,54 +220,54 @@ class MyQEE_Profiler
     {
         // Min and max are unknown by default
         $min = $max = array( 'time' => NULL, 'memory' => NULL );
-        
+
         // Total values are always integers
         $total = array( 'time' => 0, 'memory' => 0, 'data' => array() );
-        
+
         foreach ( $tokens as $token )
         {
             // Get the total time and memory for this benchmark
             list ( $time, $memory, $data ) = Profiler::total( $token );
-            
+
             if ( $max['time'] === NULL or $time > $max['time'] )
             {
                 // Set the maximum time
                 $max['time'] = $time;
             }
-            
+
             if ( $min['time'] === NULL or $time < $min['time'] )
             {
                 // Set the minimum time
                 $min['time'] = $time;
             }
-            
+
             // Increase the total time
             $total['time'] += $time;
-            
+
             if ( $max['memory'] === NULL or $memory > $max['memory'] )
             {
                 // Set the maximum memory
                 $max['memory'] = $memory;
             }
-            
+
             if ( $min['memory'] === NULL or $memory < $min['memory'] )
             {
                 // Set the minimum memory
                 $min['memory'] = $memory;
             }
-            
+
             // Increase the total memory
             $total['memory'] += $memory;
-            
+
             if ( $data ) $total['data'][] = $data;
         }
-        
+
         // Determine the number of tokens
         $count = count( $tokens );
-        
+
         // Determine the averages
         $average = array( 'time' => $total['time'] / $count, 'memory' => $total['memory'] / $count );
-        
+
         return array( 'min' => $min, 'max' => $max, 'total' => $total, 'average' => $average );
     }
 
@@ -281,7 +281,7 @@ class MyQEE_Profiler
     {
         // Import the benchmark data
         $mark = Profiler::$_marks[$token];
-        
+
         if ( $mark['stop_time'] === FALSE )
         {
             // The benchmark has not been stopped yet
@@ -299,12 +299,12 @@ class MyQEE_Profiler
         {
             $mark['data'] = null;
         }
-        
+
         return array( // Total time in seconds
-$runtime, 
+$runtime,
 
         // Amount of memory in bytes
-        $memory, 
+        $memory,
 
         $mark['data'] );
     }
@@ -318,53 +318,53 @@ $runtime,
     {
         // Load the stats from cache, which is valid for 1 day
         $stats = null; //VeryCD::cache('profiler_application_stats', NULL, 3600 * 24);
-        
+
 
         if ( ! is_array( $stats ) or $stats['count'] > Profiler::$rollover )
         {
             // Initialize the stats array
             $stats = array( 'min' => array( 'time' => NULL, 'memory' => NULL ), 'max' => array( 'time' => NULL, 'memory' => NULL ), 'total' => array( 'time' => NULL, 'memory' => NULL ), 'count' => 0 );
         }
-        
+
         // Get the application run time
         $time = microtime( TRUE ) - START_TIME;
-        
+
         // Get the total memory usage
         $memory = memory_get_usage() - START_MEMORY;
-        
+
         // Calculate max time
         if ( $stats['max']['time'] === NULL or $time > $stats['max']['time'] ) $stats['max']['time'] = $time;
-        
+
         // Calculate min time
         if ( $stats['min']['time'] === NULL or $time < $stats['min']['time'] ) $stats['min']['time'] = $time;
-        
+
         // Add to total time
         $stats['total']['time'] += $time;
-        
+
         // Calculate max memory
         if ( $stats['max']['memory'] === NULL or $memory > $stats['max']['memory'] ) $stats['max']['memory'] = $memory;
-        
+
         // Calculate min memory
         if ( $stats['min']['memory'] === NULL or $memory < $stats['min']['memory'] ) $stats['min']['memory'] = $memory;
-        
+
         // Add to total memory
         $stats['total']['memory'] += $memory;
-        
+
         // Another mark has been added to the stats
         $stats['count'] ++;
-        
+
         // Determine the averages
         $stats['average'] = array( 'time' => $stats['total']['time'] / $stats['count'], 'memory' => $stats['total']['memory'] / $stats['count'] );
-        
+
         // Cache the new stats
         //Kohana::cache('profiler_application_stats', $stats);
-        
+
 
         // Set the current application execution time and memory
         // Do NOT cache these, they are specific to the current request only
         $stats['current']['time'] = $time;
         $stats['current']['memory'] = $memory;
-        
+
         // Return the total application run time and memory usage
         return $stats;
     }

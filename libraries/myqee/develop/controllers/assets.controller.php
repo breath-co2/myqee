@@ -6,7 +6,7 @@
  * @author jonwang
  *
  */
-class Controller_Assets extends Controller
+class Library_MyQEE_Develop_Controller_Assets extends Controller
 {
     /**
      * assets允许的文件后缀名
