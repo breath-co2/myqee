@@ -10,7 +10,7 @@
  * @copyright  Copyright (c) 2008-2012 myqee.com
  * @license    http://www.myqee.com/license.html
  */
-abstract class MyQEE_OOP_ORM_Index
+abstract class Core_OOP_ORM_Index
 {
 
     /**

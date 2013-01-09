@@ -77,7 +77,7 @@ if (!defined('_HTTPIO_METHOD'))
  * @copyright  Copyright (c) 2008-2012 myqee.com
  * @license    http://www.myqee.com/license.html
  */
-class MyQEE_HttpIO
+class Core_HttpIO
 {
 
     const PARAM_TYPE_URL = 'url';

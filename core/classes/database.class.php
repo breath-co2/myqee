@@ -9,7 +9,7 @@
  * @copyright  Copyright (c) 2008-2012 myqee.com
  * @license    http://www.myqee.com/license.html
  */
-class MyQEE_Database extends Database_QueryBuilder
+class Core_Database extends Database_QueryBuilder
 {
     /**
      * MySQL驱动类型

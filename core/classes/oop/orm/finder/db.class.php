@@ -10,7 +10,7 @@
  * @copyright  Copyright (c) 2008-2012 myqee.com
  * @license    http://www.myqee.com/license.html
  */
-class MyQEE_OOP_ORM_Finder_DB extends OOP_ORM
+class Core_OOP_ORM_Finder_DB extends OOP_ORM
 {
 
     /**

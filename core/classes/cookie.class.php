@@ -10,7 +10,7 @@
  * @copyright  Copyright (c) 2008-2012 myqee.com
  * @license    http://www.myqee.com/license.html
  */
-class MyQEE_Core_Cookie
+class Core_Cookie
 {
 
     /**
@@ -21,15 +21,15 @@ class MyQEE_Core_Cookie
 
     public function __construct()
     {
-        if ( null === Core_Cookie::$config )
+        if ( null === Cookie::$config )
         {
-            Core_Cookie::$config = Core::config('cookie');
+            Cookie::$config = Core::config('cookie');
         }
     }
 
     public static function get($name)
     {
-        if ( isset(Core_Cookie::$config['prefix']) && Core_Cookie::$config['prefix'] ) $name = Core_Cookie::$config['prefix'] . $name;
+        if ( isset(Cookie::$config['prefix']) && Cookie::$config['prefix'] ) $name = Cookie::$config['prefix'] . $name;
         return $_COOKIE[$name];
     }
 
@@ -56,17 +56,17 @@ class MyQEE_Core_Cookie
 
         foreach ( array('value', 'expire', 'domain', 'path', 'secure', 'httponly', 'prefix') as $item )
         {
-            if ( $$item === null and isset(Core_Cookie::$config[$item]) )
+            if ( $$item === null && isset(Cookie::$config[$item]) )
             {
-                $$item = Core_Cookie::$config[$item];
+                $$item = Cookie::$config[$item];
             }
         }
-        Core_Cookie::$config['prefix'] and $name = Core_Cookie::$config['prefix'] . $name;
+        Cookie::$config['prefix'] && $name = Cookie::$config['prefix'] . $name;
 
         // Expiration timestamp
         $expire = ($expire == 0) ? 0 : $_SERVER['REQUEST_TIME'] + (int)$expire;
 
-        Core_Cookie::check_domain($domain);
+        Cookie::check_domain($domain);
 
         return setcookie($name, $value, $expire, $path, $domain, $secure, $httponly);
     }
@@ -81,9 +81,9 @@ class MyQEE_Core_Cookie
      */
     public static function delete($name, $path = null, $domain = null)
     {
-        Core_Cookie::check_domain($domain);
+        Cookie::check_domain($domain);
 
-        return Core_Cookie::set($name, '', - 864000, $path, $domain, false, false);
+        return Cookie::set($name, '', - 864000, $path, $domain, false, false);
     }
 
     /**

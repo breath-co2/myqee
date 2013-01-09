@@ -10,7 +10,7 @@
  * @copyright  Copyright (c) 2008-2012 myqee.com
  * @license    http://www.myqee.com/license.html
  */
-class MyQEE_Database_Driver_SQLite extends Database_Driver
+class Core_Database_Driver_SQLite extends Database_Driver
 {
     /**
      * MySQL使用反引号标识符

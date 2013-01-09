@@ -9,7 +9,7 @@
  * @copyright  Copyright (c) 2008-2012 myqee.com
  * @license    http://www.myqee.com/license.html
  */
-abstract class MyQEE_I18n
+abstract class Core_I18n
 {
     protected static $is_setup = false;
 

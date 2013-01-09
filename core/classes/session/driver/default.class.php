@@ -10,7 +10,7 @@
  * @copyright  Copyright (c) 2008-2012 myqee.com
  * @license    http://www.myqee.com/license.html
  */
-class MyQEE_Session_Driver_Default
+class Core_Session_Driver_Default
 {
 
     public function __construct()

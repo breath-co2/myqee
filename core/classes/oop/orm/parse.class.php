@@ -10,7 +10,7 @@
  * @copyright  Copyright (c) 2008-2012 myqee.com
  * @license    http://www.myqee.com/license.html
  */
-abstract class MyQEE_OOP_ORM_Parse
+abstract class Core_OOP_ORM_Parse
 {
 
     public function __construct()

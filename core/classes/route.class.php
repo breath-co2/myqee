@@ -10,7 +10,7 @@
  * @copyright  Copyright (c) 2008-2012 myqee.com
  * @license    http://www.myqee.com/license.html
  */
-class MyQEE_Core_Route
+class Core_Route
 {
 
     // Defines the pattern of a <segment>
@@ -47,7 +47,7 @@ class MyQEE_Core_Route
      */
     public function get($pathinfo)
     {
-        if ( !isset(Core_Route::$regex[Core::$project]) )
+        if ( !isset(Route::$regex[Core::$project]) )
         {
             # 构造路由正则
             $this->init_regex();
@@ -56,7 +56,7 @@ class MyQEE_Core_Route
         # 当前Route
         $route = Core::config('core.route');
 
-        foreach ( Core_Route::$regex[Core::$project] as $k => $v )
+        foreach ( Route::$regex[Core::$project] as $k => $v )
         {
             if ( isset($route[$k]['for']) )
             {
@@ -67,7 +67,7 @@ class MyQEE_Core_Route
                 }
             }
 
-            $preg = Core_Route::_matches($pathinfo, $k);
+            $preg = Route::_matches($pathinfo, $k);
             if ($preg)
             {
                 return $preg;
@@ -83,17 +83,17 @@ class MyQEE_Core_Route
      * @param   array   URI parameters
      * @return  string
      * @throws  Exception
-     * @uses    Core_Route::REGEX_Key
+     * @uses    Route::REGEX_Key
      */
     public static function uri(array $params = null)
     {
-        if ( !isset(Core_Route::$regex[Core::$project]) )
+        if ( !isset(Route::$regex[Core::$project]) )
         {
             # 构造路由正则
             $this->init_regex();
         }
 
-        $current_route = Core::config('core.route.'.Core_Route::$current_route);
+        $current_route = Core::config('core.route.'.Route::$current_route);
 
         if (!isset($current_route['default']) || !is_array($current_route['default']))$current_route['default'] = array();
 
@@ -127,11 +127,11 @@ class MyQEE_Core_Route
             // Remove the parenthesis from the match as the replace
             $replace = substr($match[0], 1, -1);
 
-            while ( preg_match('#' . Core_Route::REGEX_KEY . '#', $replace, $match) )
+            while ( preg_match('#' . Route::REGEX_KEY . '#', $replace, $match) )
             {
                 list ( $key, $param ) = $match;
 
-                if ( isset($params[$param]) && ($params[$param]!==Core_Route::arr_get($current_route['default'],$param)) )
+                if ( isset($params[$param]) && ($params[$param]!==Route::arr_get($current_route['default'],$param)) )
                 {
                     $provided_optional = true;
 
@@ -165,7 +165,7 @@ class MyQEE_Core_Route
             $uri = str_replace($search, $replace, $uri);
         }
 
-        while ( preg_match('#' . Core_Route::REGEX_KEY . '#', $uri, $match) )
+        while ( preg_match('#' . Route::REGEX_KEY . '#', $uri, $match) )
         {
             list($key, $param) = $match;
 
@@ -208,9 +208,9 @@ class MyQEE_Core_Route
      */
     protected static function init_regex()
     {
-        if (isset(Core_Route::$regex[Core::$project]))return null;
+        if (isset(Route::$regex[Core::$project]))return null;
 
-        Core_Route::$regex[Core::$project] = array();
+        Route::$regex[Core::$project] = array();
 
         # 获取路由配置
         $route = Core::config('core.route');
@@ -221,7 +221,7 @@ class MyQEE_Core_Route
             # 构造路由正则
             foreach ( $route as $k => $v )
             {
-                Core_Route::$regex[Core::$project][$k] = Core_Route::_compile($v);
+                Route::$regex[Core::$project][$k] = Route::_compile($v);
             }
         }
     }
@@ -235,7 +235,7 @@ class MyQEE_Core_Route
      */
     protected static function _matches($uri, $route_name)
     {
-        if ( !$route_name || !(isset(Core_Route::$regex[Core::$project][$route_name])) )
+        if ( !$route_name || !(isset(Route::$regex[Core::$project][$route_name])) )
         {
             return false;
         }
@@ -243,9 +243,9 @@ class MyQEE_Core_Route
         if (IS_DEBUG)
         {
             Core::debug()->group('路由匹配');
-            Core::debug()->info(array('URI:' => $uri, 'Route:' => Core_Route::$regex[Core::$project][$route_name]),'匹配');
+            Core::debug()->info(array('URI:' => $uri, 'Route:' => Route::$regex[Core::$project][$route_name]),'匹配');
         }
-        if ( !preg_match(Core_Route::$regex[Core::$project][$route_name], $uri, $matches) )
+        if ( !preg_match(Route::$regex[Core::$project][$route_name], $uri, $matches) )
         {
             if (IS_DEBUG)
             {
@@ -307,7 +307,7 @@ class MyQEE_Core_Route
     {
         // The URI should be considered literal except for keys and optional parts
         // Escape everything preg_quote would escape except for : ( ) < >
-        $regex = preg_replace('#' . Core_Route::REGEX_ESCAPE . '#', '\\\\$0', $route['uri']);
+        $regex = preg_replace('#' . Route::REGEX_ESCAPE . '#', '\\\\$0', $route['uri']);
 
         if ( strpos($regex, '(') !== false )
         {
@@ -316,14 +316,14 @@ class MyQEE_Core_Route
         }
 
         // Insert default regex for keys
-        $regex = str_replace(array('<', '>'), array('(?P<', '>' . Core_Route::REGEX_SEGMENT . ')'), $regex);
+        $regex = str_replace(array('<', '>'), array('(?P<', '>' . Route::REGEX_SEGMENT . ')'), $regex);
 
         if ( !empty($route['preg']) )
         {
             $search = $replace = array();
             foreach ( $route['preg'] as $key => $value )
             {
-                $search[]  = "<$key>" . Core_Route::REGEX_SEGMENT;
+                $search[]  = "<$key>" . Route::REGEX_SEGMENT;
                 $replace[] = "<$key>$value";
             }
 

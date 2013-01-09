@@ -10,7 +10,7 @@
  * @copyright  Copyright (c) 2008-2012 myqee.com
  * @license    http://www.myqee.com/license.html
  */
-class MyQEE_HttpClient_Driver_Curl
+class Core_HttpClient_Driver_Curl
 {
 
     protected $http_data = array();

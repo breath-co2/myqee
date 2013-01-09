@@ -10,7 +10,7 @@
  * @copyright  Copyright (c) 2008-2012 myqee.com
  * @license	   http://www.myqee.com/license.html
  */
-class MyQEE_Cache_Driver_SQLite extends Cache_Driver_Database
+class Core_Cache_Driver_SQLite extends Cache_Driver_Database
 {
     /**
      * 默认缓存时间

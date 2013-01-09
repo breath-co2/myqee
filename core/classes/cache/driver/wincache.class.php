@@ -10,7 +10,7 @@
  * @copyright  Copyright (c) 2008-2012 myqee.com
  * @license    http://www.myqee.com/license.html
  */
-class MyQEE_Cache_Driver_WinCache
+class Core_Cache_Driver_WinCache
 {
 
     public function __construct()

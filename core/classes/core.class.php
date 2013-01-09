@@ -51,7 +51,7 @@ function config($key=null)
  * @copyright  Copyright (c) 2008-2012 myqee.com
  * @license    http://www.myqee.com/license.html
  */
-abstract class MyQEE_Core extends Bootstrap
+abstract class Core_Core extends Bootstrap
 {
     /**
      * MyQEE版本号

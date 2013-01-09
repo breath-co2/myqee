@@ -12,7 +12,7 @@
  * @copyright   Copyright (c) 2008-2012 myqee.com
  * @license     http://www.myqee.com/license.html
  */
-class MyQEE_Database_Driver_Mongo extends Database_Driver
+class Core_Database_Driver_Mongo extends Database_Driver
 {
     /**
      * 记录当前连接所对应的数据库

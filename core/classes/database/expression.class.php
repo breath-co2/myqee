@@ -9,7 +9,7 @@
  * @copyright  Copyright (c) 2008-2012 myqee.com
  * @license    http://www.myqee.com/license.html
  */
-class MyQEE_Database_Expression
+class Core_Database_Expression
 {
 
     // Raw expression string

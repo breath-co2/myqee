@@ -10,7 +10,7 @@
  * @copyright  Copyright (c) 2008-2012 myqee.com
  * @license    http://www.myqee.com/license.html
  */
-abstract class MyQEE_Database_Result implements Countable, Iterator, SeekableIterator, ArrayAccess
+abstract class Core_Database_Result implements Countable, Iterator, SeekableIterator, ArrayAccess
 {
 
     protected $_config;

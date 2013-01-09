@@ -18,7 +18,7 @@ if ( !class_exists('ORM_Member_Data',true) )
  * @copyright  Copyright (c) 2008-2012 myqee.com
  * @license    http://www.myqee.com/license.html
  */
-class MyQEE_Member extends ORM_Member_Data
+class Core_Member extends ORM_Member_Data
 {
     /**
      * 定义此对象的ORM基础名称为Member

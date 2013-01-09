@@ -11,7 +11,7 @@
  * @license    http://www.myqee.com/license.html
  */
 
-class MyQEE_Upload
+class Core_Upload
 {
     /**
      * 是否严谨验证mime
