@@ -6,7 +6,7 @@
  * @author jonwang
  *
  */
-class ORM_MyQEE_Admin_Member_Finder extends OOP_ORM_Finder_DB
+class Library_MyQEE_Administration_ORM_MyQEE_Admin_Member_Finder extends OOP_ORM_Finder_DB
 {
     protected $database = Model_Admin::DATABASE;
 
@@ -45,7 +45,7 @@ class ORM_MyQEE_Admin_Member_Finder extends OOP_ORM_Finder_DB
         $this->db()->like('channel_ids','%'.Session::instance()->member()->channel_id().'%');
         $this->db()->or_where('channel_ids','');
         $this->db()->or_where_close();
-        return $this 
+        return $this
         ->where('nickname',$name)->find()->current();
     }
 }
@@ -56,7 +56,7 @@ class ORM_MyQEE_Admin_Member_Finder extends OOP_ORM_Finder_DB
  * @author jonwang
  *
  */
-class ORM_MyQEE_Admin_Member_Result extends OOP_ORM_Result
+class Library_MyQEE_Administration_ORM_MyQEE_Admin_Member_Result extends OOP_ORM_Result
 {
 
 }
@@ -72,7 +72,7 @@ class ORM_MyQEE_Admin_Member_Result extends OOP_ORM_Result
  * @copyright  Copyright (c) 2008-2012 myqee.com
  * @license	   http://www.myqee.com/license.html
  */
-class ORM_MyQEE_Admin_Member_Data extends OOP_ORM_Data
+class Library_MyQEE_Administration_ORM_MyQEE_Admin_Member_Data extends OOP_ORM_Data
 {
     /**
      * 权限对象

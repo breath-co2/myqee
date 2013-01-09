@@ -6,7 +6,7 @@
  * @author jonwang
  *
  */
-class ORM_MyQEE_Admin_MemberGroup_Finder extends OOP_ORM_Finder_DB
+class Library_MyQEE_Administration_ORM_MyQEE_Admin_MemberGroup_Finder extends OOP_ORM_Finder_DB
 {
     /**
      * 数据库
@@ -244,7 +244,7 @@ class ORM_MyQEE_Admin_MemberGroup_Finder extends OOP_ORM_Finder_DB
  * @author jonwang
  *
  */
-class ORM_MyQEE_Admin_MemberGroup_Result extends OOP_ORM_Result
+class Library_MyQEE_Administration_ORM_MyQEE_Admin_MemberGroup_Result extends OOP_ORM_Result
 {
     /**
      * 获取所在组所有ID
@@ -283,7 +283,7 @@ class ORM_MyQEE_Admin_MemberGroup_Result extends OOP_ORM_Result
  * @author jonwang
  *
  */
-class ORM_MyQEE_Admin_MemberGroup_Data extends OOP_ORM_Data
+class Library_MyQEE_Administration_ORM_MyQEE_Admin_MemberGroup_Data extends OOP_ORM_Data
 {
     /**
      * 权限对象

@@ -5,7 +5,7 @@
  * @author jonwang
  *
  */
-class Model_MyQEE_Admin_Administrator extends Model_Admin
+class Library_MyQEE_Administration_Model_MyQEE_Admin_Administrator extends Model_Admin
 {
     /**
      * 管理员设置

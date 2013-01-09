@@ -10,7 +10,7 @@
  * @copyright  Copyright (c) 2008-2012 myqee.com
  * @license    http://www.myqee.com/license.html
  */
-class MyQEE_Form
+class Library_MyQEE_Administration_Form
 {
 
     /**
@@ -461,7 +461,7 @@ class MyQEE_Form
         if ( null===$run )
         {
             $run = true;
-            $tmpinput = '<link rel="stylesheet" type="text/css" href="'.Core::url('/statics/css/calender.css').'" /><script type="text/javascript">MyQEE.$import("'.Core::url('/statics/js/calender.js').'");</script>';
+            $tmpinput = '<link rel="stylesheet" type="text/css" href="'.Core::url_assets('css/calender.css').'" /><script type="text/javascript">MyQEE.$import("'.Core::url_assets('js/calender.js').'");</script>';
         }
         else
         {
@@ -479,7 +479,7 @@ class MyQEE_Form
         $tmpinput .= '<span style="white-space:nowrap;">' . Form::input($name, is_numeric($value)&&$value>0? date("Y-m-d" . ($attributes['time'] ? ' H:i:s' : ''), $value > 0 ? $value : TIME ):$value, $input_att );
         if ( $showinput )
         {
-            $tmpinput .= '<img src="'.Core::url('statics/images/icon/calender.png').'" style="margin-right:8px;margin-left:2px;vertical-align:middle;cursor:pointer;" title="显示时间控件" onclick="var myobj=MyQEE.$(\'' . $attributes['id'] .'\');if(myobj){if(myobj.disabled)return false;myobj.focus();myobj.onfocus(event);}" />';
+            $tmpinput .= '<img src="'.Core::url_assets('images/icon/calender.png').'" style="margin-right:8px;margin-left:2px;vertical-align:middle;cursor:pointer;" title="显示时间控件" onclick="var myobj=MyQEE.$(\'' . $attributes['id'] .'\');if(myobj){if(myobj.disabled)return false;myobj.focus();myobj.onfocus(event);}" />';
         }
         $tmpinput .= '</span>';
 

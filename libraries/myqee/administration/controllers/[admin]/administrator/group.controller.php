@@ -5,7 +5,7 @@
  * @author jonwang
  *
  */
-abstract class Controller_MyQEE_Administrator_Group extends Controller_Admin
+abstract class Library_MyQEE_Administration_Controller_MyQEE_Administrator_Group extends Controller_Admin
 {
     /**
      * 权限组列表

@@ -15,7 +15,7 @@ if (!defined('MODEL_ADMIN_DATABASE'))
  * @author jonwang
  *
  */
-class Model_MyQEE_Admin extends Model
+class Library_MyQEE_Administration_Model_MyQEE_Admin extends Model
 {
     /**
      * 数据库配置名
