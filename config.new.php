@@ -89,6 +89,21 @@ $config['debug_open_password'] = array
 );
 
 /**
+ * 调试环境打开关键字
+ *
+ * 可在php.ini中加入：
+ *
+ *   [MyQEE]
+ *   myqee.debug = On
+ *
+ *
+ * 强烈推荐在本地开发时开启此功能，方便开发。但注意：生产环境中绝不能在php.ini设置
+ *
+ * @var string
+ */
+$config['local_debug_cfg'] = 'myqee.debug';
+
+/**
  * 页面编码
  *
  * @var string
@@ -171,36 +186,6 @@ $config['web_server_list'] = array
 (
 
 );
-
-/**
- * 调试环境打开关键字
- *
- * 可在php.ini中加入：
- *
- *   [MyQEE]
- *   myqee.debug = On
- *
- *
- * 强烈推荐在本地开发时开启此功能，方便开发。但注意：生产环境中绝不能在php.ini设置
- *
- * @var string
- */
-$config['local_debug_cfg'] = 'myqee.debug';
-
-/**
- * 使用项目代码合并构建功能
- *
- * 此功能能够大大提升系统加载相应速度，建议远程环境开启，本地调试关闭
- * 如果设为自动，则本地调试环境打开是则禁用，远程启用
- * 也可在项目中设置
- * 注意，开启项目代码合并功能后，改动过文件需要执行合并脚本
- * false=关闭，true=开启，auto=自动
- *
- * !! 暂不支持
- *
- * @var boolean
- */
-$config['use_bulider'] = false;
 
 
 /**

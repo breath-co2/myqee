@@ -46,7 +46,7 @@ abstract class Core_I18n
             }
 
             # 包含目录
-            $include_path = Core::$include_path;
+            $include_path = Core::include_path();
 
             # 逆向排序，调整优先级
             krsort($include_path);

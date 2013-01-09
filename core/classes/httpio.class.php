@@ -823,7 +823,7 @@ class Core_HttpIO
         }
         else
         {
-            $includepath = Core::$include_path;
+            $includepath = Core::include_path();
         }
 
         $ext = '.controller' . EXT;

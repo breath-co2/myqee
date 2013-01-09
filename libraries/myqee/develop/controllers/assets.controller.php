@@ -360,7 +360,7 @@ class Library_MyQEE_Develop_Controller_Assets extends Controller
      */
     protected function get_css_or_js_files_array()
     {
-        $include_path = Core::$include_path;
+        $include_path = Core::include_path();
         $include_path = array_reverse($include_path);
 
         # 记录整理后的数据
@@ -696,7 +696,7 @@ class Library_MyQEE_Develop_Controller_Assets extends Controller
                 # 循环获取所有文件列表
                 $file_paths = array();
 
-                $include_path = Core::$include_path;
+                $include_path = Core::include_path();
                 $include_path = array_reverse($include_path);
 
                 # 循环include path

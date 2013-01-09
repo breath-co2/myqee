@@ -90,7 +90,7 @@ return false;
 <?php $env_id = $error_id.'environment';?>
 <h2 onclick="return koggle('<?php echo $env_id ?>');" style="cursor:pointer;" onmouseover="this.getElementsByTagName('A')[0].style.color='#f0ff00';" onmouseout="this.getElementsByTagName('A')[0].style.color='';"><a href="#<?php echo $env_id; ?>" onclick="return false">Environment</a></h2>
 <div id="<?php echo $env_id ?>" class="content collapsed">
-	<?php $included = Core::$include_path; ?>
+	<?php $included = Core::include_path(); ?>
 	<h3><a href="#<?php echo $env_id = $error_id.'environment_include_path' ?>" onclick="return koggle('<?php echo $env_id ?>')">Include path</a> (<?php echo count($included) ?>)</h3>
 	<div id="<?php echo $env_id ?>" class="collapsed">
 		<table cellspacing="0">

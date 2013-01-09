@@ -39,8 +39,6 @@ function config($key=null)
 }
 
 
-
-
 /**
  * MyQEE 核心类
  *
@@ -151,37 +149,37 @@ abstract class Core_Core extends Bootstrap
 
         Core::$charset = Core::$config['core']['charset'];
 
-        # 注销Bootstrap的自动加载类
-        spl_autoload_unregister(array('Bootstrap', 'auto_load'));
-
-        # 注册自动加载类
-        spl_autoload_register(array('Core', 'auto_load'));
-
         if ( !IS_CLI )
         {
             # 输出powered by信息
             header('X-Powered-By: PHP/' . PHP_VERSION . ' MyQEE/' . Core::VERSION );
         }
 
-        # 检查Bootstrap版本
-        if ( version_compare(Bootstrap::VERSION, '1.9.2' ,'<') )
-        {
-            Core::show_500(__('System Bootstrap version is too low, please upgrade Bootstrap.'));
-            exit();
-        }
-
         if ( IS_DEBUG )
         {
-            Core::debug()->info(INITIAL_PROJECT_NAME,'project');
-
             Core::debug()->info('SERVER IP:' . $_SERVER["SERVER_ADDR"] . (function_exists('php_uname')?'. SERVER NAME:' . php_uname('a') : ''));
 
             Core::debug()->group('include path');
-            foreach ( Core::$include_path as $value )
+            foreach ( Core::include_path() as $value )
             {
                 Core::debug()->log(Core::debug_path($value));
             }
+
             Core::debug()->groupEnd();
+
+            if (self::$project)
+            {
+                Core::debug()->info('project: '.self::$project);
+            }
+            else
+            {
+                Core::debug()->info('default application');
+            }
+
+            if (IS_ADMIN_MODE)
+            {
+                Core::debug()->info('admin mode');
+            }
         }
 
         if ( (IS_CLI || IS_DEBUG) && class_exists('ErrException', true) )
@@ -206,9 +204,6 @@ abstract class Core_Core extends Bootstrap
 
         # 注册输出函数
         register_shutdown_function(array('Core', 'output'));
-
-        # 初始化类库
-        Core::ini_library();
 
         if ( true===IS_SYSTEM_MODE )
         {
@@ -345,181 +340,6 @@ abstract class Core_Core extends Bootstrap
     }
 
     /**
-     * 自动加载类
-     *
-     * @param string $class 类名称
-     */
-    public static function auto_load($class)
-    {
-        if (class_exists($class, false))return true;
-
-        $class = strtolower($class);
-        $strpos = strpos($class, '_');
-
-        if ($strpos!==false)
-        {
-            $prefix = substr($class, 0, $strpos);
-        }
-        else
-        {
-            $prefix = '';
-        }
-        $dir = 'classes';
-
-        if ($prefix)
-        {
-            # 处理类的前缀
-            if ( $prefix=='model' )
-            {
-                $dir = 'models';
-            }
-            elseif( $prefix=='orm' )
-            {
-                $dir = 'orm';
-            }
-            elseif ( $prefix=='controller' )
-            {
-                # 控制器会因为环境都不同而在不同目录，有shell,controllers,admin 三个，分别为命令行下执行的，正常访问的，后台管理的
-                $dir = 'controllers';
-            }
-
-            if ( $dir!='classes' )
-            {
-                $class = substr($class, strlen($prefix) + 1);
-            }
-        }
-
-        return Core::find_file($dir, $class, null, true);
-    }
-
-    /**
-     * 查找文件
-     *
-     * @param string $dir 目录
-     * @param string $file 文件
-     * @param string $ext 后缀 例如：.html
-     * @param boolean $auto_require 是否自动加载上来，对config,i18n无效
-     */
-    public static function find_file($dir, $file, $ext = null, $auto_require = false)
-    {
-        # 寻找到的文件
-        $found_files = array();
-
-        # 处理后缀
-        if ( null === $ext )
-        {
-            $ext = EXT;
-        }
-        elseif ( false === $ext || ''===$ext )
-        {
-            $ext = '';
-        }
-        elseif ( $ext[0] != '.' )
-        {
-            $ext = '.' . $ext;
-        }
-
-        if ( $ext === EXT && isset(Core::$autoload_dir_ext[$dir]) )
-        {
-            $ext = Core::$autoload_dir_ext[$dir] . EXT;
-        }
-
-        # 是否只需要寻找到第一个文件
-        $only_need_one_file = true;
-
-        if ( $dir == 'classes' || $dir == 'models' || $dir == 'controllers' )
-        {
-            $file = strtolower(str_replace('_', '/', $file));
-
-            // 控制器特殊目录
-            if ($dir=='controllers')
-            {
-                if ( IS_SYSTEM_MODE )
-                {
-                    $dir .= '/[system]';
-                }
-                elseif ( IS_CLI )
-                {
-                    $dir .= '/[shell]';
-                }
-                elseif ( IS_ADMIN_MODE )
-                {
-                    $dir .= '/[admin]';
-                }
-            }
-        }
-        elseif ( $dir == 'i18n' || $dir == 'config' )
-        {
-            $only_need_one_file = false;
-        }
-        elseif ( $dir == 'views' )
-        {
-            $file = strtolower($file);
-        }
-        elseif ( $dir == 'orm' )
-        {
-            #orm
-            $file = preg_replace('#^(.*)_[a-z0-9]+$#i', '$1', $file);
-            $file = strtolower(str_replace('_', '/', $file));
-        }
-
-        if ( isset(Core::$file_list[Core::$project]) )
-        {
-            # 读取优化文件列表
-            if ( isset(Core::$file_list[Core::$project][$dir . '/' . $file . $ext]) )
-            {
-                $found_files[] = Core::$file_list[Core::$project][$dir . '/' . $file . $ext];
-            }
-            elseif ( in_array($dir, array('classes', 'models', 'i18n', 'config', 'views', 'controllers', 'controllers/[shell]', 'controllers/[system]', 'controllers/[admin]')) )
-            {
-                return null;
-            }
-        }
-
-        if ( !$found_files )
-        {
-            # 采用当前项目目录
-            $include_path = Core::$include_path;
-
-            foreach ( $include_path as $path )
-            {
-                if ( $dir == 'config' && Core::$config['core']['debug_config'] )
-                {
-                    # config 在 debug开启的情况下读取debug
-                    $tmpfile_debug = $path . $dir . DS . $file . '.debug' . $ext;
-                    if ( is_file($tmpfile_debug) )
-                    {
-                        $found_files[] = $tmpfile_debug;
-                    }
-                }
-
-                $tmpfile = $path . $dir . DS . $file . $ext;
-                if ( is_file($tmpfile) )
-                {
-                    $found_files[] = $tmpfile;
-                    if ( $only_need_one_file ) break;
-                }
-            }
-        }
-
-        if ( $found_files )
-        {
-            if ( $only_need_one_file )
-            {
-                if ( $auto_require )
-                {
-                    require $found_files[0];
-                }
-                return $found_files[0];
-            }
-            else
-            {
-                return $found_files;
-            }
-        }
-    }
-
-    /**
      * 获取指定key的配置
      *
      * 若不传key，则返回Core_Config对象，可获取动态配置，例如Core::config()->get();
@@ -533,7 +353,7 @@ abstract class Core_Core extends Bootstrap
     {
         if ( null===$key )
         {
-            return Core::factory('Core_Config');
+            return Core::factory('Config');
         }
 
         $c = explode('.', $key);
@@ -576,7 +396,7 @@ abstract class Core_Core extends Bootstrap
      */
     public static function cookie()
     {
-        return Core::factory('Core_Cookie');
+        return Core::factory('Cookie');
     }
 
     /**
@@ -586,7 +406,7 @@ abstract class Core_Core extends Bootstrap
      */
     public static function route()
     {
-        return Core::factory('Core_Route');
+        return Core::factory('Route');
     }
 
     /**
@@ -805,6 +625,18 @@ abstract class Core_Core extends Bootstrap
         {
             $file = $l . './core/' . $r . substr($file, strlen(DIR_CORE));
         }
+        elseif ( strpos($file, DIR_GLOBAL) === 0 )
+        {
+            $file = $l . './global/' . $r . substr($file, strlen(DIR_GLOBAL));
+        }
+        elseif ( strpos($file, DIR_LIBRARY) === 0 )
+        {
+            $file = $l . './libraries/' . $r . substr($file, strlen(DIR_LIBRARY));
+        }
+        elseif ( strpos($file, DIR_PROJECT) === 0 )
+        {
+            $file = $l . './projects/' . $r . substr($file, strlen(DIR_PROJECT));
+        }
         elseif ( strpos($file, DIR_BULIDER) === 0 )
         {
             $file = $l . './data/bulider/' . $r . substr($file, strlen(DIR_BULIDER));
@@ -824,14 +656,6 @@ abstract class Core_Core extends Bootstrap
         elseif ( strpos($file, DIR_DATA) === 0 )
         {
             $file = $l . './data/' . $r . substr($file, strlen(DIR_DATA));
-        }
-        elseif ( strpos($file, DIR_LIBRARY) === 0 )
-        {
-            $file = $l . './libraries/' . $r . substr($file, strlen(DIR_LIBRARY));
-        }
-        elseif ( strpos($file, DIR_PROJECT) === 0 )
-        {
-            $file = $l . './projects/' . $r . substr($file, strlen(DIR_PROJECT));
         }
         elseif ( strpos($file, DIR_ASSETS) === 0 )
         {
@@ -1224,6 +1048,7 @@ abstract class Core_Core extends Bootstrap
         {
             Core::$instances[$objName][$key] = new $objName($key);
         }
+
         return Core::$instances[$objName][$key];
     }
 
@@ -1294,58 +1119,22 @@ abstract class Core_Core extends Bootstrap
     }
 
     /**
-     * 动态加入指定类库
+     * 获取包含目录
      *
-     *    Core::import_library('com.myqee.test');
-     *
-     * [!!] 类库被载入后不可移除，类库将被加在项目目录之下的最高优先级，若已经包含了目录则不会加入，且不会调整原先的优先级
-     *
-     * 例如，原来的目录是
-     * array('a','b','c'); 其中a是项目目录，则如果加入d的话，最后的结果将是array('a','d','b','c');
-     *
-     * @param string $lib
+     * @return array
      */
-    public static function import_library($lib)
+    public static function include_path()
     {
-        $dir = DIR_LIBRARY . str_replace('.',DS,substr(trim($lib),4));
-        $lib_dir = realpath( $dir );
-        if ( !$lib_dir )
+        $arr = array();
+        foreach (Bootstrap::$include_path as $v)
         {
-            throw new Exception(__('Library :lib not exist.',array(':lib'=>$lib)));
-        }
-
-        $lib_dir .= DS;
-        $old_include_path = Core::$include_path;
-        if ( in_array($lib_dir, $old_include_path ) )
-        {
-            # 已经存在
-            return true;
-        }
-        $new_include_path = array( array_shift($old_include_path) );
-        $new_include_path[] = $lib_dir;
-        $new_include_path = array_merge($new_include_path, $old_include_path);
-
-        self::$include_path = $new_include_path;
-
-        # 加载类库初始化文件
-        Core::ini_library();
-
-        return true;
-    }
-
-    /**
-     * 执行初始化类库
-     */
-    protected static function ini_library()
-    {
-        foreach (Core::$include_path as $path)
-        {
-            $file = $path . 'config' . EXT;
-            if (is_file($file))
+            foreach ($v as $p)
             {
-                Core::_include_file($file,true);
+                $arr[] = $p;
             }
         }
+
+        return $arr;
     }
 
     /**
@@ -1491,6 +1280,8 @@ abstract class Core_Core extends Bootstrap
     {
         return '';
     }
+
+
 }
 
 

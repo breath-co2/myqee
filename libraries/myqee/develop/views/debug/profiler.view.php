@@ -224,7 +224,7 @@ function profilerdiv_reload(){
         <?php endif;?>
         <?php endforeach ?></table><?php endforeach ?><?php
 if ( Core::debug()->profiler('filelist')->is_open() ){
-    $includepath = Core::$include_path;
+    $includepath = Core::include_path();
     $filelist = get_included_files();
 ?><table class="profiler"><tr class="profiler_group">
             <th colspan="3" class="profiler_name" style="float:none;"><?php echo 'Include Path ('.count($includepath).')' ?></th>
