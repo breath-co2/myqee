@@ -31,6 +31,24 @@ class Core_Controller
      */
     public $action;
 
+    /**
+     * 当前控制器信息ID
+     *
+     * 例如访问地址为 http://localhost/123/test/ 控制器为_id.controller.php ,方法为test，则$this->ids=array(123)，系统会在初始化控制器时进行设置
+     *
+     * @var array
+     */
+    public $ids = array();
+
+    protected static $message_view = 'show_message';
+
+    /**
+     * 控制器实例化化对象
+     *
+     * @var array
+     */
+    public static $controllers = array();
+
     public function __construct()
     {
 

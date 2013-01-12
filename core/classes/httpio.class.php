@@ -189,30 +189,42 @@ class Core_HttpIO
 
     /**
      * 将输出的header列表
+     *
      * @var array
      */
     public static $headers = array();
 
     /**
      * 页码状态
+     *
      * @var int
      */
     public static $status = 200;
 
     /**
      * 当前页面URI
+     *
      * @var string
      */
     public static $uri;
 
     /**
      * 当前页码参数
+     *
      * @var array
      */
     public static $params;
 
     /**
+     * 待输出的内容
+     *
+     * @var string
+     */
+    public static $body;
+
+    /**
      * 控制器对象寄存器
+     *
      * @var array
      */
     protected static $controlers = array();
@@ -261,10 +273,10 @@ class Core_HttpIO
                 HttpIO::$_REQUEST_OLD = $_REQUEST;
 
                 # XSS安全处理
-                $_GET     = HttpIO::htmlspecialchars($_GET);
-                $_POST    = HttpIO::htmlspecialchars($_POST);
-                $_COOKIE  = HttpIO::htmlspecialchars($_COOKIE);
-                $_REQUEST = HttpIO::htmlspecialchars($_REQUEST);
+                $_GET     = HttpIO::sanitize($_GET);
+                $_POST    = HttpIO::sanitize($_POST);
+                $_COOKIE  = HttpIO::sanitize($_COOKIE);
+                $_REQUEST = HttpIO::sanitize($_REQUEST);
 
                 # 隐射
                 HttpIO::$_GET     = & $_GET;
@@ -340,12 +352,12 @@ class Core_HttpIO
         if ( !$type )
         {
             # 未安全过滤的数据
-            $data = HttpIO::htmlspecialchars_decode($data);
+            $data = HttpIO::sanitize_decode($data);
         }
         elseif ( $type == HttpIO::PARAM_TYPE_URL )
         {
             # URL 格式数据
-            $data = HttpIO::htmlspecialchars_decode($data);
+            $data = HttpIO::sanitize_decode($data);
             $data = str_replace(array('<', '>', '\'', "\"", '\''), array('%3C', '%3E', '%27', '%22', '%5C'), $data);
         }
         return $data;
@@ -356,7 +368,7 @@ class Core_HttpIO
      *
      * @param $str
      */
-    public static function htmlspecialchars($str)
+    public static function sanitize($str)
     {
         if ( null === $str ) return null;
         if ( is_array($str) || is_object($str) )
@@ -364,7 +376,7 @@ class Core_HttpIO
             $data = array();
             foreach ( $str as $k => $v )
             {
-                $data[$k] = HttpIO::htmlspecialchars($v);
+                $data[$k] = HttpIO::sanitize($v);
             }
         }
         else
@@ -384,14 +396,14 @@ class Core_HttpIO
      *
      * @param $str
      */
-    public static function htmlspecialchars_decode($str)
+    public static function sanitize_decode($str)
     {
         if ( null === $str ) return null;
         if ( is_array($str) || is_object($str) )
         {
             foreach ( $str as $k => $v )
             {
-                $str[$k] = HttpIO::htmlspecialchars_decode($v);
+                $str[$k] = HttpIO::sanitize_decode($v);
             }
         }
         else
@@ -515,7 +527,7 @@ class Core_HttpIO
                 }
 
                 // Send the raw header
-                header($value, TRUE);
+                header($value, true);
             }
         }
     }
@@ -529,6 +541,21 @@ class Core_HttpIO
     public static function add_header($key, $value)
     {
         HttpIO::$headers[$key] = $value;
+    }
+
+    /**
+     * 设置HTTP的状态
+     *
+     * @param int $status
+     */
+    public static function status($status=null)
+    {
+        if (HttpIO::$status)
+        {
+            HttpIO::$status = $status;
+        }
+
+        return HttpIO::$status;
     }
 
     /**
@@ -1157,7 +1184,6 @@ class Core_HttpIO
     {
         if ( $key === null )
         {
-            // Return the full array
             return HttpIO::$params;
         }
 

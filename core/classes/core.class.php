@@ -159,14 +159,6 @@ abstract class Core_Core extends Bootstrap
         {
             Core::debug()->info('SERVER IP:' . $_SERVER["SERVER_ADDR"] . (function_exists('php_uname')?'. SERVER NAME:' . php_uname('a') : ''));
 
-            Core::debug()->group('include path');
-            foreach ( Core::include_path() as $value )
-            {
-                Core::debug()->log(Core::debug_path($value));
-            }
-
-            Core::debug()->groupEnd();
-
             if (self::$project)
             {
                 Core::debug()->info('project: '.self::$project);
@@ -180,6 +172,13 @@ abstract class Core_Core extends Bootstrap
             {
                 Core::debug()->info('admin mode');
             }
+
+            Core::debug()->group('include path');
+            foreach ( Core::include_path() as $value )
+            {
+                Core::debug()->log(Core::debug_path($value));
+            }
+            Core::debug()->groupEnd();
         }
 
         if ( (IS_CLI || IS_DEBUG) && class_exists('ErrException', true) )
@@ -219,48 +218,17 @@ abstract class Core_Core extends Bootstrap
             Profiler::setup();
         }
 
-        if ( $auto_run )
+        if (!IS_CLI)
         {
-            Core::run();
+            register_shutdown_function(array('Core','output2'));
         }
     }
 
-    /**
-     * 系统执行
-     * 本方法只运行一次
-     */
-    public static function run()
+    public static function output2()
     {
-        static $run = null;
-        if ( true === $run )
-        {
-            return;
-        }
-        $run = true;
-
-        # 加入debug信息
-        Core::debug()->log(Core::$path_info, 'PathInfo');
-
-        Core::$arguments = explode('/', trim(Core::$path_info, '/ '));
-
-        try
-        {
-            # 执行
-            $output = HttpIO::execute(Core::$path_info, false);
-
-            if ( false===$output )
-            {
-                # 抛出404错误
-                Core::show_404();
-                exit();
-            }
-
-            Core::$output = $output;
-        }
-        catch (Exception $e)
-        {
-            Core::show_500($e);
-        }
+        HttpIO::send_headers();
+        # 输出内容
+        echo HttpIO::$body;
     }
 
     /**
@@ -1116,25 +1084,6 @@ abstract class Core_Core extends Bootstrap
             }
         }
         return $c1;
-    }
-
-    /**
-     * 获取包含目录
-     *
-     * @return array
-     */
-    public static function include_path()
-    {
-        $arr = array();
-        foreach (Bootstrap::$include_path as $v)
-        {
-            foreach ($v as $p)
-            {
-                $arr[] = $p;
-            }
-        }
-
-        return $arr;
     }
 
     /**
