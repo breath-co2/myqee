@@ -138,11 +138,11 @@ function paste_files($lib,$dir,$class_dir,$p_dir='')
 
                     foreach ($obj_key as $item)
                     {
-                        if (preg_match('#(abstract )?class ORM_'.$m2[1].'_'.$item.'#i', $content,$m3))
+                        if (preg_match('#(abstract )?class '.$ns.'ORM_'.$m2[1].'_'.$item.'#i', $content,$m3))
                         {
-                            $abstract  = $m3[1];
-                            $classname = 'ORM_'.$m2[1].'_'.$item;
-                            $str .= "\r\n\r\n\r\n{$abstract}class {$classname} extends {$namespace}_{$classname}\r\n{\r\n\r\n}";
+                            $abstract2  = $m3[1];
+                            $classname2 = 'ORM_'.$m2[1].'_'.$item;
+                            $str .= "\r\n\r\n\r\n{$abstract2}class {$classname2} extends {$ns}{$classname2}\r\n{\r\n\r\n}";
                         }
                     }
                 }
