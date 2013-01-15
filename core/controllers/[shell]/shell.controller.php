@@ -6,7 +6,7 @@
  * @author jonwang
  *
  */
-abstract class Controller_MyQEE_Shell extends Controller
+abstract class Controller_Shell extends Controller
 {
 
     public function action_default()

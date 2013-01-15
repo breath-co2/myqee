@@ -5,7 +5,7 @@
  * @author jonwang
  *
  */
-abstract class Library_MyQEE_Administration_Controller_MyQEE_Statics extends Controller
+abstract class Library_MyQEE_Administration_Controller_Statics extends Controller
 {
 
     protected $allow_suffix = 'js|css|jpg|png|gif|bmp|html|htm|mp4|swf|zip';

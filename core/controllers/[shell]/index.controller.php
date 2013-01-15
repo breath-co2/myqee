@@ -1,6 +1,6 @@
 <?php
 
-class Controller_MyQEE_Index extends Controller_Shell
+class Controller_Index extends Controller_Shell
 {
     public function action_default()
     {

@@ -222,15 +222,9 @@ new check_config();
     <td><?php echo PHP_VERSION; ?></td>
 </tr>
 <tr>
-    <td class="td1" align="right">MyQEE Core 版本：</td>
+    <td class="td1" align="right">MyQEE 版本：</td>
     <td>
     <?php echo Core::VERSION; ?>
-    </td>
-</tr>
-<tr>
-    <td class="td1" align="right">Bootstrap 版本：</td>
-    <td>
-    <?php echo Bootstrap::VERSION; ?>
     </td>
 </tr>
 <tr>
@@ -246,7 +240,13 @@ new check_config();
     </td>
 </tr>
 <tr>
-    <td class="td1" align="right">类库目录：</td>
+    <td class="td1" align="right">Global目录：</td>
+    <td>
+    <?php echo DIR_GLOBAL; ?>
+    </td>
+</tr>
+<tr>
+    <td class="td1" align="right">第三方类库目录：</td>
     <td>
     <?php echo DIR_LIBRARY; ?>
     </td>
