@@ -497,51 +497,60 @@ abstract class Bootstrap
              */
             define('IS_ADMIN_MODE',(!IS_CLI && $request_mode=='admin')?true:false);
 
-            $load_lib = array();
-
-            # 如果有autoload目录，则设置加载目录
-            if ( isset(self::$config['core']['libraries']['autoload']) && is_array(self::$config['core']['libraries']['autoload']) && self::$config['core']['libraries']['autoload'] )
+            # 加载类库
+            foreach (array('autoload', 'cli', 'admin', 'debug') as $type)
             {
-                foreach (array_reverse(self::$config['core']['libraries']['autoload']) as $lib)
+                if (!isset(self::$config['core']['libraries'][$type]) || !self::$config['core']['libraries'][$type])continue;
+
+                if ($type=='cli')
+                {
+                    if (!IS_DEBUG)continue;
+                }
+                else if ($type=='admin')
+                {
+                    if (!IS_ADMIN_MODE)continue;
+                }
+                else if ($type=='debug')
+                {
+                    if (!IS_DEBUG)continue;
+                }
+
+                $libs = array_reverse((array)self::$config['core']['libraries'][$type]);
+                foreach ($libs as $lib)
                 {
                     self::_add_include_path_lib($lib);
                 }
             }
 
-            if (IS_CLI)
+            # 处理 library 的config
+            $config_files = array();
+
+            # 反向排序，从最后一个开始导入
+            $include_path = array_reverse(self::include_path());
+            foreach ($include_path as $path)
             {
-                # cli模式
-                if ( isset(self::$config['core']['libraries']['cli']) && is_array(self::$config['core']['libraries']['cli']) && self::$config['core']['libraries']['cli'] )
+                $config_file = $path.'config'.EXT;
+
+                if ( is_file($config_file) )
                 {
-                    foreach (array_reverse(self::$config['core']['libraries']['cli']) as $lib)
-                    {
-                        self::_add_include_path_lib($lib);
-                    }
-                }
-            }
-            elseif (IS_ADMIN_MODE)
-            {
-                # 后台模式
-                if ( isset(self::$config['core']['libraries']['admin']) && is_array(self::$config['core']['libraries']['admin']) && self::$config['core']['libraries']['admin'] )
-                {
-                    foreach (array_reverse(self::$config['core']['libraries']['admin']) as $lib)
-                    {
-                        self::_add_include_path_lib($lib);
-                    }
+                    $config_files[] = $config_file;
                 }
             }
 
-            if (IS_DEBUG)
+            if ($config_files)
             {
-                # 加载debug类库
-                if ( isset(self::$config['core']['libraries']['debug']) && is_array(self::$config['core']['libraries']['debug']) && self::$config['core']['libraries']['debug'] )
-                {
-                    foreach (array_reverse(self::$config['core']['libraries']['debug']) as $lib)
-                    {
-                        self::_add_include_path_lib($lib);
-                    }
-                }
+                # 记录Core配置
+                $core_config =& self::$config['core'];
+                unset(self::$config['core']);
+
+                # 导入config
+                _include_config_file(self::$config, $config_files);
+
+                # 避免Core配置被修改
+                self::$config['core'] =& $core_config;
             }
+            unset($include_path, $core_config , $config_file);
+
 
             Core::setup();
         }
@@ -564,7 +573,7 @@ abstract class Bootstrap
                 catch (Exception $e)
                 {
                     $code = $e->getCode();
-                    if ( 404===$code || E_PAGE_NOT_FOUND===$code )
+                    if (404===$code || E_PAGE_NOT_FOUND===$code)
                     {
                         Core::show_404($e->getMessage());
                     }
@@ -578,11 +587,8 @@ abstract class Bootstrap
                     }
                 }
 
-                HttpIO::$body = ob_get_clean();
+                Core::$output = ob_get_clean();
             }
-
-            # 全部全部连接
-            Core::close_all_connect();
         }
     }
 
@@ -692,14 +698,12 @@ abstract class Bootstrap
                                 $file = $dir_setting[0].DS.str_replace('_',DS,$class_name).$dir_setting[1].EXT;
                                 if ($type=='core')
                                 {
-                                    $tmp_file = DIR_CORE .'extend_files' . DS . $file;
+                                    $tmp_file = DIR_CORE .'empty_extend_files' . DS . $file;
                                 }
                                 else
                                 {
-                                    $tmp_file = DIR_LIBRARY . str_replace('.',DS,$lib_ns) . DS .'extend_files' . DS . $file;
+                                    $tmp_file = DIR_LIBRARY . str_replace('.',DS,$lib_ns) . DS .'empty_extend_files' . DS . $file;
                                 }
-                                prt($tmp_file);
-
 
                                 if (is_file($tmp_file))
                                 {
@@ -740,94 +744,12 @@ abstract class Bootstrap
         {
             return false;
         }
-
-
-        # 通过正则匹配出相关参数
-        if (preg_match('#^(?:(core|library)_(?:([0-9a-z_]+)_([0-9a-z_]+)_)?)?(?:(orm|controller|model)_)?([0-9a-z_]+)$#i', $class_name,$m))
-        {
-            # 主命名空间，包括 core,library,project
-            $lib_space = $m[1];
-
-            # 子命名空间，例如 MyQEE_Test_
-            $sub_name_space = '';
-            if ($m[2] && $m[3])
-            {
-                $sub_name_space = $m[2].'_'.$m[3].'_';
-            }
-
-            $class_prefix = 'class';
-
-            # 命名空间内的类名称
-            $the_classname = $real_name = $m[5];
-
-            if ($m[4])
-            {
-                # 前缀，目前包括orm,controller,model,其它均被视为类库
-                $class_prefix = $m[4];
-                $the_classname = $class_prefix.'_'.$the_classname;
-            }
-
-            if ($class_prefix=='orm')
-            {
-                # ORM需要处理下，去掉后缀
-                $real_name = @preg_replace('#^(.*)_(data|finder|index|result)$#', '$1',$real_name);
-            }
-
-            if ( $class_prefix=='controller' )
-            {
-                # 控制器是2个下划线代表一个文件夹
-                $filename = str_replace('__', DS, $real_name);
-            }
-            else
-            {
-                $filename = str_replace('_', DS, $real_name);
-            }
-        }
-        else
-        {
-            # 不在既定的命名规则之内
-            return false;
-        }
-
-        static $lib_dir_array = array
-        (
-            'global'  => DIR_GLOBAL,
-            'library' => DIR_LIBRARY,
-            'core'    => DIR_CORE,
-        );
-
-        /*
-         Controller\Index          DIR_APPLICATION/controller/index.controller.php
-         Database\Driver\MySQL     DIR_APPLICATION/classes/database/driver/mysql.class.php
-         Model\Test\Abc            DIR_APPLICATION/model/test/abc.model.php
-         Library\MyQEE\CMS\Test    DIR_LIBRARY/myqee/cms/classes/test.class.php
-         Core\Test\t               DIR_CORE/classes/test/t.class.php
-        */
-        # 拼接出完整的文件路径
-        $file = str_replace('\\',DS,$sub_name_space).self::$dir_setting[$class_prefix][0].DS.$filename.self::$dir_setting[$class_prefix][1].EXT;
-
-        if ( is_file($lib_dir_array[$lib_space].$file) )
-        {
-            # 指定文件存在
-            require $lib_dir_array[$lib_space].$file;
-        }
-        elseif ($lib_space==='')
-        {
-
-        }
-
-        if ( class_exists($class_name,false) )
-        {
-            return true;
-        }
-        else
-        {
-            return false;
-        }
     }
 
     /**
-     * 获取包含目录
+     * 获取包含目录，返回一个一维的数组
+     *
+     * ! 注意 Bootstrap::$include_path 为一个2维数组
      *
      * @return array
      */
@@ -843,179 +765,6 @@ abstract class Bootstrap
         }
 
         return $arr;
-    }
-
-    /**
-     * 设置项目
-     * 可重新设置新项目已实现程序内项目切换，但需谨慎使用
-     * @param string $project
-     */
-    public static function set_project( $project )
-    {
-        if ( self::$project == $project )
-        {
-            return true;
-        }
-
-        static $core_config = null;
-
-        if (null===$core_config)
-        {
-            # 记录原始Core配置
-            $core_config = self::$config['core'];
-        }
-
-        if ( !isset($core_config['projects'][$project] ) )
-        {
-            self::_show_error( __('not found the project: :project.',array(':project'=>$project) ) );
-        }
-        if ( !$core_config['projects'][$project]['isuse'] )
-        {
-            self::_show_error( __('the project: :project is not open.' , array(':project'=>$project) ) );
-        }
-
-        # 记录所有项目设置，当切换回项目时，使用此设置还原
-        static $all_prjects_setting = array();
-
-        if ( self::$project )
-        {
-            // 记录上一个项目设置
-            $all_prjects_setting[self::$project] = array
-            (
-                'config'         => self::$config,
-                'include_path'   => self::$include_path,
-                'file_list'      => self::$file_list,
-                'project_dir'    => self::$project_dir,
-                'base_url'       => self::$base_url,
-            );
-        }
-
-        # 设为当前项目
-        self::$project = $project;
-
-        # 记录debug信息
-        if ( IS_DEBUG && class_exists( 'Core', false ) )
-        {
-            Core::debug()->info( '程序已切换到了新项目：' . $project );
-        }
-
-        if ( isset($all_prjects_setting[$project]) )
-        {
-            # 还原配置
-            self::$config         = $all_prjects_setting[$project]['config'];
-            self::$include_path   = $all_prjects_setting[$project]['include_path'];
-            self::$file_list      = $all_prjects_setting[$project]['file_list'];
-            self::$project_dir    = $all_prjects_setting[$project]['project_dir'];
-            self::$base_url       = $all_prjects_setting[$project]['base_url'];
-        }
-        else
-        {
-            self::$config = array
-            (
-                'core' => $core_config,
-            );
-
-            if (!isset($core_config['projects'][$project]['dir']) || !$core_config['projects'][$project]['dir'])
-            {
-                self::_show_error( __('the project ":project" dir is not defined.' , array(':project'=>$project)) );
-            }
-
-            # 项目路径
-            $project_dir = realpath( DIR_PROJECT . $core_config['projects'][$project]['dir'] );
-            if ( !$project_dir || !is_dir( $project_dir ) )
-            {
-                self::_show_error( __('the project dir :dir is not exist.' , array(':dir'=>$core_config['projects'][$project]['dir'])) );
-            }
-            $project_dir .= DS;
-            self::$project_dir = $project_dir;
-
-            # 读取项目配置
-            if ( is_file( $project_dir . 'config' . EXT ) )
-            {
-                _include_config_file( self::$config['core'], $project_dir . 'config' . EXT );
-            }
-
-            # 读取DEBUG配置
-            if ( isset($core_config['debug_config']) && $core_config['debug_config'] && is_file($project_dir.'debug.config'.EXT) )
-            {
-                _include_config_file( self::$config['core'] , $project_dir.'debug.config'.EXT );
-            }
-
-            # 设置包含目录
-            self::$include_path = self::get_project_include_path($project);
-
-            # 处理base_url
-            if ( isset($core_config['projects'][$project]['url']) && $core_config['projects'][$project]['url'] )
-            {
-                self::$base_url = current((array)$core_config['projects'][$project]['url']);
-                foreach ((array)$core_config['projects'][$project]['url'] as $u)
-                {
-                    if ( preg_match('#^http(s)?://(.*)$#i', $u) )
-                    {
-                        if ( strtolower(substr($_SERVER['SCRIPT_URI'], 0, strlen($u)))==strtolower($u) )
-                        {
-                            self::$base_url = $u;
-                            break;
-                        }
-                    }
-                    else if (substr($u,0,1)=='/')
-                    {
-                        self::$base_url = $u;
-                        break;
-                    }
-                }
-            }
-
-            if (IS_ADMIN_MODE)
-            {
-                if (isset($core_config['projects'][$project]['url_admin']) && $core_config['projects'][$project]['url_admin'])
-                {
-                    $url = null;
-                    foreach ((array)$core_config['projects'][$project]['url_admin'] as $u)
-                    {
-                        if ( preg_match('#^http(s)?://(.*)$#i', $u) )
-                        {
-                            if ( strtolower(substr($_SERVER['SCRIPT_URI'], 0, strlen($u)))==strtolower($u) )
-                            {
-                                $url = $u;
-                                break;
-                            }
-                        }
-                        else if (substr($u,0,1)=='/')
-                        {
-                            // 拼接后台地址
-                            $url = rtrim(self::$base_url,'/').$u;
-                            break;
-                        }
-                    }
-
-                    if ($url)
-                    {
-                        self::$base_url = $url;
-                    }
-                    else
-                    {
-                        self::$base_url = rtrim(self::$base_url,'/').current((array)$core_config['projects'][$project]['url_admin']);
-                    }
-                }
-            }
-        }
-
-        if ( class_exists('Core',false) )
-        {
-            # 输出调试信息
-            if ( IS_DEBUG )
-            {
-                Core::debug()->group( '当前加载目录' );
-                foreach ( self::$include_path as $value )
-                {
-                    Core::debug()->log( Core::debug_path($value) );
-                }
-                Core::debug()->groupEnd();
-            }
-
-            Core::ini_library();
-        }
     }
 
     /**
@@ -1183,12 +932,12 @@ abstract class Bootstrap
                     {
                         $controller->__call($action_name,$arguments);
 
-                        self::rm_controoler();
+                        self::rm_controoler($controller);
                         return;
                     }
                     else
                     {
-                        self::rm_controoler();
+                        self::rm_controoler($controller);
 
                         throw new Exception(__('Page Not Found'),404);
                     }
@@ -1201,7 +950,7 @@ abstract class Bootstrap
                 $ispublicmethod = new ReflectionMethod($controller,$action_name);
                 if (!$ispublicmethod->isPublic())
                 {
-                    self::rm_controoler();
+                    self::rm_controoler($controller);
 
                     throw new Exception(__('Request Method Not Allowed.'),405);
                 }
@@ -1259,7 +1008,7 @@ abstract class Bootstrap
                 }
 
                 # 移除控制器
-                $this->rm_controoler();
+                self::rm_controoler($controller);
             }
             else
             {
@@ -1271,7 +1020,9 @@ abstract class Bootstrap
             throw new Exception(__('Page Not Found'),404);
         }
     }
-    private function rm_controoler ($controller)
+
+
+    private static function rm_controoler ($controller)
     {
         foreach (Controller::$controllers as $k=>$c)
         {
@@ -1440,20 +1191,22 @@ abstract class Bootstrap
                 $config_files[] = $config_file;
             }
 
-            if ( IS_DEBUG && class_exists('Core',false) && class_exists('Debug',false) )Core::debug()->info('import a new library: '.Core::debug_path($dir));
+            if ( IS_DEBUG && class_exists('Core',false) && class_exists('Debug',false) )Core::debug()->info('import a new library: '.Core::debug_path($lib));
         }
 
         if ($config_files)
         {
             # 记录Core配置
-            $core_config = self::$config['core'];
+            $core_config =& self::$config['core'];
             unset(self::$config['core']);
 
             # 导入config
             _include_config_file(self::$config, $config_files);
 
             # 避免Core配置被修改
-            self::$config['core'] = $core_config;
+            self::$config['core'] =& $core_config;
+
+            unset($core_config);
         }
 
         return true;
@@ -1662,8 +1415,6 @@ abstract class Bootstrap
 
         unset($ids);
         $found = null;
-
-        echo '<pre>';
 
         # 寻找可能的文件
         if ($found_path)

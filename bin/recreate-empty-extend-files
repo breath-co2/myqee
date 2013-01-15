@@ -9,13 +9,13 @@ define('DIR_SYSTEM',realpath(__DIR__.'/../').'/');
 
 $dir_system_len = strlen(DIR_SYSTEM);
 
-foreach (array('core','global') as $lib)
-{
-    paste_files($lib, 'classes'     , DIR_SYSTEM .'core/classes/');
-    paste_files($lib, 'orm'         , DIR_SYSTEM .'core/orm/');
-    paste_files($lib, 'controllers' , DIR_SYSTEM .'core/controllers/');
-    paste_files($lib, 'models'      , DIR_SYSTEM .'core/models/');
-}
+
+// 处理 core
+paste_files('core', 'classes'     , DIR_SYSTEM .'core/classes/');
+paste_files('core', 'orm'         , DIR_SYSTEM .'core/orm/');
+paste_files('core', 'controllers' , DIR_SYSTEM .'core/controllers/');
+paste_files('core', 'models'      , DIR_SYSTEM .'core/models/');
+
 
 // 处理类库
 foreach ( glob( DIR_SYSTEM.'libraries/*', GLOB_NOSORT )  as $file )
@@ -61,6 +61,19 @@ function paste_files($lib,$dir,$class_dir,$p_dir='')
 {
     if (is_dir($class_dir))
     {
+        if ($lib=='core')
+        {
+            $preg_str = '#(abstract )?class (Core_)([a-z0-9_]+)( |\r|\n)#Uis';
+        }
+        elseif (substr($lib,0,10)=='libraries/')
+        {
+            $preg_str = '#(abstract )?class (library_'.str_replace(array('_','\\','/'),array('','_','_'),substr($lib,10)).'_)([a-z0-9_]+)( |\r|\n)#Uis';
+        }
+        else
+        {
+            echo 'dir: '.$lib.' not defined'."\n";
+            return;
+        }
         $dirArr = array
         (
             'orm'         => '.orm'.EXT,
@@ -68,9 +81,10 @@ function paste_files($lib,$dir,$class_dir,$p_dir='')
             'controllers' => '.controller'.EXT,
             'models'      => '.model'.EXT,
         );
+
         if (!isset($dirArr[$dir]))
         {
-            echo 'dir '.$dir.' not defined'."\n";
+            echo 'dir: '.$dir.' not defined'."\n";
             return;
         }
 
@@ -78,7 +92,7 @@ function paste_files($lib,$dir,$class_dir,$p_dir='')
         $ext_len = strlen($ext);
         $dir_len = strlen($class_dir);
 
-        echo 'found class dir '.$class_dir."\n";
+        echo 'dir: '.$class_dir."\n";
 
         $files = glob( preg_quote($class_dir).'*', GLOB_NOSORT );
 
@@ -99,20 +113,20 @@ function paste_files($lib,$dir,$class_dir,$p_dir='')
             $content = file_get_contents($file);
 
             // 匹配类名称
-            if (preg_match('#namespace ([a-z0-9_\\\\]+)(?:;| |\{|\r|\n)(?:.*)(abstract )?class ([a-z0-9_]+)( |\r|\n)#Uis', $content,$m))
+            if (preg_match($preg_str, $content,$m))
             {
-                $namespace = $m[1];
+                $abstract  = $m[1];
+                $ns        = $m[2];
                 $classname = $m[3];
-                $abstract  = $m[2];
             }
             else
             {
                 // 如果没有匹配到，则用文件名来命名
-                echo '-------------no match file '.$file.' ------------'."\n";
+                echo '    no match file '.$file."\n";
                 continue;
             }
 
-            $str = "<?php\r\n\r\n{$abstract}class {$classname} extends {$namespace}_{$classname}\r\n{\r\n\r\n}";
+            $str = "<?php\r\n{$abstract}class {$classname} extends {$ns}{$classname}\r\n{\r\n\r\n}";
 
             if ($dir=='orm')
             {
@@ -134,11 +148,11 @@ function paste_files($lib,$dir,$class_dir,$p_dir='')
                 }
                 else
                 {
-                    echo '-------------no match orm '.$file.' ------------'."\n";
+                    echo '    no match orm '.$file."\n";
                 }
             }
 
-            $to_dir = DIR_SYSTEM.$lib.'/extend_files/'.$dir.'/'.ltrim($p_dir.'/','/');
+            $to_dir = DIR_SYSTEM.$lib.'/empty_extend_files/'.$dir.'/'.ltrim($p_dir.'/','/');
             if (!is_dir($to_dir))
             {
                 create_dir($to_dir);
@@ -146,26 +160,22 @@ function paste_files($lib,$dir,$class_dir,$p_dir='')
 
             $e_file = $to_dir.$file_name;
 
-            if ( is_file($e_file) && md5($str)!=md5_file($e_file) )
+            if ( !is_file($e_file) || md5($str)!=md5_file($e_file) )
             {
                 if (@file_put_contents($e_file, $str))
                 {
-                    echo 'success wirte file:'.$e_file."\n";
+                    echo '    success   :'.$e_file."\n";
                 }
                 else
                 {
-                    echo 'fail wirte file:'.$e_file."\n";
+                    echo '    fail      :'.$e_file."\n";
                 }
             }
             else
             {
-                echo "not change:{$e_file}\n";
+                echo "    not change :{$e_file}\n";
             }
         }
-    }
-    else
-    {
-        echo 'not found class dir '.$class_dir."\n\n";
     }
 }
 
