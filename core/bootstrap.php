@@ -201,25 +201,25 @@ define( 'MAGIC_QUOTES_GPC', get_magic_quotes_gpc() );
 if ( !IS_CLI && MAGIC_QUOTES_GPC )
 {
 
-    function _stripcslashes( $string )
+    function __stripcslashes($string)
     {
-        if ( is_array( $string ) )
+        if (is_array($string))
         {
-            foreach ( $string as $key => $val )
+            foreach ($string as $key => $val)
             {
-                $string[$key] = _stripcslashes( $val );
+                $string[$key] = __stripcslashes($val);
             }
         }
         else
         {
-            $string = stripcslashes( $string );
+            $string = stripcslashes($string);
         }
         return $string;
     }
-    $_GET     = _stripcslashes( $_GET );
-    $_POST    = _stripcslashes( $_POST );
-    $_COOKIE  = _stripcslashes( $_COOKIE );
-    $_REQUEST = _stripcslashes( $_REQUEST );
+    $_GET     = __stripcslashes($_GET);
+    $_POST    = __stripcslashes($_POST);
+    $_COOKIE  = __stripcslashes($_COOKIE);
+    $_REQUEST = __stripcslashes($_REQUEST);
 }
 
 
@@ -229,12 +229,12 @@ if ( !IS_CLI && MAGIC_QUOTES_GPC )
  * @param array $config
  * @param string|array $files
  */
-function _include_config_file( & $config , $files )
+function __include_config_file(& $config , $__files__)
 {
-    $files = (array)$files;
-    foreach ($files as $file)
+    $__files__ = (array)$__files__;
+    foreach ($__files__ as $__file__)
     {
-        include $file;
+        include $__file__;
     }
 }
 
@@ -399,7 +399,7 @@ abstract class Bootstrap
                 'core' => array()
             );
 
-            _include_config_file( self::$config['core'] , DIR_SYSTEM.'config'.EXT );
+            __include_config_file( self::$config['core'] , DIR_SYSTEM.'config'.EXT );
 
             # 本地调试模式
             if ( isset( self::$config['core']['local_debug_cfg'] ) && self::$config['core']['local_debug_cfg'] )
@@ -423,7 +423,7 @@ abstract class Bootstrap
             if ( $open_debug && is_file(DIR_SYSTEM.'debug.config'.EXT) )
             {
                 # 本地debug配置打开
-                _include_config_file( self::$config['core'] , DIR_SYSTEM.'debug.config'.EXT );
+                __include_config_file( self::$config['core'] , DIR_SYSTEM.'debug.config'.EXT );
             }
 
             # 在线调试
@@ -584,7 +584,7 @@ abstract class Bootstrap
                 unset(self::$config['core']);
 
                 # 导入config
-                _include_config_file(self::$config, $config_files);
+                __include_config_file(self::$config, $config_files);
 
                 # 避免Core配置被修改
                 self::$config['core'] =& $core_config;
@@ -1203,7 +1203,7 @@ abstract class Bootstrap
             unset(self::$config['core']);
 
             # 导入config
-            _include_config_file(self::$config, $config_files);
+            __include_config_file(self::$config, $config_files);
 
             # 避免Core配置被修改
             self::$config['core'] =& $core_config;
