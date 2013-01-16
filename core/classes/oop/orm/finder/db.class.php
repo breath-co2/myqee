@@ -191,7 +191,7 @@ class Core_OOP_ORM_Finder_DB extends OOP_ORM
      * @param   mixed   column name or array($column, $alias) or object
      * @param   string  logic operator
      * @param   mixed   column value
-     * @return  MyQEE_OOP_ORM_Finder_DB
+     * @return  OOP_ORM_Finder_DB
      */
     public function where($column, $value = null, $op = '=')
     {
@@ -216,7 +216,7 @@ class Core_OOP_ORM_Finder_DB extends OOP_ORM
      * Start returning results after "OFFSET ..."
      *
      * @param   integer   starting result number
-     * @return  MyQEE_OOP_ORM_Finder_DB
+     * @return  OOP_ORM_Finder_DB
      */
     public function offset($number)
     {
@@ -228,7 +228,7 @@ class Core_OOP_ORM_Finder_DB extends OOP_ORM
      * Return up to "LIMIT ..." results
      *
      * @param   integer  maximum results to return
-     * @return  MyQEE_OOP_ORM_Finder_DB
+     * @return  OOP_ORM_Finder_DB
      */
     public function limit($number)
     {

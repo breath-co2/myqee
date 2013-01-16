@@ -239,6 +239,46 @@ function _include_config_file( & $config , $files )
 }
 
 
+if (!function_exists('class_alias'))
+{
+    /**
+     * 为一个类创建别名，模拟php5.3以后的 class_alias() 方法
+     *
+     * @param string $original
+     * @param string $alias
+     * @return boolean
+     */
+    function class_alias($original, $alias)
+    {
+        if (!class_exists($original,true))
+        {
+            trigger_error("Class '{$original}' not found", E_USER_WARNING);
+            return false;
+        }
+
+        if (class_exists($alias,false))
+        {
+            trigger_error('First argument "'.$alias.'" of class_alias() must be a name of user defined class', E_USER_WARNING);
+            return false;
+        }
+
+        $rf = new ReflectionClass($original);
+        if ( $rf->isAbstract() )
+        {
+            $abs = 'abstract ';
+        }
+        else
+        {
+            $abs = '';
+        }
+        unset($rf);
+
+        eval($abs . 'class ' . $alias . ' extends ' . $original . ' {}');
+
+        return true;
+    }
+}
+
 /**
  * Bootstrap
  *
@@ -689,45 +729,7 @@ abstract class Bootstrap
                         }
                         else
                         {
-                            # 是否禁用eval方式加载
-                            static $disable_eval = null;
-                            if (null===$disable_eval)$disable_eval = isset(self::$config['core']['disable_eval']) && self::$config['core']['disable_eval'] ? true:false;
-
-                            if ($disable_eval)
-                            {
-                                $file = $dir_setting[0].DS.str_replace('_',DS,$class_name).$dir_setting[1].EXT;
-                                if ($type=='core')
-                                {
-                                    $tmp_file = DIR_CORE .'empty_extend_files' . DS . $file;
-                                }
-                                else
-                                {
-                                    $tmp_file = DIR_LIBRARY . str_replace('.',DS,$lib_ns) . DS .'empty_extend_files' . DS . $file;
-                                }
-
-                                if (is_file($tmp_file))
-                                {
-                                    include $tmp_file;
-                                }
-                            }
-                            else
-                            {
-                                $rf = new ReflectionClass($ns_class_name);
-                                if ( $rf->isAbstract() )
-                                {
-                                    $abstract = 'abstract ';
-                                }
-                                else
-                                {
-                                    $abstract = '';
-                                }
-                                unset($rf);
-
-                                $str = $abstract.'class '.$class_name.' extends '.$ns_class_name.'{}';
-
-                                # 动态执行
-                                eval($str);
-                            }
+                           class_alias($ns_class_name, $class_name);
                         }
 
                         break;
@@ -1226,7 +1228,7 @@ abstract class Bootstrap
         $lib_arr = explode('.',$lib);
         if (count($lib_arr)!=3 || $lib_arr[0]!='com')
         {
-            throw new Exception(__('Library name (:lib) error',array(':lib'=>$lib)));
+            throw new Exception(__('Library name :lib error',array(':lib'=>$lib)));
         }
 
         $dir = DIR_LIBRARY . $lib_arr[1] . DS . $lib_arr[2] . DS;

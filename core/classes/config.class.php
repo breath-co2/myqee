@@ -167,7 +167,14 @@ class Core_Config
 
         $type = (string)$type;
 
-        return (array)$this->config[$type];
+        if (isset($this->config[$type]))
+        {
+            return (array)$this->config[$type];
+        }
+        else
+        {
+            return array();
+        }
     }
 
     /**
@@ -245,7 +252,7 @@ class Core_Config
      */
     public function reload($from_db=true)
     {
-        $tmpfile = DIR_DATA.Core::$project.'/extends_config.txt';
+        $tmpfile = DIR_DATA.'/extends_config_'.Core::$project.'.txt';
 
         if ( !$from_db && is_file($tmpfile) )
         {
@@ -290,7 +297,7 @@ class Core_Config
         if ($projects)foreach ($projects as $project)
         {
             # 所有项目的配置文件
-            $tmpfile[] = DIR_DATA.$project.'/extends_config.txt';
+            $tmpfile[] = DIR_DATA.'/extends_config'.$project.'.txt';
         }
 
         $rs = File::unlink($tmpfile);

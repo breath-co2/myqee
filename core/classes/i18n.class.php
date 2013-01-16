@@ -103,10 +103,7 @@ abstract class Core_I18n
                 }
             }
 
-            if (!is_file($cache_file))
-            {
-                File::create_file($cache_file, serialize($lang));
-            }
+            File::create_file($cache_file, serialize($lang));
 
             I18n::$lang = $lang;
         }
