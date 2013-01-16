@@ -6,7 +6,7 @@
  * @author jonwang
  *
  */
-class Library_MyQEE_Administration_ORM_MyQEE_Admin_Member_Finder extends OOP_ORM_Finder_DB
+class Library_MyQEE_Administration_ORM_Admin_Member_Finder extends OOP_ORM_Finder_DB
 {
     protected $database = Model_Admin::DATABASE;
 
@@ -56,7 +56,7 @@ class Library_MyQEE_Administration_ORM_MyQEE_Admin_Member_Finder extends OOP_ORM
  * @author jonwang
  *
  */
-class Library_MyQEE_Administration_ORM_MyQEE_Admin_Member_Result extends OOP_ORM_Result
+class Library_MyQEE_Administration_ORM_Admin_Member_Result extends OOP_ORM_Result
 {
 
 }
@@ -72,7 +72,7 @@ class Library_MyQEE_Administration_ORM_MyQEE_Admin_Member_Result extends OOP_ORM
  * @copyright  Copyright (c) 2008-2012 myqee.com
  * @license	   http://www.myqee.com/license.html
  */
-class Library_MyQEE_Administration_ORM_MyQEE_Admin_Member_Data extends OOP_ORM_Data
+class Library_MyQEE_Administration_ORM_Admin_Member_Data extends OOP_ORM_Data
 {
     /**
      * 权限对象
@@ -221,7 +221,7 @@ class Library_MyQEE_Administration_ORM_MyQEE_Admin_Member_Data extends OOP_ORM_D
      * 设置管理组
      *
      * @param ORM_Admin_MemberGroup_Result $rs
-     * @return ORM_MyQEE_Admin_Member_Data
+     * @return ORM_Admin_Member_Data
      */
     public function set_groups(ORM_Admin_MemberGroup_Result $member_group_result)
     {
@@ -256,7 +256,7 @@ class Library_MyQEE_Administration_ORM_MyQEE_Admin_Member_Data extends OOP_ORM_D
      * 设置管理组设置
      *
      * @param array $setting
-     * @return ORM_MyQEE_Admin_Member_Data
+     * @return ORM_Admin_Member_Data
      */
     public function set_groups_setting(array $setting)
     {
