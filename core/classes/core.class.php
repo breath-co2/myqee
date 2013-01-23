@@ -147,7 +147,7 @@ abstract class Core_Core extends Bootstrap
         }
         $run = true;
 
-        Core::$charset = Core::$config['charset'];
+        Core::$charset = Core::$core_config['charset'];
 
         if (!IS_CLI)
         {
@@ -207,7 +207,7 @@ abstract class Core_Core extends Bootstrap
         # 注册输出函数
         register_shutdown_function(array('Core','_output_body'));
 
-        if ( true===IS_SYSTEM_MODE )
+        if (true===IS_SYSTEM_MODE)
         {
             if (false===Core::check_system_request_allow() )
             {
@@ -234,38 +234,46 @@ abstract class Core_Core extends Bootstrap
      */
     public static function config($key = null)
     {
-        if ( null===$key )
+        if (null===$key)
         {
             return Core::factory('Config');
         }
 
         $c = explode('.', $key);
         $cname = array_shift($c);
-        if ( !array_key_exists($cname, Core::$config) )
+
+        if (strtolower($cname)=='core')
         {
-            $config = array();
-            $thefiles = Core::find_file('config', $cname);
-            if ( is_array($thefiles) )
+            $v = Core::$core_config;
+        }
+        else
+        {
+            if ( !array_key_exists($cname, Core::$config) )
             {
-                if ( count($thefiles) > 1 )
+                $config = array();
+                $thefiles = Core::find_file('config', $cname);
+                if ( is_array($thefiles) )
                 {
-                    krsort($thefiles); //逆向排序
-                }
-                foreach ( $thefiles as $thefile )
-                {
-                    if ( $thefile )
+                    if ( count($thefiles) > 1 )
                     {
-                        __include_config_file($config, $thefile);
+                        krsort($thefiles); //逆向排序
+                    }
+                    foreach ( $thefiles as $thefile )
+                    {
+                        if ( $thefile )
+                        {
+                            __include_config_file($config, $thefile);
+                        }
                     }
                 }
+                if ( !isset(Core::$config[$cname]) )
+                {
+                    Core::$config[$cname] = $config;
+                }
             }
-            if ( !isset(Core::$config[$cname]) )
-            {
-                Core::$config[$cname] = $config;
-            }
-        }
 
-        $v = Core::$config[$cname];
+            $v = Core::$config[$cname];
+        }
 
         foreach ($c as $i)
         {
@@ -311,7 +319,7 @@ abstract class Core_Core extends Bootstrap
     {
         list($url,$query) = explode('?', $url , 2);
 
-        $url = Bootstrap::$base_url. ltrim($url,'/') . ($url!='' && substr($url,-1)!='/' && false===strpos($url,'.') && Core::$config['url_suffix']?Core::$config['url_suffix']:'') . ($query?'?'.$query:'');
+        $url = Core::$base_url. ltrim($url,'/') . ($url!='' && substr($url,-1)!='/' && false===strpos($url,'.') && Core::$config['url_suffix']?Core::$config['url_suffix']:'') . ($query?'?'.$query:'');
 
         // 返回完整URL
         if ( $need_full_url && !preg_match('#^http(s)?://#i', $url) )
@@ -324,6 +332,7 @@ abstract class Core_Core extends Bootstrap
 
     /**
      * 返回静态资源URL路径
+     *
      * @param unknown_type $uri
      */
     public static function url_assets($uri = '')
@@ -348,6 +357,17 @@ abstract class Core_Core extends Bootstrap
     }
 
     /**
+     * Include一个指定URI的控制器
+     *
+     * @param string $uri
+     * @return boolean
+     */
+    public static function load_controller($uri)
+    {
+        $found = self::find_controller($uri);
+    }
+
+    /**
      * 记录日志
      *
      * @param string $msg 日志内容
@@ -362,33 +382,6 @@ abstract class Core_Core extends Bootstrap
         # 不记录日志
         if ( isset($log_config['use']) && !$log_config['use'] )return true;
 
-        if ($log_config['file'])
-        {
-        $file = date($log_config['file']);
-        }
-        else
-        {
-            $file = date('Y/m/d/');
-        }
-        $file .= $type.'.log';
-
-        $dir = trim(dirname($file),'/');
-
-        # 如果目录不存在，则创建
-        if (!is_dir(DIR_LOG.$dir))
-        {
-            $temp = explode('/', str_replace('\\', '/', $dir) );
-            $cur_dir = '';
-            for( $i=0; $i<count($temp); $i++ )
-            {
-                $cur_dir .= $temp[$i] . "/";
-                if ( !is_dir(DIR_LOG.$cur_dir) )
-                {
-                    @mkdir(DIR_LOG.$cur_dir,0755);
-                }
-            }
-        }
-
         # 内容格式化
         if ($log_config['format'])
         {
@@ -401,7 +394,7 @@ abstract class Core_Core extends Bootstrap
         }
 
         # 获取日志内容
-        $data = Core::log_format($msg,$type,$format);
+        $data = Core::log_format($msg, $type, $format);
 
         if (IS_DEBUG)
         {
@@ -410,18 +403,7 @@ abstract class Core_Core extends Bootstrap
         }
 
         # 保存日志
-        return Core::write_log($file, $data, $type);
-    }
-
-    /**
-     * Include一个指定URI的控制器
-     *
-     * @param string $uri
-     * @return boolean
-     */
-    public static function load_controller($uri)
-    {
-        $found = self::find_controller($uri);
+        return Core::write_log($data, $type);
     }
 
     /**
@@ -429,14 +411,94 @@ abstract class Core_Core extends Bootstrap
     *
     * 若有特殊写入需求，可以扩展本方法（比如调用数据库类克写到数据库里）
     *
-    * @param string $file
     * @param string $data
     * @param string $type 日志类型
     * @return boolean
     */
-    protected static function write_log($file , $data , $type = 'log')
+    protected static function write_log($data, $type = 'log')
     {
-        return File::create_file(DIR_LOG.$file, $data.CRLF , FILE_APPEND);
+        static $pro = null;
+        if (null===$pro)
+        {
+            if (preg_match('#^(db|cache)://([a-z0-9_]+)/([a-z0-9_]+)$#i', DIR_LOG , $m))
+            {
+                $pro = $m;
+            }
+            else
+            {
+                $pro = false;
+            }
+        }
+
+        if (false===$pro)
+        {
+            # 以文件的形式保存
+
+            $log_config = Core::config('log');
+
+            if ($log_config['file'])
+            {
+                $file = date($log_config['file']);
+            }
+            else
+            {
+                $file = date('Y/m/d/');
+            }
+            $file .= $type.'.log';
+
+            $dir = trim(dirname($file),'/');
+
+            # 如果目录不存在，则创建
+            if (!is_dir(DIR_LOG.$dir))
+            {
+                $temp = explode('/', str_replace('\\', '/', $dir) );
+                $cur_dir = '';
+                for( $i=0; $i<count($temp); $i++ )
+                {
+                    $cur_dir .= $temp[$i] . "/";
+                    if ( !is_dir(DIR_LOG.$cur_dir) )
+                    {
+                        @mkdir(DIR_LOG.$cur_dir,0755);
+                    }
+                }
+            }
+
+            return false===@file_put_contents(DIR_LOG.$file, $data.CRLF , FILE_APPEND)?false:true;
+        }
+        else
+        {
+            # 以db或cache方式保存
+
+            if ($pro[1]=='db')
+            {
+                $db_data = array
+                (
+                    'type'   => $type,
+                    'day'    => date('Ymd'),
+                    'time'   => TIME,
+                    'value'  => $data,
+                );
+
+                $obj = new Database($pro[2]);
+                $status = $obj->insert($pro[3],$db_data) ? true:false;
+            }
+            else
+            {
+                $class = 'Cache';
+                if ($pro[3])
+                {
+                    $pro[1]['prefix'] = trim($pro[3]).'_';
+                }
+
+                $pro[1]['prefix'] .= $type.'_';
+
+                $obj = new Cache($pro[2]);
+
+                $status = $obj->set(date('Ymd'), $data, 86400*30);        // 存1月
+            }
+
+            return $status;
+        }
     }
 
     /**
@@ -524,7 +586,7 @@ abstract class Core_Core extends Bootstrap
         }
         elseif ( strpos($file, DIR_TEAM_LIB) === 0 )
         {
-            $file = $l . './global/' . $r . substr($file, strlen(DIR_TEAM_LIB));
+            $file = $l . './team_lib/' . $r . substr($file, strlen(DIR_TEAM_LIB));
         }
         elseif ( strpos($file, DIR_LIBRARY) === 0 )
         {
@@ -823,7 +885,7 @@ abstract class Core_Core extends Bootstrap
             CRLF . $_SERVER['SERVER_SIGNATURE'] .
             CRLF . '</body>' .
             CRLF . '</html>';
-    }
+        }
 
         # 执行注册的shutdown方法，并忽略输出的内容
         ob_start();
@@ -864,9 +926,9 @@ abstract class Core_Core extends Bootstrap
      * @param string $key
      * @return fixed
      */
-    public static function key_string($arr, $key)
+    public static function key_string($arr, $key, $default = null)
     {
-        if ( !is_array($arr) ) return null;
+        if (!is_array($arr)) return $default;
         $keyArr = explode('.', $key);
         foreach ( $keyArr as $key )
         {
@@ -876,7 +938,7 @@ abstract class Core_Core extends Bootstrap
             }
             else
             {
-                return null;
+                return $default;
             }
         }
         return $arr;
@@ -990,45 +1052,40 @@ abstract class Core_Core extends Bootstrap
     /**
      * 将项目切换回初始项目
      *
-     * 当使用Core::set_project()设置切换过项目后，可使用此方法返回初始化时的项目
+     * 当使用Core::change_project()设置切换过项目后，可使用此方法返回初始化时的项目
      */
     public static function reset_project()
     {
         if ( defined('INITIAL_PROJECT_NAME') && INITIAL_PROJECT_NAME != Core::$project )
         {
-            Core::set_project( INITIAL_PROJECT_NAME );
+            Core::change_project(INITIAL_PROJECT_NAME);
         }
     }
 
     /**
-     * 设置项目
+     * 切换到另外一个项目
      *
-     * 可重新设置新项目已实现程序内项目切换，但需谨慎使用
+     * 切换其它项目后，相关的config,include_path等都将加载为设定项目的，但是已经加载的class等是不可能销毁的，所以需谨慎使用
+     *
      * @param string $project
+     * @return boolean
+     * @throws Exception 失败则抛出异常（比如不存在指定的项目）
      */
-    public static function set_project($project)
+    public static function change_project($project)
     {
-        if ( Core::$project == $project )
+        if (Core::$project==$project)
         {
             return true;
         }
 
-        if ( !isset(Core::$config['projects'][$project] ) )
+        if ( !isset(Core::$core_config['projects'][$project] ) )
         {
             Core::show_500( __('not found the project: :project.',array(':project'=>$project) ) );
         }
 
-        if ( !Core::$config['projects'][$project]['isuse'] )
+        if ( !Core::$core_config['projects'][$project]['isuse'] )
         {
             Core::show_500( __('the project: :project is not open.' , array(':project'=>$project) ) );
-        }
-
-        static $core_config = null;
-
-        if (null===$core_config)
-        {
-            # 记录原始Core配置
-            $core_config = Core::$config;
         }
 
         # 记录所有项目设置，当切换回项目时，使用此设置还原
@@ -1039,16 +1096,16 @@ abstract class Core_Core extends Bootstrap
             // 记录上一个项目设置
             $all_prjects_setting[Core::$project] = array
             (
-                'config'         => Core::$config,
-                'include_path'   => Core::$include_path,
-                'file_list'      => Core::$file_list,
-                'project_dir'    => Core::$project_dir,
-                'base_url'       => Core::$base_url,
+                'config'        => Core::$config,
+                'include_path'  => Core::$include_path,
+                'file_list'     => Core::$file_list,
+                'project_dir'   => Core::$project_dir,
+                'base_url'      => Core::$base_url,
             );
         }
 
         # 设为当前项目
-        Bootstrap::$project = Core::$project = $project;
+        Core::$project = $project;
 
         # 记录debug信息
         if (IS_DEBUG)
@@ -1067,38 +1124,30 @@ abstract class Core_Core extends Bootstrap
         }
         else
         {
-            Core::$config = array
-            (
-                'core' => $core_config,
-            );
+            $core_config = Core::$core_config;
 
             if (!isset($core_config['projects'][$project]['dir']) || !$core_config['projects'][$project]['dir'])
             {
-                Core::show_500( __('the project ":project" dir is not defined.' , array(':project'=>$project)) );
+                Core::show_500(__('the project ":project" dir is not defined.', array(':project'=>$project)));
+            }
+
+            # 设置include path
+            $project_dir = DIR_PROJECT . $project . DS;
+            if (!is_dir($project_dir))
+            {
+                Core::show_500(__('not found the project: :project.', array(':project' => $project)));
             }
 
             # 项目路径
-            $project_dir = realpath( DIR_PROJECT . $core_config['projects'][$project]['dir'] );
+            $project_dir = realpath(DIR_PROJECT . $core_config['projects'][$project]['dir']);
 
             if (!$project_dir || !is_dir($project_dir))
             {
-                Core::show_500( __('the project dir :dir is not exist.' , array(':dir'=>$core_config['projects'][$project]['dir'])) );
+                Core::show_500(__('the project dir :dir is not exist.', array(':dir'=>$core_config['projects'][$project]['dir'])));
             }
 
             $project_dir .= DS;
             Core::$project_dir = $project_dir;
-
-            # 读取项目配置
-            if (is_file($project_dir.'config'.EXT))
-            {
-                __include_config_file( Core::$config, $project_dir.'config'.EXT );
-            }
-
-            # 读取DEBUG配置
-            if ( isset($core_config['debug_config']) && $core_config['debug_config'] && is_file($project_dir.'debug.config'.EXT) )
-            {
-                __include_config_file( Core::$config , $project_dir.'debug.config'.EXT );
-            }
 
             # 处理base_url
             if ( isset($core_config['projects'][$project]['url']) && $core_config['projects'][$project]['url'] )
@@ -1124,37 +1173,15 @@ abstract class Core_Core extends Bootstrap
             }
             Core::$base_url = $url;
 
-            # 设置include path
-            $project_dir = DIR_PROJECT . $project . DS;
-            if (!is_dir($project_dir))
-            {
-                Core::show_500('not found the project: :project', array(':project' => $project));
-            }
-            Bootstrap::$include_path['project'] = array($project_dir);
-            Bootstrap::$include_path['library'] = array();
+            # 重置$include_path
+            Core::$include_path['project'] = array($project_dir);
+            Core::$include_path['library'] = array();
 
             # 重新加载类库配置
-            Bootstrap::load_all_libraries();
+            Core::reload_all_libraries();
         }
 
         return true;
-    }
-
-
-    /**
-     * 输出执行跟踪信息
-     * 注意：本方法仅用于本地跟踪代码使用，调试完毕后请移除相关调用
-     *
-     * @param string $msg
-     * @param int $code
-     */
-    public static function trace($msg = 'Trace Tree', $code = E_NOTICE)
-    {
-        if (IS_DEBUG)
-        {
-            throw new Exception($msg, $code);
-            exit();
-        }
     }
 
     /**

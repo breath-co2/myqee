@@ -318,14 +318,14 @@ abstract class Bootstrap
      *
      * @var string
      */
-    public static $path_info = null;
+    public static $path_info = '/';
 
     /**
      * 当前项目
      *
      * @var string
      */
-    public static $project;
+    public static $project = 'default';
 
     /**
      * 当前项目目录
@@ -405,7 +405,7 @@ abstract class Bootstrap
                 self::_show_error( __('Please rename the file config.new:EXT to config:EXT' , array(':EXT'=>EXT)) );
             }
 
-            __include_config_file( self::$core_config , DIR_SYSTEM.'config'.EXT );
+            __include_config_file(self::$core_config, DIR_SYSTEM.'config'.EXT);
 
             # 本地调试模式
             if ( isset(self::$core_config['local_debug_cfg']) && self::$core_config['local_debug_cfg'] )
@@ -550,6 +550,13 @@ abstract class Bootstrap
              */
             define('IS_ADMIN_MODE', (!IS_CLI && $request_mode=='admin')?true:false);
 
+            /**
+             * 静态文件URL地址前缀
+             *
+             * @var string
+             */
+            define('URL_ASSETS', isset(self::$core_config['url']['assets']) && self::$core_config['url']['assets']?self::$core_config['url']['assets']:'/assets/' );
+
 
             $project_dir = DIR_PROJECT . self::$project . DS;
 
@@ -561,7 +568,7 @@ abstract class Bootstrap
             self::$include_path['project'] = array($project_dir);
 
             # 加载类库
-            self::load_all_libraries();
+            self::reload_all_libraries();
 
             Core::setup();
         }
@@ -1182,14 +1189,15 @@ abstract class Bootstrap
     }
 
     /**
-     * 加载类库
+     * 重新加载类库
+     *
      */
-    protected static function load_all_libraries()
+    protected static function reload_all_libraries()
     {
         # 加载类库
         foreach (array('autoload', 'cli', 'admin', 'debug') as $type)
         {
-            if (!isset(self::$config['libraries'][$type]) || !self::$config['libraries'][$type])continue;
+            if (!isset(self::$core_config['libraries'][$type]) || !self::$core_config['libraries'][$type])continue;
 
             if ($type=='cli')
             {
@@ -1204,7 +1212,7 @@ abstract class Bootstrap
                 if (!IS_DEBUG)continue;
             }
 
-            $libs = array_reverse((array)self::$config['libraries'][$type]);
+            $libs = array_reverse((array)self::$core_config['libraries'][$type]);
             foreach ($libs as $lib)
             {
                 self::_add_include_path_lib($lib);
@@ -1583,12 +1591,6 @@ abstract class Bootstrap
                     }
                 }
             }
-        }
-
-        if (null===self::$project)
-        {
-            self::$project   = 'default';
-            self::$path_info = '/';
         }
     }
 
