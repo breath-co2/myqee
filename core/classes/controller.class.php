@@ -51,7 +51,7 @@ class Core_Controller
 
     public function __construct()
     {
-
+        $this->ids = 1;
     }
 
     /**

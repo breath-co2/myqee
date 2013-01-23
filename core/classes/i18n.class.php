@@ -24,6 +24,8 @@ abstract class Core_I18n
             # 客户端语言包
             $accept_language = $_SERVER['HTTP_ACCEPT_LANGUAGE'];
 
+            $lang_config = Core::config('core.lang');
+
             # 匹配语言设置
             if (preg_match_all('#,([a-z]+-[a-z]+);#i',$accept_language,$matches))
             {
@@ -31,18 +33,21 @@ abstract class Core_I18n
                 $accept_language =  array_slice($accept_language,0,2);    //只取前2个语言设置
                 array_map('strtolower',$accept_language);
 
-                if (isset(Core::$config['core']['lang']) && !in_array(Core::$config['core']['lang'],$accept_language))
+                if ($lang_config && !in_array($lang_config,$accept_language))
                 {
-                    $accept_language[] = Core::$config['core']['lang'];
+                    $accept_language[] = $lang_config;
                 }
-            }
-            elseif (isset(Core::$config['core']['lang']))
-            {
-                $accept_language = array(Core::$config['core']['lang']);
             }
             else
             {
-                $accept_language = array('zh-cn');
+                if ($lang_config)
+                {
+                    $accept_language = array($lang_config);
+                }
+                else
+                {
+                    $accept_language = array('zh-cn');
+                }
             }
 
             # 包含目录

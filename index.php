@@ -21,12 +21,6 @@ $dir_cache   = $dir_data.'cache/';
 
 
 /**
- * 临时数据目录
- */
-$dir_temp    = $dir_data.'temp/';
-
-
-/**
  * LOG目录
  */
 $dir_log     = $dir_data.'log/';

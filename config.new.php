@@ -2,9 +2,10 @@
 /**
  * 项目配置
  *
- * @var array
- *
+ * 建议将default项目放在最后面
  * url 可以是字符串也可以是数组，可以/开头，也可以http://开头。结尾不需要加/
+ *
+ * @var array
  */
 $config['projects'] = array
 (
@@ -189,6 +190,14 @@ $config['web_server_list'] = array
 
 
 /**
+ * HTTPS是否开启的关键字，通常不用改
+ *
+ * @var string
+ */
+$config['server_https_on_key'] = 'HTTPS';
+
+
+/**
  * 记录慢查询的时间，单位毫秒。0表示不记录
  *
  * 在shell下执行SQL不记录
@@ -237,7 +246,6 @@ $config['error500']['type_config'] = 'default';
 
 /**
  * assets允许的文件后缀名，用|隔开
- *
  *
  * @var string
  */

@@ -139,7 +139,7 @@ abstract class Core_Core extends Bootstrap
         static $run = null;
         if ( true === $run )
         {
-            if ( $auto_run )
+            if ($auto_run)
             {
                 Core::run();
             }
@@ -147,15 +147,15 @@ abstract class Core_Core extends Bootstrap
         }
         $run = true;
 
-        Core::$charset = Core::$config['core']['charset'];
+        Core::$charset = Core::$config['charset'];
 
-        if ( !IS_CLI )
+        if (!IS_CLI)
         {
             # 输出powered by信息
             header('X-Powered-By: PHP/' . PHP_VERSION . ' MyQEE/' . Core::VERSION );
         }
 
-        if ( IS_DEBUG )
+        if (IS_DEBUG)
         {
             Core::debug()->info('SERVER IP:' . $_SERVER["SERVER_ADDR"] . (function_exists('php_uname')?'. SERVER NAME:' . php_uname('a') : ''));
 
@@ -198,8 +198,11 @@ abstract class Core_Core extends Bootstrap
             set_error_handler(array('Core', 'error_handler'), error_reporting());
         }
 
-        # 初始化 HttpIO 对象
-        HttpIO::setup();
+        if (!IS_CLI)
+        {
+            # 初始化 HttpIO 对象
+            HttpIO::setup();
+        }
 
         # 注册输出函数
         register_shutdown_function(array('Core','_output_body'));
@@ -220,232 +223,13 @@ abstract class Core_Core extends Bootstrap
     }
 
     /**
-     * 设置项目
-     *
-     * 可重新设置新项目已实现程序内项目切换，但需谨慎使用
-     * @param string $project
-     */
-    public static function set_project($project)
-    {
-        if ( self::$project == $project )
-        {
-            return true;
-        }
-
-        static $core_config = null;
-
-        if (null===$core_config)
-        {
-            # 记录原始Core配置
-            $core_config = self::$config['core'];
-        }
-
-        if ( !isset($core_config['projects'][$project] ) )
-        {
-            self::_show_error( __('not found the project: :project.',array(':project'=>$project) ) );
-        }
-        if ( !$core_config['projects'][$project]['isuse'] )
-        {
-            self::_show_error( __('the project: :project is not open.' , array(':project'=>$project) ) );
-        }
-
-        # 记录所有项目设置，当切换回项目时，使用此设置还原
-        static $all_prjects_setting = array();
-
-        if ( self::$project )
-        {
-            // 记录上一个项目设置
-            $all_prjects_setting[self::$project] = array
-            (
-                'config'         => self::$config,
-                'include_path'   => self::$include_path,
-                'file_list'      => self::$file_list,
-                'project_dir'    => self::$project_dir,
-                'base_url'       => self::$base_url,
-            );
-        }
-
-        # 设为当前项目
-        self::$project = $project;
-
-        # 记录debug信息
-        if ( IS_DEBUG && class_exists( 'Core', false ) )
-        {
-            Core::debug()->info( '程序已切换到了新项目：' . $project );
-        }
-
-        if ( isset($all_prjects_setting[$project]) )
-        {
-            # 还原配置
-            self::$config         = $all_prjects_setting[$project]['config'];
-            self::$include_path   = $all_prjects_setting[$project]['include_path'];
-            self::$file_list      = $all_prjects_setting[$project]['file_list'];
-            self::$project_dir    = $all_prjects_setting[$project]['project_dir'];
-            self::$base_url       = $all_prjects_setting[$project]['base_url'];
-        }
-        else
-        {
-            self::$config = array
-            (
-                'core' => $core_config,
-            );
-
-            if (!isset($core_config['projects'][$project]['dir']) || !$core_config['projects'][$project]['dir'])
-            {
-                self::_show_error( __('the project ":project" dir is not defined.' , array(':project'=>$project)) );
-            }
-
-            # 项目路径
-            $project_dir = realpath( DIR_PROJECT . $core_config['projects'][$project]['dir'] );
-            if ( !$project_dir || !is_dir( $project_dir ) )
-            {
-                self::_show_error( __('the project dir :dir is not exist.' , array(':dir'=>$core_config['projects'][$project]['dir'])) );
-            }
-            $project_dir .= DS;
-            self::$project_dir = $project_dir;
-
-            # 读取项目配置
-            if ( is_file( $project_dir . 'config' . EXT ) )
-            {
-                _include_config_file( self::$config['core'], $project_dir . 'config' . EXT );
-            }
-
-            # 读取DEBUG配置
-            if ( isset($core_config['debug_config']) && $core_config['debug_config'] && is_file($project_dir.'debug.config'.EXT) )
-            {
-                _include_config_file( self::$config['core'] , $project_dir.'debug.config'.EXT );
-            }
-
-            # 设置包含目录
-            self::$include_path = self::get_project_include_path($project);
-
-            # 处理base_url
-            if ( isset($core_config['projects'][$project]['url']) && $core_config['projects'][$project]['url'] )
-            {
-                self::$base_url = current((array)$core_config['projects'][$project]['url']);
-                foreach ((array)$core_config['projects'][$project]['url'] as $u)
-                {
-                    if ( preg_match('#^http(s)?://(.*)$#i', $u) )
-                    {
-                        if ( strtolower(substr($_SERVER['SCRIPT_URI'], 0, strlen($u)))==strtolower($u) )
-                        {
-                            self::$base_url = $u;
-                            break;
-                        }
-                    }
-                    else if (substr($u,0,1)=='/')
-                    {
-                        self::$base_url = $u;
-                        break;
-                    }
-                }
-            }
-
-            if (IS_ADMIN_MODE)
-            {
-                if (isset($core_config['projects'][$project]['url_admin']) && $core_config['projects'][$project]['url_admin'])
-                {
-                    $url = null;
-                    foreach ((array)$core_config['projects'][$project]['url_admin'] as $u)
-                    {
-                        if ( preg_match('#^http(s)?://(.*)$#i', $u) )
-                        {
-                            if ( strtolower(substr($_SERVER['SCRIPT_URI'], 0, strlen($u)))==strtolower($u) )
-                            {
-                                $url = $u;
-                                break;
-                            }
-                        }
-                        else if (substr($u,0,1)=='/')
-                        {
-                            // 拼接后台地址
-                            $url = rtrim(self::$base_url,'/').$u;
-                            break;
-                        }
-                    }
-
-                    if ($url)
-                    {
-                        self::$base_url = $url;
-                    }
-                    else
-                    {
-                        self::$base_url = rtrim(self::$base_url,'/').current((array)$core_config['projects'][$project]['url_admin']);
-                    }
-                }
-            }
-        }
-
-        if ( class_exists('Core',false) )
-        {
-            # 输出调试信息
-            if ( IS_DEBUG )
-            {
-                Core::debug()->group( '当前加载目录' );
-                foreach ( self::$include_path as $value )
-                {
-                    Core::debug()->log( Core::debug_path($value) );
-                }
-                Core::debug()->groupEnd();
-            }
-
-            Core::ini_library();
-        }
-    }
-
-
-    /**
-     * 输出执行跟踪信息
-     * 注意：本方法仅用于本地跟踪代码使用，调试完毕后请移除相关调用
-     *
-     * @param string $msg
-     * @param int $code
-     */
-    public static function trace($msg = 'Trace Tree', $code = E_NOTICE)
-    {
-        if (IS_DEBUG)
-        {
-            throw new Exception($msg, $code);
-            exit();
-        }
-    }
-
-    /**
-     * 执行注册的关闭方法
-     */
-    protected static function run_shutdown_function()
-    {
-        static $run = null;
-        if ( null!==$run )
-        {
-            return true;
-        }
-        $run = true;
-
-        if ( Core::$shutdown_function )
-        {
-            foreach ( Core::$shutdown_function as $item )
-            {
-                try
-                {
-                    call_user_func_array($item[0], (array)$item[1]);
-                }
-                catch ( Exception $e )
-                {
-
-                }
-            }
-        }
-    }
-
-    /**
      * 获取指定key的配置
      *
      * 若不传key，则返回Core_Config对象，可获取动态配置，例如Core::config()->get();
      *
      * @param string $key
      * @param string $project 跨项目读取配置，若本项目内的不需要传
-     * @return Core_Config
+     * @return Config
      * @return array
      */
     public static function config($key = null)
@@ -471,7 +255,7 @@ abstract class Core_Core extends Bootstrap
                 {
                     if ( $thefile )
                     {
-                        Core::_include_config_file($config, $thefile);
+                        __include_config_file($config, $thefile);
                     }
                 }
             }
@@ -480,12 +264,15 @@ abstract class Core_Core extends Bootstrap
                 Core::$config[$cname] = $config;
             }
         }
+
         $v = Core::$config[$cname];
-        foreach ( $c as $i )
+
+        foreach ($c as $i)
         {
-            if ( !isset($v[$i]) ) return null;
+            if (!isset($v[$i]))return null;
             $v = $v[$i];
         }
+
         return $v;
     }
 
@@ -524,7 +311,7 @@ abstract class Core_Core extends Bootstrap
     {
         list($url,$query) = explode('?', $url , 2);
 
-        $url = Bootstrap::$base_url. ltrim($url,'/') . ($url!='' && substr($url,-1)!='/' && false===strpos($url,'.') && self::$config['core']['url_suffix']?self::$config['core']['url_suffix']:'') . ($query?'?'.$query:'');
+        $url = Bootstrap::$base_url. ltrim($url,'/') . ($url!='' && substr($url,-1)!='/' && false===strpos($url,'.') && Core::$config['url_suffix']?Core::$config['url_suffix']:'') . ($query?'?'.$query:'');
 
         // 返回完整URL
         if ( $need_full_url && !preg_match('#^http(s)?://#i', $url) )
@@ -627,6 +414,17 @@ abstract class Core_Core extends Bootstrap
     }
 
     /**
+     * Include一个指定URI的控制器
+     *
+     * @param string $uri
+     * @return boolean
+     */
+    public static function load_controller($uri)
+    {
+        $found = self::find_controller($uri);
+    }
+
+    /**
     * 写入日志
     *
     * 若有特殊写入需求，可以扩展本方法（比如调用数据库类克写到数据库里）
@@ -682,7 +480,7 @@ abstract class Core_Core extends Bootstrap
             }
             else
             {
-                $debug = new _NoDebug();
+                $debug = new __NoDebug();
             }
         }
         return $debug;
@@ -724,9 +522,9 @@ abstract class Core_Core extends Bootstrap
         {
             $file = $l . './core/' . $r . substr($file, strlen(DIR_CORE));
         }
-        elseif ( strpos($file, DIR_GLOBAL) === 0 )
+        elseif ( strpos($file, DIR_TEAM_LIB) === 0 )
         {
-            $file = $l . './global/' . $r . substr($file, strlen(DIR_GLOBAL));
+            $file = $l . './global/' . $r . substr($file, strlen(DIR_TEAM_LIB));
         }
         elseif ( strpos($file, DIR_LIBRARY) === 0 )
         {
@@ -775,23 +573,20 @@ abstract class Core_Core extends Bootstrap
     }
 
     /**
-     * Closes all open output buffers, either by flushing or cleaning all
-     * open buffers, including the myqee output buffer.
+     * 关闭缓冲区
      *
-     * @param   boolean  disable to clear buffers, rather than flushing
-     * @return  void
+     * @param  boolean 是否输出缓冲数据
+     * @return void
      */
     public static function close_buffers($flush = true)
     {
         if ( ob_get_level() > Core::$buffer_level )
         {
-            // Set the close function
             $close = ($flush === true) ? 'ob_end_flush' : 'ob_end_clean';
             while ( ob_get_level() > Core::$buffer_level )
             {
                 $close();
             }
-            // Reset the buffer level
             Core::$buffer_level = ob_get_level();
         }
     }
@@ -806,7 +601,7 @@ abstract class Core_Core extends Bootstrap
         Core::close_buffers(false);
 
         # 避免输出的CSS头试抛出页面无法显示
-        @header( 'Content-Type: text/html;charset=' . Core::config('core.charset') ,true );
+        @header('Content-Type: text/html;charset=' . Core::config('core.charset') ,true);
 
         HttpIO::$status = 404;
         HttpIO::send_headers();
@@ -869,7 +664,7 @@ abstract class Core_Core extends Bootstrap
         Core::close_buffers(false);
 
         # 避免输出的CSS头试抛出页面无法显示
-        @header( 'Content-Type: text/html;charset=' . Core::config('core.charset') , true );
+        @header('Content-Type: text/html;charset=' . Core::config('core.charset') , true);
 
         HttpIO::$status = 500;
         HttpIO::send_headers();
@@ -1161,14 +956,18 @@ abstract class Core_Core extends Bootstrap
      */
     public static function factory_release($objName = null, $key = null)
     {
-        $old_memory = memory_get_usage();
-        if ( null === $objName )
+        if (IS_CLI || IS_DEBUG)
+        {
+            $old_memory = memory_get_usage();
+        }
+
+        if  (null===$objName)
         {
             Core::$instances = array();
         }
-        elseif ( isset(Core::$instances[$objName]) )
+        elseif (isset(Core::$instances[$objName]))
         {
-            if ( null === $key )
+            if (null===$key)
             {
                 unset(Core::$instances[$objName]);
             }
@@ -1178,13 +977,211 @@ abstract class Core_Core extends Bootstrap
             }
         }
 
-        if ( IS_CLI )
+        if (IS_CLI)
         {
             echo __('The release memory:') . ( memory_get_usage() - $old_memory ) . "\n";
         }
-        else if ( IS_DEBUG )
+        else if (IS_DEBUG)
         {
             Core::debug()->info(__('The release memory:') . ( memory_get_usage() - $old_memory) );
+        }
+    }
+
+    /**
+     * 将项目切换回初始项目
+     *
+     * 当使用Core::set_project()设置切换过项目后，可使用此方法返回初始化时的项目
+     */
+    public static function reset_project()
+    {
+        if ( defined('INITIAL_PROJECT_NAME') && INITIAL_PROJECT_NAME != Core::$project )
+        {
+            Core::set_project( INITIAL_PROJECT_NAME );
+        }
+    }
+
+    /**
+     * 设置项目
+     *
+     * 可重新设置新项目已实现程序内项目切换，但需谨慎使用
+     * @param string $project
+     */
+    public static function set_project($project)
+    {
+        if ( Core::$project == $project )
+        {
+            return true;
+        }
+
+        if ( !isset(Core::$config['projects'][$project] ) )
+        {
+            Core::show_500( __('not found the project: :project.',array(':project'=>$project) ) );
+        }
+
+        if ( !Core::$config['projects'][$project]['isuse'] )
+        {
+            Core::show_500( __('the project: :project is not open.' , array(':project'=>$project) ) );
+        }
+
+        static $core_config = null;
+
+        if (null===$core_config)
+        {
+            # 记录原始Core配置
+            $core_config = Core::$config;
+        }
+
+        # 记录所有项目设置，当切换回项目时，使用此设置还原
+        static $all_prjects_setting = array();
+
+        if ( Core::$project )
+        {
+            // 记录上一个项目设置
+            $all_prjects_setting[Core::$project] = array
+            (
+                'config'         => Core::$config,
+                'include_path'   => Core::$include_path,
+                'file_list'      => Core::$file_list,
+                'project_dir'    => Core::$project_dir,
+                'base_url'       => Core::$base_url,
+            );
+        }
+
+        # 设为当前项目
+        Bootstrap::$project = Core::$project = $project;
+
+        # 记录debug信息
+        if (IS_DEBUG)
+        {
+            Core::debug()->info($project, '程序已切换到了新项目');
+        }
+
+        if ( isset($all_prjects_setting[$project]) )
+        {
+            # 还原配置
+            Core::$config         = $all_prjects_setting[$project]['config'];
+            Core::$include_path   = $all_prjects_setting[$project]['include_path'];
+            Core::$file_list      = $all_prjects_setting[$project]['file_list'];
+            Core::$project_dir    = $all_prjects_setting[$project]['project_dir'];
+            Core::$base_url       = $all_prjects_setting[$project]['base_url'];
+        }
+        else
+        {
+            Core::$config = array
+            (
+                'core' => $core_config,
+            );
+
+            if (!isset($core_config['projects'][$project]['dir']) || !$core_config['projects'][$project]['dir'])
+            {
+                Core::show_500( __('the project ":project" dir is not defined.' , array(':project'=>$project)) );
+            }
+
+            # 项目路径
+            $project_dir = realpath( DIR_PROJECT . $core_config['projects'][$project]['dir'] );
+
+            if (!$project_dir || !is_dir($project_dir))
+            {
+                Core::show_500( __('the project dir :dir is not exist.' , array(':dir'=>$core_config['projects'][$project]['dir'])) );
+            }
+
+            $project_dir .= DS;
+            Core::$project_dir = $project_dir;
+
+            # 读取项目配置
+            if (is_file($project_dir.'config'.EXT))
+            {
+                __include_config_file( Core::$config, $project_dir.'config'.EXT );
+            }
+
+            # 读取DEBUG配置
+            if ( isset($core_config['debug_config']) && $core_config['debug_config'] && is_file($project_dir.'debug.config'.EXT) )
+            {
+                __include_config_file( Core::$config , $project_dir.'debug.config'.EXT );
+            }
+
+            # 处理base_url
+            if ( isset($core_config['projects'][$project]['url']) && $core_config['projects'][$project]['url'] )
+            {
+                $url = rtrim(current((array)$core_config['projects'][$project]['url']),'/');
+            }
+            else
+            {
+                $url = '/';
+            }
+
+            if (IS_ADMIN_MODE)
+            {
+                if (isset($core_config['projects'][$project]['url_admin']) && $core_config['projects'][$project]['url_admin'])
+                {
+                    $admin_url = current((array)$core_config['projects'][$project]['url_admin']);
+                    if (false===strpos($admin_url[0],'://'))
+                    {
+                        $url .= trim($admin_url,'/');
+                        $url  = trim($url,'/').'/';
+                    }
+                }
+            }
+            Core::$base_url = $url;
+
+            # 设置include path
+            $project_dir = DIR_PROJECT . $project . DS;
+            if (!is_dir($project_dir))
+            {
+                Core::show_500('not found the project: :project', array(':project' => $project));
+            }
+            Bootstrap::$include_path['project'] = array($project_dir);
+            Bootstrap::$include_path['library'] = array();
+
+            # 重新加载类库配置
+            Bootstrap::load_all_libraries();
+        }
+
+        return true;
+    }
+
+
+    /**
+     * 输出执行跟踪信息
+     * 注意：本方法仅用于本地跟踪代码使用，调试完毕后请移除相关调用
+     *
+     * @param string $msg
+     * @param int $code
+     */
+    public static function trace($msg = 'Trace Tree', $code = E_NOTICE)
+    {
+        if (IS_DEBUG)
+        {
+            throw new Exception($msg, $code);
+            exit();
+        }
+    }
+
+    /**
+     * 执行注册的关闭方法
+     */
+    protected static function run_shutdown_function()
+    {
+        static $run = null;
+        if ( null!==$run )
+        {
+            return true;
+        }
+        $run = true;
+
+        if ( Core::$shutdown_function )
+        {
+            foreach ( Core::$shutdown_function as $item )
+            {
+                try
+                {
+                    call_user_func_array($item[0], (array)$item[1]);
+                }
+                catch ( Exception $e )
+                {
+
+                }
+            }
         }
     }
 
@@ -1218,24 +1215,6 @@ abstract class Core_Core extends Bootstrap
     }
 
     /**
-     * 包含文件
-     *
-     * @param string $file
-     * @param boolean $is_once
-     */
-    protected static function _include_file($file,$is_once=true)
-    {
-        if ($is_once)
-        {
-            include_once $file;
-        }
-        else
-        {
-            include $file;
-        }
-    }
-
-    /**
      * 关闭所有可能的外部链接，比如Database,Memcache等连接
      */
     public static function close_all_connect()
@@ -1248,7 +1227,7 @@ abstract class Core_Core extends Bootstrap
             }
             catch (Exception $e)
             {
-                Core::debug()->error( 'close_all_connect error:'.$e->getMessage() );
+                Core::debug()->error('close_all_connect error:'.$e->getMessage());
             }
         }
     }
@@ -1399,7 +1378,7 @@ abstract class Core_Core extends Bootstrap
  * @copyright  Copyright (c) 2008-2012 myqee.com
  * @license    http://www.myqee.com/license.html
  */
-class _NoDebug
+class __NoDebug
 {
     public function __call($m, $v)
     {
