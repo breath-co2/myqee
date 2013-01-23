@@ -11,7 +11,7 @@
  * @link        http://www.verycd.com/
  * @since       Version 4.0
  */
-class Controller_OpenDebugger extends Controller
+class Core_Controller_OpenDebugger extends Controller
 {
 
     protected $password = array();

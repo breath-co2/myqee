@@ -11,7 +11,7 @@
  * @copyright  Copyright (c) 2008-2012 myqee.com
  * @license    http://www.myqee.com/license.html
  */
-class Controller_File extends Controller
+class Core_Controller_File extends Controller
 {
 
     /**

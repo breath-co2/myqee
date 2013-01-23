@@ -1,6 +1,6 @@
 <?php
 
-class Controller_Captcha extends Controller
+class Core_Controller_Captcha extends Controller
 {
     /**
      * 输出缩略图

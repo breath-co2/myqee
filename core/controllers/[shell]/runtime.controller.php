@@ -6,7 +6,7 @@
  * @author jonwang
  *
  */
-class Controller_RunTime extends Controller_Shell
+class Core_Controller_RunTime extends Controller_Shell
 {
     /**
      * 检查当前服务器的可用性，包括MySQL,MongoDB,Memcache等
