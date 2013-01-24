@@ -3,19 +3,41 @@
  * 项目配置
  *
  * 建议将default项目放在最后面
- * url 可以是字符串也可以是数组，可以/开头，也可以http://开头。结尾不需要加/
  *
  * @var array
  */
 $config['projects'] = array
 (
+    // 请在这边加入其它项目，参照default
+    /*
+	'admin' => array
+    (
+		'name'      => '独立后台',
+		'dir'       => 'admin',
+        'isuse'     => true,
+		'url'	    => '/admin/',
+		'url_admin' => '/',
+	),
+	*/
+
+    // 请确保Default放在最后
 	'default' => array
     (
-		'name'      => '默认项目',
-		'isuse'     => true,
-		'dir'       => 'default',
-		'url'	    => '/',
-	    'url_admin' => '/admin/',
+		'name'      => '默认项目',        //名称
+		'dir'       => 'default',        //目录
+        'isuse'     => true,             //是否启用
+		'url'	    => '/',              //URL根目录，可以是字符串也可以是数组，可以/开头，也可以http://开头。
+	    'url_admin' => '/admin/',        //后台URL根目录，同上
+        /*
+        // 此项目有的加载类库配置
+        'libraries' => array
+        (
+            'autoload' => array(),
+            'cli'      => array(),
+            'debug'    => array(),
+            'admin'    => array(),
+        ),
+        */
 	),
 );
 
@@ -157,6 +179,7 @@ $config['timezone'] = 'PRC';
 
 /**
  * 语言包
+ *
  * @var string
  */
 $config['lang'] = 'zh-cn';

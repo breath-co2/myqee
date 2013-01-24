@@ -240,13 +240,13 @@ new check_config();
     </td>
 </tr>
 <tr>
-    <td class="td1" align="right">Global目录：</td>
+    <td class="td1" align="right">Team类库目录：</td>
     <td>
-    <?php echo DIR_GLOBAL; ?>
+    <?php echo DIR_TEAM_LIB; ?>
     </td>
 </tr>
 <tr>
-    <td class="td1" align="right">第三方类库目录：</td>
+    <td class="td1" align="right">第三方开源类库目录：</td>
     <td>
     <?php echo DIR_LIBRARY; ?>
     </td>

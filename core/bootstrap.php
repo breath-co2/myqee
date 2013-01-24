@@ -402,7 +402,7 @@ abstract class Bootstrap
             # 读取配置
             if ( !is_file(DIR_SYSTEM.'config'.EXT) )
             {
-                self::_show_error( __('Please rename the file config.new:EXT to config:EXT' , array(':EXT'=>EXT)) );
+                self::_show_error(__('Please rename the file config.new:EXT to config:EXT', array(':EXT'=>EXT)));
             }
 
             __include_config_file(self::$core_config, DIR_SYSTEM.'config'.EXT);
@@ -487,7 +487,7 @@ abstract class Bootstrap
 
                 if (!isset(self::$core_config['projects'][$project]))
                 {
-                    self::_show_error( __('not found the project: :project',array(':project'=>$project)) );
+                    self::_show_error(__('not found the project: :project', array(':project'=>$project)));
                 }
 
                 // 如果有设置项目
@@ -536,6 +536,11 @@ abstract class Bootstrap
                 }
             }
 
+            if ( isset(self::$core_config['projects'][self::$project]['isuse']) && !self::$core_config['projects'][self::$project]['isuse'] )
+            {
+                self::_show_error(__('the project: :project is not open.' , array(':project'=>$project)));
+            }
+
             /**
              * 初始项目名
              *
@@ -562,7 +567,7 @@ abstract class Bootstrap
 
             if (!is_dir($project_dir))
             {
-                self::_show_error('not found the project: :project', array(':project' => self::$project));
+                self::_show_error(__('not found the project: :project', array(':project' => self::$project)));
             }
 
             self::$include_path['project'] = array($project_dir);
@@ -1195,9 +1200,10 @@ abstract class Bootstrap
     protected static function reload_all_libraries()
     {
         # 加载类库
+        $lib_config = self::$core_config['libraries'];
         foreach (array('autoload', 'cli', 'admin', 'debug') as $type)
         {
-            if (!isset(self::$core_config['libraries'][$type]) || !self::$core_config['libraries'][$type])continue;
+            if (!isset($lib_config[$type]) || !$lib_config[$type])continue;
 
             if ($type=='cli')
             {
@@ -1212,7 +1218,7 @@ abstract class Bootstrap
                 if (!IS_DEBUG)continue;
             }
 
-            $libs = array_reverse((array)self::$core_config['libraries'][$type]);
+            $libs = array_reverse((array)$lib_config[$type]);
             foreach ($libs as $lib)
             {
                 self::_add_include_path_lib($lib);
@@ -1226,7 +1232,7 @@ abstract class Bootstrap
         $include_path = array_reverse(self::include_path());
         foreach ($include_path as $path)
         {
-            $config_file = $path.'config'.EXT;
+            $config_file = $path . 'config' . EXT;
 
             if ( is_file($config_file) )
             {

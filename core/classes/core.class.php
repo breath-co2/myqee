@@ -1104,29 +1104,26 @@ abstract class Core_Core extends Bootstrap
             );
         }
 
-        # 设为当前项目
-        Core::$project = $project;
-
-        # 记录debug信息
-        if (IS_DEBUG)
-        {
-            Core::debug()->info($project, '程序已切换到了新项目');
-        }
-
         if ( isset($all_prjects_setting[$project]) )
         {
+            # 设为当前项目
+            Core::$project = $project;
+
             # 还原配置
             Core::$config         = $all_prjects_setting[$project]['config'];
             Core::$include_path   = $all_prjects_setting[$project]['include_path'];
             Core::$file_list      = $all_prjects_setting[$project]['file_list'];
             Core::$project_dir    = $all_prjects_setting[$project]['project_dir'];
             Core::$base_url       = $all_prjects_setting[$project]['base_url'];
+
+            # 清除缓存数据
+            unset($all_prjects_setting[$project]);
         }
         else
         {
-            $core_config = Core::$core_config;
+            $p_config = Core::$core_config['projects'][$project];
 
-            if (!isset($core_config['projects'][$project]['dir']) || !$core_config['projects'][$project]['dir'])
+            if (!isset($p_config['dir']) || !$p_config['dir'])
             {
                 Core::show_500(__('the project ":project" dir is not defined.', array(':project'=>$project)));
             }
@@ -1139,20 +1136,24 @@ abstract class Core_Core extends Bootstrap
             }
 
             # 项目路径
-            $project_dir = realpath(DIR_PROJECT . $core_config['projects'][$project]['dir']);
+            $project_dir = realpath(DIR_PROJECT . $p_config['dir']);
 
             if (!$project_dir || !is_dir($project_dir))
             {
-                Core::show_500(__('the project dir :dir is not exist.', array(':dir'=>$core_config['projects'][$project]['dir'])));
+                Core::show_500(__('the project dir :dir is not exist.', array(':dir'=>$p_config['dir'])));
             }
 
+            # 设为当前项目
+            Core::$project = $project;
+
             $project_dir .= DS;
+
             Core::$project_dir = $project_dir;
 
             # 处理base_url
-            if ( isset($core_config['projects'][$project]['url']) && $core_config['projects'][$project]['url'] )
+            if ( isset($p_config['url']) && $p_config['url'] )
             {
-                $url = rtrim(current((array)$core_config['projects'][$project]['url']),'/');
+                $url = rtrim(current((array)$p_config['url']),'/');
             }
             else
             {
@@ -1161,9 +1162,9 @@ abstract class Core_Core extends Bootstrap
 
             if (IS_ADMIN_MODE)
             {
-                if (isset($core_config['projects'][$project]['url_admin']) && $core_config['projects'][$project]['url_admin'])
+                if (isset($p_config['url_admin']) && $p_config['url_admin'])
                 {
-                    $admin_url = current((array)$core_config['projects'][$project]['url_admin']);
+                    $admin_url = current((array)$p_config['url_admin']);
                     if (false===strpos($admin_url[0],'://'))
                     {
                         $url .= trim($admin_url,'/');
@@ -1179,6 +1180,12 @@ abstract class Core_Core extends Bootstrap
 
             # 重新加载类库配置
             Core::reload_all_libraries();
+        }
+
+        # 记录debug信息
+        if (IS_DEBUG)
+        {
+            Core::debug()->info($project, '程序已切换到了新项目');
         }
 
         return true;
