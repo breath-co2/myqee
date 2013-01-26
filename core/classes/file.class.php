@@ -23,6 +23,7 @@ class Core_File
         DIR_LOG,
         DIR_TEMP,
         DIR_WWWROOT,
+        DIR_TEAM_LIBRARY,
         DIR_PROJECT,
         DIR_SYSTEM,
         DIR_ASSETS,
