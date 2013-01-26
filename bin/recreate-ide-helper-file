@@ -50,7 +50,7 @@ function create_ide_helper($lib)
     $file = DIR_SYSTEM.$lib.'/_ide_helper'.EXT;
     if ($str==='')
     {
-        echo $lib ."\x1b[36m无文件\x1b[39m\n";
+        echo $lib ." \x1b[36m无文件\x1b[39m\n";
         if (is_file($file))@unlink($file);
         return;
     }
@@ -59,17 +59,17 @@ function create_ide_helper($lib)
 
     if (is_file($file) && md5_file($file)==md5($str))
     {
-        echo $lib ."\x1b[36m未修改.\x1b[39m\n";
+        echo $lib ." \x1b[36m未修改.\x1b[39m\n";
     }
     else
     {
         if (false!==@file_put_contents(DIR_SYSTEM.$lib.'/_ide_helper'.EXT, $str))
         {
-            echo $lib ."\x1b[32m✔\x1b[39m\n";
+            echo $lib ." \x1b[32m✔\x1b[39m\n";
         }
         else
         {
-            echo $lib ."\x1b[33m✕\x1b[39m\n";
+            echo $lib ." \x1b[33m✕\x1b[39m\n";
         }
     }
 }
@@ -128,7 +128,7 @@ function paste_files($lib,$dir,$class_dir,$p_dir='')
             $file_name = substr($file,$dir_len);
             if (is_dir($file))
             {
-                paste_files($lib , $dir , $file.'/' , $p_dir.'/'.$file_name);
+                $str .= paste_files($lib , $dir , $file.'/' , $p_dir.'/'.$file_name);
                 continue;
             }
 
