@@ -242,7 +242,7 @@ new check_config();
 <tr>
     <td class="td1" align="right">Team类库目录：</td>
     <td>
-    <?php echo DIR_TEAM_LIB; ?>
+    <?php echo DIR_TEAM_LIBRARY; ?>
     </td>
 </tr>
 <tr>

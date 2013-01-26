@@ -584,9 +584,9 @@ abstract class Core_Core extends Bootstrap
         {
             $file = $l . './core/' . $r . substr($file, strlen(DIR_CORE));
         }
-        elseif ( strpos($file, DIR_TEAM_LIB) === 0 )
+        elseif ( strpos($file, DIR_TEAM_LIBRARY) === 0 )
         {
-            $file = $l . './team_lib/' . $r . substr($file, strlen(DIR_TEAM_LIB));
+            $file = $l . './team_lib/' . $r . substr($file, strlen(DIR_TEAM_LIBRARY));
         }
         elseif ( strpos($file, DIR_LIBRARY) === 0 )
         {

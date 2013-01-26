@@ -14,6 +14,13 @@ define('START_TIME', microtime(1));
 define('START_MEMORY', memory_get_usage());
 
 /**
+ * 定义MyQEE大版本
+ *
+ * @var string
+ */
+define('MyQEE', 'v3');
+
+/**
  * PHP文件后缀
  *
  * @var string
@@ -102,7 +109,7 @@ define('DIR_PROJECT', DIR_SYSTEM.'projects'.DS);
  *
  * @var string
 */
-define('DIR_TEAM_LIB', DIR_SYSTEM.'team_lib'.DS);
+define('DIR_TEAM_LIBRARY', DIR_SYSTEM.'team_library'.DS);
 
 /**
  * 模块目录
@@ -300,10 +307,10 @@ abstract class Bootstrap
      */
     public static $include_path = array
     (
-        'project'  => array(),                   // 项目类库
-        'team_lib' => array(DIR_TEAM_LIB),       // Team公共类库
-        'library'  => array(),                   // 类库包
-        'core'     => array('core'=>DIR_CORE),   // 核心类库
+        'project'      => array(),                   // 项目类库
+        'team_library' => array(DIR_TEAM_LIBRARY),   // Team公共类库
+        'library'      => array(),                   // 类库包
+        'core'         => array('core'=>DIR_CORE),   // 核心类库
     );
 
     /**
@@ -704,7 +711,7 @@ abstract class Bootstrap
             if (!$is_alias)
             {
                 # 在include path中找
-                foreach (array('project','team_lib') as $type)
+                foreach (array('project','team_library') as $type)
                 {
                     foreach (self::$include_path[$type] as $path)
                     {
@@ -743,7 +750,7 @@ abstract class Bootstrap
             }
         }
 
-        if ( class_exists($class_name,false) )
+        if (class_exists($class_name,false))
         {
             return true;
         }
@@ -787,7 +794,7 @@ abstract class Bootstrap
         {
             require $found['file'];
 
-            if ($found['ns']=='team_lib'||$found['ns']=='project')
+            if ($found['ns']=='team_library'||$found['ns']=='project')
             {
                 $class_name = $found['class'];
             }
