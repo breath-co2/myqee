@@ -105,7 +105,7 @@ class Core_Member extends ORM_Member_Data
      * @param string $password
      * @return string
      */
-    protected function _get_password_hash( $password )
+    protected function _get_password_hash($password)
     {
         return md5($this->username . '||$34#@_' . $password);
     }
@@ -116,7 +116,7 @@ class Core_Member extends ORM_Member_Data
      * @param string $new_password
      * @return array 失败返回false
      */
-    public function change_password( $new_password )
+    public function change_password($new_password)
     {
         $this->password = $this->_get_password_hash($new_password);
         return $this->update();

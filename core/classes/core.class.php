@@ -248,34 +248,10 @@ abstract class Core_Core extends Bootstrap
         }
         else
         {
-            if ( !array_key_exists($cname, Core::$config) )
-            {
-                $config = array();
-                $thefiles = Core::find_file('config', $cname);
-                if ( is_array($thefiles) )
-                {
-                    if ( count($thefiles) > 1 )
-                    {
-                        krsort($thefiles); //逆向排序
-                    }
-                    foreach ( $thefiles as $thefile )
-                    {
-                        if ( $thefile )
-                        {
-                            __include_config_file($config, $thefile);
-                        }
-                    }
-                }
-                if ( !isset(Core::$config[$cname]) )
-                {
-                    Core::$config[$cname] = $config;
-                }
-            }
-
             $v = Core::$config[$cname];
         }
 
-        foreach ($c as $i)
+        if ($c)foreach ($c as $i)
         {
             if (!isset($v[$i]))return null;
             $v = $v[$i];
@@ -360,11 +336,21 @@ abstract class Core_Core extends Bootstrap
      * Include一个指定URI的控制器
      *
      * @param string $uri
-     * @return boolean
+     * @return class_name | false
      */
     public static function load_controller($uri)
     {
         $found = self::find_controller($uri);
+
+        if ($found)
+        {
+            # 返回类的名称
+            return $found['class'];
+        }
+        else
+        {
+            return false;
+        }
     }
 
     /**
@@ -748,7 +734,7 @@ abstract class Core_Core extends Bootstrap
             }
         }
 
-        if ( IS_CLI )
+        if (IS_CLI)
         {
             echo "\x1b[36m";
             if ( $msg instanceof Exception )

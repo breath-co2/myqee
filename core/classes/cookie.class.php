@@ -21,7 +21,7 @@ class Core_Cookie
 
     public function __construct()
     {
-        if ( null === Cookie::$config )
+        if ( null===Cookie::$config )
         {
             Cookie::$config = Core::config('cookie');
         }
@@ -88,6 +88,7 @@ class Core_Cookie
 
     /**
      * 校验domain
+     *
      * 处理当domain为IP+端口的形式
      *
      * @param string $domain
@@ -99,8 +100,8 @@ class Core_Cookie
             # 这里对IP+非80端口的需要特殊处理下，经试验，当这种情况下，设置session id的cookie的话会失败
             if (preg_match('#^([0-9]+.[0-9]+.[0-9]+.[0-9]+):[0-9]+$#',$domain,$m))
             {
-            # IP:PORT 方式
-            $domain = $m[1];
+                # IP:PORT 方式
+                $domain = $m[1];
             }
         }
     }

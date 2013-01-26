@@ -18,7 +18,7 @@ define('START_MEMORY', memory_get_usage());
  *
  * @var string
  */
-define('MyQEE', 'v3');
+define('MyQEE_VERSION', 'v3');
 
 /**
  * PHP文件后缀
@@ -677,15 +677,15 @@ abstract class Bootstrap
 
             if ($type=='controller')
             {
-                if ( IS_SYSTEM_MODE )
+                if (IS_SYSTEM_MODE)
                 {
                     $dir_setting[0] .= '/[system]';
                 }
-                elseif ( IS_CLI )
+                elseif (IS_CLI)
                 {
                     $dir_setting[0] .= '/[shell]';
                 }
-                elseif ( IS_ADMIN_MODE )
+                elseif (IS_ADMIN_MODE)
                 {
                     $dir_setting[0] .= '/[admin]';
                 }

@@ -50,6 +50,7 @@ class Core_HttpClient
 
     /**
      * 客户端信息
+     *
      * @var string
      */
     protected static $agent = '';
@@ -79,6 +80,7 @@ class Core_HttpClient
 
     /**
      * 获取实例化对象
+     *
      * @param string $type
      * @return HttpClient
      */
@@ -101,6 +103,7 @@ class Core_HttpClient
 
     /**
      * 设置$agent
+     *
      * @param string $agent
      * @return HttpClient
      */

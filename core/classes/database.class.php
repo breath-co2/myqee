@@ -242,11 +242,11 @@ class Core_Database extends Database_QueryBuilder
             }
         }
 
-        if ($slow_query_mtime)$stime = microtime(1);
+        if ($slow_query_mtime>0)$stime = microtime(1);
 
         $rs = $this->driver->query($sql, $as_object, $use_master);
 
-        if ( $slow_query_mtime>0 )
+        if ($slow_query_mtime>0)
         {
             $etime = microtime(1);
             $time = 1000*($etime-$stime);
@@ -514,7 +514,7 @@ class Core_Database extends Database_QueryBuilder
      */
     public function create_database( $database, $charset = null, $collate=null )
     {
-        if ( method_exists($this->driver, 'create_database') )
+        if (method_exists($this->driver, 'create_database'))
         {
             return $this->driver->create_database($database,$charset,$collate);
         }
