@@ -68,8 +68,8 @@ else
 {
 ?>
 <form method="post" action="<?php echo $url;?>" name="form1">
-调试已开启
-<input type="submit" name="submit" value="关闭调试" />
+已开启<b style="color:green"><?php echo (IS_DEBUG&1)?'本地':'在线';?></b>调试模式
+<input type="submit" name="submit" value="关闭调试"<?php if (IS_DEBUG&1)echo ' disabled="disabeld" title="本地调试模式必需修改php.ini中相关配置才可以关闭"';?> />
 <?php echo $str;?>
 </form>
 <script type="text/javascript">

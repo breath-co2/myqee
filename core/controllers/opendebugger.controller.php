@@ -28,7 +28,7 @@ class Core_Controller_OpenDebugger extends Controller
 
     public function action_default()
     {
-        if ( Core::is_online_debug() )
+        if (IS_DEBUG)
         {
             $this->nodebug();
         }
