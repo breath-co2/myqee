@@ -37,8 +37,8 @@ class Core_Config
         $config = Core::config('configuration');
         if ($config)
         {
-            if ( isset($config['database']) && $config['database'] )$this->database = $config['database'];
-            if ( isset($config['tablename']) && $config['tablename'] )$this->tablename = $config['tablename'];
+            if (isset($config['database']) && $config['database']  )$this->database  = $config['database'];
+            if (isset($config['tablename']) && $config['tablename'])$this->tablename = $config['tablename'];
         }
     }
 
@@ -50,13 +50,13 @@ class Core_Config
      * @param string $type 类型,长度32以内
      * @return boolean
      */
-    public function set($key, $value , $type = '')
+    public function set($key, $value, $type = '')
     {
         $db = new Database($this->database);
         $type = (string)$type;
         try
         {
-            if ( is_array($key) )
+            if (is_array($key))
             {
                 # 批量设置
                 $tr = $db->transaction();
@@ -76,7 +76,8 @@ class Core_Config
                     # 设置数据
                     foreach ($key as $i=>$k)
                     {
-                        $data = array(
+                        $data = array
+                        (
                             'type'     => $type,
                             'key_md5'  => md5($k),
                             'key_name' => $k,
@@ -271,6 +272,7 @@ class Core_Config
 
             if ($config)
             {
+                $this->config = array();
                 foreach ($config as $item)
                 {
                     $this->config[$item['type']][$item['key_name']] = @unserialize(gzuncompress($item['value']));
