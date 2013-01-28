@@ -168,7 +168,7 @@ $config['mimes'] = array
     'jpe'      => array('image/jpeg', 'image/pjpeg'),
     'jpeg'     => array('image/jpeg', 'image/pjpeg'),
     'jpg'      => array('image/jpeg', 'image/pjpeg'),
-    'js'       => array('application/javascript'),
+    'js'       => array('application/x-javascript'),
     'json'     => array('application/json'),
     'latex'    => array('application/x-latex'),
     'lha'      => array('application/octet-stream'),
@@ -311,5 +311,5 @@ $config['mimes'] = array
     'xvid'     => array('video/x-xvid'),
     'xwd'      => array('image/x-xwindowdump'),
     'z'        => array('application/x-compress'),
-    'zip'      => array('application/x-zip', 'application/zip', 'application/x-zip-compressed')
+    'zip'      => array('application/x-zip', 'application/zip', 'application/x-zip-compressed'),
 );
