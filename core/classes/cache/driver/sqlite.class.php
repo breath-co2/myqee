@@ -7,7 +7,7 @@
  * @category   MyQEE
  * @package    System
  * @subpackage Core
- * @copyright  Copyright (c) 2008-2012 myqee.com
+ * @copyright  Copyright (c) 2008-2013 myqee.com
  * @license	   http://www.myqee.com/license.html
  */
 class Core_Cache_Driver_SQLite extends Cache_Driver_Database
@@ -41,7 +41,7 @@ class Core_Cache_Driver_SQLite extends Cache_Driver_Database
         }
         else
         {
-            $connection += Core::config('cache/sqlite.' . $config_name);
+            $connection += (array)Core::config('cache/sqlite.' . $config_name);
         }
 
         if ( Cache_Driver_SQLite::DATA_COMPRESS && function_exists('gzcompress') )
@@ -49,7 +49,7 @@ class Core_Cache_Driver_SQLite extends Cache_Driver_Database
             $this->_compress = true;
         }
 
-        $this->_handler = new Database(array('type'=>'SQLite','connection'=>$connection));
+        $this->_handler = new Database(array('type'=>'SQLite', 'connection'=>$connection));
 
         $this->tablename = $connection['tablename'];
     }

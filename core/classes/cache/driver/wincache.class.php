@@ -7,15 +7,15 @@
  * @category   MyQEE
  * @package    System
  * @subpackage Core
- * @copyright  Copyright (c) 2008-2012 myqee.com
+ * @copyright  Copyright (c) 2008-2013 myqee.com
  * @license    http://www.myqee.com/license.html
  */
-class Core_Cache_Driver_WinCache
+class Core_Cache_Driver_WinCache extends Cache_Driver
 {
 
     public function __construct()
     {
-        if ( !extension_loaded('wincache') )
+        if (function_exists('extension_loaded') && !extension_loaded('wincache'))
         {
             throw new Exception(__('php WinCache extension is not available.'));
         }
@@ -29,30 +29,63 @@ class Core_Cache_Driver_WinCache
      */
     public function get($key)
     {
-        $success = false;
+        $is_array_key = is_array($key);
 
-        $return = wincache_ucache_get($key, $success);
-
-        if ( $success === false )
+        if ($this->prefix)
         {
-            Core::debug()->error($key,'wincache mis key');
-            return false;
-        }
-        else
-        {
-            if ( is_array($key) )
+            if ($is_array_key)
             {
-                foreach ( $return as &$item )
+                $key_map = array();
+                foreach ($key as &$k)
                 {
-                    Cache_Driver_WinCache::_de_format_data($item);
+                    $key_map[$this->prefix . $k] = $k;
+                    $k = $this->prefix . $k;
                 }
             }
             else
             {
-                Cache_Driver_WinCache::_de_format_data($return);
+                $key = $this->prefix . $key;
+            }
+        }
+
+        $success = false;
+
+        $return = wincache_ucache_get($key, $success);
+
+        if (false===$success)
+        {
+            if (IS_DEBUG)Core::debug()->error($key, 'wincache mis key');
+            return false;
+        }
+        else
+        {
+            if ($is_array_key)
+            {
+                if ($this->prefix)
+                {
+                    # 有前缀，移除前缀
+                    $new_rs = array();
+                    foreach ($return as $k=>$item)
+                    {
+                        $this->_de_format_data($item);
+                        $new_rs[$key_map[$k]] = $item;
+                    }
+                    $return = $new_rs;
+                }
+                else
+                {
+                    foreach ($return as &$item)
+                    {
+                        $this->_de_format_data($item);
+                    }
+                }
+            }
+            else
+            {
+                $this->_de_format_data($return);
             }
 
-            Core::debug()->info($key,'wincache hit key');
+            if (IS_DEBUG)Core::debug()->info($key, 'wincache hit key');
         }
 
         return $return;
@@ -68,27 +101,43 @@ class Core_Cache_Driver_WinCache
      */
     public function set($key, $value = null, $lifetime = 3600)
     {
-        if (IS_DEBUG)Core::debug()->info($key,'wincache set key');
+        if ($this->prefix)
+        {
+            if (is_array($key))
+            {
+                $new_key = array();
+                foreach ($key as $k=>$v)
+                {
+                    $new_key[$this->prefix . $k] = $v;
+                }
+                $key = $new_key;
+            }
+            else
+            {
+                $key = $this->prefix . $key;
+            }
+        }
 
-        if ( is_array($key) )
+        if (IS_DEBUG)Core::debug()->info($key, 'wincache set key');
+        
+        if (is_array($key))
         {
             $return = true;
-            foreach ( $key as $k => & $v )
+            foreach ($key as $k => &$v)
             {
-                Cache_Driver_WinCache::_format_data($v);
+                $this->_format_data($v);
                 $s = wincache_ucache_set($k, $v, $lifetime);
-
-                if ( false === $s )
+                if (false === $s)
                 {
                     $return = false;
                 }
             }
-
+        
             return $return;
         }
         else
         {
-            Cache_Driver_WinCache::_format_data($value);
+            $this->_format_data($value);
             return wincache_ucache_set($key, $value, $lifetime);
         }
     }
@@ -97,24 +146,48 @@ class Core_Cache_Driver_WinCache
      * 删除指定key的缓存，若$key===true则表示删除全部
      *
      * @param string $key
+     * @return boolean
      */
     public function delete($key)
     {
-        if (IS_DEBUG)Core::debug()->info($key,'wincache delete key');
-
-        if ( $key === true )
+        if (true===$key)
         {
             return $this->delete_all();
         }
+        else
+        {
+            if ($this->prefix)
+            {
+                if (is_array($key))
+                {
+                    foreach ($key as &$k)
+                    {
+                        $k = $this->prefix . $k;
+                    }
+                }
+                else
+                {
+                    $key = $this->prefix . $key;
+                }
+            }
 
-        return wincache_ucache_delete($key);
+            $status = wincache_ucache_delete($key);
+        }
+
+        if (IS_DEBUG)Core::debug()->info($key, 'wincache delete key');
+
+        return $status;
     }
 
     /**
      * 删除全部
+     *
+     * @return boolean
      */
     public function delete_all()
     {
+        if (IS_DEBUG)Core::debug()->info('wincache delete all cache');
+
 		return wincache_ucache_clear();
     }
 
@@ -122,6 +195,7 @@ class Core_Cache_Driver_WinCache
     /**
      * 过期数据会自动清除
      *
+     * @return boolean
      */
     public function delete_expired()
     {
@@ -130,19 +204,21 @@ class Core_Cache_Driver_WinCache
 
     /**
      * 递减
+     *
      * 与原始decrement方法区别的是若不存指定KEY时返回false，这个会自动递减
      *
      * @param string $key
      * @param int $offset
      * @param int $lifetime 当递减失则时当作set使用
+     * @return boolean
      */
     public function decrement($key, $offset = 1, $lifetime = 60)
     {
-        if ( wincache_ucache_dec($key, $offset) )
+        if (wincache_ucache_dec($this->prefix . $key, $offset))
         {
             return true;
         }
-        elseif ( false==wincache_ucache_exists($key) && $this->set($key, $offset, $lifetime) )
+        elseif (false==wincache_ucache_exists($this->prefix . $key) && $this->set($key, $offset, $lifetime))
         {
             return true;
         }
@@ -154,45 +230,27 @@ class Core_Cache_Driver_WinCache
 
     /**
      * 递增
+     *
      * 与原始increment方法区别的是若不存指定KEY时返回false，这个会自动递增
      *
      * @param string $key
      * @param int $offset
      * @param int $lifetime 当递减失则时当作set使用
+     * @return boolean
      */
     public function increment($key, $offset = 1, $lifetime = 60)
     {
-        if ( wincache_ucache_inc($key, $offset) )
+        if (wincache_ucache_inc($this->prefix . $key, $offset))
         {
             return true;
         }
-        elseif ( false==wincache_ucache_exists($key) && $this->set($key, $offset, $lifetime) )
+        elseif (false==wincache_ucache_exists($this->prefix . $key) && $this->set($key, $offset, $lifetime))
         {
             return true;
         }
         else
         {
             return false;
-        }
-    }
-
-    protected static function _de_format_data( &$data )
-    {
-        if ( null===$data || is_bool($data) )
-        {
-            # bool类型不处理
-        }
-        elseif ( !is_numeric($data) )
-        {
-            $data = @unserialize($data);
-        }
-    }
-
-    protected static function _format_data( &$data )
-    {
-        if ( !is_numeric($data) )
-        {
-            $data = serialize($data);
         }
     }
 }

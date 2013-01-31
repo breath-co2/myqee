@@ -7,19 +7,11 @@
  * @category   MyQEE
  * @package    System
  * @subpackage Core
- * @copyright  Copyright (c) 2008-2012 myqee.com
+ * @copyright  Copyright (c) 2008-2013 myqee.com
  * @license	   http://www.myqee.com/license.html
  */
-class Core_Cache_Driver_Database
+class Core_Cache_Driver_Database extends Cache_Driver
 {
-
-    /**
-     * 是否开启缓存
-     *
-     * @var boolean
-     */
-    const DATA_COMPRESS = true;
-
     /**
      * 数据库配置
      *
@@ -41,16 +33,9 @@ class Core_Cache_Driver_Database
      */
     protected $_handler;
 
-    /**
-     * 是否压缩数据
-     *
-     * @var boolean
-     */
-    protected $_compress = false;
-
     public function __construct($config_name = 'default')
     {
-        if ( is_array($config_name) )
+        if (is_array($config_name))
         {
             $config = $config_name;
         }
@@ -59,20 +44,15 @@ class Core_Cache_Driver_Database
             $config = Core::config('cache/database.'.$config_name);
         }
 
-        $this->database = $config['database'];
+        $this->database  = $config['database'];
         $this->tablename = $config['tablename'];
 
-        if ( !$this->tablename )
+        if (!$this->tablename)
         {
-            throw new Exception('数据库缓存配置错误。');
+            throw new Exception(__('Database cache configuration error'));
         }
 
-        if ( Cache_Driver_Database::DATA_COMPRESS && function_exists('gzcompress') )
-        {
-            $this->_compress = true;
-        }
-
-        $this->_handler = new Database(array('type'=>$config['type'],'connection'=>$config));
+        $this->_handler = new Database(array('type'=>$config['type'], 'connection'=>$config));
     }
 
     public function __destruct()
@@ -89,38 +69,45 @@ class Core_Cache_Driver_Database
     {
         if (IS_DEBUG)$key_bak = $key;
 
-        if ( is_array($key) )
+        if (is_array($key))
         {
-            $this->_handler->in('key',array_map('md5', $key));
+            $md5_key = array();
+            $key_map = array();
+            foreach ($key as &$k)
+            {
+                $key_map[$this->prefix . $k] = $k;
+                $k = $this->prefix . $k;
+                $md5_key[] = md5($k);
+            }
+
+            $this->_handler->in('key', $md5_key);
         }
         else
         {
-            $this->_handler->where('key',md5($key))->limit(1);
+            $key = $this->prefix . $key;
+
+            $this->_handler->where('key', md5($key))->limit(1);
         }
 
-        $rs = $this->_handler->select('key','value','number')->from($this->tablename)->and_where_open()->where('expire',0)->or_where('expire', TIME,'>')->and_where_close()->get();
+        $rs = $this->_handler->select('key_string', 'value', 'number')->from($this->tablename)->and_where_open()->where('expire', 0)->or_where('expire', TIME,'>')->and_where_close()->get();
 
-        if ( $rs->count() )
+        if ($rs->count())
         {
-            if ( is_array($key) )
+            if (is_array($key))
             {
                 $return = array();
-                foreach ( $rs as $data )
+                foreach ($rs as $data)
                 {
-                    $return[$data['key']] = $data['value'];
+                    $data_key = $key_map[$data['key_string']];
+                    $return[$data_key] = $data['value'];
 
-                    if ( ''===$data['value'] )
+                    if (''===$data['value'])
                     {
-                        $return[$data['key']] = $data['number'];
+                        $return[$data_key] = $data['number'];
                     }
                     else
                     {
-                        if($this->_compress)
-                        {
-                            //启用数据压缩
-                            $return[$data['key']] = gzuncompress($data['value']);
-                        }
-                        $return[$data['key']] = @unserialize($return);
+                        $this->_de_format_data($return[$data_key]);
                     }
                 }
             }
@@ -128,30 +115,26 @@ class Core_Cache_Driver_Database
             {
                 $return = $rs->current();
 
-                if ( ''===$return['value'] )
+                if (''===$return['value'])
                 {
                     $return = $return['number'];
                 }
                 else
                 {
                     $return = $return['value'];
-                    if($this->_compress)
-                    {
-                        //启用数据压缩
-                        $return = gzuncompress($return);
-                    }
-
-                    $return = @unserialize($return);
+                    $this->_de_format_data($return);
                 }
             }
 
-            if (IS_DEBUG)Core::debug()->info($key_bak,'database cache hit key');
+            if (IS_DEBUG)Core::debug()->info($key_bak, 'database cache hit key');
+
+            unset($rs);
 
             return $return;
         }
         else
         {
-            if (IS_DEBUG)Core::debug()->error($key_bak,'database cache mis key');
+            if (IS_DEBUG)Core::debug()->error($key_bak, 'database cache mis key');
         }
 
         return false;
@@ -162,44 +145,45 @@ class Core_Cache_Driver_Database
      *
      * @param string/array $key 支持多存
      * @param $data Value 多存时此项可空
-     * @param $lifetime 有效期，默认3600，即1小时，0表示最大值30天（2592000）
+     * @param $lifetime 有效期，默认3600，即1小时，0表示不限制
      * @return boolean
      */
     public function set($key, $value = null, $lifetime = 3600)
     {
-        if (IS_DEBUG)Core::debug()->info($key,'database cache set key');
+        if (IS_DEBUG)Core::debug()->info($key, 'database cache set key');
 
         if ($lifetime>0)
         {
             $lifetime += TIME;
         }
-        if ( is_array($key) )
+
+        if (is_array($key))
         {
-            foreach ($key as $k)
+            foreach ($key as $k=>$v)
             {
-                if (is_numeric($value[$k]))
+                $k = $this->prefix . $k;
+
+                if (is_numeric($v))
                 {
                     $data = array
                     (
                         md5($k),
                         $k,
                         '',
-                        $value[$k],
+                        $v,
                         $lifetime,
                     );
                 }
                 else
                 {
-                    if($this->_compress)
-                    {
-                        $value[$k] = gzcompress($value[$k],9);
-                    }
+                    $this->_format_data($value[$k]);
+
                     $data = array
                     (
                         md5($k),
                         $k,
-                        serialize($value[$k]),
-                        null,
+                        $value[$k],
+                        0,
                         $lifetime,
                     );
                 }
@@ -209,6 +193,8 @@ class Core_Cache_Driver_Database
         }
         else
         {
+            $key = $this->prefix . $key;
+
             if (is_numeric($value))
             {
                 # 对于数值型数据，存在number字段里
@@ -223,16 +209,13 @@ class Core_Cache_Driver_Database
             }
             else
             {
-                if($this->_compress)
-                {
-                    $value = gzcompress($value,9);
-                }
+                $this->_format_data($value);
                 $data = array
                 (
                     md5($key),
                     $key,
-                    serialize($value),
-                    null,
+                    $value,
+                    0,
                     $lifetime,
                 );
             }
@@ -240,7 +223,7 @@ class Core_Cache_Driver_Database
             $this->_handler->values($data);
         }
 
-        $rs = $this->_handler->columns(array('key','key_string','value','number','expire'))->replace($this->tablename);
+        $rs = $this->_handler->columns(array('key', 'key_string', 'value', 'number', 'expire'))->replace($this->tablename);
 
         if ($rs[0])
         {
@@ -259,15 +242,23 @@ class Core_Cache_Driver_Database
      */
     public function delete($key)
     {
-        if (IS_DEBUG)Core::debug()->info($key,'database delete key');
+        if (IS_DEBUG)Core::debug()->info($key, 'database delete key');
 
-        if ( true!==$key )
+        if (is_array($key))
         {
-            $this->_handler->where('key',$key);
+            $new_keys = array();
+            foreach ($key as $k)
+            {
+                $k = $this->prefix . $k;
+                $new_keys[] = md5($k);
+            }
+
+            $this->_handler->in('key', $new_keys);
         }
-        elseif (is_array($key))
+        elseif (true!==$key)
         {
-            $this->_handler->in('key',$key);
+            $key = $this->prefix . $key;
+            $this->_handler->where('key', $key);
         }
 
         try
@@ -299,7 +290,7 @@ class Core_Cache_Driver_Database
     {
         try
         {
-            $this->_handler->where('expire',0,'>')->where('expire',TIME,'<=')->delete($this->tablename);
+            $this->_handler->where('expire', 0, '>')->where('expire', TIME, '<=')->delete($this->tablename);
             return true;
         }
         catch (Exception $e)
@@ -330,15 +321,13 @@ class Core_Cache_Driver_Database
      */
     public function increment($key, $offset = 1, $lifetime = 60)
     {
-        $k = md5($key);
-
         # 首先尝试递增
-        $s = $this->_handler->value_increment('number',$offset)->where('key',$k)->update($this->tablename,array('value'=>''));
+        $s = $this->_handler->value_increment('number', $offset)->where('key', md5($this->prefix.$key))->update($this->tablename, array('value'=>''));
 
         if (!$s)
         {
             # 没有更新到数据，尝试插入数据
-            return $this->set($key,$offset,$lifetime);
+            return $this->set($key, $offset, $lifetime);
         }
 
         return false;

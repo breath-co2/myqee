@@ -7,16 +7,35 @@
  * @category   MyQEE
  * @package    System
  * @subpackage Core
- * @copyright  Copyright (c) 2008-2012 myqee.com
+ * @copyright  Copyright (c) 2008-2013 myqee.com
  * @license	   http://www.myqee.com/license.html
  */
-class Core_Cache_Driver_File
+class Core_Cache_Driver_File extends Cache_Driver
 {
-    protected $dir;
+    protected $dir = DIR_CACHE;
+
+    /**
+     * 存储
+     *
+     * @var string
+     */
+    protected $storage = 'default';
 
     public function __construct($config_name = 'default')
     {
-        $this->dir = DIR_DATA . Core::$project . DS . 'cache' . DS;
+        if (is_array($config_name))
+        {
+            $config = $config_name;
+        }
+        else
+        {
+            $config = (array)Core::config('cache/file.'.$config_name);
+        }
+
+        if ($config['storage'])
+        {
+            $this->storage  = $config['storage'];
+        }
     }
 
     public function __destruct()
@@ -26,16 +45,17 @@ class Core_Cache_Driver_File
 
     /**
      * 取得数据，支持批量取
+     *
      * @param string/array $key
      * @return mixed
      */
     public function get($key)
     {
-        if ( is_array($key) )
+        if (is_array($key))
         {
             # 支持多取
             $data = array();
-            foreach ( $key as $k=>$v )
+            foreach ($key as $k=>$v)
             {
                 $data[$k] = $this->get((string)$v);
             }
@@ -43,11 +63,12 @@ class Core_Cache_Driver_File
         }
 
         $filename = $this->get_filename_by_key($key);
-        if ( file_exists($filename) )
+
+        if (file_exists($filename))
         {
             $data = @file_get_contents($filename);
 
-            if ( $data && $this->get_expired_setting($key,$data) )
+            if ( $data && $this->get_expired_setting($key, $data) )
             {
                 return $data;
             }
@@ -55,12 +76,12 @@ class Core_Cache_Driver_File
             {
                 # 删除失效文件
                 $this->delete($key);
-                return false;
+                return null;
             }
         }
         else
         {
-            return false;
+            return null;
         }
     }
 
@@ -74,26 +95,27 @@ class Core_Cache_Driver_File
      */
     public function set($key, $value = null, $lifetime = 3600)
     {
-        if ( is_array($key) )
+        if (is_array($key))
         {
             # 支持多存
             $i=0;
-            foreach ( $key as $k=>$v )
+            foreach ($key as $k=>$v)
             {
-                if ($this->set((string)$k,$v,$lifetime))
+                if ($this->set((string)$k, $v, $lifetime))
                 {
                     $i++;
                 }
             }
+
             return $i==count($key)?true:false;
         }
 
         $filename = $this->get_filename_by_key($key);
 
-        if ( !is_dir($this->dir) )
+        if (!is_dir($this->dir . $this->prefix))
         {
             # 创建初始文件夹
-            if ( !File::create_dir($this->dir) )
+            if (!File::create_dir($this->dir . $this->prefix, true, $this->storage))
             {
                 return false;
             }
@@ -101,7 +123,7 @@ class Core_Cache_Driver_File
 
         $data = $this->format_data($lifetime, $value);
 
-        return File::create_file($filename, $data);
+        return File::create_file($filename, $data, null, null, $this->storage);
     }
 
     /**
@@ -111,19 +133,20 @@ class Core_Cache_Driver_File
      */
     public function delete($key)
     {
-        if ( true===$key )
+        if (true===$key)
         {
             # 删除全部
-            return File::remove_dir($this->dir);
+            return File::remove_dir($this->dir . $this->prefix, $this->storage);
         }
-        if ( is_array($key) )
+
+        if (is_array($key))
         {
             # 支持多取
             $data = array();
             $i=0;
-            foreach ( $key as $k=>$v )
+            foreach ($key as $k=>$v)
             {
-                if ( $this->delete((string)$v) )
+                if ($this->delete((string)$v))
                 {
                     $i++;
                 }
@@ -133,12 +156,12 @@ class Core_Cache_Driver_File
 
         $filename = $this->get_filename_by_key($key);
 
-        if ( !file_exists($filename) )
+        if (!file_exists($filename))
         {
             return true;
         }
 
-        return File::unlink($filename);
+        return File::unlink($filename, $this->storage);
     }
 
     /**
@@ -181,44 +204,51 @@ class Core_Cache_Driver_File
     {
         $filename = $this->get_filename_by_key($key);
 
-        if ( !file_exists($filename) )
+        if (!file_exists($filename))
         {
             # 不存在，则设置
-            return $this->set($key,$offset,$lifetime);
+            return $this->set($key, $offset, $lifetime);
         }
 
         $fh = fopen($filename, 'r+');
-        $i=1;
-        while ( $i<=2 )
+        if (flock($fh, LOCK_EX))
         {
-            if ( flock( $fh, LOCK_EX ) )
+            $data = trim(fread($fh, filesize($filename)));
+            $expired_setting = $this->get_expired_setting($key, $data);
+            if ($expired_setting)
             {
-                $data = trim( fread( $fh, filesize( $filename ) ) );
-                $expired_setting = $this->get_expired_setting($key,$data);
-                if ( $expired_setting )
-                {
-                    $buffer = $data + $offset;
-                    $lifetime = max($expired_setting['lifetime'],$lifetime);
-                }
-                else
-                {
-                    $buffer = $offset;
-                }
-                $data = $this->format_data($lifetime, $buffer);
-                rewind( $fh );
-                fwrite( $fh, $data );
-                fflush( $fh );
-                ftruncate( $fh, ftell( $fh ) );
-                flock( $fh, LOCK_UN );
-
-                return true;
+                $buffer = $data + $offset;
+                $lifetime = max($expired_setting['lifetime'], $lifetime);
+            }
+            else
+            {
+                $buffer = $offset;
             }
 
-            usleep( 30*$i );
-            $i++;
+            $data = $this->format_data($lifetime, $buffer);
+
+            rewind($fh);
+            fwrite($fh, $data);
+            fflush($fh);
+            ftruncate($fh, ftell($fh));
+            flock($fh, LOCK_UN);
+
+            $status = true;
+        }
+        else
+        {
+            $status = false;
         }
 
-        return false;
+        @fclose($fh);
+
+        if ($status)
+        {
+            # 同步文件
+            File::sync($filename, $this->storage);
+        }
+
+        return $status;
     }
 
     /**
@@ -226,12 +256,12 @@ class Core_Cache_Driver_File
      *
      * @param string $key
      */
-    protected function get_filename_by_key( $key )
+    protected function get_filename_by_key($key)
     {
-        return $this->dir . 'cache_file_' . substr(preg_replace('#[^a-z0-9_\-]*#i','',$key),0,100) . '_' . md5( $key . '_&@c)ac%he_file' );
+        return $this->dir . $this->prefix . 'cache_file_' . substr(preg_replace('#[^a-z0-9_\-]*#i','',$key), 0, 100) . '_' . md5($key . '_&@c)ac%he_file');
     }
 
-    protected function get_expired_setting( $key, & $data )
+    protected function get_expired_setting($key, &$data)
     {
         $dataArr = explode(CRLF, $data, 3);
         /*
@@ -241,7 +271,7 @@ class Core_Cache_Driver_File
         */
         if( $dataArr[0]==0 || TIME - $dataArr[1] <= $dataArr[0]   )
         {
-            $data = @unserialize( $dataArr[2] );
+            $data = @unserialize($dataArr[2]);
             return array
             (
                 'lifetime' => $dataArr[0],
@@ -254,8 +284,28 @@ class Core_Cache_Driver_File
         }
     }
 
-    protected function format_data($lifetime,$data)
+    protected function format_data($lifetime, $data)
     {
         return $lifetime . CRLF . TIME . CRLF . serialize($data);
+    }
+
+    /**
+     * 设置前缀
+     *
+     * @param string $prefix
+     * @return $this
+     */
+    public function set_prefix($prefix)
+    {
+        if ($prefix)
+        {
+            $this->prefix = trim($prefix, ' /_') . '/';
+        }
+        else
+        {
+            $prefix = '';
+        }
+
+        return $this;
     }
 }

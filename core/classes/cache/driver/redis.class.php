@@ -7,10 +7,10 @@
  * @category   MyQEE
  * @package    System
  * @subpackage Core
- * @copyright  Copyright (c) 2008-2012 myqee.com
+ * @copyright  Copyright (c) 2008-2013 myqee.com
  * @license    http://www.myqee.com/license.html
  */
-class Core_Cache_Driver_Redis
+class Core_Cache_Driver_Redis extends Cache_Driver
 {
 
     /**
@@ -49,7 +49,7 @@ class Core_Cache_Driver_Redis
      */
     public function __construct($config_name = 'default')
     {
-        if ( is_array($config_name) )
+        if (is_array($config_name))
         {
             $this->servers = $config_name;
             $config_name = md5(serialize($config_name));
@@ -59,9 +59,9 @@ class Core_Cache_Driver_Redis
             $this->servers = Core::config('cache/redis.' . $config_name);
         }
 
-        if ( !is_array($this->servers) )
+        if (!is_array($this->servers))
         {
-            throw new Exception('指定的' . $config_name . 'Memcache缓存配置不存在.');
+            throw new Exception(__('The cache redis config :config does not exist', array(':config'=>$config_name)));
         }
         $this->config_name = $config_name;
 
@@ -81,12 +81,12 @@ class Core_Cache_Driver_Redis
      */
     protected function _connect()
     {
-        if ( $this->_redis )return;
-        if ( !$this->config_name )return;
+        if ($this->_redis)return;
+        if (!$this->config_name)return;
 
         $config_name = $this->config_name;
 
-        if ( !isset(Cache_Driver_Redis::$redis[$config_name]) )
+        if (!isset(Cache_Driver_Redis::$redis[$config_name]))
         {
             $class = 'Redis';
             Cache_Driver_Redis::$redis[$config_name] = new $class();
@@ -113,9 +113,9 @@ class Core_Cache_Driver_Redis
 
                 try
                 {
-                    $time = microtime(1);
-                    $status = Cache_Driver_Redis::$redis[$config_name]->$action($server['host'], $server['port'],$server['timeout']);
-                    $time = microtime(1)-$time;
+                    $time   = microtime(1);
+                    $status = Cache_Driver_Redis::$redis[$config_name]->$action($server['host'], $server['port'], $server['timeout']);
+                    $time   = microtime(1)-$time;
                 }
                 catch (Exception $e)
                 {
@@ -124,12 +124,12 @@ class Core_Cache_Driver_Redis
 
                 if ($status)
                 {
-                    if (IS_DEBUG)Core::debug()->info('connect redis server '.$server['host'].':'.$server['port'] . ' time:'.$time);
+                    if (IS_DEBUG)Core::debug()->info('connect cache redis server '.$server['host'].':'.$server['port'] . ' time:'.$time);
                     break;
                 }
                 else
                 {
-                    if (IS_DEBUG)Core::debug()->error('error connect redis server '.$server['host'].':'.$server['port'] . ' time:'.$time);
+                    if (IS_DEBUG)Core::debug()->error('error connect cache redis server '.$server['host'].':'.$server['port'] . ' time:'.$time);
                 }
             }
         }
@@ -157,7 +157,7 @@ class Core_Cache_Driver_Redis
             {
                 @Cache_Driver_Redis::$redis[$this->config_name]->close();
 
-                if (IS_DEBUG)Core::debug()->info('close redis server.');
+                if (IS_DEBUG)Core::debug()->info('close cache redis server.');
 
                 Cache_Driver_Redis::$redis[$this->config_name] = null;
                 unset(Cache_Driver_Redis::$redis[$this->config_name]);
@@ -177,12 +177,21 @@ class Core_Cache_Driver_Redis
         $this->_connect();
 
         $time = microtime(1);
-        if ( is_array($key) )
+
+        if (is_array($key))
         {
             # redis多取
+            if ($this->prefix)
+            {
+                foreach ($key as &$k)
+                {
+                    $k = $this->prefix . $k;
+                }
+            }
+
             $return = $this->_redis->mget($key);
 
-            foreach ( $return as &$item )
+            foreach ($return as &$item)
             {
                 Cache_Driver_Redis::_de_format_data($item);
             }
@@ -190,20 +199,22 @@ class Core_Cache_Driver_Redis
         else
         {
             $return = $this->_redis->get($key);
+
             Cache_Driver_Redis::_de_format_data($return);
         }
+
         $time = microtime(1) - $time;
 
-        if ( false===$return )
+        if (false===$return)
         {
-            Core::debug()->error($key,'redis mis key');
+            Core::debug()->error($key,'cache redis mis key');
             Core::debug()->info($time,'use time');
 
             return false;
         }
         else
         {
-            Core::debug()->info($key,'redis hit key');
+            Core::debug()->info($key,'cache redis hit key');
             Core::debug()->info($time,'use time');
         }
 
@@ -221,9 +232,9 @@ class Core_Cache_Driver_Redis
     public function set($key, $value = null, $lifetime = 3600)
     {
         $this->_connect();
-        Core::debug()->info($key,'redis set key');
+        Core::debug()->info($key,'cache redis set key');
 
-        if ( is_array($key) )
+        if (is_array($key))
         {
             foreach ($key as & $item)
             {
@@ -303,29 +314,32 @@ class Core_Cache_Driver_Redis
     {
         $this->_connect();
 
-        if ( method_exists($this->_redis, $method) )
+        if (method_exists($this->_redis, $method))
         {
             return call_user_func_array(array($this->_redis,$method), $params);
         }
     }
 
-    protected static function _de_format_data( &$data )
+    protected static function _de_format_data(&$data)
     {
-        if ( null===$data || is_bool($data) )
+        if (null===$data || is_bool($data))
         {
             # bool类型不处理
         }
-        elseif ( !is_numeric($data) )
+        elseif (!is_numeric($data))
         {
-            $data = @unserialize($data);
+            if (substr($data,0,13)=='::serialize::')
+            {
+                $data = @unserialize($data);
+            }
         }
     }
 
-    protected static function _format_data( &$data )
+    protected static function _format_data(&$data)
     {
-        if ( !is_numeric($data) )
+        if (!is_numeric($data) && !is_string($data))
         {
-            $data = serialize($data);
+            $data = '::serialize::' . serialize($data);
         }
     }
 
@@ -334,7 +348,7 @@ class Core_Cache_Driver_Redis
      */
     public static function close_all_connect()
     {
-        foreach ( Cache_Driver_Redis::$redis as $config_name=>$obj )
+        foreach (Cache_Driver_Redis::$redis as $config_name=>$obj)
         {
             try
             {
@@ -342,7 +356,7 @@ class Core_Cache_Driver_Redis
             }
             catch (Exception $e)
             {
-                Core::debug()->error('close redis connect error:'.$e);
+                Core::debug()->error('close cache redis connect error:'.$e);
             }
 
             Cache_Driver_Redis::$redis[$config_name] = null;
@@ -352,6 +366,6 @@ class Core_Cache_Driver_Redis
         Cache_Driver_Redis::$redis = array();
         Cache_Driver_Redis::$redis_num = array();
 
-        if (IS_DEBUG)Core::debug()->info('close all redis server.');
+        if (IS_DEBUG)Core::debug()->info('close all cache redis server.');
     }
 }

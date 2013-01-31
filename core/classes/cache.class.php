@@ -7,32 +7,11 @@
  * @category   MyQEE
  * @package    System
  * @subpackage Core
- * @copyright  Copyright (c) 2008-2012 myqee.com
+ * @copyright  Copyright (c) 2008-2013 myqee.com
  * @license	   http://www.myqee.com/license.html
  */
 class Core_Cache
 {
-    /**
-     * 驱动类型为memcache
-     *
-     * @var string
-     */
-    const DRIVER_MEMCACHE = 'Memcache';
-
-    /**
-     * 驱动类型为文件
-     *
-     * @var string
-     */
-    const DRIVER_FILE = 'File';
-
-    /**
-     * 驱动类型为Redis
-     *
-     * @var string
-     */
-    const DRIVER_REDIS = 'Redis';
-
     /**
      * 驱动类型为APC
      *
@@ -46,6 +25,27 @@ class Core_Cache
      * @var string
      */
     const DRIVER_DATABASE = 'Database';
+
+    /**
+     * 驱动类型为文件
+     *
+     * @var string
+     */
+    const DRIVER_FILE = 'File';
+
+    /**
+     * 驱动类型为memcache
+     *
+     * @var string
+     */
+    const DRIVER_MEMCACHE = 'Memcache';
+
+    /**
+     * 驱动类型为Redis
+     *
+     * @var string
+     */
+    const DRIVER_REDIS = 'Redis';
 
     /**
      * 驱动类型为SQLite
@@ -99,6 +99,20 @@ class Core_Cache
     protected static $instances = array();
 
     /**
+     * 错误信息
+     *
+     * @var string
+     */
+    protected $last_error_msg;
+
+    /**
+     * 错误信息号
+     *
+     * @var string
+     */
+    protected $last_error_no;
+
+    /**
      * 当前缓存的配置
      * @var string
      */
@@ -139,7 +153,7 @@ class Core_Cache
 
     public function __construct($name = 'default')
     {
-        if ( is_array($name) )
+        if (is_array($name))
         {
             $this->config = $name;
         }
@@ -148,12 +162,7 @@ class Core_Cache
             $this->config = Core::config('cache.' . $name);
         }
 
-        if ( !isset($this->config['prefix']) )
-        {
-            $this->config['prefix'] = '';
-        }
-
-        if ( !isset($this->config['driver']) )
+        if (!isset($this->config['driver']))
         {
             $this->config['driver'] = Cache::DRIVER_FILE;
         }
@@ -161,21 +170,28 @@ class Core_Cache
         $driver = 'Cache_Driver_' . $this->config['driver'];
         if (!class_exists($driver,true))
         {
-            throw new Exception('指定的缓存驱动' . $driver . '不存在！');
+            throw new Exception(__('The :type driver :driver does not exist',array(':type'=>'Cache',':driver'=>$this->config['driver'])));
         }
 
         $this->driver = new $driver($this->config['driver_config']);
+
+        # 设置前缀
+        if ($this->config['prefix'])
+        {
+            $this->driver->set_prefix($this->config['prefix']);
+        }
     }
 
     /**
      * 获取指定KEY的缓存数据
      *
-     * get('a');
-     * get('a','b','c');
-     * get(array('a','b','c'));
+     *     $cache->get('a');
+     *     $cache->get('a','b','c');
+     *     $cache->get(array('a','b','c'));
      *
      * @param string $key 指定key
      * @return mixed
+     * @return false 返回失败
      */
     public function get($key)
     {
@@ -186,49 +202,35 @@ class Core_Cache
         }
         if ( $is_no_cache && !$this->session_mode )
         {
-            return false;
+            return null;
         }
 
         $columns = func_get_args();
-        if ( count($columns) > 1 )
+        if (count($columns) > 1)
         {
             $key = $columns;
         }
-        if ( null===$key )
+
+        if (null===$key)
         {
-            return false;
-        }
-        if ( $this->config['prefix'] )
-        {
-            # 加前缀
-            if ( is_array($key) )
-            {
-                foreach ( $key as &$item )
-                {
-                    $item = $this->config['prefix'] . $item;
-                }
-            }
-            else
-            {
-                $key = $this->config['prefix'] . $key;
-            }
+            return null;
         }
 
         try
         {
             $data = $this->driver->get($key);
 
-            if ( is_array($data) )
+            if (is_array($data))
             {
-                foreach ( $data as & $item )
+                foreach ($data as & $item)
                 {
-                    if ( is_string($item) )
+                    if (is_string($item))
                     {
                         $this->_get_adv_data($item);
                     }
                 }
             }
-            elseif ( is_string($data) )
+            elseif (is_string($data))
             {
                 $this->_get_adv_data($data);
             }
@@ -237,6 +239,8 @@ class Core_Cache
         }
         catch (Exception $e)
         {
+            $this->last_error_msg = $e->getMessage();
+            $this->last_error_no  = $e->getCode();
             return false;
         }
     }
@@ -261,24 +265,6 @@ class Core_Cache
      */
     public function set($key, $value = null, $expire = 3600, $expire_type = null)
     {
-        if ( $this->config['prefix'] )
-        {
-            # 加前缀
-            if ( is_array($key) )
-            {
-                $tmpcopy = array();
-                foreach ( $key as $k => $v )
-                {
-                    $tmpcopy[$this->config['prefix'] . $k] = $v;
-                }
-                $key = $tmpcopy;
-            }
-            else
-            {
-                $key = $this->config['prefix'] . $key;
-            }
-        }
-
         if ( $expire_type && $expire_type!=Cache::TYPE_MAX_AGE )
         {
             $this->_check_adv_data($key, $value, $expire, $expire_type);
@@ -298,6 +284,8 @@ class Core_Cache
         }
         catch (Exception $e)
         {
+            $this->last_error_msg = $e->getMessage();
+            $this->last_error_no  = $e->getCode();
             return false;
         }
     }
@@ -305,31 +293,19 @@ class Core_Cache
     /**
      * 删除指定key的缓存数据
      * @param string $key
-     * @param fiexd $value
+     * @return boolean
      */
     public function delete($key)
     {
-        if ( true !== $key && $this->config['prefix'] )
-        {
-            # 加前缀
-            if ( is_array($key) )
-            {
-                foreach ( $key as &$item )
-                {
-                    $item = $this->config['prefix'] . $item;
-                }
-            }
-            else
-            {
-                $key = $this->config['prefix'] . $key;
-            }
-        }
         try
         {
             return $this->driver->delete($key);
         }
         catch (Exception $e)
         {
+            $this->last_error_msg = $e->getMessage();
+            $this->last_error_no  = $e->getCode();
+
             return false;
         }
     }
@@ -359,6 +335,8 @@ class Core_Cache
         }
         catch (Exception $e)
         {
+            $this->last_error_msg = $e->getMessage();
+            $this->last_error_no  = $e->getCode();
             return false;
         }
     }
@@ -375,6 +353,8 @@ class Core_Cache
         }
         catch (Exception $e)
         {
+            $this->last_error_msg = $e->getMessage();
+            $this->last_error_no  = $e->getCode();
             return false;
         }
     }
@@ -388,7 +368,7 @@ class Core_Cache
      * @param int $offset
      * @param int $lifetime 当递减失则时当作set使用
      */
-    public function decrement($key, $offset = 1, $lifetime = 60)
+    public function decrement($key, $offset = 1, $lifetime = 3600)
     {
         try
         {
@@ -410,7 +390,7 @@ class Core_Cache
      * @param int $offset
      * @param int $lifetime 当递减失则时当作set使用
      */
-    public function increment($key, $offset = 1, $lifetime = 60)
+    public function increment($key, $offset = 1, $lifetime = 3600)
     {
         try
         {
@@ -423,6 +403,26 @@ class Core_Cache
         }
     }
 
+    /**
+     * 获取错误信息
+     *
+     * @return string
+     */
+    public function last_error_msg()
+    {
+        return $this->last_error_msg;
+    }
+
+    /**
+     * 获取错误号
+     *
+     * @return int
+     */
+    public function last_error_no()
+    {
+        return $this->last_error_no;
+    }
+
     public function __get($key)
     {
         return $this->get($key);
@@ -430,17 +430,26 @@ class Core_Cache
 
     public function __set($key, $value)
     {
-        $this->set($key, $value);
+        return $this->set($key, $value);
     }
 
     public function __unset($key)
     {
-        $this->delete($key);
+        return $this->delete($key);
     }
 
     public function __call($method, $params)
     {
-        return call_user_func_array(array($this->driver,$method) , $params);
+        try
+        {
+            return call_user_func_array(array($this->driver,$method) , $params);
+        }
+        catch (Exception $e)
+        {
+            $this->last_error_msg = $e->getMessage();
+            $this->last_error_no  = $e->getCode();
+            return false;
+        }
     }
 
     /**
@@ -481,10 +490,10 @@ class Core_Cache
             }
             $value = '__::foRMat_CacHe::Type=' . $type . ',ExpKey=' . $exp_key . ',Exp=' . $lifestr . ',SaveTime=' . TIME . ',Value=' . serialize($value);
 
-            if ( $type == Cache::TYPE_ADV_HIT || $type == Cache::TYPE_MAX_HIT )
+            if ($type == Cache::TYPE_ADV_HIT || $type == Cache::TYPE_MAX_HIT)
             {
                 # 此类型需要增加计数器
-                if ( is_array($key) )
+                if (is_array($key))
                 {
                     $key[$exp_key] = 0;
                 }
@@ -502,10 +511,10 @@ class Core_Cache
 
     protected function _get_adv_data(& $value)
     {
-        if ( substr($value, 0, 18) == '__::foRMat_CacHe::' && preg_match('#^__::foRMat_CacHe::Type=(?P<type>[a-z0-9_]+),ExpKey=(?P<expkey>[a-f0-9]{32}),Exp=(?P<exp>[0-9,~/]+),SaveTime=(?P<savetime>[0-9]+),Value=(?P<value>.*)$#', $value, $match) )
+        if (substr($value, 0, 18) == '__::foRMat_CacHe::' && preg_match('#^__::foRMat_CacHe::Type=(?P<type>[a-z0-9_]+),ExpKey=(?P<expkey>[a-f0-9]{32}),Exp=(?P<exp>[0-9,~/]+),SaveTime=(?P<savetime>[0-9]+),Value=(?P<value>.*)$#', $value, $match))
         {
             #200~250,1/100
-            if ( !preg_match('#^([0-9]+)~([0-9]+),([0-9]+)/([0-9]+)$#', $match['exp'], $match_exp) )
+            if (!preg_match('#^([0-9]+)~([0-9]+),([0-9]+)/([0-9]+)$#', $match['exp'], $match_exp))
             {
                 return true;
             }
