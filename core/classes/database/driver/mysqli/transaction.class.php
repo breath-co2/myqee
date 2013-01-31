@@ -7,7 +7,7 @@
  * @category   MyQEE
  * @package    System
  * @subpackage Core
- * @copyright  Copyright (c) 2008-2012 myqee.com
+ * @copyright  Copyright (c) 2008-2013 myqee.com
  * @license    http://www.myqee.com/license.html
  */
 abstract class Core_Database_Driver_MySQLI_Transaction extends Database_Transaction
@@ -26,7 +26,7 @@ abstract class Core_Database_Driver_MySQLI_Transaction extends Database_Transact
      */
     public function start()
     {
-        if ( $this->id )
+        if ($this->id)
         {
             throw new Exception('transaction has started');
         }
@@ -37,10 +37,10 @@ abstract class Core_Database_Driver_MySQLI_Transaction extends Database_Transact
         # 获取唯一ID
         $this->id = uniqid('TaId_' . rand());
 
-        if ( isset(self::$transactions[$this->_connection_id]) )
+        if (isset(self::$transactions[$this->_connection_id]))
         {
             # 已存在事务，则该事务为子事务
-            if ( $this->_set_save_point() )
+            if ($this->_set_save_point())
             {
                 //保存事务点
                 self::$transactions[$this->_connection_id][$this->id] = true;
@@ -55,7 +55,8 @@ abstract class Core_Database_Driver_MySQLI_Transaction extends Database_Transact
         else
         {
             # 开启新事务
-            if ( true === $this->_query('START TRANSACTION;') )
+            $this->_query('SET AUTOCOMMIT=0;');
+            if (true === $this->_query('START TRANSACTION;'))
             {
                 # 如果没有建立到当前主服务器的连接，该操作会隐式的建立
                 self::$transactions[$this->_connection_id] = array($this->id => true);
@@ -79,23 +80,24 @@ abstract class Core_Database_Driver_MySQLI_Transaction extends Database_Transact
      */
     public function commit()
     {
-        if ( ! $this->id || ! $this->_haveid() ) return false;
+        if (!$this->id || ! $this->_haveid()) return false;
 
-        if ( $this->is_root() )
+        if ($this->is_root())
         {
             # 父事务
-            while ( count(self::$transactions[$this->_connection_id]) > 1 )
+            while (count(self::$transactions[$this->_connection_id]) > 1)
             {
                 # 还有没有提交的子事务
                 end(self::$transactions[$this->_connection_id]);
                 $subid = key(self::$transactions[$this->_connection_id]);
-                if ( ! $this->_release_save_point($subid) )
+                if (!$this->_release_save_point($subid))
                 {
                     throw new Exception('commit error');
                 }
             }
             $status = $this->_query('COMMIT;');
-            if ( $status ) unset(self::$transactions[$this->_connection_id]);
+            $this->_query('SET AUTOCOMMIT=1;');
+            if ($status) unset(self::$transactions[$this->_connection_id]);
         }
         else
         {
@@ -120,13 +122,15 @@ abstract class Core_Database_Driver_MySQLI_Transaction extends Database_Transact
      */
     public function rollback()
     {
-        if ( ! $this->id ) return false;
-        if ( ! $this->_haveid() ) return false;
+        if (!$this->id) return false;
+        if (!$this->_haveid()) return false;
 
-        if ( $this->is_root() )
-        { //父事务
+        if ($this->is_root())
+        {
+            //父事务
             $status = $this->_query('ROLLBACK;');
-            if ( $status )
+            $this->_query('SET AUTOCOMMIT=1;');
+            if ($status)
             {
                 unset(self::$transactions[$this->_connection_id]);
             }
@@ -137,7 +141,7 @@ abstract class Core_Database_Driver_MySQLI_Transaction extends Database_Transact
             $status = $this->_query("ROLLBACK TO SAVEPOINT {$this->id};");
             $this->_release_save_point($this->id);
         }
-        if ( $status )
+        if ($status)
         {
             $this->id = null;
             return true;
@@ -153,7 +157,7 @@ abstract class Core_Database_Driver_MySQLI_Transaction extends Database_Transact
      */
     public function is_root()
     {
-        if ( ! $this->id ) return false;
+        if (!$this->id) return false;
         return isset(self::$transactions[$this->_connection_id]) && key(self::$transactions[$this->_connection_id]) == $this->id;
     }
 
@@ -164,7 +168,7 @@ abstract class Core_Database_Driver_MySQLI_Transaction extends Database_Transact
      */
     protected function _set_save_point()
     {
-        if ( ! $this->is_root() )
+        if (!$this->is_root())
         {
             //只有子事务才需要保存点
             if ( true === $this->_query("SAVEPOINT {$this->id};") )
@@ -182,7 +186,7 @@ abstract class Core_Database_Driver_MySQLI_Transaction extends Database_Transact
      */
     protected function _release_save_point($id)
     {
-        if ( !$this->is_root() )
+        if (!$this->is_root())
         {
             if ( true === $this->_query("RELEASE SAVEPOINT {$id};") )
             {

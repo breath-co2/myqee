@@ -5,7 +5,7 @@
  * @author     jonwang(jonwang@myqee.com)
  * @category   Core
  * @package    Classes
- * @copyright  Copyright (c) 2008-2012 myqee.com
+ * @copyright  Copyright (c) 2008-2013 myqee.com
  * @license    http://www.myqee.com/license.html
  */
 class Core_HttpCall
@@ -26,7 +26,7 @@ class Core_HttpCall
         if (!$group)$group = 'default';
 
         $this->group = $group;
-        $this->hosts = Core::config('core.web_server_list.'.$group);
+        $this->hosts = Core::config('web_server_list.'.$group);
 
         if (!$this->hosts)
         {
@@ -112,7 +112,7 @@ class Core_HttpCall
 
         # 是否支持CURL
         static $curl_supper = null;
-        if (null===$curl_supper)$curl_supper = function_exists('\curl_init');
+        if (null===$curl_supper)$curl_supper = function_exists('curl_init');
 
         if (IS_CLI)
         {
@@ -468,7 +468,7 @@ class Core_HttpCall
     private static function get_hash($vars,$rstr,$mictime)
     {
         # 系统调用密钥
-        $system_exec_pass = Core::config('core.system_exec_key');
+        $system_exec_pass = Core::config('system_exec_key');
 
         if ( $system_exec_pass && strlen($system_exec_pass) >= 10 )
         {

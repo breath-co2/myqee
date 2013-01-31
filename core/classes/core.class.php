@@ -46,7 +46,7 @@ function config($key=null)
  * @category   MyQEE
  * @package    System
  * @subpackage Core
- * @copyright  Copyright (c) 2008-2012 myqee.com
+ * @copyright  Copyright (c) 2008-2013 myqee.com
  * @license    http://www.myqee.com/license.html
  */
 abstract class Core_Core extends Bootstrap
@@ -162,10 +162,6 @@ abstract class Core_Core extends Bootstrap
             if (Core::$project)
             {
                 Core::debug()->info('project: '.Core::$project);
-            }
-            else
-            {
-                Core::debug()->info('default application');
             }
 
             if (IS_ADMIN_MODE)
@@ -360,13 +356,16 @@ abstract class Core_Core extends Bootstrap
      * @param string $type 类型，例如：log,error,debug 等
      * @return boolean
      */
-    public static function log($msg , $type = 'log')
+    public static function log($msg, $type = 'log')
     {
         # log配置
         $log_config = Core::config('log');
 
         # 不记录日志
-        if ( isset($log_config['use']) && !$log_config['use'] )return true;
+        if ( isset($log_config['use']) && !$log_config['use'] )
+        {
+            return true;
+        }
 
         # 内容格式化
         if ($log_config['format'])
@@ -543,7 +542,7 @@ abstract class Core_Core extends Bootstrap
      * @param  boolean $highlight 是否返回高亮前缀，可以传字符颜色，比如#f00
      * @return string
      */
-    public static function debug_path($file,$highlight=false)
+    public static function debug_path($file, $highlight=false)
     {
         if ($highlight)
         {
@@ -572,7 +571,7 @@ abstract class Core_Core extends Bootstrap
         }
         elseif ( strpos($file, DIR_TEAM_LIBRARY) === 0 )
         {
-            $file = $l . './team_lib/' . $r . substr($file, strlen(DIR_TEAM_LIBRARY));
+            $file = $l . './team_library/' . $r . substr($file, strlen(DIR_TEAM_LIBRARY));
         }
         elseif ( strpos($file, DIR_LIBRARY) === 0 )
         {
@@ -671,7 +670,7 @@ abstract class Core_Core extends Bootstrap
             }
         }
 
-        if ( IS_CLI )
+        if (IS_CLI)
         {
             echo $msg . CRLF;
             exit();
@@ -695,11 +694,12 @@ abstract class Core_Core extends Bootstrap
             CRLF . '<body>' .
             CRLF . '<h1>Not Found</h1>' .
             CRLF . '<p>The requested URL ' . $REQUEST_URI . ' was not found on this server.</p>' .
-            CRLF . '<hr>' .
+            CRLF . '<hr />' .
             CRLF . $_SERVER['SERVER_SIGNATURE'] .
             CRLF . '</body>' .
             CRLF . '</html>';
         }
+
         exit();
     }
 
@@ -820,17 +820,14 @@ abstract class Core_Core extends Bootstrap
                     {
                         case 'database':
                             $obj = new Database($error_config['type_config']?$error_config['type_config']:'default');
-                            $where = array
+                            $data = array
                             (
-                                'time'  => strtotime($date.' 00:00:00'),
-                                'no'    => $no,
+                                'time'        => strtotime($date.' 00:00:00'),
+                                'no'          => $no,
+                                'log'         => $trace_data,
+                                'expire_time' => TIME + 7*86400,
                             );
-
-                            if ( !$obj->from('error500_log')->where($where)->get(false,true)->current() )
-                            {
-                                $where['log'] = $trace_data;
-                                $obj->insert('error500_log',$where);
-                            }
+                            $obj->insert('error500_log',$data);
                             break;
                         case 'cache':
                             $obj = new Cache($error_config['type_config']?$error_config['type_config']:'default');
@@ -867,16 +864,11 @@ abstract class Core_Core extends Bootstrap
             CRLF . '<body>' .
             CRLF . '<h1>'.__('Internal Server Error').'</h1>' .
             CRLF . '<p>The requested URL ' . $REQUEST_URI . ' was error on this server.</p>' .
-            CRLF . '<hr>' .
+            CRLF . '<hr />' .
             CRLF . $_SERVER['SERVER_SIGNATURE'] .
             CRLF . '</body>' .
             CRLF . '</html>';
         }
-
-        # 执行注册的shutdown方法，并忽略输出的内容
-        ob_start();
-        Core::run_shutdown_function();
-        ob_end_clean();
 
         exit();
     }
@@ -1066,12 +1058,12 @@ abstract class Core_Core extends Bootstrap
 
         if ( !isset(Core::$core_config['projects'][$project] ) )
         {
-            Core::show_500( __('not found the project: :project.',array(':project'=>$project) ) );
+            Core::show_500( __('not found the project: :project.', array(':project'=>$project) ) );
         }
 
         if ( !Core::$core_config['projects'][$project]['isuse'] )
         {
-            Core::show_500( __('the project: :project is not open.' , array(':project'=>$project) ) );
+            Core::show_500( __('the project: :project is not open.', array(':project'=>$project) ) );
         }
 
         # 记录所有项目设置，当切换回项目时，使用此设置还原
@@ -1325,7 +1317,7 @@ abstract class Core_Core extends Bootstrap
         $body = http_build_query(HttpIO::POST(null, HttpIO::PARAM_TYPE_OLDDATA));
 
         // 系统调用密钥
-        $system_exec_pass = Core::config('core.system_exec_key');
+        $system_exec_pass = Core::config('system_exec_key');
 
         if ( $system_exec_pass && strlen($system_exec_pass) >= 10 )
         {
@@ -1395,7 +1387,7 @@ abstract class Core_Core extends Bootstrap
  * @category   Core
  * @package    Classes
  * @subpackage Core
- * @copyright  Copyright (c) 2008-2012 myqee.com
+ * @copyright  Copyright (c) 2008-2013 myqee.com
  * @license    http://www.myqee.com/license.html
  */
 class __NoDebug

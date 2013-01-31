@@ -7,20 +7,22 @@
  *
  *   # 配置默认值见 pagination.config.php 配置
  *
- *   $pageconfig = array(
- *   	current_page => array(
- *   		'source' => 'default',			//可不设置，默认值：default，可选query_string，route和default
- *   		'key' => 0,						//指定参数位置，通常source为default时，key都为0，若source为query_string或route时，通常为page
- *   	),
- *   	'view' => 'pagination/floating',	//可不设置，默认值pagination/basic
- *   	'auto_hide' => false,				//可不设置，默认值true
- *   	'items_per_page' => 20,				//可不设置，默认值20
+ *   $pageconfig = array
+ *   (
+ *       current_page => array
+ *       (
+ *           'source' => 'default',                    //可不设置，默认值：default，可选query_string，route和default
+ *           'key'    => 0,                            //指定参数位置，通常source为default时，key都为0，若source为query_string或route时，通常为page
+ *       ),
+ *       'view'           => 'pagination/floating',    //可不设置，默认值pagination/basic
+ *       'auto_hide'      => false,                    //可不设置，默认值true
+ *       'items_per_page' => 20,                       //可不设置，默认值20
  *   );
  *
  *   # 若不设置，则全为默认值，例如：$pagination = new Pagination();
  *   $pagination = new Pagination($pageconfig);
- *   $offset = $pagination->get_offset();
- *   $limit = $pagination->get_items_per_page();
+ *   $offset     = $pagination->get_offset();
+ *   $limit      = $pagination->get_items_per_page();
  *
  *   #通过$offset和$limit获取指定分页数据
  *   $data = Database::instance()->limit($limit,$offset)->get()->as_array();
@@ -30,7 +32,7 @@
  * @category   MyQEE
  * @package    System
  * @subpackage Core
- * @copyright  Copyright (c) 2008-2012 myqee.com
+ * @copyright  Copyright (c) 2008-2013 myqee.com
  * @license    http://www.myqee.com/license.html
  */
 class Core_Pagination
@@ -39,10 +41,10 @@ class Core_Pagination
     // Merged configuration settings
     protected $config = array
     (
-    	'current_page' => array
+        'current_page' => array
         (
-    		'source' => 'query_string',
-    		'key'    => 'page'
+            'source' => 'query_string',
+            'key'    => 'page'
         ),
         'total_items'    => 0,
         'items_per_page' => 10,

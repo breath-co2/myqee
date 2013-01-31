@@ -7,7 +7,7 @@
  * @category   MyQEE
  * @package    System
  * @subpackage Core
- * @copyright  Copyright (c) 2008-2012 myqee.com
+ * @copyright  Copyright (c) 2008-2013 myqee.com
  * @license    http://www.myqee.com/license.html
  */
 class Core_Text
@@ -16,7 +16,8 @@ class Core_Text
     /**
      * @var  array   number units and text equivalents
      */
-    public static $units = array(
+    public static $units = array
+    (
         1000000000 => 'billion',
         1000000 => 'million',
         1000 => 'thousand',

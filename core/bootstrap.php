@@ -383,14 +383,6 @@ abstract class Bootstrap
     );
 
     /**
-     * 所有项目的config配置
-     *
-     * array('projectName'=>array(...))
-     * @var array
-     */
-    private static $config_projects = array();
-
-    /**
      * 系统初始化
      *
      * @param boolean $auto_execute 是否自动运行控制器

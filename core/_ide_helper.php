@@ -29,6 +29,9 @@ class EX_Cache_Driver_SQLite extends Core_Cache_Driver_SQLite{}
 class Cache_Driver_WinCache extends Core_Cache_Driver_WinCache{}
 class EX_Cache_Driver_WinCache extends Core_Cache_Driver_WinCache{}
 
+abstract class Cache_Driver extends Core_Cache_Driver{}
+abstract class EX_Cache_Driver extends Core_Cache_Driver{}
+
 class Cache extends Core_Cache{}
 class EX_Cache extends Core_Cache{}
 
@@ -184,6 +187,18 @@ class EX_Session_Driver_Default extends Core_Session_Driver_Default{}
 
 class Session extends Core_Session{}
 class EX_Session extends Core_Session{}
+
+class Strone_Driver_Database extends Core_Strone_Driver_Database{}
+class EX_Strone_Driver_Database extends Core_Strone_Driver_Database{}
+
+class Storage_Driver_File extends Core_Storage_Driver_File{}
+class EX_Storage_Driver_File extends Core_Storage_Driver_File{}
+
+class Storage_Driver_Redis extends Core_Storage_Driver_Redis{}
+class EX_Storage_Driver_Redis extends Core_Storage_Driver_Redis{}
+
+class Storage extends Core_Storage{}
+class EX_Storage extends Core_Storage{}
 
 class Str extends Core_Str{}
 class EX_Str extends Core_Str{}

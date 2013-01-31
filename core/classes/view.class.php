@@ -7,7 +7,7 @@
  * @category   MyQEE
  * @package    System
  * @subpackage Core
- * @copyright  Copyright (c) 2008-2012 myqee.com
+ * @copyright  Copyright (c) 2008-2013 myqee.com
  * @license    http://www.myqee.com/license.html
  */
 class Core_View
@@ -38,7 +38,7 @@ class Core_View
         }
         else
         {
-            throw new Exception('指定的视图“' . $file . '”不存在');
+            throw new Exception(__('The view :file does not exist', array(':file'=>$file)));
         }
     }
 
@@ -119,7 +119,7 @@ class Core_View
 
         if ( empty($this->_file) )
         {
-            throw new Exception('You must set the file to use within your view before rendering');
+            throw new Exception(__('You must set the file to use within your view before rendering'));
         }
 
         // Combine local and global data and capture the output
@@ -189,7 +189,8 @@ class Core_View
         if ( _view_tag_current::$debug )
         {
             # 如果是调试输出，则直接构造出对象
-            $data = array(
+            $data = array
+            (
                 new _view_tag_current($keystr,null),
             );
             return $data;
