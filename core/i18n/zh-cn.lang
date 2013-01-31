@@ -12,7 +12,17 @@ Library name :lib error                             = 类库命名“:lib”不�
 The mysql database account or password error                   = 数据库账号或密码错误
 System Bootstrap version is too low, please upgrade Bootstrap. = 系统Bootstrap版本太低，请先升级Bootstrap。
 Permission denied : :file                                      = 文件无权限：:file
-
+The view :file does not exist                                  = 指定的视图文件 :file 不存在
+You must set the file to use within your view before rendering = 你必需在渲染视图前设定视图文件
+Function :s can not callable.                                  = 无法调用函数 :s 。
+Run function :s error.                                         = 执行函数 :s 错误。 
+Not allowed to operate the corresponding directory             = 不允许操作对应的目录
+The :type driver :driver does not exist                        = 指定的:type驱动:driver不存在
+The cache redis config :config does not exist                  = 指定的Redis缓存配置 :config 不存在
+The storage redis config :config does not exist                = 指定的Redis存储配置 :config 不存在
+The memcache config :config does not exist                     = 指定的Memcache缓存配置 :config 不存在
+Dache database configuration error                             = 缓存数据库配置错误
+The system did not load memcached or memcache extension        = 系统没有加载Memcached或Memcache扩展
 
 [Core.Page]
 First    = 首页
@@ -31,7 +41,6 @@ Please create a new project.                                    = 请先创建�
 not found the project: :project.                                = 指定的项目“:project”不存在。
 the project: :project is not open.                              = 当前项目“:project”没有开启。
 the project dir :dir is not exist.                              = 项目目录“:dir”不存在。
-Core library lost.<br/><br/>Please check the core config.       = 系统类库丢失，请检查配置文件。
 Back                                                            = 返回上一页
 Goto Home Page                                                  = 返回首页
 The error has been logged and can use this number to report the error message to the system administrator.    = 错误已记录，可将此编号汇报给系统管理员以查询详细错误信息。
