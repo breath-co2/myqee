@@ -23,6 +23,10 @@ The storage redis config :config does not exist                = 指定的Redis�
 The memcache config :config does not exist                     = 指定的Memcache缓存配置 :config 不存在
 Dache database configuration error                             = 缓存数据库配置错误
 The system did not load memcached or memcache extension        = 系统没有加载Memcached或Memcache扩展
+Swift get error, code: :code.                                  = 获取Swift信息失败，编码: :code
+Swift get data error.Data: :data                               = 获取Swift消息失败，内容: :data
+Swift get token error.not found X-Auth-Token                   = 获取Swift Token失败，没有发现 X-Auth-Token 头信息
+Swift get token error.not found X-Storage-Url                  = 获取Swift Token失败，没有发现 X-Storage-Url 头信息
 
 [Core.Page]
 First    = 首页
