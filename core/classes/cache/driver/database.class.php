@@ -67,8 +67,6 @@ class Core_Cache_Driver_Database extends Cache_Driver
      */
     public function get($key)
     {
-        if (IS_DEBUG)$key_bak = $key;
-
         if (is_array($key))
         {
             $md5_key = array();
@@ -126,7 +124,7 @@ class Core_Cache_Driver_Database extends Cache_Driver
                 }
             }
 
-            if (IS_DEBUG)Core::debug()->info($key_bak, 'database cache hit key');
+            if (IS_DEBUG)Core::debug()->info($key, 'database cache hit key');
 
             unset($rs);
 
@@ -134,7 +132,7 @@ class Core_Cache_Driver_Database extends Cache_Driver
         }
         else
         {
-            if (IS_DEBUG)Core::debug()->error($key_bak, 'database cache mis key');
+            if (IS_DEBUG)Core::debug()->error($key, 'database cache mis key');
         }
 
         return false;

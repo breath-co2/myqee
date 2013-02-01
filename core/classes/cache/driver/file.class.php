@@ -12,6 +12,11 @@
  */
 class Core_Cache_Driver_File extends Cache_Driver
 {
+    /**
+     * Cache目录
+     *
+     * @var string
+     */
     protected $dir = DIR_CACHE;
 
     /**
@@ -68,7 +73,7 @@ class Core_Cache_Driver_File extends Cache_Driver
         {
             $data = @file_get_contents($filename);
 
-            if ( $data && $this->get_expired_setting($key, $data) )
+            if ($data && $this->get_expired_setting($key, $data))
             {
                 return $data;
             }
@@ -112,18 +117,9 @@ class Core_Cache_Driver_File extends Cache_Driver
 
         $filename = $this->get_filename_by_key($key);
 
-        if (!is_dir($this->dir . $this->prefix))
-        {
-            # 创建初始文件夹
-            if (!File::create_dir($this->dir . $this->prefix, true, $this->storage))
-            {
-                return false;
-            }
-        }
+        $value = $this->format_data($lifetime, $value);
 
-        $data = $this->format_data($lifetime, $value);
-
-        return File::create_file($filename, $data, null, null, $this->storage);
+        return File::create_file($filename, $value, null, null, $this->storage);
     }
 
     /**
@@ -258,7 +254,7 @@ class Core_Cache_Driver_File extends Cache_Driver
      */
     protected function get_filename_by_key($key)
     {
-        return $this->dir . $this->prefix . 'cache_file_' . substr(preg_replace('#[^a-z0-9_\-]*#i','',$key), 0, 100) . '_' . md5($key . '_&@c)ac%he_file');
+        return $this->dir . $this->prefix . 'cache_file_' . substr(preg_replace('#[^a-z0-9_\-]*#i','',$key), 0, 50) . '_' . md5($key . '_&@c)ac%he_file');
     }
 
     protected function get_expired_setting($key, &$data)

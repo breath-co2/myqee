@@ -92,7 +92,7 @@ class Core_Cache_Driver_Redis extends Cache_Driver
             Cache_Driver_Redis::$redis[$config_name] = new $class();
             Cache_Driver_Redis::$redis_num[$config_name] = 0;
 
-            foreach ( $this->servers as $server )
+            foreach ($this->servers as $server)
             {
                 $server += array
                 (
@@ -193,14 +193,14 @@ class Core_Cache_Driver_Redis extends Cache_Driver
 
             foreach ($return as &$item)
             {
-                Cache_Driver_Redis::_de_format_data($item);
+                $this->_de_format_data($item);
             }
         }
         else
         {
             $return = $this->_redis->get($key);
 
-            Cache_Driver_Redis::_de_format_data($return);
+            $this->_de_format_data($return);
         }
 
         $time = microtime(1) - $time;
@@ -238,13 +238,13 @@ class Core_Cache_Driver_Redis extends Cache_Driver
         {
             foreach ($key as & $item)
             {
-                Cache_Driver_Redis::_format_data($item);
+                $this->_format_data($item);
             }
             return $this->_redis->mset($key);
         }
         else
         {
-            Cache_Driver_Redis::_format_data($value);
+            $this->_format_data($value);
             return $this->_redis->set($key, $value, $lifetime);
         }
     }
@@ -317,29 +317,6 @@ class Core_Cache_Driver_Redis extends Cache_Driver
         if (method_exists($this->_redis, $method))
         {
             return call_user_func_array(array($this->_redis,$method), $params);
-        }
-    }
-
-    protected static function _de_format_data(&$data)
-    {
-        if (null===$data || is_bool($data))
-        {
-            # bool类型不处理
-        }
-        elseif (!is_numeric($data))
-        {
-            if (substr($data,0,13)=='::serialize::')
-            {
-                $data = @unserialize($data);
-            }
-        }
-    }
-
-    protected static function _format_data(&$data)
-    {
-        if (!is_numeric($data) && !is_string($data))
-        {
-            $data = '::serialize::' . serialize($data);
         }
     }
 
