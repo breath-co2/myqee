@@ -150,6 +150,20 @@ class Core_HttpClient
     }
 
     /**
+     * 设置请求页面的Header信息
+     *
+     *     $this->set_header('X-Auth-User: test');
+     *
+     * @param string $header
+     * @return HttpClient
+     */
+    public function set_header($header)
+    {
+        $this->driver()->set_header($header);
+        return $this;
+    }
+
+    /**
      * 设置参数
      *
      * @param $key

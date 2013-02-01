@@ -96,6 +96,18 @@ class Core_HttpClient_Driver_Fsock
     }
 
     /**
+     * 设置Header
+     *
+     * @param string $header
+     * @return HttpClient_Driver_Curl
+     */
+    public function set_header($header)
+    {
+        $this->header = array_merge($this->header, (array)$header);
+        return $this;
+    }
+
+    /**
      * 设置curl参数
      *
      * //TODO 不支持自定义参数
@@ -172,7 +184,7 @@ class Core_HttpClient_Driver_Fsock
         }
         $this->_post_data = $myvars;
 
-        return $this->get($url,$timeout);
+        return $this->get($url, $timeout);
     }
 
     /**
@@ -219,29 +231,35 @@ class Core_HttpClient_Driver_Fsock
      */
     protected function _create($url,$timeout)
     {
-        if ( false===strpos($url, '://') )
+        if (false===strpos($url, '://'))
         {
             preg_match('#^(http(?:s)?\://[^/]+/)#', $_SERVER["SCRIPT_URI"] , $m);
-            $the_url = $m[1].ltrim($url,'/');
+            $the_url = $m[1] . ltrim($url,'/');
         }
         else
         {
             $the_url = $url;
         }
 
-        preg_match('#^http(?:s)?\://([^/]+)(/.*)$#', $the_url , $m);
-        $hostname = $m[1];
-        $uri      = $m[2];
+        preg_match('#^(http(?:s)?)\://([^/]+)(/.*)$#', $the_url , $m);
+        $hostname = $m[2];
+        $uri      = $m[3];
 
-        list($host,$port) = explode(':',$hostname,2);
+        list($host, $port) = explode(':', $hostname, 2);
+
         if ($this->ip)
         {
             $host = $this->ip;
         }
 
+        if ($m[1]=='https')
+        {
+            $host = 'tls://' . $host;
+        }
+
         if (!$port)
         {
-            if (substr($url,0,8)=='https://')
+            if ($m[1]=='https')
             {
                 $port = 443;
             }
@@ -251,7 +269,7 @@ class Core_HttpClient_Driver_Fsock
             }
         }
 
-        $ch = fsockopen($host,$port,$errno,$errstr,$timeout);
+        $ch = fsockopen($host, $port, $errno, $errstr, $timeout);
 
         $header = array
         (
@@ -260,32 +278,32 @@ class Core_HttpClient_Driver_Fsock
             'Connection' => 'close',
         );
 
-        if ( $this->cookies )
+        if ($this->cookies)
         {
             $header['Cookie'] = is_array($this->cookies)?http_build_query($this->cookies, '', ';'):$this->cookies;
         }
 
-        if ( $this->referer )
+        if ($this->referer)
         {
             $header['Referer'] = $this->referer;
         }
 
-        if ( $this->agent )
+        if ($this->agent)
         {
             $header['User-Agent'] = $this->agent;
         }
-        elseif ( array_key_exists('HTTP_USER_AGENT', $_SERVER) )
+        elseif (array_key_exists('HTTP_USER_AGENT', $_SERVER))
         {
             $header['User-Agent'] = $_SERVER['HTTP_USER_AGENT'];
         }
 
-        if ( $this->header )
+        if ($this->header)
         {
             $header = array();
             foreach ($this->header as $item)
             {
                 # 防止有重复的header
-                if ( preg_match('#(^[^:]*):(.*)$#', $item,$m) )
+                if (preg_match('#(^[^:]*):(.*)$#', $item,$m))
                 {
                     $header[trim($m[1])] = trim($m[2]);
                 }
@@ -293,7 +311,7 @@ class Core_HttpClient_Driver_Fsock
         }
 
         # 设置POST数据
-        if ( $this->method=='POST' )
+        if ($this->method=='POST')
         {
             $vars = (string)$this->_post_data[$the_url];
             $header['Content-Length'] = strlen($vars);
@@ -307,7 +325,7 @@ class Core_HttpClient_Driver_Fsock
         }
         $str .= "\r\n";
 
-        if ( $this->method=='POST' )
+        if ($this->method=='POST')
         {
             // 追加POST数据
             $str .= $vars;
@@ -370,11 +388,11 @@ class Core_HttpClient_Driver_Fsock
 
         while($listener_list)
         {
-            list($done_url,$f) = array_shift($listener_list);
+            list($done_url, $f) = array_shift($listener_list);
 
             $time = microtime(1);
             $str = '';
-            while ( !feof($f) )
+            while (!feof($f))
             {
                 $str .= fgets($f);
             }
@@ -382,12 +400,12 @@ class Core_HttpClient_Driver_Fsock
             fclose($f);
             $time = microtime(1)-$time;
 
-            list($header,$body) = explode("\r\n\r\n",$str,2);
+            list($header, $body) = explode("\r\n\r\n", $str, 2);
 
             $header_arr = explode("\r\n", $header);
             $first_line = array_shift($header_arr);
 
-            if ( preg_match('#^HTTP/1.1 ([0-9]+) #',$first_line,$m) )
+            if ( preg_match('#^HTTP/1.1 ([0-9]+) #', $first_line, $m) )
             {
                 $code = $m[1];
             }
@@ -399,13 +417,13 @@ class Core_HttpClient_Driver_Fsock
             if( strpos($header, 'Transfer-Encoding: chunked') )
             {
                 $body = explode("\r\n", $body);
-                $body = array_slice($body, 1, - 1);
+                $body = array_slice($body, 1, -1);
                 $body = implode('', $body);
             }
 
             if ( preg_match('#Location(?:[ ]*):([^\r]+)\r\n#Uis', $header , $m) )
             {
-                if ( count($redirect_list[$done_url])>=10 )
+                if (count($redirect_list[$done_url])>=10)
                 {
                     # 防止跳转次数太大
                     $body = $header = '';
@@ -416,15 +434,16 @@ class Core_HttpClient_Driver_Fsock
                     # 302 跳转
                     $new_url = trim($m[1]);
                     $redirect_list[$done_url][] = $new_url;
+
                     // 插入列队
-                    if ( preg_match('#Set-Cookie(?:[ ]*):([^\r+])\r\n#is', $header , $m2) )
+                    if (preg_match('#Set-Cookie(?:[ ]*):([^\r+])\r\n#is', $header , $m2))
                     {
                         // 把cookie传递过去
                         $old_cookie    = $this->cookies;
                         $this->cookies = $m2[1];
                     }
 
-                    array_unshift($listener_list , array( $done_url , $this->_create($new_url, $timeout) ) );
+                    array_unshift($listener_list, array($done_url , $this->_create($new_url, $timeout)));
 
                     if (isset($old_cookie))
                     {
@@ -463,7 +482,7 @@ class Core_HttpClient_Driver_Fsock
                 $current_url = array_shift($multi_list);
 
                 # 更新监听列队信息
-                $listener_list[] = array( $current_url , $this->_create($current_url, $timeout) );
+                $listener_list[] = array($current_url, $this->_create($current_url, $timeout));
 
                 # 更新列队数
                 $list_num++;

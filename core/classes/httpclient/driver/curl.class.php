@@ -103,6 +103,18 @@ class Core_HttpClient_Driver_Curl
     }
 
     /**
+     * 设置Header
+     *
+     * @param string $header
+     * @return HttpClient_Driver_Curl
+     */
+    public function set_header($header)
+    {
+        $this->header = array_merge($this->header, (array)$header);
+        return $this;
+    }
+
+    /**
      * 设置curl参数
      *
      * @param string $key
@@ -113,7 +125,7 @@ class Core_HttpClient_Driver_Curl
     {
         if ( $key===CURLOPT_HTTPHEADER )
         {
-            $this->header = array_merge($this->header,$value);
+            $this->header = array_merge($this->header, $value);
         }
         else
         {

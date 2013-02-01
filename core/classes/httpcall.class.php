@@ -119,11 +119,13 @@ class Core_HttpCall
             $project_config = Core::config('core.projects'.Core::$project);
             $script = $project_config['url'];
             if (is_array($script))$script = current($script);
-            if ( isset($project_config['url_admin']) )
+
+            if (isset($project_config['url_admin']))
             {
                 $script .= ltrim($project_config['url_admin'],'/');
             }
-            if ( false===strpos($uri, '://') )
+
+            if (false===strpos($uri, '://'))
             {
                 $url_site = Core::config('core.url.site');
                 if ( !$url_site )
@@ -140,11 +142,12 @@ class Core_HttpCall
         }
 
         $uri = Core::url($uri);
-        if ( false===strpos($uri, '://') )
+        if (false===strpos($uri, '://'))
         {
             preg_match('#^(http(?:s)?\://[^/]+/)#', $script , $m);
             $uri = $m[1].ltrim($uri,'/');
         }
+
         # http://host/uri
         $uri_arr = explode('/',$uri);
         $scr_arr = explode('/',$script);
@@ -161,12 +164,6 @@ class Core_HttpCall
         }
         else
         {
-            if ( preg_match('#^https://#i', $uri) )
-            {
-                # https方式目前还不可以用 socket 模式
-                throw new Exception('system exec error.https url need use curl module.');
-            }
-
             # 调用socket进行连接
             $result = HttpCall::exec_by_socket($hosts,$uri,array('data'=>serialize($param_arr)));
         }
@@ -349,11 +346,11 @@ class Core_HttpCall
      * @param array $param_arr
      * @return array
      */
-    protected static function exec_by_socket($hosts,$url,array $param_arr = null)
+    protected static function exec_by_socket($hosts, $url, array $param_arr = null)
     {
         $vars = http_build_query($param_arr);
 
-        if (preg_match('#^(http(?:s)?)\://([^/\:]+)(\:[0-9]+)?/(.*)$#', $url,$m))
+        if (preg_match('#^(http(?:s)?)\://([^/\:]+)(\:[0-9]+)?/(.*)$#', $url, $m))
         {
             $uri = '/'.ltrim($m[4],'/');     //获取到URI部分
             $h = $m[2];                      //获取到HOST
@@ -363,11 +360,13 @@ class Core_HttpCall
 
         foreach ($hosts as $host)
         {
-            list($hostname,$port) = explode(':',$host,2);
+            list($hostname, $port) = explode(':', $host,2);
             if (!$port)
             {
                 $port = $_SERVER["SERVER_PORT"];
             }
+
+            if ($m[1]=='https')$hostname = 'tls://' . $hostname;
 
             # 一个mictime
             $mictime = microtime(1);
