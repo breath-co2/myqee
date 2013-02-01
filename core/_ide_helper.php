@@ -188,14 +188,20 @@ class EX_Session_Driver_Default extends Core_Session_Driver_Default{}
 class Session extends Core_Session{}
 class EX_Session extends Core_Session{}
 
-class Strone_Driver_Database extends Core_Strone_Driver_Database{}
-class EX_Strone_Driver_Database extends Core_Strone_Driver_Database{}
+class Storage_Driver_Database extends Core_Storage_Driver_Database{}
+class EX_Storage_Driver_Database extends Core_Storage_Driver_Database{}
 
 class Storage_Driver_File extends Core_Storage_Driver_File{}
 class EX_Storage_Driver_File extends Core_Storage_Driver_File{}
 
 class Storage_Driver_Redis extends Core_Storage_Driver_Redis{}
 class EX_Storage_Driver_Redis extends Core_Storage_Driver_Redis{}
+
+class Storage_Driver_Swift extends Core_Storage_Driver_Swift{}
+class EX_Storage_Driver_Swift extends Core_Storage_Driver_Swift{}
+
+abstract class Storage_Driver extends Core_Storage_Driver{}
+abstract class EX_Storage_Driver extends Core_Storage_Driver{}
 
 class Storage extends Core_Storage{}
 class EX_Storage extends Core_Storage{}
