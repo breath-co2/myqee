@@ -250,10 +250,10 @@ class Core_Cache
      *
      * $expire_type默认有4种类型，分别为：
      *
-     * * $expire_type = Cacah::TYPE_MAX_AGE 最长时间，当指定的$expire达到时间后，缓存失效，默认方式
-     * * $expire_type = Cacah::TYPE_MAX_HIT 最大命中数，当get()请求数量达到$expire值后，缓存失效
-     * * $expire_type = Cacah::TYPE_ADV_AGE 高级时效类型，此类型时，传入的$expire可以类似：200~250,1/100，其中200~250表示介于这个时间（单位秒）内时，在1/100请求几率下会失效，其它99/100请求不会失效，并且250为临界时间，超过这个时间将等同TYPE_MAX_AGE方式处理。它的主要用途是在高并发的情况下，避免因缓存失效而集中需要更新导致重复加载。
-     * * $expire_type = Cacah::TYPE_ADV_HIT 高级命中类型，此类型基本同上，只是$expire前的数值表示为请求数
+     * * $expire_type = Cache::TYPE_MAX_AGE 最长时间，当指定的$expire达到时间后，缓存失效，默认方式
+     * * $expire_type = Cache::TYPE_MAX_HIT 最大命中数，当get()请求数量达到$expire值后，缓存失效
+     * * $expire_type = Cache::TYPE_ADV_AGE 高级时效类型，此类型时，传入的$expire可以类似：200~250,1/100，其中200~250表示介于这个时间（单位秒）内时，在1/100请求几率下会失效，其它99/100请求不会失效，并且250为临界时间，超过这个时间将等同TYPE_MAX_AGE方式处理。它的主要用途是在高并发的情况下，避免因缓存失效而集中需要更新导致重复加载。
+     * * $expire_type = Cache::TYPE_ADV_HIT 高级命中类型，此类型基本同上，只是$expire前的数值表示为请求数
      *
      * @example $this->set('key','value','200~250,1/100',Cache::TYPE_RENEW_AGE); 表示介于200～250秒之间时命中率为1/100，若命中则更新缓存
      *
