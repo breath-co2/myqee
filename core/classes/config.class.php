@@ -87,7 +87,8 @@ class Core_Config
                     }
 
                     $db->columns(
-                        array(
+                        array
+                        (
                             'type',
                             'key_md5',
                             'key_name',

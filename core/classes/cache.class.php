@@ -136,7 +136,7 @@ class Core_Cache
      */
     public static function instance($name = 'default')
     {
-        if ( is_array($name) )
+        if (is_array($name))
         {
             $config_name = '_tmp_' . md5(serialize($name));
         }
@@ -144,10 +144,11 @@ class Core_Cache
         {
             $config_name = $name;
         }
-        if ( !isset(Cache::$instances[$config_name]) )
+        if (!isset(Cache::$instances[$config_name]))
         {
             Cache::$instances[$config_name] = new Cache($name);
         }
+
         return Cache::$instances[$config_name];
     }
 
@@ -265,11 +266,11 @@ class Core_Cache
      */
     public function set($key, $value = null, $expire = 3600, $expire_type = null)
     {
-        if ( $expire_type && $expire_type!=Cache::TYPE_MAX_AGE )
+        if ($expire_type && $expire_type!=Cache::TYPE_MAX_AGE)
         {
             $this->_check_adv_data($key, $value, $expire, $expire_type);
         }
-        elseif ( strpos($expire, '~') && preg_match('#^([0-9]+)~([0-9]+),([0-9]+)/([0-9]+)$#', $expire, $match_exp) )
+        elseif (strpos($expire, '~') && preg_match('#^([0-9]+)~([0-9]+),([0-9]+)/([0-9]+)$#', $expire, $match_exp))
         {
             $expire = (int)$match_exp[1];
         }
@@ -460,14 +461,14 @@ class Core_Cache
      * @param string $type
      * @return boolean/string $exp_key
      */
-    protected function _check_adv_data(& $key, & $value, & $expire, $type)
+    protected function _check_adv_data(& $key, &$value, &$expire, $type)
     {
-        if ( is_array($key) )
+        if (is_array($key))
         {
-            foreach ( $key as $k => &$v )
+            foreach ($key as $k => &$v)
             {
                 $exp_key = $this->_check_adv_data($k, $v, $expire, $type);
-                if ( is_string($exp_key) && is_array($k) )
+                if (is_string($exp_key) && is_array($k))
                 {
                     # 原来的$k是字符串，若变成了数组则表示需要增加一个计数器
                     $key[$exp_key] = 0;
@@ -480,7 +481,7 @@ class Core_Cache
             $exp_key = md5(microtime(true) . mt_rand(100000000, 999999999));
 
             # 修正
-            if ( preg_match('#^([0-9]+)~([0-9]+),([0-9]+)/([0-9]+)$#', $expire, $match_exp) )
+            if (preg_match('#^([0-9]+)~([0-9]+),([0-9]+)/([0-9]+)$#', $expire, $match_exp))
             {
                 $lifestr = $expire;
             }
@@ -533,29 +534,30 @@ class Core_Cache
                     break;
             }
 
-            if ( $exp >= $match_exp[0] && $exp <= $match_exp[1] )
+            if ($exp >= $match_exp[0] && $exp <= $match_exp[1])
             {
                 # 在指定范围内按比例更新
                 $rand = mt_rand(1, $match_exp[3]);
-                if ( $rand <= $match_exp[2] )
+                if ($rand <= $match_exp[2])
                 {
                     # 命中，则清除数据，让程序可主动更新
                     $value = null;
                     return;
                 }
             }
-            elseif ( $exp > $match_exp[1] )
+            elseif ($exp > $match_exp[1])
             {
                 # 强制认为没有获取数据
                 $value = null;
                 return;
             }
 
-            if ( $match['type'] == Cache::TYPE_ADV_HIT || $match['type'] == Cache::TYPE_MAX_HIT )
+            if ($match['type'] == Cache::TYPE_ADV_HIT || $match['type'] == Cache::TYPE_MAX_HIT)
             {
                 # 计数器增加
                 $this->driver->increment($match['expkey'], 1, $match_exp[1]);
             }
+
             $value = @unserialize($match['value']);
         }
     }

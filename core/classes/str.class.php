@@ -150,14 +150,14 @@ class Core_Str
     /**
      * 输出字节格式化
      *
-     * @param   string   a definitive unit
-     * @param   string   the return string format
-     * @param   boolean  whether to use SI prefixes or IEC
+     * @param string a definitive unit
+     * @param string the return string format
+     * @param boolean whether to use SI prefixes or IEC
      * @return string
      */
-    public function byte( $force_unit = null, $format = null, $si = true )
+    public function byte($force_unit = null, $format = null, $si = true)
     {
-        return Text::bytes( (int)$this->data , $force_unit , $format , $si );
+        return Text::bytes((int)$this->data, $force_unit, $format, $si);
     }
 
     public static function __set_state($arr)

@@ -16,7 +16,7 @@ class Core_Session
     /**
      * @var Session
      */
-    protected static $instance;
+    protected static $instance = null;
 
     protected static $protect = array('SID' => 1, '_flash_session_' => 1);
 
@@ -41,7 +41,7 @@ class Core_Session
      */
     public static function instance()
     {
-        if ( Session::$instance == null )
+        if (null===Session::$instance)
         {
             // Create a new instance
             new Session();
@@ -186,7 +186,7 @@ class Core_Session
      */
     public function member()
     {
-        if ( null===Session::$member )
+        if (null===Session::$member)
         {
             # 创建一个空的用户对象
             Session::$member = new Member();
@@ -222,16 +222,16 @@ class Core_Session
             return false;
         }
         static $run = null;
-        if ( $run === null )
+        if (null===$run)
         {
             $run = true;
 
-            if ( !$_SESSION['_flash_session_'] )
+            if (!$_SESSION['_flash_session_'])
             {
                 unset($_SESSION['_flash_session_']);
             }
 
-            if ( Session::$member && Session::$member->id>0 )
+            if (Session::$member && Session::$member->id>0)
             {
                 # 设置用户数据
                 $member_data = Session::$member->get_field_data();
@@ -239,7 +239,7 @@ class Core_Session
                 $_SESSION['member'] = $member_data;
             }
 
-            if ( !isset($_SESSION['_last_actived_time_']) || TIME - 300 > $_SESSION['_last_actived_time_'] )
+            if (!isset($_SESSION['_last_actived_time_']) || TIME - 300 > $_SESSION['_last_actived_time_'])
             {
                 # 更新最后活动时间 10分钟更新一次
                 $_SESSION['_last_actived_time_'] = TIME;
@@ -262,14 +262,14 @@ class Core_Session
      */
     public function set($keys, $val = false)
     {
-        if ( empty($keys) ) return false;
+        if (empty($keys)) return false;
 
-        if ( !is_array($keys) )
+        if (!is_array($keys))
         {
             $keys = array($keys => $val);
         }
 
-        foreach ( $keys as $key => $val )
+        foreach ($keys as $key => $val)
         {
             if ( isset(Session::$protect[$key]) ) continue;
 
@@ -287,16 +287,16 @@ class Core_Session
      */
     public function set_flash($keys, $val = false)
     {
-        if ( empty($keys) ) return false;
+        if (empty($keys)) return false;
 
-        if ( !is_array($keys) )
+        if (!is_array($keys))
         {
             $keys = array($keys => $val);
         }
 
-        foreach ( $keys as $key => $val )
+        foreach ($keys as $key => $val)
         {
-            if ( $key == false ) continue;
+            if (false==$key)continue;
 
             Session::$flash[$key] = 'new';
             $this->set($key, $val);
@@ -311,11 +311,11 @@ class Core_Session
      */
     public function keep_flash($keys = null)
     {
-        $keys = ($keys === null) ? array_keys(Session::$flash) : func_get_args();
+        $keys = (null===$keys) ? array_keys(Session::$flash) : func_get_args();
 
-        foreach ( $keys as $key )
+        foreach ($keys as $key)
         {
-            if ( isset(Session::$flash[$key]) )
+            if (isset(Session::$flash[$key]))
             {
                 Session::$flash[$key] = 'new';
             }
@@ -329,7 +329,7 @@ class Core_Session
      */
     protected function expire_flash()
     {
-        if ( !empty(Session::$flash) )
+        if (!empty(Session::$flash))
         {
             foreach ( Session::$flash as $key => $state )
             {
@@ -360,11 +360,11 @@ class Core_Session
      */
     public function get($key = false, $default = false)
     {
-        if ( empty($key) ) return $_SESSION;
+        if (empty($key))return $_SESSION;
 
         $result = isset($_SESSION[$key]) ? $_SESSION[$key] : Core::key_string($_SESSION, $key);
 
-        return ($result === null) ? $default : $result;
+        return (null===$result) ? $default : $result;
     }
 
     /**
@@ -397,7 +397,7 @@ class Core_Session
     {
         $args = func_get_args();
 
-        foreach ( $args as $key )
+        foreach ($args as $key)
         {
             if ( isset(Session::$protect[$key]) ) continue;
 

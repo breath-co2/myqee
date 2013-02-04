@@ -168,7 +168,8 @@ class Core_Model
                 }
             }
         }
-        $data = array(
+        $data = array
+        (
             $trace[$trace_offset]['class'],
             $trace[$trace_offset]['function'],
             $trace[$trace_offset]['type'],

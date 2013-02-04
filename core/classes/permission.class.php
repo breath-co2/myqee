@@ -14,9 +14,9 @@ class Core_Permission
 {
     protected $setting = array();
 
-    public function __construct( $perm_setting )
+    public function __construct($perm_setting)
     {
-        if ( is_array($perm_setting) )
+        if (is_array($perm_setting))
         {
             $this->setting = $perm_setting;
         }
@@ -35,9 +35,9 @@ class Core_Permission
      * @param ...
      * @return boolean
      */
-    public function is_own( $key1 , $key2 = null , $key3 = null )
+    public function is_own($key1, $key2 = null, $key3 = null)
     {
-        if ( $this->is_super_perm() )
+        if ($this->is_super_perm())
         {
             # 超级管理员
             return true;
@@ -48,8 +48,9 @@ class Core_Permission
         foreach ($keys as $key)
         {
             $key = trim($key);
-            if ( !Core::key_string($this->setting, $key) )return false;
+            if (!Core::key_string($this->setting, $key))return false;
         }
+
         return true;
     }
 
@@ -60,7 +61,7 @@ class Core_Permission
      */
     public function is_super_perm()
     {
-        if ( isset($this->setting['_super_admin']) && $this->setting['_super_admin'] )
+        if (isset($this->setting['_super_admin']) && $this->setting['_super_admin'])
         {
             # 超级管理员
             return true;

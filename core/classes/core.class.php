@@ -177,7 +177,7 @@ abstract class Core_Core extends Bootstrap
             Core::debug()->groupEnd();
         }
 
-        if ( (IS_CLI || IS_DEBUG) && class_exists('ErrException', true) )
+        if ((IS_CLI || IS_DEBUG) && class_exists('ErrException', true))
         {
             # 注册脚本
             register_shutdown_function(array('ErrException', 'shutdown_handler'));
@@ -201,7 +201,7 @@ abstract class Core_Core extends Bootstrap
         }
 
         # 注册输出函数
-        register_shutdown_function(array('Core','_output_body'));
+        register_shutdown_function(array('Core', '_output_body'));
 
         if (true===IS_SYSTEM_MODE)
         {
@@ -212,7 +212,7 @@ abstract class Core_Core extends Bootstrap
             }
         }
 
-        if ( IS_DEBUG && isset($_REQUEST['debug']) && class_exists('Profiler', true) )
+        if (IS_DEBUG && isset($_REQUEST['debug']) && class_exists('Profiler', true))
         {
             Profiler::setup();
         }
@@ -309,7 +309,7 @@ abstract class Core_Core extends Bootstrap
      */
     public static function url_assets($uri = '')
     {
-        $url = ltrim($uri,'./ ');
+        $url = ltrim($uri, './ ');
 
         if (IS_DEBUG & 1)
         {
@@ -438,10 +438,10 @@ abstract class Core_Core extends Bootstrap
             {
                 $temp = explode('/', str_replace('\\', '/', $dir) );
                 $cur_dir = '';
-                for( $i=0; $i<count($temp); $i++ )
+                for($i=0; $i<count($temp); $i++)
                 {
                     $cur_dir .= $temp[$i] . "/";
-                    if ( !is_dir(DIR_LOG.$cur_dir) )
+                    if (!is_dir(DIR_LOG.$cur_dir))
                     {
                         @mkdir(DIR_LOG.$cur_dir,0755);
                     }
@@ -508,7 +508,7 @@ abstract class Core_Core extends Bootstrap
             ':referer' => $_SERVER["HTTP_REFERER"],        //来源页面
         );
 
-        return strtr($format,$value);
+        return strtr($format, $value);
     }
 
     /**
@@ -519,9 +519,9 @@ abstract class Core_Core extends Bootstrap
     public static function debug()
     {
         static $debug = null;
-        if ( null === $debug )
+        if (null === $debug)
         {
-            if ( !IS_CLI && ( IS_DEBUG || false!==strpos($_SERVER["HTTP_USER_AGENT"],'FirePHP') || isset($_SERVER["HTTP_X_FIREPHP_VERSION"]) ) && class_exists('Debug', true) )
+            if (!IS_CLI && ( IS_DEBUG || false!==strpos($_SERVER["HTTP_USER_AGENT"],'FirePHP') || isset($_SERVER["HTTP_X_FIREPHP_VERSION"]) ) && class_exists('Debug', true))
             {
                 $debug = Debug::instance();
             }
@@ -627,10 +627,10 @@ abstract class Core_Core extends Bootstrap
      */
     public static function close_buffers($flush = true)
     {
-        if ( ob_get_level() > Core::$buffer_level )
+        if (ob_get_level() > Core::$buffer_level)
         {
             $close = ($flush === true) ? 'ob_end_flush' : 'ob_end_clean';
-            while ( ob_get_level() > Core::$buffer_level )
+            while (ob_get_level() > Core::$buffer_level)
             {
                 $close();
             }
@@ -648,17 +648,17 @@ abstract class Core_Core extends Bootstrap
         Core::close_buffers(false);
 
         # 避免输出的CSS头试抛出页面无法显示
-        @header('Content-Type: text/html;charset=' . Core::config('core.charset') ,true);
+        @header('Content-Type: text/html;charset=' . Core::config('core.charset'), true);
 
         HttpIO::$status = 404;
         HttpIO::send_headers();
 
-        if ( null === $msg )
+        if (null === $msg)
         {
             $msg = __('Page Not Found');
         }
 
-        if ( IS_DEBUG && class_exists('ErrException', false) )
+        if (IS_DEBUG && class_exists('ErrException', false))
         {
             if ( $msg instanceof Exception )
             {
@@ -717,12 +717,12 @@ abstract class Core_Core extends Bootstrap
         HttpIO::$status = 500;
         HttpIO::send_headers();
 
-        if ( null === $msg )
+        if (null === $msg)
         {
             $msg = __('Internal Server Error');
         }
 
-        if ( IS_DEBUG && class_exists('ErrException', false) )
+        if (IS_DEBUG && class_exists('ErrException', false))
         {
             if ( $msg instanceof Exception )
             {
@@ -753,7 +753,7 @@ abstract class Core_Core extends Bootstrap
 
         try
         {
-            if ( $msg instanceof Exception )
+            if ($msg instanceof Exception)
             {
                 $error = $msg->getMessage();
                 $trace_obj = $msg;
@@ -790,7 +790,7 @@ abstract class Core_Core extends Bootstrap
                 );
 
                 $date     = date('Y-m-d');
-                $no       = strtoupper(substr(md5(serialize($trace_array)),10,10));
+                $no       = strtoupper(substr(md5(serialize($trace_array)), 10, 10));
                 $error_no = $date.'-'.$no;
 
                 # 其它数据
@@ -827,20 +827,20 @@ abstract class Core_Core extends Bootstrap
                                 'log'         => $trace_data,
                                 'expire_time' => TIME + 7*86400,
                             );
-                            $obj->insert('error500_log',$data);
+                            $obj->insert('error500_log', $data);
                             break;
                         case 'cache':
                             $obj = new Cache($error_config['type_config']?$error_config['type_config']:'default');
                             if ( !$obj->get($error_no) )
                             {
-                                $obj->set($error_no,$trace_data,7*86400);
+                                $obj->set($error_no, $trace_data, 7*86400);
                             }
                             break;
                         default:
-                            $file = DIR_LOG.'error500'.DS.str_replace('-',DS,$date).DS.$no.'.log';
+                            $file = DIR_LOG.'error500'.DS.str_replace('-', DS, $date).DS.$no.'.log';
                             if (!is_file($file))
                             {
-                                File::create_file($file, $trace_data,null,null,$error_config['type_config']?$error_config['type_config']:'default');
+                                File::create_file($file, $trace_data, null, null, $error_config['type_config']?$error_config['type_config']:'default');
                             }
                             break;
                     }
@@ -1208,7 +1208,7 @@ abstract class Core_Core extends Bootstrap
      */
     protected static function _merge_project_config( $c1, $c2 )
     {
-        foreach ( $c2 as $k=>$v )
+        foreach ($c2 as $k=>$v)
         {
             if (!isset($c1[$k]))
             {
@@ -1280,14 +1280,14 @@ abstract class Core_Core extends Bootstrap
         }
 
         // 验证IP
-        if ( '127.0.0.1' != HttpIO::IP && HttpIO::IP != $_SERVER["SERVER_ADDR"] )
+        if ('127.0.0.1' != HttpIO::IP && HttpIO::IP != $_SERVER["SERVER_ADDR"])
         {
             $allow_ip = Core::config('core.system_exec_allow_ip');
 
-            if ( is_array($allow_ip) && $allow_ip )
+            if (is_array($allow_ip) && $allow_ip)
             {
                 $allow = false;
-                foreach ( $allow_ip as $ip )
+                foreach ($allow_ip as $ip)
                 {
                     if ( HttpIO::IP == $ip )
                     {
@@ -1295,7 +1295,7 @@ abstract class Core_Core extends Bootstrap
                         break;
                     }
 
-                    if ( strpos($allow_ip, '*') )
+                    if (strpos($allow_ip, '*'))
                     {
                         // 对IP进行匹配
                         if ( preg_match('#^' . str_replace('\\*', '[^\.]+', preg_quote($allow_ip, '#')) . '$#', HttpIO::IP) )
@@ -1319,7 +1319,7 @@ abstract class Core_Core extends Bootstrap
         // 系统调用密钥
         $system_exec_pass = Core::config('system_exec_key');
 
-        if ( $system_exec_pass && strlen($system_exec_pass) >= 10 )
+        if ($system_exec_pass && strlen($system_exec_pass) >= 10)
         {
             // 如果有则使用系统调用密钥
             $newhash = sha1($body . $time . $system_exec_pass . $rstr);
@@ -1330,7 +1330,7 @@ abstract class Core_Core extends Bootstrap
             $newhash = sha1($body . $time . serialize(Core::config('core')) . serialize(Core::config('database')) . $rstr);
         }
 
-        if ( $newhash == $hash )
+        if ($newhash==$hash)
         {
             return true;
         }
@@ -1360,7 +1360,7 @@ abstract class Core_Core extends Bootstrap
         # 发送header数据
         HttpIO::send_headers();
 
-        if ( IS_DEBUG && isset($_REQUEST['debug']) && class_exists('Profiler', true) )
+        if (IS_DEBUG && isset($_REQUEST['debug']) && class_exists('Profiler', true))
         {
             # 调试打开时不缓存页面
             HttpIO::set_cache_header(0);

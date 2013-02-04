@@ -19,36 +19,36 @@ class Core_Text
     public static $units = array
     (
         1000000000 => 'billion',
-        1000000 => 'million',
-        1000 => 'thousand',
-        100 => 'hundred',
-        90 => 'ninety',
-        80 => 'eighty',
-        70 => 'seventy',
-        60 => 'sixty',
-        50 => 'fifty',
-        40 => 'fourty',
-        30 => 'thirty',
-        20 => 'twenty',
-        19 => 'nineteen',
-        18 => 'eighteen',
-        17 => 'seventeen',
-        16 => 'sixteen',
-        15 => 'fifteen',
-        14 => 'fourteen',
-        13 => 'thirteen',
-        12 => 'twelve',
-        11 => 'eleven',
-        10 => 'ten',
-        9 => 'nine',
-        8 => 'eight',
-        7 => 'seven',
-        6 => 'six',
-        5 => 'five',
-        4 => 'four',
-        3 => 'three',
-        2 => 'two',
-        1 => 'one'
+        1000000    => 'million',
+        1000       => 'thousand',
+        100        => 'hundred',
+        90         => 'ninety',
+        80         => 'eighty',
+        70         => 'seventy',
+        60         => 'sixty',
+        50         => 'fifty',
+        40         => 'fourty',
+        30         => 'thirty',
+        20         => 'twenty',
+        19         => 'nineteen',
+        18         => 'eighteen',
+        17         => 'seventeen',
+        16         => 'sixteen',
+        15         => 'fifteen',
+        14         => 'fourteen',
+        13         => 'thirteen',
+        12         => 'twelve',
+        11         => 'eleven',
+        10         => 'ten',
+        9          => 'nine',
+        8          => 'eight',
+        7          => 'seven',
+        6          => 'six',
+        5          => 'five',
+        4          => 'four',
+        3          => 'three',
+        2          => 'two',
+        1          => 'one',
     );
 
     /**
@@ -64,11 +64,11 @@ class Core_Text
     public static function limit_words($str, $limit = 100, $end_char = NULL)
     {
         $limit = (int)$limit;
-        $end_char = ($end_char === NULL) ? '…' : $end_char;
+        $end_char = (null===$end_char) ? '…' : $end_char;
 
-        if ( trim($str) === '' ) return $str;
+        if (trim($str) === '')return $str;
 
-        if ( $limit <= 0 ) return $end_char;
+        if ($limit <= 0)return $end_char;
 
         preg_match('/^\s*+(?:\S++\s*+){1,' . $limit . '}/u', $str, $matches);
 
@@ -91,19 +91,19 @@ class Core_Text
      */
     public static function limit_chars($str, $limit = 100, $end_char = NULL, $preserve_words = FALSE)
     {
-        $end_char = ($end_char === NULL) ? '…' : $end_char;
+        $end_char = (null===$end_char) ? '…' : $end_char;
 
         $limit = (int)$limit;
 
-        if ( trim($str) === '' or UTF8::strlen($str) <= $limit ) return $str;
+        if (trim($str) === '' || UTF8::strlen($str) <= $limit)return $str;
 
-        if ( $limit <= 0 ) return $end_char;
+        if ($limit <= 0)return $end_char;
 
-        if ( $preserve_words === FALSE ) return rtrim(UTF8::substr($str, 0, $limit)) . $end_char;
+        if (false===$preserve_words)return rtrim(UTF8::substr($str, 0, $limit)) . $end_char;
 
         // Don't preserve words. The limit is considered the top limit.
         // No strings with a length longer than $limit should be returned.
-        if ( !preg_match('/^.{0,' . $limit . '}\s/us', $str, $matches) ) return $end_char;
+        if (!preg_match('/^.{0,' . $limit . '}\s/us', $str, $matches))return $end_char;
 
         return rtrim($matches[0]) . ((strlen($matches[0]) === strlen($str)) ? '' : $end_char);
     }
@@ -125,7 +125,7 @@ class Core_Text
     {
         static $i = null;
 
-        if ( func_num_args() === 0 )
+        if (func_num_args() === 0)
         {
             $i = 0;
             return '';
@@ -165,7 +165,7 @@ class Core_Text
      */
     public static function random($type = NULL, $length = 8)
     {
-        if ( $type === NULL )
+        if (null===$type)
         {
             // Default is to generate an alphanumeric string
             $type = 'alnum';
@@ -206,16 +206,16 @@ class Core_Text
         $max = count($pool) - 1;
 
         $str = '';
-        for( $i = 0; $i < $length; $i ++ )
+        for($i = 0; $i < $length; $i++)
         {
             // Select a random character from the pool and add it to the string
             $str .= $pool[mt_rand(0, $max)];
         }
 
         // Make sure alnum strings contain at least one letter and one digit
-        if ( $type === 'alnum' and $length > 1 )
+        if ($type === 'alnum' && $length > 1)
         {
-            if ( ctype_alpha($str) )
+            if (ctype_alpha($str))
             {
                 // Add a random digit
                 $str[mt_rand(0, $length - 1)] = chr(mt_rand(48, 57));
@@ -275,7 +275,7 @@ class Core_Text
 
         $regex = '!' . $regex . '!ui';
 
-        if ( UTF8::strlen($replacement) == 1 )
+        if (UTF8::strlen($replacement) == 1)
         {
             $regex .= 'e';
             return preg_replace($regex, 'str_repeat($replacement, UTF8::strlen(\'$1\'))', $str);
@@ -297,9 +297,9 @@ class Core_Text
         // First word is the word to match against
         $word = current($words);
 
-        for( $i = 0, $max = strlen($word); $i < $max; ++ $i )
+        for($i = 0, $max = strlen($word); $i < $max; ++$i)
         {
-            foreach ( $words as $w )
+            foreach ($words as $w)
             {
                 // Once a difference is found, break out of the loops
                 if ( !isset($w[$i]) || $w[$i] !== $word[$i] ) break 2;
@@ -456,10 +456,10 @@ class Core_Text
     public static function bytes($bytes, $force_unit = NULL, $format = NULL, $si = TRUE)
     {
         // Format string
-        $format = ($format === NULL) ? '%01.2f %s' : (string)$format;
+        $format = (null===$format) ? '%01.2f %s' : (string)$format;
 
         // IEC prefixes (binary)
-        if ( $si == FALSE or strpos($force_unit, 'i') !== FALSE )
+        if ( false==$si || false!==strpos($force_unit, 'i'))
         {
             $units = array('B', 'KiB', 'MiB', 'GiB', 'TiB', 'PiB');
             $mod = 1024;
@@ -507,7 +507,7 @@ class Core_Text
         // The last matched item within the loop
         $last_item = '';
 
-        foreach ( Text::$units as $unit => $name )
+        foreach (Text::$units as $unit => $name)
         {
             if ( $number / $unit >= 1 )
             {
@@ -534,7 +534,7 @@ class Core_Text
 
                 // In the situation that we need to make a composite number (i.e. twenty-three)
                 // then we need to modify the previous entry
-                if ( empty($item) )
+                if (empty($item))
                 {
                     array_pop($text);
 
@@ -546,7 +546,7 @@ class Core_Text
             }
         }
 
-        if ( count($text) > 1 )
+        if (count($text) > 1)
         {
             $and = array_pop($text);
         }
@@ -639,16 +639,23 @@ class Core_Text
         $str = rawurldecode($str);
         preg_match_all('#%u.{4}|&#x.{4};|&#\d+;|&#\d+?|.+#U', $str, $r);
         $ar = $r[0];
-        foreach ( $ar as $k => $v )
+        foreach ($ar as $k => $v)
         {
-            if ( substr($v, 0, 2) == "%u" ) $ar[$k] = iconv("UCS-2BE", $encode, pack("H4", substr($v, - 4)));
-            elseif ( substr($v, 0, 3) == "&#x" ) $ar[$k] = iconv("UCS-2BE", $encode, pack("H4", substr($v, $substrStrNum, - 1)));
-            elseif ( substr($v, 0, 2) == "&#" )
+            if (substr($v, 0, 2) == "%u")
             {
-                $ar [$k] = iconv ( "UCS-2BE", $encode, pack ( "n", preg_replace ( '#[^\d]#', "", $v ) ) );
+                $ar[$k] = iconv("UCS-2BE", $encode, pack("H4", substr($v, -4)));
+            }
+            elseif (substr($v, 0, 3) == "&#x")
+            {
+                $ar[$k] = iconv("UCS-2BE", $encode, pack("H4", substr($v, $substrStrNum, -1)));
+            }
+            elseif (substr($v, 0, 2) == "&#")
+            {
+                $ar [$k] = iconv ( "UCS-2BE", $encode, pack ( "n", preg_replace ( '#[^\d]#', '', $v ) ) );
             }
         }
-        return join ( "", $ar );
+
+        return join ('', $ar);
     }
 
     /**
@@ -661,14 +668,9 @@ class Core_Text
      */
     public static function substr($str, $start, $length = null, $encoding = 'UTF-8')
     {
-        static $supper_mb = null;
-        if (null===$supper_mb)
+        if (IS_MBSTRING)
         {
-            $supper_mb = function_exists('mb_substr');
-        }
-        if ( $supper_mb )
-        {
-            if ( null === $length )
+            if (null===$length)
             {
                 return mb_substr((string)$str, $start, null, $encoding);
             }
@@ -679,13 +681,13 @@ class Core_Text
         }
         else
         {
-            if ( self::is_ascii($str) ) return ($length === NULL) ? substr($str, $start) : substr($str, $start, $length);
+            if (UTF8::is_ascii($str))return (null===$length) ? substr($str, $start) : substr($str, $start, $length);
 
             // Normalize params
             $str = (string)$str;
-            $strlen = self::strlen($str);
+            $strlen = UTF8::strlen($str);
             $start = (int)($start < 0) ? max(0, $strlen + $start) : $start; // Normalize to positive offset
-            $length = ($length === NULL) ? NULL : (int)$length;
+            $length = (null===$length) ? null : (int)$length;
 
             // Impossible
             if ( $length === 0 or $start >= $strlen or ($length < 0 and $length <= $start - $strlen) ) return '';

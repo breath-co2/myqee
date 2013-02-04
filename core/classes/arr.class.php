@@ -30,27 +30,27 @@ class Core_Arr extends ArrayIterator
 
         $data = $this->getArrayCopy();
 
-        if ( $key === null && $value === null )
+        if (null===$key && null===$value)
         {
             return $data;
         }
-        elseif ( $key === null )
+        elseif (null===$key)
         {
-            foreach ( $data as $row )
+            foreach ($data as $row)
             {
                 $results[] = $row[$value];
             }
         }
-        elseif ( $value === null )
+        elseif (null===$value)
         {
-            foreach ( $data as $row )
+            foreach ($data as $row)
             {
                 $results[$row[$key]] = $row;
             }
         }
         else
         {
-            foreach ( $data as $row )
+            foreach ($data as $row)
             {
                 $results[$row[$key]] = $row[$value];
             }
@@ -137,7 +137,7 @@ class Core_Arr extends ArrayIterator
 	 */
 	public static function path($array, $path, $default = null, $delimiter = null)
 	{
-		if ( !Arr::is_array($array))
+		if (!Arr::is_array($array))
 		{
 			// This is not an array!
 			return $default;
@@ -179,7 +179,7 @@ class Core_Arr extends ArrayIterator
 			if (ctype_digit($key))
 			{
 				// Make the key an integer
-				$key = (int) $key;
+				$key = (int)$key;
 			}
 
 			if (isset($array[$key]))
@@ -248,7 +248,7 @@ class Core_Arr extends ArrayIterator
 	* @param mixed   $value     Value to set
 	* @param string  $delimiter Path delimiter
 	*/
-	public static function set_path( & $array, $path, $value, $delimiter = null)
+	public static function set_path( &$array, $path, $value, $delimiter = null)
 	{
 		if (!$delimiter)
 		{
@@ -270,7 +270,7 @@ class Core_Arr extends ArrayIterator
 				$key = (int) $key;
 			}
 
-			if ( !isset($array[$key]) )
+			if (!isset($array[$key]))
 			{
 				$array[$key] = array();
 			}
@@ -461,7 +461,7 @@ class Core_Arr extends ArrayIterator
 			{
 				if (isset($result[$key]))
 				{
-					if (is_array($val) AND is_array($result[$key]))
+					if (is_array($val) && is_array($result[$key]))
 					{
 						if (Arr::is_assoc($val))
 						{
@@ -484,7 +484,7 @@ class Core_Arr extends ArrayIterator
 							// Associative values are replaced
 							$result[$key] = $val;
 						}
-						elseif ( !in_array($val, $result, true) )
+						elseif (!in_array($val, $result, true))
 						{
 							// Indexed values are added only if they do not yet exist
 							$result[] = $val;

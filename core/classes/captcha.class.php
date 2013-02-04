@@ -81,7 +81,7 @@ class Core_Captcha
         $session = Captcha::$valid_countname;
 
         // Update counter
-        if ( $new_count !== null )
+        if (null!==$new_count)
         {
             $new_count = (int)$new_count;
 
@@ -113,7 +113,7 @@ class Core_Captcha
     public static function promoted($threshold = null)
     {
         // Promotion has been disabled
-        if ( Captcha::$config['promote'] === false ) return false;
+        if (Captcha::$config['promote'] === false) return false;
 
         // Use the config threshold
         if ( $threshold === null )
@@ -133,14 +133,15 @@ class Core_Captcha
      */
     public static function render($config = false)
     {
-        if ( is_array($config) )
+        if (is_array($config))
         {
             Captcha::$config = array_merge(Captcha::$config, $config);
         }
-        if ( empty(Captcha::$response) )
+        if (empty(Captcha::$response))
         {
             Captcha::generate_challenge();
         }
+
         // Creates Captcha::$image
         Captcha::image_create(Captcha::$config['background']);
 
@@ -240,7 +241,7 @@ class Core_Captcha
     protected function image_create($background = null)
     {
         // Check for GD2 support
-        if ( !function_exists('imagegd2') ) Core::show_500(__('captcha.requires_GD2'));
+        if (!function_exists('imagegd2'))Core::show_500(__('captcha.requires_GD2'));
 
         // Create a new image (black)
         Captcha::$image = imagecreatetruecolor(Captcha::$config['width'], Captcha::$config['height']);
@@ -322,9 +323,9 @@ class Core_Captcha
         // Execute the gradient loop
         for( $i = 0; $i <= $steps; $i ++ )
         {
-            $r2 = $color1['red'] - floor($i * $r1);
+            $r2 = $color1['red']   - floor($i * $r1);
             $g2 = $color1['green'] - floor($i * $g1);
-            $b2 = $color1['blue'] - floor($i * $b1);
+            $b2 = $color1['blue']  - floor($i * $b1);
             $color = imagecolorallocate(Captcha::$image, $r2, $g2, $b2);
 
             imageline(Captcha::$image, $x1, $y1, $x2, $y2, $color);
@@ -340,8 +341,6 @@ class Core_Captcha
     protected function image_render()
     {
         // Send the correct HTTP header
-
-
         header("Cache-Control:no-cache,must-revalidate");
         header("Pragma:no-cache");
         header('Content-Type: image/' . Captcha::$image_type);

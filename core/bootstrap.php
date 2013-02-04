@@ -170,7 +170,7 @@ define('DIR_TEMP', strpos($dir_temp,'://')!==false ? $dir_temp : ($dir_temp && r
 define('DIR_LOG', strpos($dir_log,'://')!==false ? $dir_log : (realpath($dir_log)?realpath($dir_log):DIR_DATA.'log').DS);
 
 
-unset($dir_data,$dir_cache,$dir_log,$dir_temp);
+unset($dir_data, $dir_cache, $dir_log, $dir_temp);
 
 
 /**
@@ -192,7 +192,7 @@ function __($string, array $values = null)
 
     if ( false===$have_i18n_class )
     {
-        $have_i18n_class = (boolean)class_exists('I18n',true);
+        $have_i18n_class = (boolean)class_exists('I18n', true);
     }
 
     if ($have_i18n_class)
@@ -200,16 +200,16 @@ function __($string, array $values = null)
         $string = I18n::get($string);
     }
 
-    return empty($values)?$string:strtr($string,$values);
+    return empty($values)?$string:strtr($string, $values);
 }
 
 /**
  * 是否对传入参数转义，建议系统关闭自动转义功能
  * @var boolean
  */
-define( 'MAGIC_QUOTES_GPC', get_magic_quotes_gpc() );
+define('MAGIC_QUOTES_GPC', get_magic_quotes_gpc());
 
-if ( !IS_CLI && MAGIC_QUOTES_GPC )
+if (!IS_CLI && MAGIC_QUOTES_GPC)
 {
 
     function __stripcslashes($string)
@@ -396,7 +396,7 @@ abstract class Bootstrap
             $run = true;
 
             # 注册自动加载类
-            spl_autoload_register(array('Bootstrap','auto_load'));
+            spl_autoload_register(array('Bootstrap', 'auto_load'));
 
             # 读取配置
             if ( !is_file(DIR_SYSTEM.'config'.EXT) )
@@ -595,6 +595,7 @@ abstract class Bootstrap
                 catch (Exception $e)
                 {
                     $code = $e->getCode();
+
                     if (404===$code || E_PAGE_NOT_FOUND===$code)
                     {
                         Core::show_404($e->getMessage());
@@ -625,9 +626,9 @@ abstract class Bootstrap
         if ( class_exists($class_name,false) )return true;
 
         # 移除两边的
-        $class_name = strtolower(trim(trim($class_name),'\\'));
+        $class_name = strtolower(trim($class_name), '\\ ');
 
-        $class_name_array = explode('_', $class_name,2);
+        $class_name_array = explode('_', $class_name, 2);
         $is_alias = false;
 
         if ($class_name_array[0]=='core' && count($class_name_array)==2)
@@ -656,7 +657,7 @@ abstract class Bootstrap
         $pos = strpos($new_class_name, '_');
         if (false!==$pos)
         {
-            $type = substr($new_class_name,0,$pos);
+            $type = substr($new_class_name, 0, $pos);
         }
         else
         {
@@ -691,7 +692,7 @@ abstract class Bootstrap
 
         if ($ns)
         {
-            $file = ($ns=='core' ? DIR_CORE : DIR_LIBRARY . str_replace('_',DS,$m[1]) . DS ) . $dir_setting[0] . DS . str_replace('_',DS,$new_class_name) . $dir_setting[1] . EXT;
+            $file = ($ns=='core' ? DIR_CORE : DIR_LIBRARY . str_replace('_', DS,$m[1]) . DS ) . $dir_setting[0] . DS . str_replace('_', DS, $new_class_name) . $dir_setting[1] . EXT;
 
             if (is_file($file))
             {
@@ -718,7 +719,7 @@ abstract class Bootstrap
             }
 
             # 没有找到文件且为项目类库，尝试在某个命名空间的类库中寻找
-            foreach (array('library','core') as $type)
+            foreach (array('library', 'core') as $type)
             {
                 foreach (self::$include_path[$type] as $lib_ns=>$path)
                 {
@@ -726,7 +727,7 @@ abstract class Bootstrap
 
                     if ( self::auto_load($ns_class_name) )
                     {
-                        if ( !$is_alias && class_exists($class_name,false) )
+                        if ( !$is_alias && class_exists($class_name, false) )
                         {
                             # 在加载$ns_class_name时，当前需要的类库有可能被加载了，直接返回true
                             return true;
@@ -742,7 +743,7 @@ abstract class Bootstrap
             }
         }
 
-        if (class_exists($class_name,false))
+        if (class_exists($class_name, false))
         {
             return true;
         }
@@ -792,7 +793,7 @@ abstract class Bootstrap
             }
             else
             {
-                $class_name = str_replace('.','_',$found['ns']).'_'.$found['class'];
+                $class_name = str_replace('.', '_', $found['ns']).'_'.$found['class'];
             }
 
             if (class_exists($class_name,false))
@@ -818,15 +819,15 @@ abstract class Bootstrap
 
                 $action_name = 'action_'.$action;
 
-                if (!method_exists($controller,$action_name))
+                if (!method_exists($controller, $action_name))
                 {
-                    if ($action_name!='action_default' && method_exists($controller,'action_default'))
+                    if ($action_name!='action_default' && method_exists($controller, 'action_default'))
                     {
                         $action_name='action_default';
                     }
-                    elseif (method_exists($controller,'__call'))
+                    elseif (method_exists($controller, '__call'))
                     {
-                        $controller->__call($action_name,$arguments);
+                        $controller->__call($action_name, $arguments);
 
                         self::rm_controoler($controller);
                         return;
@@ -835,7 +836,7 @@ abstract class Bootstrap
                     {
                         self::rm_controoler($controller);
 
-                        throw new Exception(__('Page Not Found'),404);
+                        throw new Exception(__('Page Not Found'), 404);
                     }
                 }
                 else
@@ -843,12 +844,12 @@ abstract class Bootstrap
                     array_shift($arguments);
                 }
 
-                $ispublicmethod = new ReflectionMethod($controller,$action_name);
+                $ispublicmethod = new ReflectionMethod($controller, $action_name);
                 if (!$ispublicmethod->isPublic())
                 {
                     self::rm_controoler($controller);
 
-                    throw new Exception(__('Request Method Not Allowed.'),405);
+                    throw new Exception(__('Request Method Not Allowed.'), 405);
                 }
                 unset($ispublicmethod);
 
@@ -860,7 +861,7 @@ abstract class Bootstrap
                 if (IS_SYSTEM_MODE)
                 {
                     # 系统内部调用参数
-                    $controller->arguments = @unserialize(HttpIO::POST('data',HttpIO::PARAM_TYPE_OLDDATA));
+                    $controller->arguments = @unserialize(HttpIO::POST('data', HttpIO::PARAM_TYPE_OLDDATA));
                 }
                 else
                 {
@@ -868,7 +869,7 @@ abstract class Bootstrap
                 }
 
                 # 前置方法
-                if (method_exists($controller,'before'))
+                if (method_exists($controller, 'before'))
                 {
                     $controller->before();
                 }
@@ -898,7 +899,7 @@ abstract class Bootstrap
                 }
 
                 # 后置方法
-                if (method_exists($controller,'after'))
+                if (method_exists($controller, 'after'))
                 {
                     $controller->after();
                 }
@@ -910,12 +911,12 @@ abstract class Bootstrap
             }
             else
             {
-                throw new Exception(__('Page Not Found'),404);
+                throw new Exception(__('Page Not Found'), 404);
             }
         }
         else
         {
-            throw new Exception(__('Page Not Found'),404);
+            throw new Exception(__('Page Not Found'), 404);
         }
     }
 
@@ -965,7 +966,7 @@ abstract class Bootstrap
             $file = strtolower(str_replace('_', '/', $file));
             if (null===$ext)$the_ext = '.class'.EXT;
         }
-        else if ( $dir == 'models' )
+        else if ($dir == 'models')
         {
             $file = strtolower(str_replace('_', '/', $file));
             if (null===$ext)$the_ext = '.model'.EXT;
@@ -975,30 +976,30 @@ abstract class Bootstrap
             $file = strtolower(str_replace('_', '/', $file));
             if (null===$ext)$the_ext = '.controller'.EXT;
 
-            if ( IS_SYSTEM_MODE )
+            if (IS_SYSTEM_MODE)
             {
                 $dir .= '/[system]';
             }
-            elseif ( IS_CLI )
+            elseif (IS_CLI)
             {
                 $dir .= '/[shell]';
             }
-            elseif ( IS_ADMIN_MODE )
+            elseif (IS_ADMIN_MODE)
             {
                 $dir .= '/[admin]';
             }
         }
-        elseif ( $dir=='i18n' || $dir=='config' )
+        elseif ($dir=='i18n' || $dir=='config')
         {
             if (null===$ext)$the_ext = '.lang';
             $only_need_one_file = false;
         }
-        elseif ( $dir=='views' )
+        elseif ($dir=='views')
         {
             if (null===$ext)$the_ext = '.view'.EXT;
             $file = strtolower($file);
         }
-        elseif ( $dir == 'orm' )
+        elseif ($dir == 'orm')
         {
             if (null===$ext)$the_ext = '.orm'.EXT;
             #orm
@@ -1013,7 +1014,7 @@ abstract class Bootstrap
         # 采用当前项目目录
         $include_path = self::$include_path;
 
-        foreach ( $include_path as $the_path )
+        foreach ($include_path as $the_path)
         {
             foreach ($the_path as $path)
             {
@@ -1021,7 +1022,8 @@ abstract class Bootstrap
                 {
                     # config 在 debug开启的情况下读取debug
                     $tmpfile_debug = $path . $dir . DS . $file . '.debug' . $the_ext;
-                    if ( is_file($tmpfile_debug) )
+
+                    if (is_file($tmpfile_debug))
                     {
                         $found_files[] = $tmpfile_debug;
                     }
@@ -1083,7 +1085,7 @@ abstract class Bootstrap
 
             $config_file = $set[1].'config'.EXT;
 
-            if ( is_file($config_file) )
+            if (is_file($config_file))
             {
                 $config_files[] = $config_file;
             }
@@ -1113,20 +1115,20 @@ abstract class Bootstrap
         $lib_arr = explode('.',$lib);
         if (count($lib_arr)!=3 || $lib_arr[0]!='com')
         {
-            throw new Exception(__('Library name :lib error',array(':lib'=>$lib)));
+            throw new Exception(__('Library name :lib error', array(':lib'=>$lib)));
         }
 
         $dir = DIR_LIBRARY . $lib_arr[1] . DS . $lib_arr[2] . DS;
-        $ns = preg_replace('#[^a-z0-9\.]#','',$lib_arr[1].'.'.$lib_arr[2]);
+        $ns = preg_replace('#[^a-z0-9\.]#', '', $lib_arr[1].'.'.$lib_arr[2]);
 
         if (isset(self::$include_path[$type][$ns]))
         {
-            return array($ns,$dir);
+            return array($ns, $dir);
         }
 
         if (!is_dir($dir))
         {
-            throw new Exception(__('Library :lib not exist.',array(':lib'=>$lib)));
+            throw new Exception(__('Library :lib not exist.', array(':lib'=>$lib)));
         }
 
         # 合并目录
@@ -1271,7 +1273,7 @@ abstract class Bootstrap
 
         if (IS_DEBUG)
         {
-            Core::debug()->log($uri,'find controller uri');
+            Core::debug()->log($uri, 'find controller uri');
         }
 
         $include_path = self::$include_path;
@@ -1370,7 +1372,8 @@ abstract class Bootstrap
                 }
                 elseif (is_numeric($tmp_class))
                 {
-                    $the_id = array(
+                    $the_id = array
+                    (
                         $tmp_class
                     );
                     $tmp_class = '_id';
@@ -1382,7 +1385,7 @@ abstract class Bootstrap
 
                 $real_class = $tmp_class;
 
-                foreach ( $all_path as $tmp_arr )
+                foreach ($all_path as $tmp_arr)
                 {
                     list($ns, $tmp_path, $real_path, $ids) = $tmp_arr;
                     $path_str = $real_path;
@@ -1416,14 +1419,14 @@ abstract class Bootstrap
         if (IS_DEBUG)
         {
             Core::debug()->group('find controller path');
-            foreach ( $find_path_log as $value )
+            foreach ($find_path_log as $value)
             {
                 Core::debug()->log($value);
             }
             Core::debug()->groupEnd();
 
             Core::debug()->group('find controller file');
-            foreach ( $find_log as $value )
+            foreach ($find_log as $value)
             {
                 Core::debug()->log($value);
             }
@@ -1433,11 +1436,11 @@ abstract class Bootstrap
             {
                 $found2 = $found;
                 $found2['file'] = Core::debug_path($found2['file']);
-                Core::debug()->log($found2,'found contoller');
+                Core::debug()->log($found2, 'found contoller');
             }
             else
             {
-                Core::debug()->log($uri,'not found contoller');
+                Core::debug()->log($uri, 'not found contoller');
             }
         }
 
@@ -1450,14 +1453,14 @@ abstract class Bootstrap
     private static function setup_by_url( & $request_mode )
     {
         # 当没有$_SERVER["SCRIPT_URL"] 时拼接起来
-        if ( !isset($_SERVER['SCRIPT_URL']) )
+        if (!isset($_SERVER['SCRIPT_URL']))
         {
             $tmp_uri = explode('?', $_SERVER['REQUEST_URI'] ,2);
             $_SERVER['SCRIPT_URL'] = $tmp_uri[0];
         }
 
         # 当没有$_SERVER["SCRIPT_URI"] 时拼接起来
-        if ( !isset($_SERVER['SCRIPT_URI']) )
+        if (!isset($_SERVER['SCRIPT_URI']))
         {
             $_SERVER['SCRIPT_URI'] = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS']=='on'?'https':'http').'://'.$_SERVER['HTTP_HOST'].$_SERVER['SCRIPT_URL'];
         }
@@ -1475,7 +1478,7 @@ abstract class Bootstrap
                 $base_url = substr($_SERVER["SCRIPT_NAME"], 0, $base_url_len);
                 if (preg_match('#^(.*)/wwwroot$#', $base_url, $m))
                 {
-                # 特殊处理wwwroot目录
+                    # 特殊处理wwwroot目录
                     $base_url     = $m[1];
                     $base_url_len = strlen($base_url);
                 }
@@ -1496,16 +1499,19 @@ abstract class Bootstrap
             if ( isset($_SERVER['REQUEST_URI']) )
             {
                 $request_uri = $_SERVER['REQUEST_URI'];
-                $root_uri = '/'.substr($_SERVER['SCRIPT_FILENAME'],strlen($_SERVER['DOCUMENT_ROOT']));
-                $index_file = 'index'.EXT;
-                if (substr($root_uri,-strlen($index_file))==$index_file)
+                $root_uri    = '/'.substr($_SERVER['SCRIPT_FILENAME'], strlen($_SERVER['DOCUMENT_ROOT']));
+                $index_file  = 'index'.EXT;
+
+                if (substr($root_uri, -strlen($index_file))==$index_file)
                 {
-                    $root_uri = substr($root_uri,0,-strlen($index_file));
+                    $root_uri = substr($root_uri, 0, -strlen($index_file));
                 }
+
                 if ($root_uri && $root_uri!='/')
                 {
                     $request_uri = substr($request_uri, strlen($root_uri));
                 }
+
                 list($pathinfo) = explode('?', $request_uri, 2);
             }
             elseif ( isset($_SERVER['PHP_SELF']) )
@@ -1607,14 +1613,14 @@ abstract class Bootstrap
     private static function _show_error($msg)
     {
         # 尝试加载Core类
-        if ( class_exists('Core',true) )
+        if (class_exists('Core', true))
         {
             Core::show_500($msg);
         }
 
         header('Content-Type: text/html;charset=utf-8');
 
-        if ( isset( $_SERVER['SERVER_PROTOCOL'] ) )
+        if (isset($_SERVER['SERVER_PROTOCOL']))
         {
             $protocol = $_SERVER['SERVER_PROTOCOL'];
         }
@@ -1638,9 +1644,9 @@ abstract class Bootstrap
      */
     private static function _is_online_debug()
     {
-        if ( IS_SYSTEM_MODE )
+        if (IS_SYSTEM_MODE)
         {
-            if ( isset($_SERVER['HTTP_X_MYQEE_SYSTEM_DEBUG']) && $_SERVER['HTTP_X_MYQEE_SYSTEM_DEBUG']=='1' )
+            if (isset($_SERVER['HTTP_X_MYQEE_SYSTEM_DEBUG']) && $_SERVER['HTTP_X_MYQEE_SYSTEM_DEBUG']=='1')
             {
                 return true;
             }
@@ -1650,12 +1656,12 @@ abstract class Bootstrap
             }
         }
 
-        if ( !isset($_COOKIE['_debug_open']) ) return false;
-        if ( !isset(self::$core_config['debug_open_password']) ) return false;
-        if ( !is_array( self::$core_config['debug_open_password']) ) self::$core_config['debug_open_password'] = array( (string) self::$core_config['debug_open_password'] );
-        foreach ( self::$core_config['debug_open_password'] as $username => $password )
+        if (!isset($_COOKIE['_debug_open'])) return false;
+        if (!isset(self::$core_config['debug_open_password'])) return false;
+        if (!is_array( self::$core_config['debug_open_password'])) self::$core_config['debug_open_password'] = array( (string) self::$core_config['debug_open_password'] );
+        foreach (self::$core_config['debug_open_password'] as $username => $password)
         {
-            if ( $_COOKIE['_debug_open'] == self::get_debug_hash( $username , $password ) )
+            if ($_COOKIE['_debug_open'] == self::get_debug_hash( $username , $password ))
             {
                 return true;
             }
@@ -1718,10 +1724,11 @@ abstract class Bootstrap
             return true;
         }
 
-        $u = rtrim( u, '/');
-        if ( strpos($u, '://') )
+        $u = rtrim($u, '/');
+
+        if (strpos($u, '://'))
         {
-            $tmppath = self::protocol() . $_SERVER["HTTP_HOST"] . '/' . ltrim( $pathinfo, '/' );
+            $tmppath = self::protocol() . $_SERVER["HTTP_HOST"] . '/' . ltrim($pathinfo, '/');
         }
         else
         {

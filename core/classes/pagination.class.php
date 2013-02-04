@@ -73,16 +73,16 @@ class Core_Pagination
     // Item offset for the last item displayed on the current page
     protected $current_last_item;
 
-    // Previous page number; FALSE if the current page is the first one
+    // Previous page number; false if the current page is the first one
     protected $previous_page;
 
-    // Next page number; FALSE if the current page is the last one
+    // Next page number; false if the current page is the last one
     protected $next_page;
 
-    // First page number; FALSE if the current page is the first one
+    // First page number; false if the current page is the first one
     protected $first_page;
 
-    // Last page number; FALSE if the current page is the last one
+    // Last page number; false if the current page is the last one
     protected $last_page;
 
     // Query offset
@@ -130,7 +130,7 @@ class Core_Pagination
         $config['group'] = (string)$group;
 
         // Recursively load requested config groups
-        while ( isset($config['group']) and isset($config_file->$config['group']) )
+        while (isset($config['group']) && isset($config_file->$config['group']))
         {
             // Temporarily store config group name
             $group = $config['group'];
@@ -166,23 +166,24 @@ class Core_Pagination
         $this->config = $config + $this->config;
 
         // Only (re)calculate pagination when needed
-        if ( $this->current_page === null or isset($config['current_page']) or isset($config['total_items']) or isset($config['items_per_page']) )
+        if ($this->current_page === null || isset($config['current_page']) || isset($config['total_items']) || isset($config['items_per_page']))
         {
             // Retrieve the current page number
-            if ( !empty($this->config['current_page']['page']) )
+            if (!empty($this->config['current_page']['page']))
             {
                 // The current page number has been set manually
                 $this->current_page = (int)$this->config['current_page']['page'];
             }
             else
             {
-                switch ( $this->config['current_page']['source'] )
+                switch ($this->config['current_page']['source'])
                 {
                     case 'query_string' :
                         $this->current_page = isset($_GET[$this->config['current_page']['key']]) ? (int)$_GET[$this->config['current_page']['key']] : 1;
                         break;
                     case 'route' :
                         $this->current_page = (int)HttpIO::param($this->config['current_page']['key'], 1);
+                        break;
                     case 'default' :
                     default :
                         $this->current_page = isset( HttpIO::$params['arguments'][$this->config['current_page']['key']] ) ? (int)HttpIO::$params['arguments'][$this->config['current_page']['key']] : 1;
@@ -191,17 +192,17 @@ class Core_Pagination
             }
 
             // Calculate and clean all pagination variables
-            $this->total_items = (int)max(0, $this->config['total_items']);
-            $this->items_per_page = (int)max(1, $this->config['items_per_page']);
-            $this->total_pages = (int)ceil($this->total_items / $this->items_per_page);
-            $this->current_page = (int)min(max(1, $this->current_page), max(1, $this->total_pages));
+            $this->total_items        = (int)max(0, $this->config['total_items']);
+            $this->items_per_page     = (int)max(1, $this->config['items_per_page']);
+            $this->total_pages        = (int)ceil($this->total_items / $this->items_per_page);
+            $this->current_page       = (int)min(max(1, $this->current_page), max(1, $this->total_pages));
             $this->current_first_item = (int)min((($this->current_page - 1) * $this->items_per_page) + 1, $this->total_items);
-            $this->current_last_item = (int)min($this->current_first_item + $this->items_per_page - 1, $this->total_items);
-            $this->previous_page = ($this->current_page > 1) ? $this->current_page - 1 : FALSE;
-            $this->next_page = ($this->current_page < $this->total_pages) ? $this->current_page + 1 : FALSE;
-            $this->first_page = ($this->current_page === 1) ? FALSE : 1;
-            $this->last_page = ($this->current_page >= $this->total_pages) ? FALSE : $this->total_pages;
-            $this->offset = (int)(($this->current_page - 1) * $this->items_per_page);
+            $this->current_last_item  = (int)min($this->current_first_item + $this->items_per_page - 1, $this->total_items);
+            $this->previous_page      = ($this->current_page > 1) ? $this->current_page - 1 : false;
+            $this->next_page          = ($this->current_page < $this->total_pages) ? $this->current_page + 1 : false;
+            $this->first_page         = ($this->current_page === 1) ? false : 1;
+            $this->last_page          = ($this->current_page >= $this->total_pages) ? false : $this->total_pages;
+            $this->offset             = (int)(($this->current_page - 1) * $this->items_per_page);
         }
 
         // Chainable method
@@ -257,7 +258,7 @@ class Core_Pagination
     public function valid_page($page)
     {
         $page = (int)$page;
-        if ( !$page > 0 ) return FALSE;
+        if (!$page > 0) return false;
 
         return $page > 0 and $page <= $this->total_pages;
     }

@@ -65,12 +65,12 @@ class Core_IpSource
         $ipdot[0] = (int)$ipdot[0];
         $ipdot[1] = (int)$ipdot[1];
 
-        if ( $fp === NULL && $fp = @fopen($ipdatafile, 'rb') )
+        if (null===$fp && $fp = @fopen($ipdatafile, 'rb'))
         {
             $offset = @unpack('Nlen', @fread($fp, 4));
             $index = @fread($fp, $offset['len'] - 4);
         }
-        elseif ( $fp == FALSE )
+        elseif (false==$fp)
         {
             return 'Invalid IP data file';
         }
@@ -129,7 +129,7 @@ class Core_IpSource
 
             fseek($fd, $ipbegin + 7 * $Middle);
             $ipData1 = fread($fd, 4);
-            if ( strlen($ipData1) < 4 )
+            if (strlen($ipData1) < 4)
             {
                 fclose($fd);
                 return 'System Error';

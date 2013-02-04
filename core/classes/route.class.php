@@ -24,6 +24,7 @@ class Core_Route
 
     /**
      * 当前路由名
+     *
      * @var string
      */
     public static $current_route;
@@ -47,20 +48,20 @@ class Core_Route
      */
     public function get($pathinfo)
     {
-        if ( !isset(Route::$regex[Core::$project]) )
+        if (!isset(Route::$regex[Core::$project]))
         {
             # 构造路由正则
             $this->init_regex();
         }
 
         # 当前Route
-        $route = Core::config('core.route');
+        $route = Core::config('route');
 
-        foreach ( Route::$regex[Core::$project] as $k => $v )
+        foreach (Route::$regex[Core::$project] as $k => $v)
         {
-            if ( isset($route[$k]['for']) )
+            if (isset($route[$k]['for']))
             {
-                if ( $route[$k]['for'] != Core::$project_url )
+                if ($route[$k]['for'] != Core::$project_url)
                 {
                     # 如果路由不是为当前url设置的则或略
                     continue;
@@ -80,24 +81,24 @@ class Core_Route
     /**
      * 根据路由获取URI，为get方法相反操作
      *
-     * @param   array   URI parameters
+     * @param   array URI parameters
      * @return  string
      * @throws  Exception
      * @uses    Route::REGEX_Key
      */
     public static function uri(array $params = null)
     {
-        if ( !isset(Route::$regex[Core::$project]) )
+        if (!isset(Route::$regex[Core::$project]))
         {
             # 构造路由正则
             $this->init_regex();
         }
 
-        $current_route = Core::config('core.route.'.Route::$current_route);
+        $current_route = Core::config('route.'.Route::$current_route);
 
         if (!isset($current_route['default']) || !is_array($current_route['default']))$current_route['default'] = array();
 
-        if ( null===$params )
+        if (null===$params)
         {
             // 使用默认参数
             $params = $current_route['default'];
@@ -111,7 +112,7 @@ class Core_Route
         // 获取URI
         $uri = $current_route['uri'];
 
-        if ( strpos($uri, '<') === false && strpos($uri, '(') === false )
+        if (strpos($uri, '<') === false && strpos($uri, '(') === false)
         {
             // This is a static route, no need to replace anything
             return $uri;
@@ -119,7 +120,7 @@ class Core_Route
 
         $provided_optional = false;
 
-        while ( preg_match('#\([^()]++\)#', $uri, $match) )
+        while (preg_match('#\([^()]++\)#', $uri, $match))
         {
             // Search for the matched value
             $search = $match[0];
@@ -127,11 +128,11 @@ class Core_Route
             // Remove the parenthesis from the match as the replace
             $replace = substr($match[0], 1, -1);
 
-            while ( preg_match('#' . Route::REGEX_KEY . '#', $replace, $match) )
+            while (preg_match('#' . Route::REGEX_KEY . '#', $replace, $match))
             {
-                list ( $key, $param ) = $match;
+                list ($key, $param) = $match;
 
-                if ( isset($params[$param]) && ($params[$param]!==Route::arr_get($current_route['default'],$param)) )
+                if (isset($params[$param]) && ($params[$param]!==Route::arr_get($current_route['default'],$param)))
                 {
                     $provided_optional = true;
 
@@ -148,9 +149,7 @@ class Core_Route
                     else
                     {
                         // Ungrouped parameters are required
-                        throw new Exception(__('Required route parameter not passed: :param', array(
-                                ':param' => $param,
-                        )));
+                        throw new Exception(__('Required route parameter not passed: :param', array(':param' => $param)));
                     }
                 }
                 else
@@ -165,7 +164,7 @@ class Core_Route
             $uri = str_replace($search, $replace, $uri);
         }
 
-        while ( preg_match('#' . Route::REGEX_KEY . '#', $uri, $match) )
+        while (preg_match('#' . Route::REGEX_KEY . '#', $uri, $match))
         {
             list($key, $param) = $match;
 
@@ -178,9 +177,7 @@ class Core_Route
                 else
                 {
                     // Ungrouped parameters are required
-                    throw new Exception(__('Required route parameter not passed: :param', array(
-                            ':param' => $param,
-                    )));
+                    throw new Exception(__('Required route parameter not passed: :param', array(':param' => $param)));
                 }
             }
 
@@ -190,14 +187,14 @@ class Core_Route
         // Trim all extra slashes from the URI
         $uri = preg_replace('#//+#', '/', rtrim($uri, '/'));
 
-        if ( isset($current_route['defaults']['host']) )
+        if (isset($current_route['defaults']['host']))
         {
-            if ( false===strpos($current_route['defaults']['host'], '://') )
+            if (false===strpos($current_route['defaults']['host'], '://'))
             {
                 $host = HttpIO::PROTOCOL.$host;
             }
 
-            $uri = rtrim($host, '/').'/'.$uri;
+            $uri = rtrim($host, '/') . '/' . $uri;
         }
 
         return $uri;
@@ -213,7 +210,7 @@ class Core_Route
         Route::$regex[Core::$project] = array();
 
         # 获取路由配置
-        $route = Core::config('core.route');
+        $route = Core::config('route');
 
         # 如果有
         if ($route)
@@ -235,7 +232,7 @@ class Core_Route
      */
     protected static function _matches($uri, $route_name)
     {
-        if ( !$route_name || !(isset(Route::$regex[Core::$project][$route_name])) )
+        if (!$route_name || !(isset(Route::$regex[Core::$project][$route_name])))
         {
             return false;
         }
@@ -245,20 +242,22 @@ class Core_Route
             Core::debug()->group('路由匹配');
             Core::debug()->info(array('URI:' => $uri, 'Route:' => Route::$regex[Core::$project][$route_name]),'匹配');
         }
-        if ( !preg_match(Route::$regex[Core::$project][$route_name], $uri, $matches) )
+
+        if (!preg_match(Route::$regex[Core::$project][$route_name], $uri, $matches))
         {
             if (IS_DEBUG)
             {
                 Core::debug()->info('↑未匹配到当前路由');
                 Core::debug()->groupEnd();
             }
+
             return false;
         }
 
         $params = array();
-        foreach ( $matches as $key => $value )
+        foreach ($matches as $key => $value)
         {
-            if ( is_int($key) )
+            if (is_int($key))
             {
                 // 跳过
                 continue;
@@ -267,27 +266,27 @@ class Core_Route
             $params[$key] = $value;
         }
 
-        $route_config = Core::config('core.route.'.$route_name);
+        $route_config = Core::config('route.'.$route_name);
         if ($route_config)
         {
-            if (isset($route_config['default']) && is_array($route_config['default']))foreach( $route_config['default'] as $key => $value )
+            if (isset($route_config['default']) && is_array($route_config['default']))foreach($route_config['default'] as $key => $value)
             {
-                if ( !isset($params[$key]) || $params[$key] === '' )
+                if (!isset($params[$key]) || $params[$key] === '')
                 {
                     $params[$key] = $value;
                 }
             }
 
             // 处理回调过滤
-            if (isset($route_config['filters']) && is_array($route_config['filters']))foreach( $route_config['filters'] as $callback )
+            if (isset($route_config['filters']) && is_array($route_config['filters']))foreach($route_config['filters'] as $callback)
             {
                 $return = call_user_func($callback, $params);
 
-                if ( false===$return )
+                if (false===$return)
                 {
                     $params = false;
                 }
-                elseif ( is_array($return) )
+                elseif (is_array($return))
                 {
                     $params = $return;
                 }
@@ -309,7 +308,7 @@ class Core_Route
         // Escape everything preg_quote would escape except for : ( ) < >
         $regex = preg_replace('#' . Route::REGEX_ESCAPE . '#', '\\\\$0', $route['uri']);
 
-        if ( strpos($regex, '(') !== false )
+        if (strpos($regex, '(') !== false)
         {
             // Make optional parts of the URI non-capturing and optional
             $regex = str_replace(array('(', ')'), array('(?:', ')?'), $regex);
@@ -318,10 +317,10 @@ class Core_Route
         // Insert default regex for keys
         $regex = str_replace(array('<', '>'), array('(?P<', '>' . Route::REGEX_SEGMENT . ')'), $regex);
 
-        if ( !empty($route['preg']) )
+        if (!empty($route['preg']))
         {
             $search = $replace = array();
-            foreach ( $route['preg'] as $key => $value )
+            foreach ($route['preg'] as $key => $value)
             {
                 $search[]  = "<$key>" . Route::REGEX_SEGMENT;
                 $replace[] = "<$key>$value";

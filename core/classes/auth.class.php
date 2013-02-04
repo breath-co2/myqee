@@ -45,9 +45,9 @@ class Core_Auth
     /**
      * @return Auth
      */
-    public static function instance( $config_name='default' )
+    public static function instance($config_name='default')
     {
-        if ( null === Auth::$instance )
+        if (null===Auth::$instance)
         {
             // Create a new instance
             Auth::$instance = new Auth($config_name);
@@ -55,7 +55,7 @@ class Core_Auth
         return Auth::$instance;
     }
 
-    public function __construct( $config_name='default' )
+    public function __construct($config_name='default')
     {
         $this->config_name = $config_name;
         $this->config = Core::config('auth.'.$config_name);
@@ -69,7 +69,7 @@ class Core_Auth
      * @return Member
      * @throws Exception
      */
-    public function check_user( $username, $password )
+    public function check_user($username, $password)
     {
         $member = $this->get_member_by_username($username);
 
@@ -94,9 +94,9 @@ class Core_Auth
      * @param string $username
      * @return 用户对象，不存在则返回false
      */
-    public function get_member_by_username( $username )
+    public function get_member_by_username($username)
     {
-        if ( !isset(Auth::$user_info[$this->config_name][$username]) )
+        if (!isset(Auth::$user_info[$this->config_name][$username]))
         {
             if ( $this->config['driver']==Auth::DRIVER_DATABASE )
             {

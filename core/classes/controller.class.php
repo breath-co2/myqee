@@ -61,7 +61,7 @@ class Core_Controller
     public function _callback_set_vars($data)
     {
         # 将路由信息传入到控制器变量中
-        foreach ( $data as $key => $value )
+        foreach ($data as $key => $value)
         {
             $this->$key = $value;
         }
@@ -131,7 +131,7 @@ class Core_Controller
      * @param string $message
      * @param int $code
      */
-    public function show_message( $msg , $code=0 , $data = array() )
+    public function show_message($msg, $code=0, $data = array())
     {
         $out = array
         (
@@ -140,7 +140,7 @@ class Core_Controller
             'data' => $data,
         );
 
-        if ( IS_SYSTEM_MODE )
+        if (IS_SYSTEM_MODE)
         {
             // 系统内部调用模式
 
@@ -148,7 +148,8 @@ class Core_Controller
 
             exit;
         }
-        if ( HttpIO::IS_AJAX )
+
+        if (HttpIO::IS_AJAX)
         {
             @header('Content-Type:application/json');
             echo json_encode($out);
@@ -160,7 +161,7 @@ class Core_Controller
             View::factory((IS_ADMIN_MODE?'admin/':'').'message',$out)->render(true);
         }
 
-        if ( method_exists($this,'after') )
+        if (method_exists($this,'after'))
         {
             $this->after();
         }
@@ -173,13 +174,13 @@ class Core_Controller
      *
      * @param string $message
      */
-    public function show_success( $message = 'success' , $data = array() )
+    public function show_success($message = 'success', $data = array())
     {
-        $this->show_message($message,1,$data);
+        $this->show_message($message, 1, $data);
     }
 
-    public function show_error( $message = 'error' , $data = array() )
+    public function show_error($message = 'error', $data = array())
     {
-        $this->show_message($message,-1,$data);
+        $this->show_message($message, -1, $data);
     }
 }

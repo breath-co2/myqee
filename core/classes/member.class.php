@@ -1,6 +1,6 @@
 <?php
 
-if ( !class_exists('ORM_Member_Data',true) )
+if (!class_exists('ORM_Member_Data',true))
 {
     class ORM_Member_Data extends OOP_ORM_Data
     {
@@ -67,6 +67,13 @@ class Core_Member extends ORM_Member_Data
     public $email;
 
     /**
+     * 当前用户随机码
+     *
+     * @var string
+     */
+    public $rand_code;
+
+    /**
      * 用户自定义权限
      *
      * 请使用$this->perm()方法获取对象
@@ -87,9 +94,9 @@ class Core_Member extends ORM_Member_Data
      *
      * @param string $password
      */
-    public function check_password( $password )
+    public function check_password($password)
     {
-        if ( $this->_get_password_hash($password) == $this->password )
+        if ($this->_get_password_hash($password) == $this->password)
         {
             return true;
         }
@@ -107,7 +114,9 @@ class Core_Member extends ORM_Member_Data
      */
     protected function _get_password_hash($password)
     {
-        return md5($this->username . '||$34#@_' . $password);
+        $rand_code = $this->rand_code?$this->rand_code:'||$34#@_';
+
+        return md5($this->username . $rand_code . $password);
     }
 
     /**
@@ -129,7 +138,7 @@ class Core_Member extends ORM_Member_Data
      */
     public function perm()
     {
-        if ( null===$this->_permission )
+        if (null===$this->_permission)
         {
             $this->_permission = new Permission($this->perm_setting);
         }

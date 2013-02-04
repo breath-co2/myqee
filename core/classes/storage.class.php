@@ -102,9 +102,9 @@ class Core_Storage
         }
 
         $driver = 'Storage_Driver_' . $this->config['driver'];
-        if (!class_exists($driver,true))
+        if (!class_exists($driver, true))
         {
-            throw new Exception(__('The :type driver :driver does not exist',array(':type'=>'Storge',':driver'=>$this->config['driver'])));
+            throw new Exception(__('The :type driver :driver does not exist', array(':type'=>'Storge',':driver'=>$this->config['driver'])));
         }
 
         $this->driver = new $driver($this->config['driver_config']);
@@ -216,16 +216,7 @@ class Core_Storage
 
     public function __call($method, $params)
     {
-        try
-        {
-            return call_user_func_array(array($this->driver,$method) , $params);
-        }
-        catch (Exception $e)
-        {
-            $this->last_error_msg = $e->getMessage();
-            $this->last_error_no  = $e->getCode();
-            return false;
-        }
+        return call_user_func_array(array($this->driver,$method) , $params);
     }
 
 }

@@ -50,9 +50,9 @@ class Core_UTF8
      */
     public static function clean($var, $charset = 'UTF-8')
     {
-        if ( is_array($var) or is_object($var) )
+        if (is_array($var) || is_object($var))
         {
-            foreach ( $var as $key => $val )
+            foreach ($var as $key => $val)
             {
                 // Recursion!
                 $var[self::clean($key)] = self::clean($val);
@@ -256,9 +256,10 @@ class Core_UTF8
 
         if ( $case >= 0 )
         {
-            if ( $UTF8_UPPER_ACCENTS === null )
+            if (null===$UTF8_UPPER_ACCENTS)
             {
-                $UTF8_UPPER_ACCENTS = array(
+                $UTF8_UPPER_ACCENTS = array
+                (
                     'À' => 'A',
                     'Ô' => 'O',
                     'Ď' => 'D',
@@ -383,9 +384,9 @@ class Core_UTF8
      */
     public static function strlen($str)
     {
-        if ( IS_MBSTRING ) return mb_strlen($str, Core::$charset);
+        if (IS_MBSTRING)return mb_strlen($str, Core::$charset);
 
-        if ( UTF8::is_ascii($str) ) return strlen($str);
+        if (UTF8::is_ascii($str))return strlen($str);
         return strlen(utf8_decode($str));
     }
 
@@ -407,9 +408,9 @@ class Core_UTF8
     {
         $offset = (int)$offset;
 
-        if ( IS_MBSTRING ) return mb_strpos($str, $search, $offset, Core::$charset);
+        if (IS_MBSTRING) return mb_strpos($str, $search, $offset, Core::$charset);
 
-        if ( UTF8::is_ascii($str) and UTF8::is_ascii($search) ) return strpos($str, $search, $offset);
+        if (UTF8::is_ascii($str) && UTF8::is_ascii($search) ) return strpos($str, $search, $offset);
 
         if ( $offset == 0 )
         {
@@ -440,7 +441,7 @@ class Core_UTF8
     {
         $offset = (int)$offset;
 
-        if ( IS_MBSTRING ) return mb_strrpos($str, $search, $offset, Core::$charset);
+        if (IS_MBSTRING) return mb_strrpos($str, $search, $offset, Core::$charset);
 
         if ( UTF8::is_ascii($str) and UTF8::is_ascii($search) ) return strrpos($str, $search, $offset);
 
@@ -471,7 +472,7 @@ class Core_UTF8
      */
     public static function substr($str, $offset, $length = null)
     {
-        if ( IS_MBSTRING ) return ($length === null) ? mb_substr($str, $offset, mb_strlen($str), Core::$charset) : mb_substr($str, $offset, $length, Core::$charset);
+        if (IS_MBSTRING)return ($length === null) ? mb_substr($str, $offset, mb_strlen($str), Core::$charset) : mb_substr($str, $offset, $length, Core::$charset);
 
         if ( UTF8::is_ascii($str) ) return ($length === null) ? substr($str, $offset) : substr($str, $offset, $length);
 
@@ -568,7 +569,7 @@ class Core_UTF8
      */
     public static function strtolower($str)
     {
-        if ( IS_MBSTRING ) return mb_strtolower($str, Core::$charset);
+        if (IS_MBSTRING)return mb_strtolower($str, Core::$charset);
 
         if ( UTF8::is_ascii($str) ) return strtolower($str);
 
@@ -819,9 +820,9 @@ class Core_UTF8
      */
     public static function strtoupper($str)
     {
-        if ( IS_MBSTRING ) return mb_strtoupper($str, Core::$charset);
+        if (IS_MBSTRING)return mb_strtoupper($str, Core::$charset);
 
-        if ( UTF8::is_ascii($str) ) return strtoupper($str);
+        if (UTF8::is_ascii($str)) return strtoupper($str);
 
         static $UTF8_LOWER_TO_UPPER = null;
 
@@ -1070,7 +1071,7 @@ class Core_UTF8
      */
     public static function ucfirst($str)
     {
-        if ( UTF8::is_ascii($str) ) return ucfirst($str);
+        if (UTF8::is_ascii($str))return ucfirst($str);
 
         preg_match('/^(.?)(.*)$/us', $str, $matches);
         return UTF8::strtoupper($matches[1]) . $matches[2];
@@ -1089,7 +1090,7 @@ class Core_UTF8
      */
     public static function ucwords($str)
     {
-        if ( UTF8::is_ascii($str) ) return ucwords($str);
+        if (UTF8::is_ascii($str))return ucwords($str);
 
         // [\x0c\x09\x0b\x0a\x0d\x20] matches form feeds, horizontal tabs, vertical tabs, linefeeds and carriage returns.
         // This corresponds to the definition of a 'word' defined at http://php.net/ucwords
@@ -1111,7 +1112,7 @@ class Core_UTF8
      */
     public static function strcasecmp($str1, $str2)
     {
-        if ( UTF8::is_ascii($str1) and UTF8::is_ascii($str2) ) return strcasecmp($str1, $str2);
+        if ( UTF8::is_ascii($str1) && UTF8::is_ascii($str2) ) return strcasecmp($str1, $str2);
 
         $str1 = UTF8::strtolower($str1);
         $str2 = UTF8::strtolower($str2);
@@ -1136,7 +1137,7 @@ class Core_UTF8
      */
     public static function str_ireplace($search, $replace, $str, & $count = null)
     {
-        if ( UTF8::is_ascii($search) and UTF8::is_ascii($replace) and UTF8::is_ascii($str) ) return str_ireplace($search, $replace, $str, $count);
+        if ( UTF8::is_ascii($search) && UTF8::is_ascii($replace) and UTF8::is_ascii($str) ) return str_ireplace($search, $replace, $str, $count);
 
         if ( is_array($str) )
         {
@@ -1238,11 +1239,11 @@ class Core_UTF8
      */
     public static function strspn($str, $mask, $offset = null, $length = null)
     {
-        if ( $str == '' or $mask == '' ) return 0;
+        if ( $str == '' || $mask == '' ) return 0;
 
         if ( UTF8::is_ascii($str) and UTF8::is_ascii($mask) ) return ($offset === null) ? strspn($str, $mask) : (($length === null) ? strspn($str, $mask, $offset) : strspn($str, $mask, $offset, $length));
 
-        if ( $offset !== null or $length !== null )
+        if ( $offset !== null || $length !== null )
         {
             $str = UTF8::substr($str, $offset, $length);
         }
@@ -1270,11 +1271,11 @@ class Core_UTF8
      */
     public static function strcspn($str, $mask, $offset = null, $length = null)
     {
-        if ( $str == '' or $mask == '' ) return 0;
+        if ( $str == '' || $mask == '' ) return 0;
 
-        if ( UTF8::is_ascii($str) and UTF8::is_ascii($mask) ) return ($offset === null) ? strcspn($str, $mask) : (($length === null) ? strcspn($str, $mask, $offset) : strcspn($str, $mask, $offset, $length));
+        if ( UTF8::is_ascii($str) && UTF8::is_ascii($mask) ) return ($offset === null) ? strcspn($str, $mask) : (($length === null) ? strcspn($str, $mask, $offset) : strcspn($str, $mask, $offset, $length));
 
-        if ( $offset !== null or $length !== null )
+        if ( $offset !== null || $length !== null )
         {
             $str = UTF8::substr($str, $offset, $length);
         }
@@ -1302,11 +1303,11 @@ class Core_UTF8
      */
     public static function str_pad($str, $final_str_length, $pad_str = ' ', $pad_type = STR_PAD_RIGHT)
     {
-        if ( UTF8::is_ascii($str) and UTF8::is_ascii($pad_str) ) return str_pad($str, $final_str_length, $pad_str, $pad_type);
+        if ( UTF8::is_ascii($str) && UTF8::is_ascii($pad_str) ) return str_pad($str, $final_str_length, $pad_str, $pad_type);
 
         $str_length = UTF8::strlen($str);
 
-        if ( $final_str_length <= 0 or $final_str_length <= $str_length ) return $str;
+        if ( $final_str_length <= 0 || $final_str_length <= $str_length ) return $str;
 
         $pad_str_length = UTF8::strlen($pad_str);
         $pad_length = $final_str_length - $str_length;
