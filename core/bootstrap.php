@@ -586,7 +586,7 @@ abstract class Bootstrap
      */
     public static function auto_load($class_name)
     {
-        if (class_exists($class_name,false))return true;
+        if (class_exists($class_name, false))return true;
 
         # 移除两边的
         $class_name = strtolower(trim($class_name, '\\ '));
@@ -617,14 +617,17 @@ abstract class Bootstrap
             $new_class_name = $class_name;
         }
 
-        $pos = strpos($new_class_name, '_');
-        if (false!==$pos)
+        $new_class_arr = explode('_', $new_class_name, 2);
+
+        if (count($new_class_arr)===2)
         {
-            $type = substr($new_class_name, 0, $pos);
+            $type = $new_class_arr[0];
+            $class_file_name = $new_class_arr[1];
         }
         else
         {
             $type = 'class';
+            $class_file_name = $new_class_name;
         }
 
         if (isset(self::$dir_setting[$type]))
@@ -671,11 +674,12 @@ abstract class Bootstrap
                 {
                     foreach (self::$include_path[$type] as $path)
                     {
-                        $tmp_file = $path . $dir_setting[0] . DS . $new_class_name . $dir_setting[1] . EXT;
+                        $tmp_file = $path . $dir_setting[0] . DS . $class_file_name . $dir_setting[1] . EXT;
+
                         if (is_file($tmp_file))
                         {
                             require $tmp_file;
-                            if (class_exists($class_name,false))return true;
+                            if (class_exists($class_name, false))return true;
                         }
                     }
                 }
@@ -752,15 +756,15 @@ abstract class Bootstrap
     public static function find_file($dir, $file, $ext=null, $auto_require=false)
     {
         # 处理后缀
-        if ( null===$ext )
+        if (null===$ext)
         {
             $the_ext = EXT;
         }
-        elseif ( false===$ext || ''===$ext )
+        elseif (false===$ext || ''===$ext)
         {
             $the_ext = '';
         }
-        elseif ( $ext[0]!='.' )
+        elseif ($ext[0]!='.')
         {
             $the_ext = '.'.$ext;
         }
@@ -771,17 +775,17 @@ abstract class Bootstrap
         if ($dir == 'classes')
         {
             $file = strtolower(str_replace('_', '/', $file));
-            if (null===$ext)$the_ext = '.class'.EXT;
+            if (null===$ext)$the_ext = '.class' . EXT;
         }
         else if ($dir == 'models')
         {
             $file = strtolower(str_replace('_', '/', $file));
-            if (null===$ext)$the_ext = '.model'.EXT;
+            if (null===$ext)$the_ext = '.model' . EXT;
         }
         else if ( $dir == 'controllers' )
         {
             $file = strtolower(str_replace('_', '/', $file));
-            if (null===$ext)$the_ext = '.controller'.EXT;
+            if (null===$ext)$the_ext = '.controller' . EXT;
 
             if (IS_SYSTEM_MODE)
             {
@@ -803,12 +807,12 @@ abstract class Bootstrap
         }
         elseif ($dir=='views')
         {
-            if (null===$ext)$the_ext = '.view'.EXT;
+            if (null===$ext)$the_ext = '.view' . EXT;
             $file = strtolower($file);
         }
         elseif ($dir == 'orm')
         {
-            if (null===$ext)$the_ext = '.orm'.EXT;
+            if (null===$ext)$the_ext = '.orm' . EXT;
             #orm
             $file = preg_replace('#^(.*)_[a-z0-9]+$#i', '$1', $file);
             $file = strtolower(str_replace('_', '/', $file));
