@@ -132,89 +132,127 @@ abstract class Core_Core extends Bootstrap
 
     /**
      * 系统启动
-     * @param string $pathinfo
+     *
+     * @param boolean $auto_execute 是否直接运行
      */
-    public static function setup($auto_run = true)
+    public static function setup($auto_execute = true)
     {
         static $run = null;
-        if ( true === $run )
+
+        if (null===$run)
         {
-            if ($auto_run)
+            $run = true;
+
+            Core::$charset = Core::$core_config['charset'];
+
+            if (!IS_CLI)
             {
-                Core::run();
+                # 输出powered by信息
+                header('X-Powered-By: PHP/' . PHP_VERSION . ' MyQEE/' . Core::VERSION );
             }
-            return;
+
+            if (IS_DEBUG)
+            {
+                Core::debug()->info('SERVER IP:' . $_SERVER["SERVER_ADDR"] . (function_exists('php_uname')?'. SERVER NAME:' . php_uname('a') : ''));
+
+                if (Core::$project)
+                {
+                    Core::debug()->info('project: '.Core::$project);
+                }
+
+                if (IS_ADMIN_MODE)
+                {
+                    Core::debug()->info('admin mode');
+                }
+
+                Core::debug()->group('include path');
+                foreach ( Core::include_path() as $value )
+                {
+                    Core::debug()->log(Core::debug_path($value));
+                }
+                Core::debug()->groupEnd();
+            }
+
+            if ((IS_CLI || IS_DEBUG) && class_exists('ErrException', true))
+            {
+                # 注册脚本
+                register_shutdown_function(array('ErrException', 'shutdown_handler'));
+                # 捕获错误
+                set_exception_handler(array('ErrException', 'exception_handler'));
+                set_error_handler(array('ErrException', 'error_handler'), error_reporting());
+            }
+            else
+            {
+                # 注册脚本
+                register_shutdown_function(array('Core', 'shutdown_handler'));
+                # 捕获错误
+                set_exception_handler(array('Core', 'exception_handler'));
+                set_error_handler(array('Core', 'error_handler'), error_reporting());
+            }
+
+            if (!IS_CLI)
+            {
+                # 初始化 HttpIO 对象
+                HttpIO::setup();
+            }
+
+            # 注册输出函数
+            register_shutdown_function(array('Core', '_output_body'));
+
+            if (true===IS_SYSTEM_MODE)
+            {
+                if (false===Core::check_system_request_allow() )
+                {
+                    # 内部请求验证不通过
+                    Core::show_500('system request hash error');
+                }
+            }
+
+            if (IS_DEBUG && isset($_REQUEST['debug']) && class_exists('Profiler', true))
+            {
+                Profiler::setup();
+            }
         }
-        $run = true;
 
-        Core::$charset = Core::$core_config['charset'];
-
-        if (!IS_CLI)
+        if ($auto_execute)
         {
-            # 输出powered by信息
-            header('X-Powered-By: PHP/' . PHP_VERSION . ' MyQEE/' . Core::VERSION );
+            Core::run();
         }
+    }
 
-        if (IS_DEBUG)
+    protected static function run()
+    {
+        if (IS_CLI || IS_SYSTEM_MODE)
         {
-            Core::debug()->info('SERVER IP:' . $_SERVER["SERVER_ADDR"] . (function_exists('php_uname')?'. SERVER NAME:' . php_uname('a') : ''));
-
-            if (Core::$project)
-            {
-                Core::debug()->info('project: '.Core::$project);
-            }
-
-            if (IS_ADMIN_MODE)
-            {
-                Core::debug()->info('admin mode');
-            }
-
-            Core::debug()->group('include path');
-            foreach ( Core::include_path() as $value )
-            {
-                Core::debug()->log(Core::debug_path($value));
-            }
-            Core::debug()->groupEnd();
-        }
-
-        if ((IS_CLI || IS_DEBUG) && class_exists('ErrException', true))
-        {
-            # 注册脚本
-            register_shutdown_function(array('ErrException', 'shutdown_handler'));
-            # 捕获错误
-            set_exception_handler(array('ErrException', 'exception_handler'));
-            set_error_handler(array('ErrException', 'error_handler'), error_reporting());
+            Core::execute(Core::$path_info);
         }
         else
         {
-            # 注册脚本
-            register_shutdown_function(array('Core', 'shutdown_handler'));
-            # 捕获错误
-            set_exception_handler(array('Core', 'exception_handler'));
-            set_error_handler(array('Core', 'error_handler'), error_reporting());
-        }
+            ob_start();
 
-        if (!IS_CLI)
-        {
-            # 初始化 HttpIO 对象
-            HttpIO::setup();
-        }
-
-        # 注册输出函数
-        register_shutdown_function(array('Core', '_output_body'));
-
-        if (true===IS_SYSTEM_MODE)
-        {
-            if (false===Core::check_system_request_allow() )
+            try
             {
-                # 内部请求验证不通过
-                Core::show_500('system request hash error');
+                Core::execute(Core::$path_info);
             }
-        }
+            catch (Exception $e)
+            {
+                $code = $e->getCode();
 
-        if (IS_DEBUG && isset($_REQUEST['debug']) && class_exists('Profiler', true))
-        {
-            Profiler::setup();
+                if (404===$code || E_PAGE_NOT_FOUND===$code)
+                {
+                    Core::show_404($e->getMessage());
+                }
+                elseif (500===$code)
+                {
+                    Core::show_500($e->getMessage());
+                }
+                else
+                {
+                    Core::show_500($e->getMessage(), $code);
+                }
+            }
+
+            Core::$output = ob_get_clean();
         }
     }
 
@@ -336,7 +374,7 @@ abstract class Core_Core extends Bootstrap
      */
     public static function load_controller($uri)
     {
-        $found = self::find_controller($uri);
+        $found = Core::find_controller($uri);
 
         if ($found)
         {
@@ -390,6 +428,375 @@ abstract class Core_Core extends Bootstrap
         # 保存日志
         return Core::write_log($data, $type);
     }
+
+    /**
+     * 执行指定URI的控制器
+     *
+     * @param string $uri
+     */
+    public static function execute($uri)
+    {
+        $found = Core::find_controller($uri);
+
+        if ($found)
+        {
+            require $found['file'];
+
+            if ($found['ns']=='team_library'||$found['ns']=='project')
+            {
+                $class_name = $found['class'];
+            }
+            else
+            {
+                $class_name = str_replace('.', '_', $found['ns']).'_'.$found['class'];
+            }
+
+            if (class_exists($class_name,false))
+            {
+
+                $controller = new $class_name();
+
+                Controller::$controllers[] = $controller;
+
+                $arguments = $found['args'];
+                if ($arguments)
+                {
+                    $action = current($arguments);
+                    if (0===strlen($action))
+                    {
+                        $action = 'default';
+                    }
+                }
+                else
+                {
+                    $action = 'index';
+                }
+
+                $action_name = 'action_'.$action;
+
+                if (!method_exists($controller, $action_name))
+                {
+                    if ($action_name!='action_default' && method_exists($controller, 'action_default'))
+                    {
+                        $action_name='action_default';
+                    }
+                    elseif (method_exists($controller, '__call'))
+                    {
+                        $controller->__call($action_name, $arguments);
+
+                        Core::rm_controoler($controller);
+                        return;
+                    }
+                    else
+                    {
+                        Core::rm_controoler($controller);
+
+                        throw new Exception(__('Page Not Found'), 404);
+                    }
+                }
+                else
+                {
+                    array_shift($arguments);
+                }
+
+                $ispublicmethod = new ReflectionMethod($controller, $action_name);
+                if (!$ispublicmethod->isPublic())
+                {
+                    Core::rm_controoler($controller);
+
+                    throw new Exception(__('Request Method Not Allowed.'), 405);
+                }
+                unset($ispublicmethod);
+
+                # 将参数传递给控制器
+                $controller->action     = $action_name;
+                $controller->controller = $found['class'];
+                $controller->ids        = $found['ids'];
+
+                if (IS_SYSTEM_MODE)
+                {
+                    # 系统内部调用参数
+                    $controller->arguments = @unserialize(HttpIO::POST('data', HttpIO::PARAM_TYPE_OLDDATA));
+                }
+                else
+                {
+                    $controller->arguments = $arguments;
+                }
+
+                # 前置方法
+                if (method_exists($controller, 'before'))
+                {
+                    $controller->before();
+                }
+
+                # 执行方法
+                $count_arguments = count($arguments);
+                switch ($count_arguments)
+                {
+                    case 0:
+                        $controller->$action_name();
+                        break;
+                    case 1:
+                        $controller->$action_name($arguments[0]);
+                        break;
+                    case 2:
+                        $controller->$action_name($arguments[0], $arguments[1]);
+                        break;
+                    case 3:
+                        $controller->$action_name($arguments[0], $arguments[1], $arguments[2]);
+                        break;
+                    case 4:
+                        $controller->$action_name($arguments[0], $arguments[1], $arguments[2], $arguments[3]);
+                        break;
+                    default:
+                        call_user_func_array(array($controller, $action_name), $arguments);
+                        break;
+                }
+
+                # 后置方法
+                if (method_exists($controller, 'after'))
+                {
+                    $controller->after();
+                }
+
+                # 移除控制器
+                Core::rm_controoler($controller);
+
+                unset($controller);
+            }
+            else
+            {
+                throw new Exception(__('Page Not Found'), 404);
+            }
+        }
+        else
+        {
+            throw new Exception(__('Page Not Found'), 404);
+        }
+    }
+
+    protected static function rm_controoler($controller)
+    {
+        foreach (Controller::$controllers as $k=>$c)
+        {
+            if ($c===$controller)unset(Controller::$controllers[$k]);
+        }
+
+        Controller::$controllers = array_values(Controller::$controllers);
+    }
+
+    /**
+     * 寻找控制器
+     *
+     * @return array
+     */
+    protected function find_controller($uri)
+    {
+        $uri = '/' . trim($uri, ' /');
+
+        if (Core::$core_config['url_suffix'] && substr(strtolower($uri), -strlen(Core::$core_config['url_suffix']))==Core::$core_config['url_suffix'])
+        {
+            $uri = substr($uri, 0, -strlen(Core::$core_config['url_suffix']));
+        }
+
+        if ($uri!='/')
+        {
+            $uri_arr = explode('/', strtolower($uri));
+        }
+        else
+        {
+            $uri_arr = array('');
+        }
+
+        if (IS_DEBUG)
+        {
+            Core::debug()->log($uri, 'find controller uri');
+        }
+
+        $include_path = Core::$include_path;
+
+        # log
+        $find_log = $find_path_log = array();
+
+        # 控制器目录
+        $controller_dir = Core::$dir_setting['controller'][0];
+
+        if (IS_SYSTEM_MODE)
+        {
+            $controller_dir .= DS.'[system]';
+        }
+        elseif (IS_ADMIN_MODE)
+        {
+            $controller_dir .= DS.'[admin]';
+        }
+        elseif (IS_CLI)
+        {
+            $controller_dir .= DS.'[shell]';
+        }
+
+        # 首先找到存在的目录
+        $found_path = array();
+        foreach ($include_path as $ns => $ipath)
+        {
+            foreach ($ipath as $path)
+            {
+                $tmp_str = $real_path = $real_class = '';
+                $tmp_path = $path . $controller_dir;
+                $ids = array();
+                foreach ($uri_arr as $uri_path)
+                {
+                    if (is_numeric($uri_path))
+                    {
+                        $real_uri_path = '_id';
+                        $ids[] = $uri_path;
+                    }
+                    elseif ($uri_path == '_id')
+                    {
+                        # 不允许直接在URL中使用_id
+                        break;
+                    }
+                    elseif (preg_match('#[^a-z0-9_]#i', $uri_path))
+                    {
+                        # 不允许非a-z0-9_的字符在控制中
+                        break;
+                    }
+                    else
+                    {
+                        $real_uri_path = $uri_path;
+                    }
+
+                    $tmpdir = $tmp_path . $real_path . $real_uri_path . DS;
+                    if (IS_DEBUG)
+                    {
+                        $find_path_log[] = Core::debug_path($tmpdir);
+                    }
+                    $real_path  .= $real_uri_path . DS;
+                    $real_class .= $real_uri_path . '_';
+                    $tmp_str    .= $uri_path . DS;
+
+                    if (is_dir($tmpdir))
+                    {
+                        $found_path[$tmp_str][] = array
+                        (
+                            $ns,
+                            $tmpdir,
+                            ltrim($real_class, '_'),
+                            $ids
+                        );
+                    }
+                    else
+                    {
+                        break;
+                    }
+                }
+            }
+        }
+
+        unset($ids);
+        $found = null;
+
+        # 寻找可能的文件
+        if ($found_path)
+        {
+            # 调整优先级
+            krsort($found_path);
+
+            foreach ($found_path as $path => $all_path)
+            {
+                $tmp_p = substr($uri, strlen($path));
+                if ($tmp_p)
+                {
+                    $args = explode('/', substr($uri, strlen($path)));
+                }
+                else
+                {
+                    $args = array();
+                }
+
+                $the_id = array();
+                $tmp_class = array_shift($args);
+
+                if (0===strlen($tmp_class))
+                {
+                    $tmp_class = 'index';
+                }
+                elseif (is_numeric($tmp_class))
+                {
+                    $the_id = array
+                    (
+                        $tmp_class
+                    );
+                    $tmp_class = '_id';
+                }
+                elseif ($tmp_class == '_id')
+                {
+                    continue;
+                }
+
+                $real_class = $tmp_class;
+
+                foreach ($all_path as $tmp_arr)
+                {
+                    list($ns, $tmp_path, $real_path, $ids) = $tmp_arr;
+                    $path_str = $real_path;
+                    $tmpfile = $tmp_path . strtolower($tmp_class) . Core::$dir_setting['controller'][1] . EXT;
+                    if (IS_DEBUG)
+                    {
+                        $find_log[] = Core::debug_path($tmpfile);
+                    }
+
+                    if (is_file($tmpfile))
+                    {
+                        if ($the_id)
+                        {
+                            $ids = array_merge($ids, $the_id);
+                        }
+                        $found = array
+                        (
+                            'file'   => $tmpfile,
+                            'ns'     => $ns,
+                            'class'  => 'Controller_' . $path_str . $real_class,
+                            'args'   => $args,
+                            'ids'    => $ids,
+                        );
+
+                        break 2;
+                    }
+                }
+            }
+        }
+
+        if (IS_DEBUG)
+        {
+            Core::debug()->group('find controller path');
+            foreach ($find_path_log as $value)
+            {
+                Core::debug()->log($value);
+            }
+            Core::debug()->groupEnd();
+
+            Core::debug()->group('find controller file');
+            foreach ($find_log as $value)
+            {
+                Core::debug()->log($value);
+            }
+            Core::debug()->groupEnd();
+
+            if ($found)
+            {
+                $found2 = $found;
+                $found2['file'] = Core::debug_path($found2['file']);
+                Core::debug()->log($found2, 'found contoller');
+            }
+            else
+            {
+                Core::debug()->log($uri, 'not found contoller');
+            }
+        }
+
+        return $found;
+    }
+
 
     /**
     * 写入日志

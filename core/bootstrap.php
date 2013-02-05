@@ -374,7 +374,7 @@ abstract class Bootstrap
      *
      * @var array
      */
-    private static $dir_setting = array
+    protected static $dir_setting = array
     (
         'class'      => array('classes'     , '.class'),
         'controller' => array('controllers' , '.controller'),
@@ -399,7 +399,7 @@ abstract class Bootstrap
             spl_autoload_register(array('Bootstrap', 'auto_load'));
 
             # 读取配置
-            if ( !is_file(DIR_SYSTEM.'config'.EXT) )
+            if (!is_file(DIR_SYSTEM.'config'.EXT))
             {
                 self::_show_error(__('Please rename the file config.new:EXT to config:EXT', array(':EXT'=>EXT)));
             }
@@ -410,7 +410,7 @@ abstract class Bootstrap
             if ( isset(self::$core_config['local_debug_cfg']) && self::$core_config['local_debug_cfg'] )
             {
                 # 判断是否开启了本地调试
-                if ( function_exists('get_cfg_var') )
+                if (function_exists('get_cfg_var'))
                 {
                     $open_debug = get_cfg_var(self::$core_config['local_debug_cfg'])?1:0;
                 }
@@ -573,46 +573,9 @@ abstract class Bootstrap
 
             # 加载类库
             self::reload_all_libraries();
-
-            Core::setup();
         }
 
-        # 直接执行
-        if ($auto_execute)
-        {
-            if (IS_CLI || IS_SYSTEM_MODE)
-            {
-                self::execute(self::$path_info);
-            }
-            else
-            {
-                ob_start();
-
-                try
-                {
-                    self::execute(self::$path_info);
-                }
-                catch (Exception $e)
-                {
-                    $code = $e->getCode();
-
-                    if (404===$code || E_PAGE_NOT_FOUND===$code)
-                    {
-                        Core::show_404($e->getMessage());
-                    }
-                    elseif (500===$code)
-                    {
-                        Core::show_500($e->getMessage());
-                    }
-                    else
-                    {
-                        Core::show_500($e->getMessage(), $code);
-                    }
-                }
-
-                Core::$output = ob_get_clean();
-            }
-        }
+        Core::setup($auto_execute);
     }
 
     /**
@@ -623,10 +586,10 @@ abstract class Bootstrap
      */
     public static function auto_load($class_name)
     {
-        if ( class_exists($class_name,false) )return true;
+        if (class_exists($class_name,false))return true;
 
         # 移除两边的
-        $class_name = strtolower(trim($class_name), '\\ ');
+        $class_name = strtolower(trim($class_name, '\\ '));
 
         $class_name_array = explode('_', $class_name, 2);
         $is_alias = false;
@@ -645,7 +608,7 @@ abstract class Bootstrap
         }
         else if (preg_match('#^library_((?:[a-z0-9]+)_(?:[a-z0-9]+))_([a-z0-9_]+)$#', $class_name,$m))
         {
-            $ns = 'library/'.str_replace('_','/',$m[1]);
+            $ns = 'library/' . str_replace('_', '/', $m[1]);
             $new_class_name = $m[2];
         }
         else
@@ -772,162 +735,6 @@ abstract class Bootstrap
         }
 
         return $arr;
-    }
-
-    /**
-     * 执行指定URI的控制器
-     *
-     * @param string $uri
-     */
-    public static function execute($uri)
-    {
-        $found = self::find_controller($uri);
-
-        if ($found)
-        {
-            require $found['file'];
-
-            if ($found['ns']=='team_library'||$found['ns']=='project')
-            {
-                $class_name = $found['class'];
-            }
-            else
-            {
-                $class_name = str_replace('.', '_', $found['ns']).'_'.$found['class'];
-            }
-
-            if (class_exists($class_name,false))
-            {
-
-                $controller = new $class_name();
-
-                Controller::$controllers[] = $controller;
-
-                $arguments = $found['args'];
-                if ($arguments)
-                {
-                    $action = current($arguments);
-                    if (0===strlen($action))
-                    {
-                        $action = 'default';
-                    }
-                }
-                else
-                {
-                    $action = 'index';
-                }
-
-                $action_name = 'action_'.$action;
-
-                if (!method_exists($controller, $action_name))
-                {
-                    if ($action_name!='action_default' && method_exists($controller, 'action_default'))
-                    {
-                        $action_name='action_default';
-                    }
-                    elseif (method_exists($controller, '__call'))
-                    {
-                        $controller->__call($action_name, $arguments);
-
-                        self::rm_controoler($controller);
-                        return;
-                    }
-                    else
-                    {
-                        self::rm_controoler($controller);
-
-                        throw new Exception(__('Page Not Found'), 404);
-                    }
-                }
-                else
-                {
-                    array_shift($arguments);
-                }
-
-                $ispublicmethod = new ReflectionMethod($controller, $action_name);
-                if (!$ispublicmethod->isPublic())
-                {
-                    self::rm_controoler($controller);
-
-                    throw new Exception(__('Request Method Not Allowed.'), 405);
-                }
-                unset($ispublicmethod);
-
-                # 将参数传递给控制器
-                $controller->action     = $action_name;
-                $controller->controller = $found['class'];
-                $controller->ids        = $found['ids'];
-
-                if (IS_SYSTEM_MODE)
-                {
-                    # 系统内部调用参数
-                    $controller->arguments = @unserialize(HttpIO::POST('data', HttpIO::PARAM_TYPE_OLDDATA));
-                }
-                else
-                {
-                    $controller->arguments = $arguments;
-                }
-
-                # 前置方法
-                if (method_exists($controller, 'before'))
-                {
-                    $controller->before();
-                }
-
-                # 执行方法
-                $count_arguments = count($arguments);
-                switch ($count_arguments)
-                {
-                    case 0:
-                        $controller->$action_name();
-                        break;
-                    case 1:
-                        $controller->$action_name($arguments[0]);
-                        break;
-                    case 2:
-                        $controller->$action_name($arguments[0], $arguments[1]);
-                        break;
-                    case 3:
-                        $controller->$action_name($arguments[0], $arguments[1], $arguments[2]);
-                        break;
-                    case 4:
-                        $controller->$action_name($arguments[0], $arguments[1], $arguments[2], $arguments[3]);
-                        break;
-                    default:
-                        call_user_func_array(array($controller, $action_name), $arguments);
-                        break;
-                }
-
-                # 后置方法
-                if (method_exists($controller, 'after'))
-                {
-                    $controller->after();
-                }
-
-                # 移除控制器
-                self::rm_controoler($controller);
-
-                unset($controller);
-            }
-            else
-            {
-                throw new Exception(__('Page Not Found'), 404);
-            }
-        }
-        else
-        {
-            throw new Exception(__('Page Not Found'), 404);
-        }
-    }
-
-    private static function rm_controoler($controller)
-    {
-        foreach (Controller::$controllers as $k=>$c)
-        {
-            if ($c===$controller)unset(Controller::$controllers[$k]);
-        }
-
-        Controller::$controllers = array_values(Controller::$controllers);
     }
 
     /**
@@ -1164,7 +971,7 @@ abstract class Bootstrap
 
         if (null===$protocol)
         {
-            if ( IS_CLI )
+            if (IS_CLI)
             {
                 return null;
             }
@@ -1202,6 +1009,7 @@ abstract class Bootstrap
     {
         # 加载类库
         $lib_config = self::$core_config['libraries'];
+
         foreach (array('autoload', 'cli', 'admin', 'debug') as $type)
         {
             if (!isset($lib_config[$type]) || !$lib_config[$type])continue;
@@ -1231,11 +1039,12 @@ abstract class Bootstrap
 
         # 反向排序，从最后一个开始导入
         $include_path = array_reverse(self::include_path());
+
         foreach ($include_path as $path)
         {
             $config_file = $path . 'config' . EXT;
 
-            if ( is_file($config_file) )
+            if (is_file($config_file))
             {
                 $config_files[] = $config_file;
             }
@@ -1249,208 +1058,9 @@ abstract class Bootstrap
     }
 
     /**
-     * 寻找控制器
-     *
-     * @return array
-     */
-    protected function find_controller($uri)
-    {
-        $uri = '/' . trim($uri, ' /');
-
-        if (self::$core_config['url_suffix'] && substr(strtolower($uri),-strlen(self::$core_config['url_suffix']))==self::$core_config['url_suffix'])
-        {
-            $uri = substr($uri,0,-strlen(self::$core_config['url_suffix']));
-        }
-
-        if ($uri != '/')
-        {
-            $uri_arr = explode('/', strtolower($uri));
-        }
-        else
-        {
-            $uri_arr = array('');
-        }
-
-        if (IS_DEBUG)
-        {
-            Core::debug()->log($uri, 'find controller uri');
-        }
-
-        $include_path = self::$include_path;
-
-        # log
-        $find_log = $find_path_log = array();
-
-        # 控制器目录
-        $controller_dir = 'controllers';
-
-        # 首先找到存在的目录
-        $found_path = array();
-        foreach ( $include_path as $ns => $ipath )
-        {
-            foreach ($ipath as $path)
-            {
-                $tmp_str = $real_path = $real_class = '';
-                $tmp_path = $path . self::$dir_setting['controller'][0];
-                $ids = array();
-                foreach ( $uri_arr as $uri_path )
-                {
-                    if (is_numeric($uri_path))
-                    {
-                        $real_uri_path = '_id';
-                        $ids[] = $uri_path;
-                    }
-                    elseif ($uri_path == '_id')
-                    {
-                        # 不允许直接在URL中使用_id
-                        break;
-                    }
-                    elseif (preg_match('#[^a-z0-9_]#i', $uri_path))
-                    {
-                        # 不允许非a-z0-9_的字符在控制中
-                        break;
-                    }
-                    else
-                    {
-                        $real_uri_path = $uri_path;
-                    }
-
-                    $tmpdir = $tmp_path . $real_path . $real_uri_path . DS;
-                    if (IS_DEBUG)
-                    {
-                        $find_path_log[] = Core::debug_path($tmpdir);
-                    }
-                    $real_path .= $real_uri_path . DS;
-                    $real_class .= $real_uri_path . '_';
-                    $tmp_str .= $uri_path . DS;
-
-                    if (is_dir($tmpdir))
-                    {
-                        $found_path[$tmp_str][] = array
-                        (
-                            $ns,
-                            $tmpdir,
-                            ltrim($real_class,'_'),
-                            $ids
-                        );
-                    }
-                    else
-                    {
-                        break;
-                    }
-                }
-            }
-        }
-
-        unset($ids);
-        $found = null;
-
-        # 寻找可能的文件
-        if ($found_path)
-        {
-            # 调整优先级
-            krsort($found_path);
-
-            foreach ( $found_path as $path => $all_path )
-            {
-                $tmp_p = substr($uri, strlen($path));
-                if ($tmp_p)
-                {
-                    $args = explode('/', substr($uri, strlen($path)));
-                }
-                else
-                {
-                    $args = array();
-                }
-
-                $the_id = array();
-                $tmp_class = array_shift($args);
-
-                if (0 === strlen($tmp_class))
-                {
-                    $tmp_class = 'index';
-                }
-                elseif (is_numeric($tmp_class))
-                {
-                    $the_id = array
-                    (
-                        $tmp_class
-                    );
-                    $tmp_class = '_id';
-                }
-                elseif ($tmp_class == '_id')
-                {
-                    continue;
-                }
-
-                $real_class = $tmp_class;
-
-                foreach ($all_path as $tmp_arr)
-                {
-                    list($ns, $tmp_path, $real_path, $ids) = $tmp_arr;
-                    $path_str = $real_path;
-                    $tmpfile = $tmp_path . strtolower($tmp_class) . self::$dir_setting['controller'][1] . EXT;
-                    if (IS_DEBUG)
-                    {
-                        $find_log[] = Core::debug_path($tmpfile);
-                    }
-
-                    if (is_file($tmpfile))
-                    {
-                        if ($the_id)
-                        {
-                            $ids = array_merge($ids, $the_id);
-                        }
-                        $found = array
-                        (
-                            'file'   => $tmpfile,
-                            'ns'     => $ns,
-                            'class'  => 'Controller_' . $path_str . $real_class,
-                            'args'   => $args,
-                            'ids'    => $ids,
-                        );
-
-                        break 2;
-                    }
-                }
-            }
-        }
-
-        if (IS_DEBUG)
-        {
-            Core::debug()->group('find controller path');
-            foreach ($find_path_log as $value)
-            {
-                Core::debug()->log($value);
-            }
-            Core::debug()->groupEnd();
-
-            Core::debug()->group('find controller file');
-            foreach ($find_log as $value)
-            {
-                Core::debug()->log($value);
-            }
-            Core::debug()->groupEnd();
-
-            if ($found)
-            {
-                $found2 = $found;
-                $found2['file'] = Core::debug_path($found2['file']);
-                Core::debug()->log($found2, 'found contoller');
-            }
-            else
-            {
-                Core::debug()->log($uri, 'not found contoller');
-            }
-        }
-
-        return $found;
-    }
-
-    /**
      * 根据URL初始化
      */
-    private static function setup_by_url( & $request_mode )
+    private static function setup_by_url(&$request_mode)
     {
         # 当没有$_SERVER["SCRIPT_URL"] 时拼接起来
         if (!isset($_SERVER['SCRIPT_URL']))
@@ -1490,13 +1100,13 @@ abstract class Bootstrap
             }
         }
 
-        if ( isset($_SERVER['PATH_INFO']) )
+        if (isset($_SERVER['PATH_INFO']))
         {
             $pathinfo = $_SERVER['PATH_INFO'];
         }
         else
         {
-            if ( isset($_SERVER['REQUEST_URI']) )
+            if (isset($_SERVER['REQUEST_URI']))
             {
                 $request_uri = $_SERVER['REQUEST_URI'];
                 $root_uri    = '/'.substr($_SERVER['SCRIPT_FILENAME'], strlen($_SERVER['DOCUMENT_ROOT']));
@@ -1514,11 +1124,11 @@ abstract class Bootstrap
 
                 list($pathinfo) = explode('?', $request_uri, 2);
             }
-            elseif ( isset($_SERVER['PHP_SELF']) )
+            elseif (isset($_SERVER['PHP_SELF']))
             {
                 $pathinfo = $_SERVER['PHP_SELF'];
             }
-            elseif ( isset($_SERVER['REDIRECT_URL']) )
+            elseif (isset($_SERVER['REDIRECT_URL']))
             {
                 $pathinfo = $_SERVER['REDIRECT_URL'];
             }
@@ -1543,14 +1153,14 @@ abstract class Bootstrap
         self::$path_info = $pathinfo;
 
         # 处理项目
-        foreach ( self::$core_config['projects'] as $project => $item )
+        foreach (self::$core_config['projects'] as $project => $item)
         {
             if (!preg_match('#^[a-z0-9_]+$#i', $project)) continue;
 
             $admin_url = array();
             if (isset($item['admin_url']) && $item['admin_url'])
             {
-                foreach ( (array)$item['admin_url'] as $tmp_url )
+                foreach ((array)$item['admin_url'] as $tmp_url)
                 {
                     if (preg_match('#^http(s)?\://#i', $tmp_url))
                     {
@@ -1574,7 +1184,7 @@ abstract class Bootstrap
 
             if ($item['url'])
             {
-                foreach ( (array)$item['url'] as $url )
+                foreach ((array)$item['url'] as $url)
                 {
                     if (($path_info = self::_get_pathinfo($url)) !== false)
                     {
@@ -1735,7 +1345,7 @@ abstract class Bootstrap
             $tmppath = $pathinfo;
         }
         $len = strlen($u);
-        if ( $len > 0 && substr($tmppath, 0, $len) == $u )
+        if ($len > 0 && substr($tmppath, 0, $len) == $u)
         {
             $pathinfo = substr($tmppath, $len);
             return true;
