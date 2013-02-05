@@ -440,18 +440,33 @@ abstract class Core_Core extends Bootstrap
 
         if ($found)
         {
-            require $found['file'];
-
-            if ($found['ns']=='team_library'||$found['ns']=='project')
+            if (isset($found['route']))
             {
-                $class_name = $found['class'];
+                $class_name   = $found['class'];
+                $class_exists = class_exists($class_name, true);
+                $arguments    = array();
+                if (isset($found['route']['action']) && $found['route']['action'])
+                {
+                    $arguments[] = $found['route']['action'];
+                }
             }
             else
             {
-                $class_name = str_replace('.', '_', $found['ns']).'_'.$found['class'];
+                require $found['file'];
+
+                if ($found['ns']=='team_library' || $found['ns']=='project')
+                {
+                    $class_name = $found['class'];
+                }
+                else
+                {
+                    $class_name = str_replace('.', '_', $found['ns']) . '_' . $found['class'];
+                }
+
+                $class_exists = class_exists($class_name, false);
             }
 
-            if (class_exists($class_name,false))
+            if ($class_exists)
             {
 
                 $controller = new $class_name();
@@ -472,13 +487,13 @@ abstract class Core_Core extends Bootstrap
                     $action = 'index';
                 }
 
-                $action_name = 'action_'.$action;
+                $action_name = 'action_' . $action;
 
                 if (!method_exists($controller, $action_name))
                 {
                     if ($action_name!='action_default' && method_exists($controller, 'action_default'))
                     {
-                        $action_name='action_default';
+                        $action_name = 'action_default';
                     }
                     elseif (method_exists($controller, '__call'))
                     {
@@ -494,12 +509,13 @@ abstract class Core_Core extends Bootstrap
                         throw new Exception(__('Page Not Found'), 404);
                     }
                 }
-                else
+                elseif ($arguments)
                 {
                     array_shift($arguments);
                 }
 
                 $ispublicmethod = new ReflectionMethod($controller, $action_name);
+
                 if (!$ispublicmethod->isPublic())
                 {
                     Core::rm_controoler($controller);
@@ -508,10 +524,23 @@ abstract class Core_Core extends Bootstrap
                 }
                 unset($ispublicmethod);
 
+                if (isset($found['route']))
+                {
+                    # 设置Route参数
+                    foreach ($found['route'] as $k => $v)
+                    {
+                        $controller->$k = $v;
+                    }
+                }
+                else
+                {
+                    $controller->ids = $found['ids'];
+                }
+
                 # 将参数传递给控制器
                 $controller->action     = $action_name;
                 $controller->controller = $found['class'];
-                $controller->ids        = $found['ids'];
+
 
                 if (IS_SYSTEM_MODE)
                 {
@@ -597,6 +626,31 @@ abstract class Core_Core extends Bootstrap
         if (Core::$core_config['url_suffix'] && substr(strtolower($uri), -strlen(Core::$core_config['url_suffix']))==Core::$core_config['url_suffix'])
         {
             $uri = substr($uri, 0, -strlen(Core::$core_config['url_suffix']));
+        }
+
+        if (!IS_SYSTEM_MODE && isset(Core::$config['route']) && Core::$config['route'])
+        {
+            # 有路由配置，首先根据路由配置查询控制器
+            $found_route = Route::get($uri);
+
+            if ($found_route)
+            {
+                if (!isset($found_route['controller']) || !$found_route['controller'])
+                {
+                    if (IS_DEBUG)Core::debug()->error('The route not match controller');
+                    Core::show_404();
+                }
+
+                return array
+                (
+                    'class'  => 'Controller_' . $found_route['controller'],
+                    'route'  => $found_route,
+                );
+            }
+            else
+            {
+                unset($found_route);
+            }
         }
 
         if ($uri!='/')

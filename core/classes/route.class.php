@@ -12,7 +12,6 @@
  */
 class Core_Route
 {
-
     // Defines the pattern of a <segment>
     const REGEX_KEY = '<([a-zA-Z0-9_]++)>';
 
@@ -51,7 +50,7 @@ class Core_Route
         if (!isset(Route::$regex[Core::$project]))
         {
             # 构造路由正则
-            $this->init_regex();
+            Route::init_regex();
         }
 
         # 当前Route
@@ -91,7 +90,7 @@ class Core_Route
         if (!isset(Route::$regex[Core::$project]))
         {
             # 构造路由正则
-            $this->init_regex();
+            Route::init_regex();
         }
 
         $current_route = Core::config('route.'.Route::$current_route);
