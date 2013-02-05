@@ -152,11 +152,6 @@ class Core_Cache_Driver_File extends Cache_Driver
 
         $filename = $this->get_filename_by_key($key);
 
-        if (!file_exists($filename))
-        {
-            return true;
-        }
-
         return File::unlink($filename, $this->storage);
     }
 

@@ -174,10 +174,12 @@ abstract class Core_Database_Driver
     public function transaction()
     {
         $tr_name = 'Database_Driver_'.$this->config['type'].'_Transaction';
-        if ( !class_exists($tr_name,true) )
+
+        if (!class_exists($tr_name, true))
         {
-            throw new Exception(__('the transaction of :driver not exist.',array(':driver'=>$this->config['type'])));
+            throw new Exception(__('the transaction of :driver not exist.', array(':driver'=>$this->config['type'])));
         }
+
         return new $tr_name($this);
     }
 
@@ -212,7 +214,7 @@ abstract class Core_Database_Driver
             if ($exclude_hosts && $type!='master' && in_array($hostname, $exclude_hosts))
             {
                 # 如果相应的slave都已不可获取，则改由获取master
-                return $this->_get_rand_host($exclude_hosts,'master');
+                return $this->_get_rand_host($exclude_hosts, 'master');
             }
 
             return $hostname;
@@ -224,14 +226,15 @@ abstract class Core_Database_Driver
         {
             if ($exclude_hosts)
             {
-                $hostconfig = array_diff($hostconfig,$exclude_hosts);
+                $hostconfig = array_diff($hostconfig, $exclude_hosts);
             }
 
             $hostconfig = array_values($hostconfig);
             $count = count($hostconfig);
+
             if ($count==0)
             {
-                if ( $type!='master' )
+                if ($type!='master')
                 {
                     return $this->_get_rand_host($exclude_hosts,'master');
                 }
@@ -248,7 +251,7 @@ abstract class Core_Database_Driver
         }
         else
         {
-            if ( in_array($hostconfig, $exclude_hosts) )
+            if (in_array($hostconfig, $exclude_hosts))
             {
                 return false;
             }
@@ -295,12 +298,12 @@ abstract class Core_Database_Driver
      *
      * @param string $value
      */
-    protected function _change_charset( &$value )
+    protected function _change_charset(&$value)
     {
-        if ( $this->config['auto_change_charset'] && $this->config['charset'] !='UTF8' )
+        if ($this->config['auto_change_charset'] && $this->config['charset']!='UTF8')
         {
             # 转换编码编码
-            if ( IS_MBSTRING )
+            if (IS_MBSTRING)
             {
                 $value = (string)mb_convert_encoding($value, $this->config['data_charset'],'UTF-8');
             }
