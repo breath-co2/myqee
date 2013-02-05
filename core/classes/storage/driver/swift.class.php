@@ -25,9 +25,9 @@ class Core_Storage_Driver_Swift extends Storage_Driver
     /**
      * 授权失效时间
      *
-     * @var string
+     * @var int
      */
-    protected $token_timeout;
+    protected $token_timeout = 180;
 
     /**
      * Swift服务器版本
