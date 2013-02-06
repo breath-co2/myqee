@@ -131,6 +131,20 @@ abstract class Core_Core extends Bootstrap
     protected static $close_connect_class_list = array();
 
     /**
+     * import_library回调函数列表
+     *
+     * @var array
+     */
+    protected static $import_library_callback = array();
+
+    /**
+     * change_project回调函数列表
+     *
+     * @var array
+     */
+    protected static $change_project_callback = array();
+
+    /**
      * 系统启动
      *
      * @param boolean $auto_execute 是否直接运行
@@ -327,7 +341,7 @@ abstract class Core_Core extends Bootstrap
      */
     public static function url($url = '' , $need_full_url = false)
     {
-        list($url,$query) = explode('?', $url , 2);
+        list($url, $query) = explode('?', $url , 2);
 
         $url = Core::$base_url. ltrim($url,'/') . ($url!='' && substr($url,-1)!='/' && false===strpos($url,'.') && Core::$config['url_suffix']?Core::$config['url_suffix']:'') . ($query?'?'.$query:'');
 
@@ -1434,17 +1448,17 @@ abstract class Core_Core extends Bootstrap
     /**
      * 根据$objName返回一个实例化并静态存储的对象
      *
-     * @param string $objName
+     * @param string $obj_name
      * @param string $key
      */
-    public static function factory($objName, $key = '')
+    public static function factory($obj_name, $key = '')
     {
-        if ( !isset(Core::$instances[$objName][$key]) )
+        if (!isset(Core::$instances[$obj_name][$key]))
         {
-            Core::$instances[$objName][$key] = new $objName($key);
+            Core::$instances[$obj_name][$key] = new $obj_name($key);
         }
 
-        return Core::$instances[$objName][$key];
+        return Core::$instances[$obj_name][$key];
     }
 
     /**
@@ -1452,29 +1466,29 @@ abstract class Core_Core extends Bootstrap
      *
      * 通常在批处理后操作，可有效的释放getFactory静态缓存的对象
      *
-     * @param string $objNamen 对象名称 不传的话则清除全部
+     * @param string $obj_name 对象名称 不传的话则清除全部
      * @param string $key 对象关键字 不传的话则清除$objName里的所有对象
      */
-    public static function factory_release($objName = null, $key = null)
+    public static function factory_release($obj_name = null, $key = null)
     {
         if (IS_CLI || IS_DEBUG)
         {
             $old_memory = memory_get_usage();
         }
 
-        if  (null===$objName)
+        if  (null===$obj_name)
         {
             Core::$instances = array();
         }
-        elseif (isset(Core::$instances[$objName]))
+        elseif (isset(Core::$instances[$obj_name]))
         {
             if (null===$key)
             {
-                unset(Core::$instances[$objName]);
+                unset(Core::$instances[$obj_name]);
             }
             else
             {
-                unset(Core::$instances[$objName][$key]);
+                unset(Core::$instances[$obj_name][$key]);
             }
         }
 
@@ -1495,7 +1509,7 @@ abstract class Core_Core extends Bootstrap
      */
     public static function reset_project()
     {
-        if ( defined('INITIAL_PROJECT_NAME') && INITIAL_PROJECT_NAME != Core::$project )
+        if (defined('INITIAL_PROJECT_NAME') && INITIAL_PROJECT_NAME != Core::$project)
         {
             Core::change_project(INITIAL_PROJECT_NAME);
         }
@@ -1530,7 +1544,7 @@ abstract class Core_Core extends Bootstrap
         # 记录所有项目设置，当切换回项目时，使用此设置还原
         static $all_prjects_setting = array();
 
-        if ( Core::$project )
+        if (Core::$project)
         {
             // 记录上一个项目设置
             $all_prjects_setting[Core::$project] = array
@@ -1543,7 +1557,10 @@ abstract class Core_Core extends Bootstrap
             );
         }
 
-        if ( isset($all_prjects_setting[$project]) )
+        # 原来的项目
+        $old_project = Core::$project;
+
+        if (isset($all_prjects_setting[$project]))
         {
             # 设为当前项目
             Core::$project = $project;
@@ -1590,7 +1607,7 @@ abstract class Core_Core extends Bootstrap
             Core::$project_dir = $project_dir;
 
             # 处理base_url
-            if ( isset($p_config['url']) && $p_config['url'] )
+            if (isset($p_config['url']) && $p_config['url'])
             {
                 $url = rtrim(current((array)$p_config['url']),'/');
             }
@@ -1627,7 +1644,129 @@ abstract class Core_Core extends Bootstrap
             Core::debug()->info($project, '程序已切换到了新项目');
         }
 
+        # 回调callback
+        if (Core::$change_project_callback)
+        {
+            foreach (Core::$change_project_callback as $fun)
+            {
+                call_user_func($fun, $old_project, $project);
+            }
+        }
+
         return true;
+    }
+
+    /**
+     * 增加change_project回调事件
+     *
+     *     //将在每次执行 Core::change_project($new_project) 成功后执行 MyClass::myfun($old_project, $new_project) 方法,其中$old_project是原来的项目名
+     *     Core::change_project_add_callback('MyClass::myfun');
+     *
+     * @param string|array $fun
+     */
+    public static function change_project_add_callback($fun)
+    {
+        Core::$change_project_callback[] = $fun;
+
+        if (count(Core::$change_project_callback)>1)
+        {
+            # 移除重复的项目
+            Core::$change_project_callback = array_unique(Core::$change_project_callback);
+        }
+    }
+
+    /**
+    * 移除import_library回调事件
+    *
+    * @param string|array $fun
+    */
+    public static function change_project_remove_callback($fun)
+    {
+        if (Core::$change_project_callback)
+        {
+            $new_arr = array();
+            foreach (Core::$change_project_callback as $item)
+            {
+                if ($item!==$fun)
+                {
+                    $new_arr = $item;
+                }
+            }
+
+            Core::$change_project_callback = $new_arr;
+        }
+    }
+
+    /**
+     * 导入指定类库
+     *
+     * 支持多个，当一次导入多个时，从数组最后一个开始导入
+     *
+     * 导入的格式必须是类似 com.a.b 的形式，否则会抛出异常，例如: com.myqee.test
+     *
+     *      Bootstrap::import_library('com.myqee.test');
+     *      Bootstrap::import_library(array('com.myqee.test','com.myqee.cms'));
+     *
+     * @param string|array $library_name 指定类库 支持多个
+     * @return boolean
+     */
+    public static function import_library($library_name)
+    {
+        $library_name = (array)$library_name;
+
+        $status = parent::import_library($library_name);
+
+        # 回调callback
+        if ($status && Core::$import_library_callback)
+        {
+            foreach (Core::$import_library_callback as $fun)
+            {
+                call_user_func($fun, $library_name);
+            }
+        }
+
+        return $status;
+    }
+
+    /**
+     * 增加import_library回调事件
+     *
+     *     //将在每次执行 Core::import_library($library_name) 成功后执行 MyClass::myfun((array)$library_name) 方法
+     *     Core::add_import_library_callback('MyClass::myfun');
+     *
+     * @param string|array $fun
+     */
+    public static function import_library_add_callback($fun)
+    {
+        Core::$import_library_callback[] = $fun;
+
+        if (count(Core::$import_library_callback)>1)
+        {
+            # 移除重复的项目
+            Core::$import_library_callback = array_unique(Core::$import_library_callback);
+        }
+    }
+
+    /**
+     * 移除import_library回调事件
+     *
+     * @param string|array $fun
+     */
+    public static function import_library_remove_callback($fun)
+    {
+        if (Core::$import_library_callback)
+        {
+            $new_arr = array();
+            foreach (Core::$import_library_callback as $item)
+            {
+                if ($item!==$fun)
+                {
+                    $new_arr = $item;
+                }
+            }
+
+            Core::$import_library_callback = $new_arr;
+        }
     }
 
     /**
@@ -1667,7 +1806,7 @@ abstract class Core_Core extends Bootstrap
      * @param array $c2
      * @return array
      */
-    protected static function _merge_project_config( $c1, $c2 )
+    protected static function _merge_project_config($c1, $c2)
     {
         foreach ($c2 as $k=>$v)
         {
@@ -1716,7 +1855,7 @@ abstract class Core_Core extends Bootstrap
      * @param string $class_name
      * @param string $fun
      */
-    public static function add_close_connect_class($class_name,$fun='close_all_connect')
+    public static function add_close_connect_class($class_name, $fun='close_all_connect')
     {
         Core::$close_connect_class_list[$class_name] = $fun;
     }
@@ -1731,17 +1870,17 @@ abstract class Core_Core extends Bootstrap
         $hash = $_SERVER['HTTP_X_MYQEE_SYSTEM_HASH']; // 请求验证HASH
         $time = $_SERVER['HTTP_X_MYQEE_SYSTEM_TIME']; // 请求验证时间
         $rstr = $_SERVER['HTTP_X_MYQEE_SYSTEM_RSTR']; // 请求随机字符串
-        if ( !$hash || !$time || !$rstr ) return false;
+        if (!$hash || !$time || !$rstr) return false;
 
         // 请求时效检查
-        if ( microtime(1) - $time > 600 )
+        if (microtime(1) - $time > 600)
         {
             Core::log('system request timeout', 'system-request');
             return false;
         }
 
         // 验证IP
-        if ('127.0.0.1' != HttpIO::IP && HttpIO::IP != $_SERVER["SERVER_ADDR"])
+        if ('127.0.0.1'!=HttpIO::IP && HttpIO::IP != $_SERVER["SERVER_ADDR"])
         {
             $allow_ip = Core::config('core.system_exec_allow_ip');
 
@@ -1750,7 +1889,7 @@ abstract class Core_Core extends Bootstrap
                 $allow = false;
                 foreach ($allow_ip as $ip)
                 {
-                    if ( HttpIO::IP == $ip )
+                    if (HttpIO::IP == $ip)
                     {
                         $allow = true;
                         break;
@@ -1759,7 +1898,7 @@ abstract class Core_Core extends Bootstrap
                     if (strpos($allow_ip, '*'))
                     {
                         // 对IP进行匹配
-                        if ( preg_match('#^' . str_replace('\\*', '[^\.]+', preg_quote($allow_ip, '#')) . '$#', HttpIO::IP) )
+                        if (preg_match('#^' . str_replace('\\*', '[^\.]+', preg_quote($allow_ip, '#')) . '$#', HttpIO::IP))
                         {
                             $allow = true;
                             break;
@@ -1767,7 +1906,7 @@ abstract class Core_Core extends Bootstrap
                     }
                 }
 
-                if ( !$allow )
+                if (!$allow)
                 {
                     Core::log('system request not allow ip:' . HttpIO::IP, 'system-request');
                     return false;

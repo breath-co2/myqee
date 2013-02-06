@@ -899,7 +899,7 @@ abstract class Bootstrap
                 $config_files[] = $config_file;
             }
 
-            if ( IS_DEBUG && class_exists('Core',false) && class_exists('Debug',false) )Core::debug()->info('import a new library: '.Core::debug_path($lib));
+            if (IS_DEBUG && class_exists('Core',false) && class_exists('Debug',false))Core::debug()->info('import a new library: '.Core::debug_path($lib));
         }
 
         if ($config_files)
