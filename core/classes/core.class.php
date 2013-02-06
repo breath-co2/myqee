@@ -1632,7 +1632,6 @@ abstract class Core_Core extends Bootstrap
 
             # 重置$include_path
             Core::$include_path['project'] = array($project_dir);
-            Core::$include_path['library'] = array();
 
             # 重新加载类库配置
             Core::reload_all_libraries();
@@ -1717,7 +1716,7 @@ abstract class Core_Core extends Bootstrap
         $status = parent::import_library($library_name);
 
         # 回调callback
-        if ($status && Core::$import_library_callback)
+        if ($status>0 && Core::$import_library_callback)
         {
             foreach (Core::$import_library_callback as $fun)
             {

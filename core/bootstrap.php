@@ -876,11 +876,11 @@ abstract class Bootstrap
      *      Bootstrap::import_library(array('com.myqee.test','com.myqee.cms'));
      *
      * @param string|array $library_name 指定类库 支持多个
-     * @return boolean
+     * @return num 返回新加载的类库总数
      */
     public static function import_library($library_name)
     {
-        if (!$library_name) return false;
+        if (!$library_name)return false;
 
         $library_name = (array)$library_name;
 
@@ -888,18 +888,28 @@ abstract class Bootstrap
         $library_name = array_reverse($library_name);
 
         $config_files = array();
+
+        $load_num = 0;
         foreach ($library_name as $lib)
         {
             $set = self::_add_include_path_lib($lib);
 
-            $config_file = $set[1].'config'.EXT;
+            if (true===$set[2])
+            {
+                # 已加载过
+                continue;
+            }
+
+            $config_file = $set[1] . 'config' . EXT;
 
             if (is_file($config_file))
             {
                 $config_files[] = $config_file;
             }
 
-            if (IS_DEBUG && class_exists('Core',false) && class_exists('Debug',false))Core::debug()->info('import a new library: '.Core::debug_path($lib));
+            $load_num++;
+
+            if (IS_DEBUG && class_exists('Core', false) && class_exists('Debug', false))Core::debug()->info('import a new library: '.Core::debug_path($lib));
         }
 
         if ($config_files)
@@ -907,7 +917,7 @@ abstract class Bootstrap
             __include_config_file(self::$config, $config_files);
         }
 
-        return true;
+        return $load_num;
     }
 
     /**
@@ -915,24 +925,24 @@ abstract class Bootstrap
      *
      * @param string $lib
      * @throws Exception
-     * @return array($ns,$dir)
+     * @return array($ns, $dir, $is_already_loaded)
      */
     protected static function _add_include_path_lib($lib)
     {
         $lib = strtolower(trim($lib));
+        $lib_arr = explode('.', $lib);
 
-        $lib_arr = explode('.',$lib);
         if (count($lib_arr)!=3 || $lib_arr[0]!='com')
         {
             throw new Exception(__('Library name :lib error', array(':lib'=>$lib)));
         }
 
         $dir = DIR_LIBRARY . $lib_arr[1] . DS . $lib_arr[2] . DS;
-        $ns = preg_replace('#[^a-z0-9\.]#', '', $lib_arr[1].'.'.$lib_arr[2]);
+        $ns = preg_replace('#[^a-z0-9\.]#', '', $lib_arr[1] . '.' . $lib_arr[2]);
 
-        if (isset(self::$include_path[$type][$ns]))
+        if (isset(self::$include_path['library'][$ns]))
         {
-            return array($ns, $dir);
+            return array($ns, $dir, true);
         }
 
         if (!is_dir($dir))
@@ -943,7 +953,7 @@ abstract class Bootstrap
         # 合并目录
         self::$include_path['library'] = array_merge( array($ns=>$dir), self::$include_path['library']);
 
-        return array($ns,$dir);
+        return array($ns, $dir , false);
     }
 
     /**
@@ -1011,6 +1021,9 @@ abstract class Bootstrap
     {
         # 加载类库
         $lib_config = self::$core_config['libraries'];
+
+        # 重置
+        self::$include_path['library'] = array();
 
         foreach (array('autoload', 'cli', 'admin', 'debug') as $type)
         {
