@@ -617,24 +617,21 @@ abstract class Bootstrap
             $new_class_name = $class_name;
         }
 
+        # 获取类的前缀
+        $prefix = '';
         $new_class_arr = explode('_', $new_class_name, 2);
 
-        if (count($new_class_arr)===2)
+        if (2===count($new_class_arr))
         {
-            $type = $new_class_arr[0];
+            $prefix = $new_class_arr[0];
+        }
+
+        if ($prefix && isset(self::$dir_setting[$prefix]))
+        {
+            $dir_setting     = self::$dir_setting[$prefix];
             $class_file_name = $new_class_arr[1];
-        }
-        else
-        {
-            $type = 'class';
-            $class_file_name = $new_class_name;
-        }
 
-        if (isset(self::$dir_setting[$type]))
-        {
-            $dir_setting = self::$dir_setting[$type];
-
-            if ($type=='controller')
+            if ($prefix=='controller')
             {
                 if (IS_SYSTEM_MODE)
                 {
@@ -653,7 +650,8 @@ abstract class Bootstrap
         }
         else
         {
-            $dir_setting = self::$dir_setting['class'];
+            $dir_setting     = self::$dir_setting['class'];
+            $class_file_name = $new_class_name;
         }
 
         if ($ns)
@@ -694,7 +692,7 @@ abstract class Bootstrap
 
                     if ( self::auto_load($ns_class_name) )
                     {
-                        if ( !$is_alias && class_exists($class_name, false) )
+                        if (!$is_alias && class_exists($class_name, false))
                         {
                             # 在加载$ns_class_name时，当前需要的类库有可能被加载了，直接返回true
                             return true;
