@@ -18,18 +18,62 @@ abstract class Core_I18n
      */
     public static $cache_config = 'default';
 
+    /**
+     * 是否安装了语言包
+     *
+     * @var array
+     */
     protected static $is_setup = array();
 
+    /**
+     * 语言包缓存数据
+     *
+     * @var string
+     */
     protected static $lang = array();
+
+    /**
+     * 当前用户的接受的语言
+     *
+     * @var string
+     */
+    protected static $accept_language = null;
+
+    /**
+     * 由系统回调执行
+     *
+     * @param array $lib
+     */
+    public static function import_lib_callback(array $libs)
+    {
+        # 清楚数据，以便重新获取
+        unset(I18n::$lang[Core::$project]);
+        unset(I18n::$is_setup[Core::$project]);
+    }
 
     public static function setup()
     {
+        # 增加回调
+        Core::import_library_add_callback('I18n::import_lib_callback');
+
         # 获取用户语言
         $accept_language = I18n::accept_language();
 
-        $lang_key = implode('_',$accept_language);
+        $lang_key = implode('_', $accept_language);
 
-        $key = 'lang_cache_by_' . Core::$project . '_mode_' . (IS_ADMIN_MODE?'admin':'default') . '_for_' . $lang_key;
+        # 根据类库加载信息获取key
+        $libs_key = array();
+        foreach (array_reverse(Core::$include_path) as $nslib=>$libs)
+        {
+            $libs = array_reverse($libs);
+            foreach ($libs as $k=>$path)
+            {
+                $libs_key[] = $libs.'.'.$k;
+            }
+        }
+        $libs_key = md5(implode(',', $libs_key));
+
+        $key = 'lang_cache_by_' . $libs_key . '_for_' . $lang_key;
 
         # 获取缓存数据
         $lang = Cache::instance(I18n::$cache_config)->get($key);
@@ -53,13 +97,14 @@ abstract class Core_I18n
         foreach (array_reverse(Core::$include_path) as $ns=>$libs)
         {
             $libs = array_reverse($libs);
-            foreach ($libs as $path)
+            foreach ($libs as $lib=>$path)
             {
+                $nslib = $ns.'.'.$lib;
                 foreach($accept_language as $l)
                 {
-                    if (isset($static_lib_array[$ns][$l]))
+                    if (isset($static_lib_array[$nslib][$l]))
                     {
-                        $lang = array_merge($lang, $static_lib_array[$ns][$l]);
+                        $lang = array_merge($lang, $static_lib_array[$nslib][$l]);
                     }
                     else
                     {
@@ -67,17 +112,17 @@ abstract class Core_I18n
 
                         if (is_file($file))
                         {
-                            $static_lib_array[$ns][$l] = (array)@parse_ini_file($file);
+                            $static_lib_array[$nslib][$l] = (array)@parse_ini_file($file);
                         }
                         else
                         {
-                            $static_lib_array[$ns][$l] = array();
+                            $static_lib_array[$nslib][$l] = array();
                         }
 
                         # 合并语言包
-                        if ($static_lib_array[$ns][$l])
+                        if ($static_lib_array[$nslib][$l])
                         {
-                            $lang = array_merge($lang, $static_lib_array[$ns][$l]);
+                            $lang = array_merge($lang, $static_lib_array[$nslib][$l]);
                         }
                     }
                 }
@@ -122,6 +167,11 @@ abstract class Core_I18n
      */
     protected static function accept_language()
     {
+        if (null!==I18n::$accept_language)
+        {
+            return I18n::$accept_language;
+        }
+
         # 客户端语言包
         $accept_language = isset($_SERVER['HTTP_ACCEPT_LANGUAGE'])?$_SERVER['HTTP_ACCEPT_LANGUAGE']:null;
 
@@ -150,6 +200,8 @@ abstract class Core_I18n
                 $accept_language = array('zh-cn');
             }
         }
+
+        I18n::$accept_language = $accept_language;
 
         return $accept_language;
     }
