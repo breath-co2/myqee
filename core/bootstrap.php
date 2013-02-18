@@ -307,10 +307,10 @@ abstract class Bootstrap
      */
     public static $include_path = array
     (
-        'project'      => array(),                   // 项目类库
-        'team_library' => array(DIR_TEAM_LIBRARY),   // Team公共类库
-        'library'      => array(),                   // 类库包
-        'core'         => array('core'=>DIR_CORE),   // 核心类库
+        'project'      => array(),                                   // 项目类库
+        'team_library' => array('default'=>DIR_TEAM_LIBRARY),        // Team公共类库
+        'library'      => array(),                                   // 类库包
+        'core'         => array('core'=>DIR_CORE),                   // 核心类库
     );
 
     /**
@@ -569,7 +569,7 @@ abstract class Bootstrap
                 self::_show_error(__('not found the project: :project', array(':project' => self::$project)));
             }
 
-            self::$include_path['project'] = array($project_dir);
+            self::$include_path['project'] = array(self::$project=>$project_dir);
 
             # 加载类库
             self::reload_all_libraries();

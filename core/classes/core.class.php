@@ -1631,7 +1631,10 @@ abstract class Core_Core extends Bootstrap
             Core::$base_url = $url;
 
             # 重置$include_path
-            Core::$include_path['project'] = array($project_dir);
+            Core::$include_path['project'] = array
+            (
+                Core::$project=>$project_dir
+            );
 
             # 重新加载类库配置
             Core::reload_all_libraries();
@@ -1780,9 +1783,9 @@ abstract class Core_Core extends Bootstrap
         }
         $run = true;
 
-        if ( Core::$shutdown_function )
+        if (Core::$shutdown_function)
         {
-            foreach ( Core::$shutdown_function as $item )
+            foreach (Core::$shutdown_function as $item)
             {
                 try
                 {
