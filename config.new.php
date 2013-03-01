@@ -177,39 +177,13 @@ $config['default_action'] = 'default';
  */
 $config['timezone'] = 'PRC';
 
+
 /**
- * 语言包
+ * 默认语言包
  *
  * @var string
  */
 $config['lang'] = 'zh-cn';
-
-/**
- * 是否允许在线安装(及删除)应用
- *
- * @var boolean
- */
-//$config['online_install_apps'] = true;
-
-/**
- * WEB服务的服务器列表，留空则禁用同步功能（比如只有1台web服务器时请禁用此功能）
- *
- * 配置服务器后，可以实现服务器上data目录的文件同步功能，同步逻辑通过本系统完成，如果已经配置了data目录的sync同步机制，只需要配置1个主服务器即可
- * 可通过 Core::sync_exec($function,$param_1,$param_2,...); 实现在所有服务器上各自运行一遍$function
- *
- *	 //可以是内网IP，确保服务器之间可以相互访问到，端口请确保指定到apache/IIS/nginx等端口上
- *   array(
- * 	   '192.168.1.1',		//80端口可省略:80
- * 	   '192.168.1.2:81',
- * 	   '192.168.1.3:81',
- *   )
- *
- * @var array
- */
-$config['web_server_list'] = array
-(
-
-);
 
 
 /**
