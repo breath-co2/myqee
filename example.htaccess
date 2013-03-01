@@ -1,9 +1,14 @@
 RewriteEngine On
+RewriteBase /
 
-RewriteRule ^~([a-zA-Z0-9\-_]+)~(.*)$ "projects/$1/wwwroot/$2" [L]
+# Protect hidden files from being viewed
+<Files .*>
+	Order Deny,Allow
+	Deny From All
+</Files>
+
 RewriteRule ^(?!(?:wwwroot/|index\.php|projects/[a-zA-Z0-9\-_]+/wwwroot/)).+$ wwwroot/$0 [PT,NS]
 
 RewriteCond %{REQUEST_FILENAME} !-f
-RewriteCond %{REQUEST_FILENAME} !-l
 RewriteCond %{REQUEST_FILENAME} !-d
 RewriteRule wwwroot/(.*)$ index.php/$1 [PT,L]
