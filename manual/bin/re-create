@@ -1,0 +1,15 @@
+#!/usr/bin/env php
+<?php
+
+define('DIR_MANUAL', realpath(dirname(__FILE__).'/../').'/');
+
+$index_filename = DIR_MANUAL.'html/index.html';
+
+$indxe_content  = file_get_contents(DIR_MANUAL.'tpl/header.html');
+$indxe_content .= file_get_contents(DIR_MANUAL.'tpl/index.html');
+$indxe_content .= file_get_contents(DIR_MANUAL.'tpl/footer.html');
+
+file_put_contents($index_filename, $indxe_content);
+
+
+echo "success\n";

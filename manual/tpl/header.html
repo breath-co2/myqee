@@ -1,0 +1,79 @@
+<!doctype html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Language" content="zh-cn" />
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>手册</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<link href="bootstrap/css/bootstrap.min.css" rel="stylesheet" />
+<link href="bootstrap/css/bootstrap-responsive.css" rel="stylesheet" />
+<link href="css/docs.css" rel="stylesheet" />
+<script type="text/javascript" src="js/jquery-1.9.1.min.js"></script>
+</head>
+<body data-spy="scroll" data-target=".bs-docs-sidebar">
+<div class="navbar navbar-inverse navbar-fixed-top">
+    <div class="navbar-inner">
+        <button type="button" class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+        </button>
+        <a class="brand" href="http://www.myqee.com/">MyQEE</a>
+        <div class="nav-collapse collapse">
+            <ul class="nav">
+                <li class="active"><a href="index.html">文档首页</a></li>
+                <li><a href="core.html">核心类库文档</a></li>
+                <li class="dropdown"><a href="#" class="dropdown-toggle" data-toggle="dropdown">类库文档 <b class="caret"></b></a>
+                    <ul class="dropdown-menu">
+                        <li><a href="#">Action</a></li>
+                        <li><a href="#">Another action</a></li>
+                        <li><a href="#">Something else here</a></li>
+                        <li class="divider"></li>
+                        <li class="nav-header">Nav header</li>
+                        <li><a href="#">Separated link</a></li>
+                        <li><a href="#">One more separated link</a></li>
+                    </ul>
+                </li>
+                <li><a href="project.html">项目文档</a></li>
+                <li><a href="team_lib.html">团队类库文档</a></li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<div class="container-fluid">
+<div class="row-fluid">
+
+<div class="left-div bs-docs-sidebar">
+    <ul class="nav nav-list bs-docs-sidenav">
+        <li class="active"><a href="#download-bootstrap"><i class="icon-chevron-right"></i> 欢迎使用</a></li>
+        <li><a href="#file-structure"><i class="icon-chevron-right"></i> 入门指引</a></li>
+        <li><a href="#contents"><i class="icon-chevron-right"></i> 安装与配置</a></li>
+        <li><a href="#examples"><i class="icon-chevron-right"></i> 感谢</a></li>
+        <li>
+            <a href="#html-template"><i class="icon-chevron-right"></i> 特点</a>
+            <!--
+            <ul class="nav nav-list">
+                <li ><a href="#download-bootstrap"><i class="icon-chevron-right"></i> 欢迎使用</a></li>
+                <li><a href="#file-structure"><i class="icon-chevron-right"></i> 入门指引</a></li>
+                <li><a href="#contents"><i class="icon-chevron-right"></i> 安装与配置</a></li>
+                <li><a href="#html-template"><i class="icon-chevron-right"></i> 特点</a></li>
+                <li><a href="#examples"><i class="icon-chevron-right"></i> 感谢</a></li>
+            </ul>
+            -->
+        </li>
+    </ul>
+</div>
+
+<script type="text/javascript">
+(function()
+{
+    var t = $(window).width() <= 980 ? 70 : 0;
+    $(window).bind('resize',function(){t=$(window).width()<=980?70:0;});
+
+    setTimeout(function (){
+        $('.bs-docs-sidenav').affix({offset: {top: function(){return t;}, bottom: 100}})
+    }, 100);
+})();
+</script>
+<div class="right-div">
