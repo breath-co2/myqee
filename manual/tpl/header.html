@@ -3,12 +3,15 @@
 <head>
 <meta http-equiv="Content-Language" content="zh-cn" />
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-<title>手册</title>
+<title><?php echo $title?$title:'迈启手册 - myqee.com';?></title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<link href="bootstrap/css/bootstrap.min.css" rel="stylesheet" />
-<link href="bootstrap/css/bootstrap-responsive.css" rel="stylesheet" />
-<link href="css/docs.css" rel="stylesheet" />
-<script type="text/javascript" src="js/jquery-1.9.1.min.js"></script>
+<?php
+if (isset($base_href) && $base_href)echo "<base href=\"{$base_href}\" />\r\n";
+?>
+<link href="assets/bootstrap/css/bootstrap.min.css" rel="stylesheet" />
+<link href="assets/bootstrap/css/bootstrap-responsive.min.css" rel="stylesheet" />
+<link href="assets/css/docs.css" rel="stylesheet" />
+<script src="assets/js/jquery-1.9.1.min.js" type="text/javascript"></script>
 </head>
 <body data-spy="scroll" data-target=".bs-docs-sidebar">
 <div class="navbar navbar-inverse navbar-fixed-top">
@@ -23,18 +26,41 @@
             <ul class="nav">
                 <li class="active"><a href="index.html">文档首页</a></li>
                 <li><a href="core.html">核心类库文档</a></li>
-                <li class="dropdown"><a href="#" class="dropdown-toggle" data-toggle="dropdown">类库文档 <b class="caret"></b></a>
+                <li class="dropdown">
+                    <a href="#" class="dropdown-toggle" data-toggle="dropdown">类库文档 <b class="caret"></b></a>
                     <ul class="dropdown-menu">
-                        <li><a href="#">Action</a></li>
-                        <li><a href="#">Another action</a></li>
-                        <li><a href="#">Something else here</a></li>
-                        <li class="divider"></li>
-                        <li class="nav-header">Nav header</li>
-                        <li><a href="#">Separated link</a></li>
-                        <li><a href="#">One more separated link</a></li>
+                    <?php
+                    if ($libraries)foreach ($libraries as $lib => $libdir)
+                    {
+                        echo '<li class="dropdown-submenu" tabindex="-1"><a href="#">'.$lib.'</a>';
+                        echo '<ul class="dropdown-menu">';
+                        foreach ($libdir as $dir)
+                        {
+                            echo '<li><a href="library/'.$lib.'/'.$dir.'/index.html">'.$dir.'</a></li>';
+                        }
+                        echo '</ul></li>';
+                    }
+                    ?>
                     </ul>
                 </li>
-                <li><a href="project.html">项目文档</a></li>
+                <?php
+                if ($projects_config)
+                {
+                ?>
+                <li class="dropdown">
+                    <a href="#" class="dropdown-toggle" data-toggle="dropdown">项目文档 <b class="caret"></b></a>
+                    <ul class="dropdown-menu">
+                    <?php
+                    foreach ($projects_config as $value)
+                    {
+                        echo '<li><a href="project/'.$value['dir'].'/index.html">'.$value['name'].'</a></li>';
+                    }
+                    ?>
+                    </ul>
+                </li>
+                <?php
+                }
+                ?>
                 <li><a href="team_lib.html">团队类库文档</a></li>
             </ul>
         </div>
@@ -45,6 +71,9 @@
 <div class="row-fluid">
 
 <div class="left-div bs-docs-sidebar">
+    <?php
+    echo $menu;
+    /*
     <ul class="nav nav-list bs-docs-sidenav">
         <li class="active"><a href="#download-bootstrap"><i class="icon-chevron-right"></i> 欢迎使用</a></li>
         <li><a href="#file-structure"><i class="icon-chevron-right"></i> 入门指引</a></li>
@@ -52,7 +81,6 @@
         <li><a href="#examples"><i class="icon-chevron-right"></i> 感谢</a></li>
         <li>
             <a href="#html-template"><i class="icon-chevron-right"></i> 特点</a>
-            <!--
             <ul class="nav nav-list">
                 <li ><a href="#download-bootstrap"><i class="icon-chevron-right"></i> 欢迎使用</a></li>
                 <li><a href="#file-structure"><i class="icon-chevron-right"></i> 入门指引</a></li>
@@ -60,12 +88,38 @@
                 <li><a href="#html-template"><i class="icon-chevron-right"></i> 特点</a></li>
                 <li><a href="#examples"><i class="icon-chevron-right"></i> 感谢</a></li>
             </ul>
-            -->
         </li>
     </ul>
+    */
+    ?>
 </div>
 
 <script type="text/javascript">
+(function()
+{
+    // 处理menu相关代码
+    var i=0;
+    $('.left-div ul').each(function(){
+        if (i==0)
+        {
+            $(this).addClass('nav nav-list bs-docs-sidenav');
+            i++;
+        }
+        else
+        {
+            $(this).addClass('nav nav-list');
+        }
+    });
+    var href = document.location.href.split('#')[0].split('?')[0];
+    $('.left-div a').each(function(){
+        if (this.href==href)
+        {
+            $(this.parentNode).addClass('active');
+        }
+        this.innerHTML = '<i class="icon-chevron-right"></i> '+this.innerHTML;
+    });
+})();
+
 (function()
 {
     var t = $(window).width() <= 980 ? 70 : 0;
