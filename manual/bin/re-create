@@ -2,6 +2,32 @@
 <?php
 define('DIR_MANUAL', realpath(dirname(__FILE__).'/../').'/');
 
+# 文档组
+$groups = array
+(
+    array
+    (
+        'type'      => 'manual',
+        'out_dir'   => '',
+        'dir'       => DIR_MANUAL,
+        'base_href' => '',
+    ),
+    array
+    (
+        'type'      => 'core',
+        'out_dir'   => 'core/',
+        'dir'       => realpath(DIR_MANUAL.'../core/').'/',
+        'base_href' => '../',
+    ),
+    array
+    (
+        'type'      => 'team',
+        'out_dir'   => 'team',
+        'dir'       => realpath(DIR_MANUAL.'../team_library/').'/',
+        'base_href' => '../',
+    ),
+);
+
 # 读取项目配置
 if (is_file(DIR_MANUAL.'../config.php'))
 {
@@ -9,12 +35,47 @@ if (is_file(DIR_MANUAL.'../config.php'))
     include_config_file($config, DIR_MANUAL.'../config.php');
 
     $projects_config = $config['projects'];
-    if (!is_array($projects_config))$projects_config = array();
+    if (is_array($projects_config))
+    {
+        $tmp = array();
+        foreach ($projects_config as $value)
+        {
+            $tmp[$value['dir']] = $value['name'];
+        }
+        $projects_config = $tmp;
+        unset($tmp);
+    }
+    else
+    {
+        $projects_config = array();
+    }
 }
 else
 {
     $projects_config = array();
 }
+
+$projects = array();
+$project_dir = realpath(DIR_MANUAL . '../projects/');
+if ($project_dir)foreach (glob($project_dir.'/*') as $value)
+{
+    if ($value=='.'||$value=='..')continue;
+    if (is_dir($value))
+    {
+        $basename = basename($value);
+        $projects[$basename] = isset($projects_config[$basename])?$projects_config[$basename]:$basename;
+
+        $groups[] = array
+        (
+            'type'      => 'project',
+            'project'   => $basename,
+            'out_dir'   => 'project/'.$basename.'/',
+            'dir'       => $value.'/',
+            'base_href' => '../../',
+        );
+    }
+}
+
 
 
 $libraries = array();
@@ -32,34 +93,96 @@ if ($lib_dir)foreach (glob($lib_dir.'/*') as $value)
             if ($dir2=='.'||$dir2=='..')continue;
             if (is_dir($dir2))
             {
-                $libraries[$dir1][] = basename($dir2);
+                $dir2 = basename($dir2);
+                $libraries[$dir1][] = $dir2;
+
+                $groups[] = array
+                (
+                    'type'      => 'library',
+                    'library'   => $dir1.'.'.$dir2,
+                    'out_dir'   => 'library/'.$dir1.'/'.$dir2.'/',
+                    'base_href' => '../../../',
+                    'dir'       => $dir2.'/',
+                );
             }
         }
     }
 }
 
-# 菜单
-$menu = Markdown::defaultTransform(file_get_contents(DIR_MANUAL.'guide/menu.md'));
 
-ob_start();
-include(DIR_MANUAL.'tpl/header.html');
-$header_html = ob_get_clean();
-
-$footer_html = file_get_contents(DIR_MANUAL.'tpl/footer.html');
-
-# 读取，写入guide目录文档
-foreach(glob(DIR_MANUAL.'guide/*.md') as $file)
+$old_type = null;
+foreach ($groups as $group)
 {
-    $filename = basename($file, '.md');
-    if ($filename=='menu')continue;
+    if ($old_type!==$group['type'])
+    {
+        # 菜单
+        $menu = Markdown::defaultTransform(file_get_contents($group['dir'].'guide/menu.md'));
 
-    $html  = $header_html;
+        if ($group['base_href'])
+        {
+            $base_href = $group['base_href'];
+        }
+        else
+        {
+            $base_href = '';
+        }
 
-    $html .= Markdown::defaultTransform(file_get_contents($file));
+        $type    = $group['type'];
+        $library     = $group['library'];
+        $project = $group['project'];
 
-    $html .= $footer_html;
+        # 头文件
+        ob_start();
+        include(DIR_MANUAL.'tpl/header.html');
+        $header_html = ob_get_clean();
 
-    file_put_contents(DIR_MANUAL.'html/'.$filename.'.html', $html);
+        # 页脚文件
+        ob_start();
+        include(DIR_MANUAL.'tpl/footer.html');
+        $footer_html = ob_get_clean();
+    }
+
+    if (!is_dir($group['dir'].'guide/'))
+    {
+        # 没有文档目录
+        continue;
+    }
+
+    $has_index = false;
+    $tmp_index_html = '';
+
+    # 读取，写入guide目录文档
+    foreach(glob($group['dir'].'guide/*.md') as $file)
+    {
+        $filename = basename($file, '.md');
+        if ($filename=='menu')continue;
+        if ($filename=='index')$has_index = true;
+
+        $tmp_index_html .= " * [{$group['out_dir']}{$filename}.html]({$group['out_dir']}{$filename}.html)\n";
+
+        $html  = $header_html;
+
+        $html .= Markdown::defaultTransform(file_get_contents($file));
+
+        $html .= $footer_html;
+
+        $dir = DIR_MANUAL.'html/'.$group['out_dir'];
+        if (!is_dir($dir))
+        {
+
+        }
+
+        file_put_contents($dir.$filename.'.html', $html);
+    }
+
+    if (!$has_index)
+    {
+        # 没有首页文件
+        $html  = $header_html;
+        $html .= Markdown::defaultTransform($tmp_index_html);
+        $html .= $footer_html;
+        file_put_contents(DIR_MANUAL.'html/'.$group['out_dir'].'index.html', $html);
+    }
 }
 
 
