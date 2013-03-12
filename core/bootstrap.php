@@ -356,14 +356,16 @@ abstract class Bootstrap
     public static $file_list = array();
 
     /**
-     * 系统配置
+     * 当前项目环境配置
+     *
+     * !!! 此配置会继承Core总配置
      *
      * @var array
      */
     protected static $config = array();
 
     /**
-     * Core配置
+     * Core总配置
      *
      * @var array
     */
@@ -537,7 +539,7 @@ abstract class Bootstrap
 
             if ( isset(self::$core_config['projects'][self::$project]['isuse']) && !self::$core_config['projects'][self::$project]['isuse'] )
             {
-                self::_show_error(__('the project: :project is not open.' , array(':project'=>$project)));
+                self::_show_error(__('the project: :project is not open.', array(':project'=>$project)));
             }
 
             /**
@@ -1068,7 +1070,12 @@ abstract class Bootstrap
         if ($config_files)
         {
             # 导入config
+            self::$config = self::$core_config;
+
             __include_config_file(self::$config, $config_files);
+
+            # 移除特殊的key
+            unset(self::$config['projects']);
         }
     }
 
@@ -1093,7 +1100,7 @@ abstract class Bootstrap
         # 处理BASE_URL
         if (isset(self::$core_config['root_path']) && self::$core_config['root_path'])
         {
-            self::$base_url = rtrim(self::$core_config['root_path'],'/');
+            self::$base_url = rtrim(self::$core_config['root_path'], '/');
         }
         else if (null === self::$base_url && isset($_SERVER["SCRIPT_NAME"]) && $_SERVER["SCRIPT_NAME"])
         {
@@ -1210,7 +1217,7 @@ abstract class Bootstrap
 
                         if ($admin_url)
                         {
-                            foreach ( $admin_url as $url2 )
+                            foreach ($admin_url as $url2)
                             {
                                 # 处理后台URL不是 http:// 或 https:// 开头的形式
                                 if (($path_info_admin = self::_get_pathinfo($url2)) !== false)
