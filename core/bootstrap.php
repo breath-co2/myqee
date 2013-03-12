@@ -1098,13 +1098,14 @@ abstract class Bootstrap
         else if (null === self::$base_url && isset($_SERVER["SCRIPT_NAME"]) && $_SERVER["SCRIPT_NAME"])
         {
             $base_url_len = strrpos($_SERVER["SCRIPT_NAME"], '/');
-            if ($base_url_len)
+            if (false!==$base_url_len)
             {
-                $base_url = rtrim(substr($_SERVER["SCRIPT_NAME"], 0, $base_url_len), '/') . '/';
-                if (preg_match('#^(.*)/wwwroot$#', $base_url, $m))
+                $base_url_len += 1;
+                $base_url = substr($_SERVER["SCRIPT_NAME"], 0, $base_url_len);
+                if (preg_match('#^(.*)/wwwroot/$#', $base_url, $m))
                 {
                     # 特殊处理wwwroot目录
-                    $base_url     = $m[1];
+                    $base_url     = $m[1] . '/';
                     $base_url_len = strlen($base_url);
                 }
 
