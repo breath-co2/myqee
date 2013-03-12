@@ -1100,7 +1100,7 @@ abstract class Bootstrap
             $base_url_len = strrpos($_SERVER["SCRIPT_NAME"], '/');
             if ($base_url_len)
             {
-                $base_url = substr($_SERVER["SCRIPT_NAME"], 0, $base_url_len);
+                $base_url = rtrim(substr($_SERVER["SCRIPT_NAME"], 0, $base_url_len), '/') . '/';
                 if (preg_match('#^(.*)/wwwroot$#', $base_url, $m))
                 {
                     # 特殊处理wwwroot目录
