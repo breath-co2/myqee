@@ -358,7 +358,7 @@ abstract class Bootstrap
     /**
      * 当前项目环境配置
      *
-     * !!! 此配置会继承Core总配置
+     * !!! 此配置会继承Core总配置(除projects和core节点)
      *
      * @var array
      */
@@ -1072,10 +1072,12 @@ abstract class Bootstrap
             # 导入config
             self::$config = self::$core_config;
 
-            __include_config_file(self::$config, $config_files);
-
             # 移除特殊的key
+            unset(self::$config['core']);
             unset(self::$config['projects']);
+
+            # 载入config
+            __include_config_file(self::$config, $config_files);
         }
     }
 
