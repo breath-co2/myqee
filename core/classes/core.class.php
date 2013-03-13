@@ -157,7 +157,7 @@ abstract class Core_Core extends Bootstrap
         {
             $run = true;
 
-            Core::$charset = Core::$core_config['charset'];
+            Core::$charset = Core::$config['charset'];
 
             if (!IS_CLI)
             {
@@ -336,17 +336,17 @@ abstract class Core_Core extends Bootstrap
      *     url('test/');
      *
      * @param string $url URL
-     * @param bool $need_full_url 返回完整的URL，带http(s)://开头
+     * @param true|string $isfullurl_or_project 若传true，则返回当前项目的完整url(http(s)://开头)，若传项目名，比如default，则返回指定项目的完整URL
      * @return string
      */
-    public static function url($url = '' , $need_full_url = false)
+    public static function url($uri = '' , $isfullurl_or_project = false)
     {
-        list($url, $query) = explode('?', $url , 2);
+        list($url, $query) = explode('?', $uri , 2);
 
-        $url = Core::$base_url. ltrim($url,'/') . ($url!='' && substr($url,-1)!='/' && false===strpos($url,'.') && Core::$config['url_suffix']?Core::$config['url_suffix']:'') . ($query?'?'.$query:'');
+        $url = Core::$base_url. ltrim($url, '/') . ($url!='' && substr($url,-1)!='/' && false===strpos($url, '.') && Core::$config['url_suffix']?Core::$config['url_suffix']:'') . ($query?'?'.$query:'');
 
         // 返回完整URL
-        if ( $need_full_url && !preg_match('#^http(s)?://#i', $url) )
+        if ( true===$isfullurl_or_project && !preg_match('#^http(s)?://#i', $url) )
         {
             $url = HttpIO::PROTOCOL . $_SERVER["HTTP_HOST"] . $url;
         }
@@ -357,7 +357,7 @@ abstract class Core_Core extends Bootstrap
     /**
      * 返回静态资源URL路径
      *
-     * @param unknown_type $uri
+     * @param string $uri
      */
     public static function url_assets($uri = '')
     {
@@ -366,15 +366,15 @@ abstract class Core_Core extends Bootstrap
         if (IS_DEBUG & 1)
         {
             # 本地调试环境
-            $url_asstes = '/assets/devmode/'.Core::$project.'/';
+            $url_asstes = Core::url('/assets/devmode/'.Core::$project.'/');
         }
         else
         {
             $url_asstes = URL_ASSETS;
 
-            list($file,$query) = explode('?', $uri.'?',2);
+            list($file, $query) = explode('?', $uri.'?',2);
 
-            $uri = $file .'?'.(strlen($query)>0?$query.'&':'').Core::get_asset_hash($file);
+            $uri = $file . '?' . (strlen($query)>0?$query.'&':'') . Core::assets_hash($file);
         }
 
         return $url_asstes . $url;
@@ -637,9 +637,9 @@ abstract class Core_Core extends Bootstrap
     {
         $uri = '/' . trim($uri, ' /');
 
-        if (Core::$core_config['url_suffix'] && substr(strtolower($uri), -strlen(Core::$core_config['url_suffix']))==Core::$core_config['url_suffix'])
+        if (Core::$config['url_suffix'] && substr(strtolower($uri), -strlen(Core::$config['url_suffix']))==Core::$config['url_suffix'])
         {
-            $uri = substr($uri, 0, -strlen(Core::$core_config['url_suffix']));
+            $uri = substr($uri, 0, -strlen(Core::$config['url_suffix']));
         }
 
         if (!IS_SYSTEM_MODE && isset(Core::$config['route']) && Core::$config['route'])
@@ -1633,7 +1633,7 @@ abstract class Core_Core extends Bootstrap
             # 重置$include_path
             Core::$include_path['project'] = array
             (
-                Core::$project=>$project_dir
+                Core::$project => $project_dir
             );
 
             # 重新加载类库配置
@@ -1949,8 +1949,9 @@ abstract class Core_Core extends Bootstrap
      * @param string $file
      * @return md5
      */
-    public static function get_asset_hash($file)
+    public static function assets_hash($file)
     {
+        //TODO 须加入文件版本号
         return '';
     }
 
