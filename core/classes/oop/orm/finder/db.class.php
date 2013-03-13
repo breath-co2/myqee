@@ -25,6 +25,13 @@ class Core_OOP_ORM_Finder_DB extends OOP_ORM
      */
     protected $tablename;
 
+    /**
+     * 当前数据库对象
+     *
+     * @var Database
+     */
+    protected $_database_instance = null;
+
     function __construct()
     {
         if ( null === $this->tablename )
@@ -171,7 +178,12 @@ class Core_OOP_ORM_Finder_DB extends OOP_ORM
      */
     public function driver()
     {
-        return Database::instance($this->database);
+        if (null===$this->_database_instance)
+        {
+            $this->_database_instance = new Database($this->database);
+        }
+
+        return $this->_database_instance;
     }
 
     /**

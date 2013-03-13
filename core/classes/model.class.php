@@ -51,6 +51,13 @@ class Core_Model
     protected $cache_last_key = null;
 
     /**
+     * 当前数据库对象
+     *
+     * @var Database
+     */
+    protected $_database_instance = null;
+
+    /**
      * 清除缓慢模式
      *
      * @var boolean
@@ -69,7 +76,12 @@ class Core_Model
      */
     protected function db()
     {
-        return Database::instance($this->database);
+        if (null===$this->_database_instance)
+        {
+            $this->_database_instance = new Database($this->database);
+        }
+
+        return $this->_database_instance;
     }
 
     /**
