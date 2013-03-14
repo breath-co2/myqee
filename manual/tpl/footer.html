@@ -1,7 +1,33 @@
+<div class="prev-next-div"></div>
+</div>
+</div>
+</div>
+<script type="text/javascript">
+(function(){
+    $('.right-div').css('minHeight', $('.left-div .bs-docs-sidenav').height()+<?php echo (int)($config['page_top']+$config['page_bottom']);?>);
+    // // var resize = function()
+    // {
+    //     $('.bs-docs-sidenav').css('maxHeight', $(window).height()-<?php echo (int)($config['page_top']);?>);
+    // }
+    // $(window).bind('resize',resize);
+    // resize();
 
-</div>
-</div>
-</div>
-<script type="text/javascript" src="<?php echo $base_href;?>assets/bootstrap/js/bootstrap.min.js"></script>
+    $('.right-div p').each(function(){
+        // 移除空行
+        if (this.innerHTML=='&nbsp;'||this.innerHTML==' ')$(this).remove();
+    });
+
+    // 给所有的表格加上css
+    $('.right-div table').addClass('table-bordered table-striped');
+
+    $('.right-div > hr').each(function(){
+        if ($(this).prev()[0].tagName=='BLOCKQUOTE'||$(this).next()[0].tagName=='BLOCKQUOTE')
+        {
+            $(this).remove();
+        }
+    });
+})()
+</script>
+<script type="text/javascript" src="<?php echo $base_href;?>../assets/bootstrap/js/bootstrap.min.js"></script>
 </body>
 </html>
