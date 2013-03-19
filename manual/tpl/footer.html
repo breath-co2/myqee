@@ -28,6 +28,26 @@
     });
 })()
 </script>
-<script type="text/javascript" src="<?php echo $base_href;?>../assets/bootstrap/js/bootstrap.min.js"></script>
+
+<link href="<?php echo $base_href;?>../assets/syntaxhighlighter/styles/shCore.css" rel="stylesheet" type="text/css" />
+<link href="<?php echo $base_href;?>../assets/syntaxhighlighter/styles/shThemeDefault.css" rel="stylesheet" type="text/css" />
+<script src="<?php echo $base_href;?>../assets/syntaxhighlighter/scripts/shCore.js" type="text/javascript"></script>
+<script src="<?php echo $base_href;?>../assets/syntaxhighlighter/scripts/shBrushPhp.js" type="text/javascript"></script>
+<script type="text/javascript">
+(function()
+{
+    $('.right-div').tooltip({selector: "a[data-toggle=tooltip]"});
+
+    $('.right-div pre:not(.debug) code').each(function()
+    {
+        $(this).addClass('brush: php');
+    });
+
+    SyntaxHighlighter.config.tagName = 'code';
+    SyntaxHighlighter.defaults.toolbar = false;
+    SyntaxHighlighter.all();
+})();
+</script>
+
 </body>
 </html>

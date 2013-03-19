@@ -19,6 +19,7 @@
 }
 </style>
 <script src="<?php echo $base_href;?>../assets/js/jquery-1.9.1.min.js" type="text/javascript"></script>
+<script type="text/javascript" src="<?php echo $base_href;?>../assets/bootstrap/js/bootstrap.min.js"></script>
 </head>
 <body data-spy="scroll" data-target=".bs-docs-sidebar">
 <div class="navbar navbar-inverse navbar-fixed-top">
@@ -155,6 +156,7 @@
     <div class="prev-next-div"></div>
 
     <div>
+        <div id="page-last-edit-div"></div>
         <?php echo __('View this page in');?> :
         <?php
             echo '<select style="vertical-align: top;">';
@@ -166,4 +168,5 @@
             echo '</select>';
         ?>
         <button class="btn btn-info" type="button"><i class="icon-arrow-right icon-white"></i></button>
+        <div class="right-clear"></div>
     </div>

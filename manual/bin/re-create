@@ -230,6 +230,9 @@ function create_all_html()
 
             $html    = str_replace('<title>'.$config['default_title'].'</title>', '<title>'.$title.' - '.$config['default_title'].'</title>', $global_data['header_html']);
 
+            # 处理最后更新时间
+            $html    = str_replace('<div id="page-last-edit-div"></div>', '<div id="page-last-edit-div">'.__('Last updated', $lang).' : '.@date($config['date-format'], $file_data['mtime']).'</div>', $html);
+
             $html   .= $content . $global_data['footer_html'];
 
 
@@ -439,6 +442,19 @@ function format_content($content, $title, $group, $lang)
             $content = str_replace($m[0][$k], '['.$m[1][$k].']('.$base_href.substr($v, 1).')', $content);
         }
     }
+
+    # 处理API内容块输出
+    if (preg_match('#<api>(core|project|team|library)\.([a-z0-9_]+)\.([a-z0-9\$]+)</api>#i', $content, $m))
+    {
+        $com = $_SERVER['_'] .' '. dirname(__FILE__) .'/lib/get_function_html.php '. $m[1] .' '. $m[2] .' '. $m[3];
+
+        $output = shell_exec($com);
+
+        $tmp_html = '<div class="api-class-div"><blockquote><h3>'.__('API Code').'</h3>'.$output.'</blockquote></div>';
+
+        $content = str_replace($m[0], $tmp_html, $content);
+    }
+
 
     # 处理MD文件
     $content = MarkdownExtra::defaultTransform($content);
