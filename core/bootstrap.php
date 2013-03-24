@@ -358,7 +358,7 @@ abstract class Bootstrap
     /**
      * 当前项目环境配置
      *
-     * !!! 此配置会继承Core总配置(除projects和core节点)
+     * !!! 此配置会继承Core总配置，除projects和core节点
      *
      * @var array
      */
@@ -977,7 +977,7 @@ abstract class Bootstrap
      *
      * 当在命令行里执行，则返回null
      *
-     * @return null | http:// | https://
+     * @return string null|http://|https://
      */
     public static function protocol()
     {

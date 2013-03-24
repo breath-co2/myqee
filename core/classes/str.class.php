@@ -1,7 +1,7 @@
 <?php
 
 /**
- * MyQEE 字符串处理类
+ * 字符串处理类
  *
  * @author     jonwang(jonwang@myqee.com)
  * @category   MyQEE

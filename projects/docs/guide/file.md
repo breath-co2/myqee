@@ -2,14 +2,15 @@
 ======
 我们会遇到这样的情况：当我们PHP服务器有好几台时，保存在本机的临时文件（比如文件缓存）在更新、修改时会比较麻烦，比如A服务器文件更新了，无法让B服务器也更新。MyQEE文件处理类提供了一个解决方案，可以让多服务器情况下能够方便的实时删除、修改、新建文件和文件夹。
 当然，在使用前需要先配置好（如果你只有1台服务器可以忽略这些）
-在系统根目录的config.php中你会发现有个 $config['web_server_list']和$config['system_exec_key']和$config['file_sync_mode']的选项，这几个参数的设定会影响文件操作逻辑，下面来了解下这几个参数设定的用途。
+在config中你会发现有个 $config['web_server_list']和$config['system_exec_key']和$config['file_sync_mode']的选项，这几个参数的设定会影响文件操作逻辑，下面来了解下这几个参数设定的用途。
 
 根目录config.php中$config['web_server_list']
 ------
 WEB服务的服务器列表，留空则禁用同步功能，比如只有1台web服务器时请禁用此功能
 
 	//可以是内网IP，确保服务器之间可以相互访问到，端口请确保指定到apache/IIS/nginx等端口上
-	array(
+	array
+	(
 	    'default' => array
 	    (
 	        '192.168.1.2:81',      //第一个为主服

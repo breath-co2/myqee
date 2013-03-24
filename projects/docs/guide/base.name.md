@@ -90,7 +90,7 @@ classes，models，controller 中若对象含有下划线_，则文件存放在�
 
 同样支持扩展到另外一个对象，比如：
 
-    class Database extends MyQEE_Database {
+    class Database extends Core_Database {
     
     }
 

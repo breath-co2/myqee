@@ -9,7 +9,7 @@
     //支持多个配置
     $config['default'] = array
     (
-        'type'       => Database::TYPE_MySQL,   //数据库为MySQL（目前还支持MySQLI）
+        'type'       => 'MySQL',                //数据库为MySQL（目前还支持MySQLI）
         'connection' => array
         (
             'hostname'   => 'localhost',        //服务器，支持主从集群配置
@@ -59,7 +59,7 @@
 
     $config['default'] = array
     (
-        'type'       => Database::TYPE_MySQL,   //数据库为MySQL（目前还支持MySQLI）
+        'type'       => 'MySQL',               //数据库为MySQL（目前还支持MySQLI）
         'connection' => array
         (
             'hostname'   => array

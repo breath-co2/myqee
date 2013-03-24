@@ -1,7 +1,7 @@
 <?php
 
 /**
- * MyQEE 控制器核心类
+ * 控制器核心类
  *
  * @author     jonwang(jonwang@myqee.com)
  * @category   MyQEE

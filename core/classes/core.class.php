@@ -120,11 +120,14 @@ abstract class Core_Core extends Bootstrap
     protected static $instances = array();
 
     /**
-     * 执行Core::close_all_connect()方法时会关闭链接的类和方法名的列队，可通过Core::add_close_connect_class()方法进行设置增加
+     * 执行Core::close_all_connect()方法时会关闭链接的类和方法名的列队
      *
-     *   array(
-     *       'Database' => 'close_all_connect',
-     *   );
+     * 可通过Core::add_close_connect_class()方法进行设置增加
+     *
+     *     array
+     *     (
+     *         'Database' => 'close_all_connect',
+     *     );
      *
      * @var array
      */
@@ -633,7 +636,7 @@ abstract class Core_Core extends Bootstrap
      *
      * @return array
      */
-    protected function find_controller($uri)
+    protected static function find_controller($uri)
     {
         $uri = '/' . trim($uri, ' /');
 
@@ -1352,28 +1355,34 @@ abstract class Core_Core extends Bootstrap
      * 返回一个用.表示的字符串的key对应数组的内容
      *
      * 例如
-     *    $arr = array(
-     *        'a' => array(
-     *        	  'b' => 123,
-     *            'c' => array(
-     *                456,
-     *            ),
-     *        ),
-     *    );
-     *    Core::key_string($arr,'a.b');  //返回123
      *
-     *    Core::key_string($arr,'a');
-     *    // 返回
-     *    array(
-     *       'b' => 123,
-     *       'c' => array(
-     *          456,
-     *        ),
-     *    );
+     *     $arr = array
+     *     (
+     *         'a' => array
+     *         (
+     *         	  'b' => 123,
+     *             'c' => array
+     *             (
+     *                 456,
+     *             ),
+     *         ),
+     *     );
+     *     Core::key_string($arr,'a.b');  //返回123
      *
-     *    Core::key_string($arr,'a.c.0');  //返回456
+     *     Core::key_string($arr,'a');
+     *     // 返回
+     *     array
+     *     (
+     *        'b' => 123,
+     *        'c' => array
+     *        (
+     *            456,
+     *         ),
+     *     );
      *
-     *    Core::key_string($arr,'a.d');  //返回null
+     *     Core::key_string($arr,'a.c.0');  //返回456
+     *
+     *     Core::key_string($arr,'a.d');  //返回null
      *
      * @param array $arr
      * @param string $key
@@ -1849,10 +1858,10 @@ abstract class Core_Core extends Bootstrap
     /**
      * 增加执行Core::close_all_connect()时会去关闭的类
      *
-     *    Core::add_close_connect_class('Database','close_all_connect');
-     *    Core::add_close_connect_class('Cache_Driver_Memcache');
-     *    Core::add_close_connect_class('TestClass','close');
-     *    //当执行 Core::close_all_connect() 时会调用 Database::close_all_connect() 和 Cache_Driver_Memcache::close_all_connect() 和 TestClass::close() 方法
+     *     Core::add_close_connect_class('Database','close_all_connect');
+     *     Core::add_close_connect_class('Cache_Driver_Memcache');
+     *     Core::add_close_connect_class('TestClass','close');
+     *     //当执行 Core::close_all_connect() 时会调用 Database::close_all_connect() 和 Cache_Driver_Memcache::close_all_connect() 和 TestClass::close() 方法
      *
      * @param string $class_name
      * @param string $fun

@@ -61,7 +61,7 @@ class Core_Storage
     /**
      * 返回数据库实例化对象
      *
-     * 支持 Database::instance('mysqli://root:123456@127.0.0.1/myqee/'); 的方式
+     * 支持 `Database::instance('mysqli://root:123456@127.0.0.1/myqee/');` 的方式
      *
      * @param string $config_name
      * @return Database

@@ -1,0 +1,52 @@
+<h1>
+<?php
+$tmp_txt = '<span class="api-class-div" data-toggle="tooltip" title="'.($setting['modifiers']?$setting['modifiers']:'public').'">';
+$modifiers = $setting['modifiers'];
+if (!$modifiers)$modifiers = 'public';
+foreach(explode(' ', $modifiers) as $m)
+{
+    $tmp_txt .= '<span class="'.$m.'"></span>';
+}
+$tmp_txt .= '</span>&nbsp;';
+if ($setting['type'])
+{
+    $tmp_txt .= '<small>'.$setting['type'].'</small>&nbsp;';
+}
+
+echo $tmp_txt.$file_data['class_name'].'::$'.$setting['name'];
+if ($file_data['class_name']!=$setting['class_name'])
+{
+    echo '<br /><span style="visibility:hidden">'.$tmp_txt.'</span><span class="api-parent-class-div">└ '.$setting['class_name'].'</span>';
+}
+?>
+</h1>
+
+<div class="api-description">
+<?php
+echo MarkdownExtra::defaultTransform($setting['description']."\n");
+?>
+</div>
+
+<?php
+if (isset($setting['value']))
+{
+?>
+<blockquote>
+<h3><?php echo __('Default Value');?></h3>
+<blockquote style="white-space:pre-wrap;"><?php echo $setting['value'];?></blockquote>
+</blockquote>
+<?php
+}
+?>
+
+
+
+
+
+<input value="查看数据" type="button" onclick="$('.data-aaaaa').show();" />
+<pre class="data-aaaaa" style="display:none;">
+<?php
+echo htmlspecialchars(print_r($file_data, true));
+echo htmlspecialchars(print_r($setting, true));
+?>
+</pre>

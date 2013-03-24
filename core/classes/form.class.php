@@ -233,7 +233,7 @@ class Core_Form
     /**
      * Creates a select form input.
      *
-     * echo Form::select('country', $countries, $country);
+     *     echo Form::select('country', $countries, $country);
      *
      * @param   string   input name
      * @param   array	available options

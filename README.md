@@ -4,6 +4,7 @@ MyQEE是一个开源的PHP框架，支持HMVC模式，V2版本建立在PHP5.2基
 
 文档
 ====
+本地文件，用浏览器直接打开 manual/index.html 即可查看
 请访问在线文档 [http://www.myqee.com/docs/](http://www.myqee.com/docs/)
 API接口 [http://www.myqee.com/docs/api/default/classes/](http://www.myqee.com/docs/api/default/classes/)
 

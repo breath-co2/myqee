@@ -794,7 +794,7 @@ class Core_OOP_ORM_Data
     /**
      * 插入数据
      *
-     * @return array(插入ID,作用行数)
+     * @return array array(插入ID,作用行数)
      */
     public function insert()
     {

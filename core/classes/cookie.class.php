@@ -27,9 +27,15 @@ class Core_Cookie
         }
     }
 
+    /**
+     * 获取指定key的Cookie内容
+     *
+     * @param string $name
+     * @return mixed
+     */
     public static function get($name)
     {
-        if ( isset(Cookie::$config['prefix']) && Cookie::$config['prefix'] ) $name = Cookie::$config['prefix'] . $name;
+        if (isset(Cookie::$config['prefix']) && Cookie::$config['prefix'])$name = Cookie::$config['prefix'] . $name;
         return $_COOKIE[$name];
     }
 

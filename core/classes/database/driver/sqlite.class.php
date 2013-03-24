@@ -49,7 +49,7 @@ class Core_Database_Driver_SQLite extends Database_Driver
      *
      * @param boolean $use_connection_type 是否使用主数据库
      */
-    public function connect()
+    public function connect($use_connection_type = null)
     {
         $connection_id = $this->connection_id();
 
@@ -299,7 +299,7 @@ class Core_Database_Driver_SQLite extends Database_Driver
      * @param string $as_object 是否返回对象
      * @return Database_Driver_SQLite_Result
      */
-    public function query($sql, $as_object=null)
+    public function query($sql, $as_object=null, $use_master = null)
     {
         $sql = trim($sql);
 

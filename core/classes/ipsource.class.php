@@ -10,7 +10,7 @@
  * @copyright  Copyright (c) 2008-2013 myqee.com
  * @license	   http://www.myqee.com/license.html
  */
-class Core_IpSource
+abstract class Core_IpSource
 {
 
     /**

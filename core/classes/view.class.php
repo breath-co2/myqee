@@ -1,7 +1,7 @@
 <?php
 
 /**
- * MyQEE 视图核心类
+ * 视图核心类
  *
  * @author     jonwang(jonwang@myqee.com)
  * @category   MyQEE

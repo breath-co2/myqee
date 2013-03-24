@@ -6,7 +6,7 @@
  * @category   MyQEE
  * @package	Docs
  * @subpackage Core
- * @copyright  Copyright (c) 2008-2012 myqee.com
+ * @copyright  Copyright (c) 2008-2013 myqee.com
  * @license    http://www.myqee.com/license.html
  */
 class Controller_Docs_Api extends Controller_Docs_Base

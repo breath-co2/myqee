@@ -88,7 +88,7 @@ class Core_Database extends Database_QueryBuilder
     /**
      * 返回数据库实例化对象
      *
-     * 支持 Database::instance('mysqli://root:123456@127.0.0.1/myqee/'); 的方式
+     * 支持 `Database::instance('mysqli://root:123456@127.0.0.1/myqee/');` 的方式
      *
      * @param string $config_name
      * @return Database
@@ -113,8 +113,8 @@ class Core_Database extends Database_QueryBuilder
 
     /**
      * new Database('default');
-     * 支持
-     * new Database('mysqli://root:123456@127.0.0.1/myqee/'); 的方式
+     *
+     * 支持 `new Database('mysqli://root:123456@127.0.0.1/myqee/');` 的方式
      *
      * @param   array  column list
      * @return  void

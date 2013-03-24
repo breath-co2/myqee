@@ -293,7 +293,7 @@ class Core_Cache_Driver_Redis extends Cache_Driver
      * @param string $key
      * @param int $offset
      */
-    public function decrement($key, $offset = 1)
+    public function decrement($key, $offset = 1, $lifetime = 60)
     {
         return $this->_redis->decrBy($key, $offset);
     }
@@ -305,7 +305,7 @@ class Core_Cache_Driver_Redis extends Cache_Driver
      * @param string $key
      * @param int $offset
      */
-    public function increment($key, $offset = 1)
+    public function increment($key, $offset = 1, $lifetime = 60)
     {
         return $this->_redis->incrBy($key, $offset);
     }

@@ -12,7 +12,7 @@ define( 'E_DATABASE_ERROR', 44 );
  * @category   MyQEE
  * @package    System
  * @subpackage Core
- * @copyright  Copyright (c) 2008-2012 myqee.com
+ * @copyright  Copyright (c) 2008-2013 myqee.com
  * @license    http://www.myqee.com/license.html
  */
 class Library_MyQEE_Develop_ErrException extends Exception

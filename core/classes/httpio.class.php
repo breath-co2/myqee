@@ -68,7 +68,7 @@ if (!defined('_HTTPIO_METHOD'))
 
 
 /**
- * MyQEE HTTP INPUT AND OUTPUT
+ * Http输入输出
  *
  * @author     jonwang(jonwang@myqee.com)
  * @category   MyQEE
@@ -77,7 +77,7 @@ if (!defined('_HTTPIO_METHOD'))
  * @copyright  Copyright (c) 2008-2013 myqee.com
  * @license    http://www.myqee.com/license.html
  */
-class Core_HttpIO
+abstract class Core_HttpIO
 {
 
     const PARAM_TYPE_URL = 'url';
@@ -618,7 +618,7 @@ class Core_HttpIO
      * @return  string
      * @uses    Route::uri
      */
-    public function uri(array $params = null)
+    public static function uri(array $params = null)
     {
         if ( null === Core_Route::$current_route )
         {

@@ -1,7 +1,7 @@
 <?php
 
 /**
- * MyQEE 数组核心类
+ * 数组核心类
  *
  * @author     jonwang(jonwang@myqee.com)
  * @category   MyQEE

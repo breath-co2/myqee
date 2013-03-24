@@ -12,6 +12,11 @@
  */
 class Core_Permission
 {
+    /**
+     * 参数设置
+     *
+     * @var array
+     */
     protected $setting = array();
 
     public function __construct($perm_setting)

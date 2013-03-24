@@ -1,6 +1,8 @@
 <?php
 
 /**
+ * UTF8
+ *
  * A port of [phputf8](http://phputf8.sourceforge.net/) to a unified set
  * of files. Provides multi-byte aware replacement string functions.
  *
@@ -14,10 +16,7 @@
  * - The [mbstring extension](http://php.net/mbstring) is highly recommended,
  * but must not be overloading string functions
  *
- * [!!] This file is licensed differently from the rest of Kohana. As a port of
- * [phputf8](http://phputf8.sourceforge.net/), this file is released under the LGPL.
- *
- * UTF8
+ * [!!] This file is licensed differently from the rest of MyQEE. As a port of [phputf8](http://phputf8.sourceforge.net/), this file is released under the LGPL.
  *
  * @author     jonwang(jonwang@myqee.com)
  * @category   MyQEE

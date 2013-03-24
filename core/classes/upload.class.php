@@ -3,7 +3,8 @@
 /**
  * 文件上传核心类
  *
- * @author     jonwang(jonwang@myqee.com) marlboro(zxf1984@gmail.com)
+ * @author     jonwang(jonwang@myqee.com)
+ * @author     marlboro(zxf1984@gmail.com)
  * @category   MyQEE
  * @package    System
  * @subpackage Core
