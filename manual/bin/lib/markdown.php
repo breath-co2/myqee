@@ -12,8 +12,8 @@
 # class: Markdown::MARKDOWNLIB_VERSION.
 #
 
-const  MARKDOWN_VERSION  =  "1.0.1p";  # Sun 13 Jan 2013
-const  MARKDOWNEXTRA_VERSION  =  "1.2.6";  # Sun 13 Jan 2013
+define('MARKDOWN_VERSION', "1.0.1p");  # Sun 13 Jan 2013
+define('MARKDOWNEXTRA_VERSION', "1.2.6");  # Sun 13 Jan 2013
 
 
 #

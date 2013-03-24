@@ -13,90 +13,60 @@ class _Docs_Method_Param extends _Docs
 {
 
     /**
-     * @var  object  ReflectionParameter for this property
+     * @var ReflectionParameter for this property
      */
     public $param;
-
-    /**
-     * @var  string  name of this var
-     */
-    public $name;
-
-    /**
-     * @var  string  variable type, retrieved from the comment
-     */
-    public $type;
-
-    /**
-     * @var  string  default value of this param
-     */
-    public $default;
-
-    /**
-     * @var  string  description of this parameter
-     */
-    public $description;
-
-    /**
-     * @var  boolean  is the parameter passed by reference?
-     */
-    public $reference = FALSE;
-
-    /**
-     * @var  boolean  is the parameter optional?
-     */
-    public $optional = FALSE;
 
     public function __construct($method, $param)
     {
         $this->param = new ReflectionParameter($method, $param);
 
-        $this->name = $this->param->name;
+        $this->data['name'] = $this->param->name;
 
         if ($this->param->isDefaultValueAvailable())
         {
-            $this->default = _Docs::dump($this->param->getDefaultValue());
+            $this->data['default'] = self::dump($this->param->getDefaultValue());
         }
 
         if ($this->param->isPassedByReference())
         {
-            $this->reference = TRUE;
+            $this->data['reference'] = true;
         }
 
         if ($this->param->isOptional())
         {
-            $this->optional = TRUE;
+            $this->data['optional'] = true;
         }
     }
 
-    public function __toString()
+    public function get_html()
     {
         $display = '';
 
-        if ($this->type)
+        if ($this->data['type'])
         {
-            $display .= '<small>' . $this->type . '</small> ';
+            $display .= '<small>' . $this->data['type'] . '</small> ';
         }
 
-        if ($this->reference)
+        if ($this->data['reference'])
         {
             $display .= '<small><abbr title="passed by reference">&</abbr></small> ';
         }
 
-        if ($this->description)
+        if ($this->data['description'])
         {
-            $display .= '<span class="param" title="' . $this->description . '">$' . $this->name . '</span> ';
+            $display .= '<span class="param" data-toggle="tooltip" title="' . $this->data['description'] . '">$' . $this->data['name'] . '</span> ';
         }
         else
         {
-            $display .= '$' . $this->name . ' ';
+            $display .= '$' . $this->data['name'] . ' ';
         }
 
-        if ($this->default)
+        if ($this->data['default'])
         {
-            $display .= '<small>= ' . $this->default . '</small> ';
+            $display .= '<small>= ' . $this->data['default'] . '</small> ';
         }
 
         return $display;
     }
-} // End Kodoc_Method_Param
+}

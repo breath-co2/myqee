@@ -114,15 +114,26 @@
         {
             $(this.parentNode).addClass('active');
         }
-        this.innerHTML = '<i class="icon-chevron-right"></i> '+this.innerHTML;
+        this.innerHTML = '<div class="left-menu-i-div"><i class="icon-chevron-right"></i></div>'+this.innerHTML;
     });
     $('.left-div .top-menu i').addClass('icon-chevron-up');
 
-    $('.left-div li').each(function(){
+    $('.left-div ul').each(function(){
+        var i = 0;
+        $(this).children('li').each(function(){
         if (this.getElementsByTagName('A').length==0)
         {
-            this.innerHTML = '<a href="javascript:" class="text">'+this.innerHTML+'</a>';
+            if (i==0)
+            {
+                this.innerHTML = '<a href="javascript:" class="text menu_title">'+this.innerHTML+'</a>';
+            }
+            else
+            {
+                this.innerHTML = '<a href="javascript:" class="text">'+this.innerHTML+'</a>';
+            }
         }
+        i++;
+    });
     });
 
     // 处理缩进
@@ -155,11 +166,11 @@
     <div class="right-clear"></div>
     <div class="prev-next-div"></div>
 
-    <div>
+    <div class="change-lang-div">
         <div id="page-last-edit-div"></div>
         <?php echo __('View this page in');?> :
         <?php
-            echo '<select style="vertical-align: top;">';
+            echo '<select>';
             if ($config['lang'])foreach ($config['lang'] as $k=>$v)
             {
 
@@ -167,6 +178,6 @@
             }
             echo '</select>';
         ?>
-        <button class="btn btn-info" type="button"><i class="icon-arrow-right icon-white"></i></button>
+        <button class="btn btn-info btn-mini" type="button"><i class="icon-arrow-right icon-white"></i></button>
         <div class="right-clear"></div>
     </div>

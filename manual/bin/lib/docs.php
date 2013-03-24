@@ -12,6 +12,10 @@
  */
 class _Docs
 {
+    /**
+     * @var  array  array of this classes constants
+     */
+    public $data;
 
     /**
      * 获取实例化对象
@@ -20,121 +24,7 @@ class _Docs
      */
     public static function factory($class)
     {
-        return new Docs_Class($class);
-    }
-
-    /**
-     * Creates an html list of all classes sorted by category (or package if no category)<br>
-     * [aaa](http://www.baid.com)
-     * asdf
-     *
-     * @return   string   the html for the menu
-     */
-    public static function menu()
-    {
-        $classes = self::classes();
-
-        foreach ($classes as $class)
-        {
-            if (isset($classes['kohana_' . $class]))
-            {
-                // Remove extended classes
-                unset($classes['kohana_' . $class]);
-            }
-        }
-
-        ksort($classes);
-
-        $menu = array();
-
-        $route = Core_Route::get('docs/api');
-
-        foreach ($classes as $class)
-        {
-            $class = Docs_Class::factory($class);
-
-            // Test if we should show this class
-            if (!self::show_class($class)) continue;
-
-            $link = HTML::anchor($route->uri(array('class' => $class->class->name)), $class->class->name);
-
-            if (isset($class->tags['package']))
-            {
-                foreach ($class->tags['package'] as $package)
-                {
-                    if (isset($class->tags['category']))
-                    {
-                        foreach ($class->tags['category'] as $category)
-                        {
-                            $menu[$package][$category][] = $link;
-                        }
-                    }
-                    else
-                    {
-                        $menu[$package]['Base'][] = $link;
-                    }
-                }
-            }
-            else
-            {
-                $menu['[Unknown]']['Base'][] = $link;
-            }
-        }
-
-        // Sort the packages
-        ksort($menu);
-
-        return View::factory('userguide/api/menu')->bind('menu', $menu);
-    }
-
-    /**
-     * Get all classes and methods of files in a list.
-     *
-     * >  I personally don't like this as it was used on the index page.  Way too much stuff on one page.  It has potential for a package index page though.
-     * >  For example:  class_methods( Kohana::list_files('classes/sprig') ) could make a nice index page for the sprig package in the api browser
-     * >     ~bluehawk
-     *
-     */
-    public static function class_methods(array $list = NULL)
-    {
-        $list = self::classes($list);
-
-        $classes = array();
-
-        foreach ($list as $class)
-        {
-            $_class = new ReflectionClass($class);
-
-            if (stripos($_class->name, 'MyQEE') === 0)
-            {
-                // Skip the extension stuff stuff
-                continue;
-            }
-
-            $methods = array();
-
-            foreach ($_class->getMethods() as $_method)
-            {
-                $declares = $_method->getDeclaringClass()->name;
-
-                if (stripos($declares, 'MyQEE') === 0)
-                {
-                    // Remove "Kohana_"
-                    $declares = substr($declares, 7);
-                }
-
-                if ($declares === $_class->name)
-                {
-                    $methods[] = $_method->name;
-                }
-            }
-
-            sort($methods);
-
-            $classes[$_class->name] = $methods;
-        }
-
-        return $classes;
+        return new _Docs_Class($class);
     }
 
     /**
@@ -171,10 +61,10 @@ class _Docs
                 switch ($name)
                 {
                     case 'license' :
-                        if (strpos($text, '://') !== FALSE)
+                        if (strpos($text, '://') !== false)
                         {
                             // Convert the lincense into a link
-                            $text = HTML::anchor($text);
+                            $text = HTML::anchor($text, null, array('target'=>'_blank', 'rel'=>"nofollow"));
                         }
                         break;
                     case 'link' :
@@ -182,7 +72,7 @@ class _Docs
                         $text = HTML::anchor($text[0], isset($text[1]) ? $text[1] : $text[0]);
                         break;
                     case 'copyright' :
-                        if (strpos($text, '(c)') !== FALSE)
+                        if (strpos($text, '(c)') !== false)
                         {
                             // Convert the copyright sign
                             $text = str_replace('(c)', '&copy;', $text);
@@ -234,7 +124,7 @@ class _Docs
     {
         if (!$file)
         {
-            return FALSE;
+            return false;
         }
 
         $file = file($file, FILE_IGNORE_NEW_LINES);
@@ -260,23 +150,23 @@ class _Docs
      * @param  Docs_Class  the class to test
      * @return  bool  whether this class should be shown
      */
-    public static function show_class(Docs_Class $class)
+    public static function show_class(_Docs_Class $class)
     {
         $api_packages = Core::config('userguide.api_packages');
 
         // If api_packages is true, all packages should be shown
-        if ($api_packages === TRUE) return TRUE;
+        if ($api_packages === true) return true;
 
         // Get the package tags for this class (as an array)
-        $packages = Arr::get($class->tags, 'package', Array('None'));
+        $packages = Arr::get($class->data['tags'], 'package', Array('None'));
 
-        $show_this = FALSE;
+        $show_this = false;
 
         // Loop through each package tag
         foreach ($packages as $package)
         {
             // If this package is in the allowed packages, set show this to true
-            if (in_array($package, explode(',', $api_packages))) $show_this = TRUE;
+            if (in_array($package, explode(',', $api_packages))) $show_this = true;
         }
 
         return $show_this;
@@ -331,9 +221,9 @@ class _Docs
      * @param   integer  recursion level (internal)
      * @return  string
      */
-    protected static function _dump(& $var, $length = 128, $level = 0)
+    protected static function _dump(&$var, $length = 128, $level = 0)
     {
-        if ($var === NULL)
+        if ($var === null)
         {
             return '<small>null</small>';
         }
@@ -419,7 +309,7 @@ class _Docs
             {
                 $output[] = "<span>(";
 
-                $var[$marker] = TRUE;
+                $var[$marker] = true;
                 foreach ($var as $key => & $val)
                 {
                     if ($key === $marker) continue;
@@ -469,7 +359,7 @@ class _Docs
             {
                 $output[] = "<code>{";
 
-                $objects[$hash] = TRUE;
+                $objects[$hash] = true;
                 foreach ($array as $key => & $val)
                 {
                     if ($key[0] === "\x00")
@@ -501,112 +391,13 @@ class _Docs
         }
         else
         {
-            return '<small>' . gettype($var) . '</small> ' . htmlspecialchars(print_r($var, TRUE), ENT_NOQUOTES, Core::$charset);
+            return '<small>' . gettype($var) . '</small> ' . htmlspecialchars(print_r($var, true), ENT_NOQUOTES, Core::$charset);
         }
-    }
-
-    /**
-     * Removes application, system, modpath, or docroot from a filename,
-     * replacing them with the plain text equivalents. Useful for debugging
-     * when you want to display a shorter path.
-     *
-     * // Displays SYSPATH/classes/kohana.php
-     * echo Kohana::debug_path(Kohana::find_file('classes', 'kohana'));
-     *
-     * @param   string  path to debug
-     * @return  string
-     */
-    public static function debug_path($file)
-    {
-        if (strpos($file, APPPATH) === 0)
-        {
-            $file = 'APPPATH' . DIRECTORY_SEPARATOR . substr($file, strlen(APPPATH));
-        }
-        elseif (strpos($file, SYSPATH) === 0)
-        {
-            $file = 'SYSPATH' . DIRECTORY_SEPARATOR . substr($file, strlen(SYSPATH));
-        }
-        elseif (strpos($file, MODPATH) === 0)
-        {
-            $file = 'MODPATH' . DIRECTORY_SEPARATOR . substr($file, strlen(MODPATH));
-        }
-        elseif (strpos($file, DOCROOT) === 0)
-        {
-            $file = 'DOCROOT' . DIRECTORY_SEPARATOR . substr($file, strlen(DOCROOT));
-        }
-
-        return $file;
-    }
-
-    /**
-     * Returns an HTML string, highlighting a specific line of a file, with some
-     * number of lines padded above and below.
-     *
-     * // Highlights the current line of the current file
-     * echo Kohana::debug_source(__FILE__, __LINE__);
-     *
-     * @param   string   file to open
-     * @param   integer  line number to highlight
-     * @param   integer  number of padding lines
-     * @return  string   source of file
-     * @return  FALSE    file is unreadable
-     */
-    public static function debug_source($file, $line_number, $padding = 5)
-    {
-        if (!$file or !is_readable($file))
-        {
-            // Continuing will cause errors
-            return FALSE;
-        }
-
-        // Open the file and set the line position
-        $file = fopen($file, 'r');
-        $line = 0;
-
-        // Set the reading range
-        $range = array('start' => $line_number - $padding, 'end' => $line_number + $padding);
-
-        // Set the zero-padding amount for line numbers
-        $format = '% ' . strlen($range['end']) . 'd';
-
-        $source = '';
-        while (($row = fgets($file)) !== FALSE)
-        {
-            // Increment the line number
-            if (++$line > $range['end']) break;
-
-            if ($line >= $range['start'])
-            {
-                // Make the row safe for output
-                $row = htmlspecialchars($row, ENT_NOQUOTES, self::$charset);
-
-                // Trim whitespace and sanitize the row
-                $row = '<span class="number">' . sprintf($format, $line) . '</span> ' . $row;
-
-                if ($line === $line_number)
-                {
-                    // Apply highlighting to this row
-                    $row = '<span class="line highlight">' . $row . '</span>';
-                }
-                else
-                {
-                    $row = '<span class="line">' . $row . '</span>';
-                }
-
-                // Add to the captured source
-                $source .= $row;
-            }
-        }
-
-        // Close the file
-        fclose($file);
-
-        return '<pre class="source"><code>' . $source . '</code></pre>';
     }
 
     public static function url($class, $havedir = false, $haveext = false)
     {
-        $url = 'api/' . DOCS_PROJECT . '/'; // . ($havedir ? '' : '/' . self::_class2url( $class )) . '/' ;
+        $url = '/'; // . ($havedir ? '' : '/' . self::_class2url( $class )) . '/' ;
         if ($havedir)
         {
             list ($dir) = explode('/', $class);
@@ -657,6 +448,7 @@ class _Docs
         {
             $url .= $class . $ext;
         }
+
         return Core::url($url);
     }
 
@@ -704,24 +496,8 @@ class _Docs
         return $dir;
     }
 
-    public function get_modifier()
+    public function getArrayCopy()
     {
-        if (strpos($this->modifiers, 'protected') !== false)
-        {
-            return 'protected';
-        }
-        elseif (strpos($this->modifiers, 'private') !== false)
-        {
-            return 'private';
-        }
-        else
-        {
-            return 'public';
-        }
-    }
-
-    public function is_static()
-    {
-        return strpos($this->modifiers, 'static') === false ? false : true;
+        return $this->data;
     }
 }

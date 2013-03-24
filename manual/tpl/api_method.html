@@ -1,25 +1,59 @@
+<h1>
 <?php
-if (false)$method = new _Docs_Method();
-$declares = $method->method->getDeclaringClass();
+$tmp_txt = '<span class="api-class-div" data-toggle="tooltip" title="'.($setting['modifiers']?$setting['modifiers']:'public').'">';
+$modifiers = $setting['modifiers'];
+if (!$modifiers)$modifiers = 'public';
+foreach(explode(' ', $modifiers) as $m)
+{
+    $tmp_txt .= '<span class="'.$m.'"></span>';
+}
+$tmp_txt .= '</span>&nbsp;';
+
+echo $tmp_txt.$file_data['class_name'].'::'.$setting['name'];
+if ($file_data['class_name']!=$setting['class_name'])
+{
+    echo '<br /><span style="visibility:hidden">'.$tmp_txt.'</span><span class="api-parent-class-div">└ '.$setting['class_name'].'</span>';
+}
 ?>
-<blockquote>
-<div class="api-method-name-div">
-<?php
-    echo $method->modifiers . $method->method->name .'('. ($method->params?$method->params_short():''). ')';
-?>
-    <br/><ul class="ul"><li><small>└ <?php echo $declares->name; ?></small></li></ul>
-</div>
-</blockquote>
+</h1>
+
+<div class="api-class-div">
+
 <div class="api-description">
-<?php echo Markdown::defaultTransform(implode("\n", $method->description)); ?>
+<?php
+echo MarkdownExtra::defaultTransform($setting['description']);
+?>
 </div>
 
 
+<div class="api-method-name-div">
+<blockquote>
+<?php
+if ($setting['return'])
+{
+    list($type, $c) = $setting['return'][0];
+    if ($type=='mixed')
+    {
+        echo '<small><a href="http://www.php.net/manual/zh/language.pseudo-types.php#language.types.mixed" target="_blank">mixed</a></small>';
+    }
+    else
+    {
+        echo '<small'.($c?' data-toggle="tooltip" title="'.chars($c).'"':'').'>'.chars($type).'</small>';
+    }
+}
+else
+{
+    echo '<small>null</small>';
+}
 
+echo '&nbsp;'.$file_data['class_name'].'::'.$setting['name'].'( '. ($setting['params']?$setting['params_short']:''). ')';
+?>
+</blockquote>
+</div>
 
-<?php if ($method->tags): ?>
+<?php if ($setting['tags']): ?>
 <dl class="tags">
-<?php foreach ($tags as $name => $set): ?>
+<?php foreach ($setting['tags'] as $name => $set): ?>
 <span>
 <dt><?php echo $name ?></dt>
 <?php foreach ($set as $tag): ?>
@@ -33,8 +67,9 @@ $declares = $method->method->getDeclaringClass();
 
 
 
-<?php if ($method->params): ?>
-<h5><?php echo __('Parameters'); ?></h5>
+<?php if ($setting['params']): ?>
+<blockquote>
+<h3><?php echo __('Parameters'); ?></h3>
 <table>
 <tr>
     <th><?php echo __('Parameter'); ?></th>
@@ -42,44 +77,68 @@ $declares = $method->method->getDeclaringClass();
     <th><?php echo __('Description'); ?></th>
     <th><?php echo __('Default'); ?></th>
 </tr>
-<?php foreach ($method->params as $param): ?>
+<?php foreach ($setting['params'] as $param): ?>
 <tr>
-<td><strong><code><?php echo '$'.$param->name ?></code></strong></td>
-<td><code><?php echo $param->byref?'byref ':''.$param->type?$param->type:'unknown' ?></code></td>
-<td><?php echo preg_match('#^[a-z]#', $param->description)?ucfirst($param->description):$param->description; ?></td>
-<td><?php echo $param->default ?></td>
+<td><strong><code><?php echo '$'.$param['name'] ?></code></strong></td>
+<td><code><?php echo $param['byref']?'byref ':''.$param['type']?$param['type']:'unknown' ?></code></td>
+<td><?php echo preg_match('#^[a-z]#', $param['description'])?ucfirst($param['description']):$param['description']; ?></td>
+<td><?php echo $param['default'] ?></td>
 </tr>
 <?php endforeach; ?>
 </table>
+</blockquote>
 <?php endif ?>
 
 
-<?php if ($method->return): ?>
+<?php if ($setting['return']): ?>
 <h5><?php echo __('Return Values'); ?></h5>
 <ul class="return">
-<?php foreach ($method->return as $set): list($type, $text) = $set; ?>
-<li><code><?php echo HTML::chars($type) ?></code> <?php echo HTML::chars($text) ?></li>
+<?php foreach ($setting['return'] as $set): list($type, $text) = $set; ?>
+<li><code><?php echo chars($type) ?></code> <?php echo chars($text) ?></li>
 <?php endforeach ?>
 </ul>
 <?php endif ?>
 
+<?php
+if ($setting['file_name'])
+{
+    if ($setting['end_line']-$setting['start_line']<=30)
+    {
+        # 100 行以内的代码直接显示
+        $is_show = true;
+    }
+    else
+    {
+        $is_show = false;
+    }
+?>
+<div class="api-filename-div" data-placement="left" title="<?php echo __('Click Open', $lang);?>" data-toggle="tooltip"><span style="padding-top:1px;float:right;"><i class="<?php echo $is_show?'icon-minus':'icon-plus';?>"></i></span>File: <?php echo debug_path($setting['debug_file']);?></div>
+<div class="api-filecode-div"<?php if (!$is_show)echo ' style="display:none;"';?>><pre><code class="first-line: <?php echo $setting['start_line'];?>"><?php echo chars(source($setting['file_name'], $setting['start_line'], $setting['end_line'])); ?></code></pre></div>
 
-<div class="api-filename-div" data-placement="left" data-original-title="点击展开" data-toggle="tooltip"><span style="padding-top:1px;float:right;"><i class="icon-plus"></i></span>File: <?php echo Core::debug_path($method->class->getFilename());?></div>
-<div class="api-filecode-div" style="display:none;"><pre><code class="first-line: <?php echo $method->getStartLine();?>"><?php echo htmlspecialchars($method->source, ENT_QUOTES, 'utf-8', true) ?></code></pre></div>
+</div>
 <script type="text/javascript">
 $('.api-filename-div').click(function(){
     var obj = $(this).nextAll('.api-filecode-div');
     if (obj.css('display')=='none')
     {
         obj.fadeIn();
-        $(this).attr('data-original-title', '点击关闭').find('i').removeClass('icon-plus').addClass('icon-minus');
+        $(this).attr('data-original-title', '<?php echo __('Click Close', $lang);?>').find('i').removeClass('icon-plus').addClass('icon-minus');
     }
     else
     {
         obj.fadeOut();
-        $(this).attr('data-original-title', '点击展开').find('i').removeClass('icon-minus').addClass('icon-plus');
+        $(this).attr('data-original-title', '<?php echo __('Click Open', $lang);?>').find('i').removeClass('icon-minus').addClass('icon-plus');
     }
 });
-
-$('.api-filename-div').tooltip();
 </script>
+<?php
+}
+?>
+
+<input value="查看数据" type="button" onclick="$('.data-aaaaa').show();" />
+<pre class="data-aaaaa" style="display:none;">
+<?php
+echo htmlspecialchars(print_r($file_data, true));
+echo htmlspecialchars(print_r($setting, true));
+?>
+</pre>

@@ -1,7 +1,6 @@
 <?php
 class _Docs_Method extends _Docs
 {
-
     /**
      *
      * @var ReflectionClass The ReflectionClass for this class
@@ -14,39 +13,34 @@ class _Docs_Method extends _Docs
      */
     public $method;
 
-    /**
-     *
-     * @var array array of Kodoc_Method_Param
-     */
-    public $params;
-
-    /**
-     *
-     * @var array the things this function can return
-     */
-    public $return = array();
-
-    /**
-     *
-     * @var string the source code for this function
-     */
-    public $source;
-
     public function __construct($class, $method)
     {
-        $this->class  = new ReflectionClass($class);
-        $this->method = new ReflectionMethod($class, $method);
+        if (is_object($class))
+        {
+            $this->class = $class;
+            $class_name = $class->name;
+        }
+        else
+        {
+            $this->class  = new ReflectionClass($class);
+            $class_name   = $class;
+        }
+
+        $this->method = new ReflectionMethod($class_name, $method);
+
+        $this->data['name']       = $method;
+        $this->data['class_name'] = $this->method->class;
 
         $this->class = $parent = $this->method->getDeclaringClass();
 
         if ($modifiers = $this->method->getModifiers())
         {
-            $this->modifiers = '<small>' . implode(' ', Reflection::getModifierNames($modifiers)) . '</small> ';
+            $this->data['modifiers'] = implode(' ', Reflection::getModifierNames($modifiers));
         }
 
         do
         {
-            if ($parent->hasMethod($method) and $comment = $parent->getMethod($method)->getDocComment())
+            if ($parent->hasMethod($method) && $comment = $parent->getMethod($method)->getDocComment())
             {
                 // Found a description for this method
                 break;
@@ -54,12 +48,14 @@ class _Docs_Method extends _Docs
         }
         while ($parent = $parent->getParentClass());
 
-        list ($this->description, $tags) = _Docs::parse($comment);
+        list ($description, $tags) = self::parse($comment);
+        $this->data['title']       = $description[0];
+        $this->data['description'] = trim(implode("\n", $description));
 
-        if ($file = $this->class->getFileName())
-        {
-            $this->source = _Docs::source($file, $this->method->getStartLine(), $this->method->getEndLine());
-        }
+//         if ($file = $this->class->getFileName())
+//         {
+//             $this->data['source'] = self::source($file, $this->method->getStartLine(), $this->method->getEndLine());
+//         }
 
         if (isset($tags['param']))
         {
@@ -71,19 +67,22 @@ class _Docs_Method extends _Docs
 
                 if (isset($tags['param'][$i]))
                 {
-                    preg_match('/^(\S+)(?:\s*(?:\$' . $param->name . '\s*)?(.+))?$/', $tags['param'][$i], $matches);
+                    preg_match('/^(\S+)(?:\s*(?:\$' . $param->data['name'] . '\s*)?(.+))?$/', $tags['param'][$i], $matches);
 
-                    $param->type = $matches[1];
+                    $param->data['type'] = $matches[1];
 
                     if (isset($matches[2]))
                     {
-                        $param->description = $matches[2];
+                        $param->data['description'] = $matches[2];
                     }
                 }
-                $params[] = $param;
+
+                $param->data['html'] = $param->get_html();
+
+                $params[] = $param->getArrayCopy();
             }
 
-            $this->params = $params;
+            $this->data['params'] = $params;
 
             unset($tags['param']);
         }
@@ -94,42 +93,51 @@ class _Docs_Method extends _Docs
             {
                 if (preg_match('/^(\S*)(?:\s*(.+?))?$/', $return, $matches))
                 {
-                    $this->return[] = array($matches[1], isset($matches[2]) ? $matches[2] : '');
+                    $this->data['return'][] = array($matches[1], isset($matches[2]) ? $matches[2] : '');
                 }
             }
 
             unset($tags['return']);
         }
-
-        $this->tags = $tags;
+        $this->data['tags']          = $tags;
+        $this->data['start_line']    = $this->method->getStartLine();
+        $this->data['end_line']      = $this->method->getEndLine();
+        $this->data['file_name']     = $this->class->getFileName();
+        $this->data['debug_file']    = $this->data['file_name']?Core::debug_path($this->data['file_name']):false;
+        $this->data['is_static']     = $this->method->isStatic();
+        $this->data['is_public']     = $this->method->isPublic();
+        if ($this->data['params'])
+        {
+            $this->data['params_short']  = $this->params_short();
+        }
     }
 
-    public function params_short()
+    protected function params_short()
     {
         $out = '';
         $required = true;
         $first = true;
-        foreach ($this->params as $param)
+        foreach ($this->data['params'] as $param)
         {
-            if ($required && $param->default && $first)
+            if ($required && $param['default'] && $first)
             {
-                $out .= '[ ' . $param;
+                $out .= '[ ' . $param['html'];
                 $required = false;
                 $first = false;
             }
-            elseif ($required && $param->default)
+            elseif ($required && $param['default'])
             {
-                $out .= '[, ' . $param;
+                $out .= '[, ' . $param['html'];
                 $required = false;
             }
             elseif ($first)
             {
-                $out .= $param;
+                $out .= $param['html'];
                 $first = false;
             }
             else
             {
-                $out .= ', ' . $param;
+                $out .= ', ' . $param['html'];
             }
         }
 
@@ -139,10 +147,5 @@ class _Docs_Method extends _Docs
         }
 
         return $out;
-    }
-
-    public function getStartLine()
-    {
-        return $this->method->getStartLine();
     }
 }
