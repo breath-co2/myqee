@@ -46,66 +46,56 @@ class _Docs
 
         foreach ($comment as $i => $line)
         {
-            // Remove all leading whitespace
             $line = preg_replace('/^\s*\* ?/m', '', $line);
 
-            // Search this line for a tag
             if (preg_match('/^@(\S+)(?:\s*(.+))?$/', $line, $matches))
             {
-                // This is a tag line
                 unset($comment[$i]);
 
                 $name = $matches[1];
                 $text = isset($matches[2]) ? $matches[2] : '';
 
-                switch ($name)
+                if ($name=='throws')
                 {
-                    case 'license' :
-                        if (strpos($text, '://') !== false)
+                    if (preg_match('/^(\w+)\W(.*)$/', $text, $matches))
+                    {
+                        $class_name = $matches[1];
+                    }
+                    else
+                    {
+                        $class_name = $text;
+                    }
+
+                    $data = self::rf_tag_by_class($class_name);
+
+                    if ($data)
+                    {
+                        $data['commit'] = $matches[2]?$matches[2]:'';
+                        $data['text']   = $text;
+                        $text = $data;
+                    }
+                }
+                elseif ($name=='uses')
+                {
+                    if (preg_match('/^([a-z0-9_]+)::(\$)?([a-z0-9_]+)$/i', $text, $matches))
+                    {
+                        $data = self::rf_tag_by_class($matches[1], $matches[3] , $matches[2]?true:false);
+                        if ($data)
                         {
-                            // Convert the lincense into a link
-                            $text = HTML::anchor($text, null, array('target'=>'_blank', 'rel'=>"nofollow"));
+                            $data['text'] = $text;
+                            $text = $data;
                         }
-                        break;
-                    case 'link' :
-                        $text = preg_split('/\s+/', $text, 2);
-                        $text = HTML::anchor($text[0], isset($text[1]) ? $text[1] : $text[0]);
-                        break;
-                    case 'copyright' :
-                        if (strpos($text, '(c)') !== false)
-                        {
-                            // Convert the copyright sign
-                            $text = str_replace('(c)', '&copy;', $text);
-                        }
-                        break;
-                    case 'throws' :
-                        if (preg_match('/^(\w+)\W(.*)$/', $text, $matches))
-                        {
-                            $text = HTML::anchor(self::url($matches[1]), $matches[1]) . ' ' . $matches[2];
-                        }
-                        else
-                        {
-                            $text = HTML::anchor(self::url($text), $text);
-                        }
-                        break;
-                    case 'uses' :
-                        if (preg_match('/^([a-z_]+)::([a-z_]+)$/i', $text, $matches))
-                        {
-                            // Make a class#method API link
-                            $text = HTML::anchor(self::url($matches[1]) . '#' . $matches[2], $text); //->uri(array('class' => $matches[1])).'#'.$matches[2], $text);
-                        }
-                        break;
-                    // Don't show @access lines, they are shown elsewhere
-                    case 'access' :
-                        continue 2;
+                    }
+                }
+                elseif ($name=='access')
+                {
+                    continue;
                 }
 
-                // Add the tag
                 $tags[$name][] = $text;
             }
             else
             {
-                // Overwrite the comment line
                 $comment[$i] = (string)$line;
             }
         }
@@ -495,6 +485,92 @@ class _Docs
 
         return $dir;
     }
+
+
+    /**
+     * 获取Tag分析需要用到的数据
+     *
+     * @param string $class_name
+     * @param string $f
+     * @param boolean $is_poperty
+     */
+    protected static function rf_tag_by_class($class_name, $f = null, $is_poperty = false)
+    {
+        try
+        {
+            if (class_exists($class_name, true))
+            {
+                if ($f)
+                {
+                    if ($is_poperty)
+                    {
+                        $rf = new _Docs_Property($class_name, $f);
+                    }
+                    else
+                    {
+                        $rf = new _Docs_Method($class_name, $f);
+                    }
+                    $data = $rf->getArrayCopy();
+
+                    return array
+                    (
+                        'class_name'   => $data['class_name'],
+                        'f'            => $f,
+                        'is_php_class' => $data['is_php_class'],
+                    );
+                }
+                else
+                {
+                    $rf = new ReflectionClass($class_name);
+
+                    $f = $rf->getFileName();
+                    if (substr($f, -13)=='ev'.'al()\'d code' && !is_file($f))
+                    {
+                        $parent = $rf;
+                        # 程序生成的代码
+                        while ($parent = $parent->getParentClass())
+                        {
+                            if (substr(strtolower($parent->name), 0, 3)=='ex_')
+                            {
+                                # 扩展类或略
+                                continue;
+                            }
+
+                            $rf2 = new ReflectionClass($parent->name);
+                            $f = $rf2->getFileName();
+                            if (substr($f, -13)!='ev'.'al()\'d code' && is_file($f))
+                            {
+                                return array
+                                (
+                                    'class_name'   => $rf2->name,
+                                    'is_php_class' => $rf2->getStartLine()?0:1,
+                                );
+                            }
+
+                            unset($rf2);
+                        }
+                    }
+                    else
+                    {
+                        return array
+                        (
+                            'class_name'   => $rf->name,
+                            'is_php_class' => $rf->getStartLine()?0:1,
+                        );
+                    }
+                }
+            }
+            else
+            {
+                return false;
+            }
+        }
+        catch (Exception $e)
+        {
+            return false;
+        }
+    }
+
 
     public function getArrayCopy()
     {

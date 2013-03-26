@@ -100,6 +100,7 @@ class _Docs_Method extends _Docs
             unset($tags['return']);
         }
         $this->data['tags']          = $tags;
+        $this->data['is_php_class']  = $this->method->getStartLine()?0:1;
         $this->data['start_line']    = $this->method->getStartLine();
         $this->data['end_line']      = $this->method->getEndLine();
         $this->data['file_name']     = $this->class->getFileName();

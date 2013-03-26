@@ -46,6 +46,15 @@ class _Docs_Property extends _Docs
         $this->data['class_name'] = $property->class;
         $this->data['is_static']  = $property->isStatic();
         $this->data['is_public']  = $property->isPublic();
+        if ($property->class!=$class)
+        {
+            $rs  = new ReflectionClass($property->class);
+            $this->data['is_php_class']  = $rs->getStartLine()?0:1;
+        }
+        else
+        {
+            $this->data['is_php_class'] = false;
+        }
 
         if ($property->isStatic() && $property->isPublic())
         {

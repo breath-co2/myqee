@@ -52,12 +52,24 @@ class _Docs_Class extends _Docs
         $parents = array();
         while ($parent = $parent->getParentClass())
         {
-            $parents[] = $parent->name;
+            if (substr(strtolower($parent->name), 0, 3)=='ex_')
+            {
+                # 扩展类或略
+                continue;
+            }
+
+            $rf = new ReflectionClass($parent->name);
+            $parents[] = array
+            (
+                'class_name'   => $parent->name,
+                'is_php_class' => $rf->getStartLine()?0:1,
+            );
         }
         $this->data['parents'] = $parents;
 
         $this->data['class_name']        = $this->class->getName();
         $this->data['title']             = $description[0];
+        $this->data['is_php_class']      = $this->class->getStartLine()?0:1;
         $this->data['description']       = trim(implode("\n", $description));
         $this->data['properties']        = $this->properties();
         $this->data['methods']           = $this->methods();

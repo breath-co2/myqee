@@ -1,7 +1,14 @@
 #!/usr/bin/env php
 <?php
-define('DIR_MANUAL', realpath(dirname(__FILE__).'/../').'/');
-define('DIR_SYSTEM', realpath(dirname(__FILE__).'/../../').'/');
+/**
+ * 目录分隔符简写
+ *
+ * @var string
+ */
+define('DS', DIRECTORY_SEPARATOR);
+
+define('DIR_MANUAL'       , realpath(dirname(__FILE__).'/../').DS);
+define('DIR_SYSTEM'       , realpath(dirname(__FILE__).'/../../').DS);
 
 include (dirname(__FILE__).'/lib/markdown.php');
 include (dirname(__FILE__).'/lib/markdown_extra.php');
@@ -21,11 +28,6 @@ function __($str, $lang=null)
     if (isset($config_i18n[$lang][$str]))return $config_i18n[$lang][$str];
 
     return $str;
-}
-
-function debug_path($path)
-{
-    return $path;
 }
 
 function chars($value, $double_encode = true)
@@ -66,9 +68,158 @@ function source($file, $start, $end)
 }
 
 
+/**
+ * 将真实路径地址输出为调试地址
+ *
+ * 显示结果类似 ./system/libraries/Database.class.php
+ *
+ * @param  string  path to debug
+ * @return string
+ */
+function debug_path($file)
+{
+    $file = str_replace('\\', '/', $file);
+
+    if (strpos($file, DIR_SYSTEM)===0)
+    {
+        $file = './' . substr($file, strlen(DIR_SYSTEM));
+    }
+
+    $file = str_replace('\\', '/', $file);
+
+    return $file;
+}
+
 function include_config_file(&$config, $file)
 {
     include $file;
+}
+
+
+
+function get_tag_html($name, $text, $path = '')
+{
+    switch ($name)
+    {
+        case 'license' :
+            if (strpos($text, '://') !== false)
+            {
+                // Convert the lincense into a link
+                $text = '<a href="'.str_replace('"', '', $text).'" target="_blank" rel="nofollow">'.$text.'</a>';
+            }
+            break;
+        case 'link' :
+            $text = preg_split('/\s+/', $text, 2);
+            $text = '<a href="'.str_replace('"', '', isset($text[1])?$text[1]:$text[0]).'" target="_blank" rel="nofollow">'.$text[0].'</a>';
+            break;
+        case 'copyright' :
+            if (strpos($text, '(c)') !== false)
+            {
+                // Convert the copyright sign
+                $text = str_replace('(c)', '&copy;', $text);
+            }
+            break;
+        case 'throws' :
+            if (is_array($text))
+            {
+                $text = '<a href="'.get_url($text['class_name'], null, $path).'">'.$text['text'].'</a>' . ($text['commit']?' '.$text['commit']:'');
+            }
+            break;
+        case 'uses' :
+            if (is_array($text))
+            {
+                $text = '<a href="'.get_url($text['class_name'], $text['f'], $path).'">'.$text['text'].'</a>';
+            }
+            break;
+    }
+
+    return $text;
+
+}
+
+/**
+ * 获取指定Class的URL路径
+ */
+function get_url($class_name, $method_or_property = '', $path = '')
+{
+    global $manual;
+
+    $class_name         = strtolower(trim($class_name, '\\ '));
+    $method_or_property = strtolower($method_or_property);
+
+    $class_name_array = explode('_', $class_name, 2);
+
+    # 扩展别名
+    if ($class_name_array[0]=='ex')
+    {
+        $class_name = $class_name_array[1];
+        $class_name_array = explode('_', $class_name, 2);
+    }
+
+    if ($class_name_array[0]=='core' && count($class_name_array)==2)
+    {
+        # 系统类库
+        $ns = 'core/';
+        $base_class_name = $class_name_array[1];
+    }
+    else if (preg_match('#^library_((?:[a-z0-9]+)_(?:[a-z0-9]+))_([a-z0-9_]+)$#', $class_name, $m))
+    {
+        $ns = 'library/' . str_replace('_', '/', $m[1]).'/';
+        $base_class_name = $m[2];
+    }
+    else
+    {
+        $ns = '';
+        $base_class_name = $class_name;
+    }
+
+    if ($method_or_property)
+    {
+        $str = $base_class_name .'.'.$method_or_property;
+    }
+    else
+    {
+        $str = $base_class_name;
+    }
+
+    if (isset($manual->is_php_class_list[$str]) && !$manual->is_php_class_list[$str])
+    {
+        list($big_name, $sub_name) = explode('_', $base_class_name, 2);
+
+        if ($sub_name)
+        {
+            $url_str = $path.$ns.'class.'.$big_name.'/api.'.str_replace('_', '.', $sub_name);
+        }
+        else
+        {
+            $url_str = $path.$ns.'class.'.$big_name.'/api';
+        }
+
+        if (!$method_or_property)
+        {
+            $url_str .= '.html';
+        }
+        else
+        {
+            if (substr($method_or_property, 0, 1)=='$')
+            {
+                $url_str .= '/property.';
+                $method_or_property = substr($method_or_property, 1);
+            }
+            else
+            {
+                $url_str .= '/method.';
+            }
+            $url_str .= $method_or_property .'.html';
+        }
+    }
+    else
+    {
+        # 直接连接到PHP网站上搜索跳转
+        $url_str = $manual->config['php_search_base_url'].$class_name.($method_or_property?'.'.trim($method_or_property, '$'):'');
+    }
+
+    return $url_str;
 }
 
 class Manual
@@ -86,7 +237,7 @@ class Manual
      *
      * @var array
      */
-    private $config = array();
+    public $config = array();
 
 
     # 文档上下文菜单列表
@@ -126,33 +277,57 @@ class Manual
      */
     private $parent_menu_tpl = array();
 
+    /**
+     * 记录TODO内容
+     */
+    private $todo_list = array();
+
+    private $todo_count = 0;
+
+
+    /**
+     * 记录所有函数、方法、变量是否PHP内置
+     */
+    public $is_php_class_list = array();
+
     public function __construct()
+    {
+
+    }
+
+    public function create()
     {
         $this->groups = array
         (
-            array
+            'manual' => array
             (
                 'type'          => 'manual',
                 'out_dir'       => '',
                 'dir'           => DIR_MANUAL,
                 'base_href'     => '',
                 'top_menu_text' => 'Welecome',
+                'class_ns'      => '',
+                'class_ns_len'  => 0,
             ),
-            array
+            'core' => array
             (
                 'type'          => 'core',
                 'out_dir'       => 'core/',
                 'dir'           => DIR_SYSTEM.'core/',
                 'base_href'     => '../',
                 'top_menu_text' => 'Core manual',
+                'class_ns'      => 'Core_',
+                'class_ns_len'  => 5,
             ),
-            array
+            'team' => array
             (
                 'type'          => 'team',
                 'out_dir'       => 'team',
                 'dir'           => DIR_SYSTEM.'team_library/',
                 'base_href'     => '../',
                 'top_menu_text' => 'Team library manual',
+                'class_ns'      => '',
+                'class_ns_len'  => 0,
             ),
         );
 
@@ -194,7 +369,7 @@ class Manual
                 $basename = basename($value);
                 $this->projects[$basename] = isset($projects_config[$basename])?$projects_config[$basename]:$basename;
 
-                $this->groups[] = array
+                $this->groups['project.'.$basename] = array
                 (
                     'type'          => 'project',
                     'project'       => $basename,
@@ -202,6 +377,8 @@ class Manual
                     'dir'           => $value.'/',
                     'base_href'     => '../../',
                     'top_menu_text' => 'Project manual',
+                    'class_ns'      => '',
+                    'class_ns_len'  => 0,
                 );
             }
         }
@@ -224,7 +401,7 @@ class Manual
                         $dir2 = basename($dir2);
                         $this->libraries[$dir1][] = $dir2;
 
-                        $this->groups[] = array
+                        $this->groups['library.'.$dir1.'.'.$dir2] = array
                         (
                             'type'          => 'library',
                             'library'       => $dir1.'.'.$dir2,
@@ -232,6 +409,8 @@ class Manual
                             'base_href'     => '../../../',
                             'dir'           => $dir2.'/',
                             'top_menu_text' => 'Libray manual',
+                            'class_ns'      => 'library_'.$dir1.'_'.$dir2.'_',
+                            'class_ns_len'  => strlen('library_'.$dir1.'_'.$dir2.'_'),
                         );
                     }
                 }
@@ -268,12 +447,15 @@ class Manual
 
         # 获取所有文档文件列表
         $this->get_all_files();
+
+        # 生成文件
+        $this->_create();
     }
 
     /**
      * 创建文档
      */
-    public function create()
+    private function _create()
     {
         $success = "\x1b[32m✔\x1b[39m";
         $error   = "\x1b[31m✕\x1b[39m";
@@ -295,7 +477,7 @@ class Manual
                     $file_data = current($lang_files);
                 }
 
-                $group = $this->groups[$file_data['group_no']];
+                $group = $this->groups[$file_data['group_key']];
 
                 $title       = $file_data['title'];
                 $global_data = $this->get_dir_global_data($lang, $group, $file_data);
@@ -313,23 +495,23 @@ class Manual
                             $content .= "\n\n" .$file_data['content'];
                         }
 
-                        $content = $this->format_content($content, $title, $group, $lang);
+                        $content = $this->format_content($content, $title, $group, $lang, $base_href);
                         break;
 
                     case 'content':
                         $content = $file_data['content'];
-                        $content = $this->format_content($content, $title, $group, $lang);
+                        $content = $this->format_content($content, $title, $group, $lang, $base_href);
                         break;
 
                     case 'class':
                     case 'method':
                     case 'property':
                         $tmp_fun = 'get_'.$file_data['file_type'].'_html_content';
-                        $content = $this->$tmp_fun($file_data, $title, $group, $lang);
+                        $content = $this->$tmp_fun($file_data, $title, $group, $lang, $base_href);
 
                         if ($file_data['file'])
                         {
-                            $content .= "\n\n". $this->format_content(file_get_contents($file_data['file']), $title, $group, $lang);
+                            $content .= "\n\n". $this->format_content(file_get_contents($file_data['file']), $title, $group, $lang, $base_href);
                         }
                         break;
                     default:
@@ -401,7 +583,7 @@ class Manual
         $error   = "\x1b[31m✕\x1b[39m";
 
         $this->files = array();
-        foreach ($this->groups as $group_no => $group)
+        foreach ($this->groups as $group_key => $group)
         {
             if(!is_dir($group['dir'].'guide/'))continue;
 
@@ -409,13 +591,13 @@ class Manual
             {
                 echo "*** 获取“{$lang_name}”文档文件";
                 # 获取所有文档文件
-                $this->get_dir_files($group_no, $lang, '');
+                $this->get_dir_files($group_key, $lang, '');
                 echo " $success\n";
                 echo "*** 获取“{$lang_name}”API信息";
 
 
                 # 获取所有API文件
-                $this->get_api_files($group_no, $lang, '');
+                $this->get_api_files($group_key, $lang, '');
                 echo "*** API信息 $success\n";
 
 
@@ -446,11 +628,11 @@ class Manual
 
         foreach ($this->config['lang'] as $lang => $lang_name)
         {
-            # 处理最新列表
-            $this->set_new_list($lang);
-
             # 处理常用文件
             $this->set_auto_file_data($lang);
+
+            # 处理最新列表
+            $this->set_new_list($lang);
         }
 
         # 处理上下文列表
@@ -463,13 +645,13 @@ class Manual
     /**
      * 获取指定目录的所有文件
      *
-     * @param int $group_no 当前组所在key
+     * @param int $group_key 当前组所在key
      * @param string $lang 当前语言
      * @param string $dir 当前子目录
      */
-    private function get_dir_files($group_no, $lang, $dir)
+    private function get_dir_files($group_key, $lang, $dir)
     {
-        $group = $this->groups[$group_no];
+        $group = $this->groups[$group_key];
 
         if ($group['base_href'])
         {
@@ -500,15 +682,16 @@ class Manual
         {
 
             $menu_content = file_get_contents($menu_file);
-            /*
-            $menu_content = preg_replace('#<function>(([a-z0-9_]+)\.([a-z0-9_\.]+)\.([a-z0-9_]+))</function>#', $base_href.'[$1]($2/$3/functions/$4.html)', $menu_content);
+
+            //$menu_content = preg_replace('#<function>(([a-z0-9_]+)\.([a-z0-9_\.]+)\.([a-z0-9_]+))</function>#', $base_href.'[$1]($2/$3/functions/$4.html)', $menu_content);
+
 
             # 获取所有超链接
             if (preg_match_all('/\[([^\]]+)\]\(([^\)]+)\)/', $menu_content, $m))
             {
                 foreach($m[2] as $k=>$tmp_url)
                 {
-                    $tmp_url = $this->replace_link_to_md_file($tmp_url, $this->group);
+                    $tmp_url = $this->replace_link_to_md_file($tmp_url, $group);
                     if (!isset($this->files[$tmp_url]))
                     {
                         $this->files[$tmp_url] = array();
@@ -516,7 +699,6 @@ class Manual
                     $tmp_menu[$tmp_url] = $m[1][$k];
                 }
             }
-            */
 
             $this->menus[$group['out_dir'].$dir][$lang] = $menu_content;
         }
@@ -535,7 +717,7 @@ class Manual
             }
             elseif (is_dir($file))
             {
-                $this->get_dir_files($group_no, $lang, $dir.basename($file).'/');
+                $this->get_dir_files($group_key, $lang, $dir.basename($file).'/');
                 continue;
             }
             elseif (substr($file, -3)!='.md')
@@ -572,7 +754,7 @@ class Manual
             (
                 'filename'      => $filename,
                 'type'          => $group['type'],
-                'group_no'      => $group_no,
+                'group_key'     => $group_key,
                 'title'         => $title,
                 'mtime'         => filemtime($file),
                 'file'          => $file,
@@ -589,7 +771,7 @@ class Manual
             (
                 'filename'      => 'index',
                 'type'          => $group['type'],
-                'group_no'      => $group_no,
+                'group_key'     => $group_key,
                 'title'         => __('Overview', $lang),
                 'mtime'         => filemtime($file),
                 'dir'           => $dir,
@@ -601,9 +783,9 @@ class Manual
     }
 
     // 获取API文件列表
-    private function get_api_files($group_no, $lang, $dir , &$api_list = array())
+    private function get_api_files($group_key, $lang, $dir , &$api_list = array())
     {
-        $group = $this->groups[$group_no];
+        $group = $this->groups[$group_key];
 
         # Manual中没有API
         if ($group['type']=='manual')return;
@@ -617,10 +799,8 @@ class Manual
             $base_href = '';
         }
 
-        if ($dir)foreach(explode('/', trim($dir, '/')) as $item)
-        {
-            $base_href .= '../';
-        }
+        # API根目录在class.**/目录中，所以要加上一个../
+        $base_href .= '../';
 
         $prefix = 'class.';
         $full_dir = $group['dir'] .'classes/'. $dir;
@@ -648,11 +828,25 @@ class Manual
                 if (is_file($file.$ext))
                 {
                     $api_sub_menu_list[$file.$ext] = array();
-                    $this->get_api_files($group_no, $lang, $dir.basename($file).'/', $api_sub_menu_list[$file.$ext]);
+                    $this->get_api_files($group_key, $lang, $dir.basename($file).'/', $api_sub_menu_list[$file.$ext]);
+                }
+                else if (!$dir)
+                {
+                    # 根目录时如果没有$file.$ext文件则需要直接处理掉菜单设置
+                    $api_list_sub_dir = array();
+                    $this->get_api_files($group_key, $lang, $dir.basename($file).'/', $api_list_sub_dir);
+                    $api_list = array_merge($api_list, $api_list_sub_dir);
+
+                    $filename   = basename($file);
+                    $tmp_dir = $prefix . $filename .'/';
+
+                    $this->api_add_menu_data($group, $group['out_dir'].$tmp_dir, $lang, $api_list_sub_dir);
+
+                    unset($api_list_sub_dir);
                 }
                 else
                 {
-                    $this->get_api_files($group_no, $lang, $dir.basename($file).'/', $api_list);
+                    $this->get_api_files($group_key, $lang, $dir.basename($file).'/', $api_list);
                 }
 
                 continue;
@@ -699,7 +893,7 @@ class Manual
             (
                 'filename'      => $tmp_name,
                 'type'          => $group['type'],
-                'group_no'      => $group_no,
+                'group_key'     => $group_key,
                 'title'         => $title,
                 'class_name'    => $class_name,
                 'class_file'    => $file,
@@ -729,22 +923,26 @@ class Manual
             );
 
             # 处理当前文件的函数、变量等
-            $this->get_class_data($st, $group_no, $lang, $dir);
-
-            if (!$dir)
-            {
-                # 加入菜单
-                $this->parent_menu[$group['out_dir'].$tmp_dir][$lang]['../api_list.html'] = __('Class List', $lang);
-            }
+            $this->get_class_data($st, $group_key, $lang, $dir, $base_href);
 
             $setting = $this->api_data[$group['type']]['classes'][$st['class_name']];
 
+            if ($group['class_ns_len']>0 && stripos($this->files[$tmp_file][$lang]['title'], $group['class_ns'])===0)
+            {
+                $sort_title = substr($this->files[$tmp_file][$lang]['title'], $group['class_ns_len']);
+            }
+            else
+            {
+                $sort_title = $this->files[$tmp_file][$lang]['title'];
+            }
+
             $temp_data = array
             (
-                'modifiers' => $setting['modifiers']?$setting['modifiers']:'public',
-                'href'      => $tmp_dir.$tmp_name.'.html',
-                'title'     => $this->files[$tmp_file][$lang]['title'],
-                'commit'    => ($this->files[$tmp_file][$lang]['commit']?' - '.$this->files[$tmp_file][$lang]['commit']:''),
+                'modifiers'  => $setting['modifiers']?$setting['modifiers']:'public',
+                'href'       => $tmp_dir.$tmp_name.'.html',
+                'title'      => $this->files[$tmp_file][$lang]['title'],
+                'commit'     => ($this->files[$tmp_file][$lang]['commit']?' - '.$this->files[$tmp_file][$lang]['commit']:''),
+                'sort_title' => $sort_title,
             );
             $api_list[] = $temp_data;
 
@@ -755,21 +953,7 @@ class Manual
 
             if (!$dir)
             {
-                $menu_content = "* [{$temp_data['title']}](../{$temp_data['href']})\n";
-                if ($api_sub_menu_list[$file])foreach ($api_sub_menu_list[$file] as $item)
-                {
-                    $menu_content .= "* [{$item['title']}](../{$item['href']})\n";
-                }
-
-                if (isset($this->menus[$group['out_dir'].$tmp_dir][$lang]) && $this->menus[$group['out_dir'].$tmp_dir][$lang])
-                {
-                    # 有自定义菜单
-                    $this->menus[$group['out_dir'].$tmp_dir][$lang] = trim($this->menus[$lang][$group['out_dir'].$tmp_dir])."\n\n---\n\n".$menu_content;
-                }
-                else
-                {
-                    $this->menus[$group['out_dir'].$tmp_dir][$lang] = $menu_content;
-                }
+                $this->api_add_menu_data($group, $group['out_dir'].$tmp_dir, $lang, $api_sub_menu_list[$file], $temp_data);
             }
 
             # 记录API公共数据
@@ -777,6 +961,28 @@ class Manual
             {
                 $this->set_api_global_data($setting['tags']);
             }
+
+
+            # 匹配TODO内容
+            $content = str_replace(array("\r\n", "\r"), "\n", file_get_contents($file));
+            if (preg_match_all('#(?:\#|//|@)(?: )*(todo|fixme) ([^\n]+)\n#i', $content, $m))
+            {
+                $line = 0;
+                foreach($m[2] as $k=>$v)
+                {
+                    # 分割成2个
+                    list($content_1, $content) = explode($m[0][$k], $content, 2);
+                    $line += substr_count($content_1, "\n") + 1;
+                    $this->todo_list[$file][] = array
+                    (
+                        'type'    => strtolower($m[1][$k]),
+                        'content' => trim($v),
+                        'line'    => $line,
+                    );
+                    $this->todo_count += 1;
+                }
+            }
+            unset($content);
         }
 
         # 只在根目录
@@ -793,7 +999,7 @@ class Manual
             (
                 'filename'      => 'api_list',
                 'type'          => $group['type'],
-                'group_no'      => $group_no,
+                'group_key'      => $group_key,
                 'title'         => __('Class List', $lang),
                 'dir'           => $dir?$prefix.$dir:'',
                 'out_dir'       => $group['out_dir'],
@@ -809,14 +1015,15 @@ class Manual
      * 获取类库数据
      *
      * @param string $menu_content
-     * @param int $group_no
+     * @param int $group_key
      * @param string $lang
      * @param string $dir
      * @param array $st
+     * @param string $base_href
      */
-    private function get_class_data($st, $group_no, $lang, $dir)
+    private function get_class_data($st, $group_key, $lang, $dir, $base_href)
     {
-        $group = $this->groups[$group_no];
+        $group = $this->groups[$group_key];
 
         if (isset($this->api_data[$group['type']]['classes'][$st['class_name']]))
         {
@@ -858,11 +1065,12 @@ class Manual
         }
 
 
-        $class_name = $data['class_name'];
-        $out_dir    = $st['out_dir'];
-        $tmp_file   = $st['tmp_file'];
-        $the_dir    = $st['dir'];
-        $the_name   = $st['name'];
+        $class_name      = $data['class_name'];
+        $base_class_name = $this->get_base_class_name($class_name);
+        $out_dir         = $st['out_dir'];
+        $tmp_file        = $st['tmp_file'];
+        $the_dir         = $st['dir'];
+        $the_name        = $st['name'];
 
         # 更新files中tilte和class_name
         $this->files[$tmp_file][$lang]['title']      = $class_name;
@@ -888,7 +1096,7 @@ class Manual
             (
                 'filename'      => 'property.'.$property['name'],
                 'type'          => $group['type'],
-                'group_no'      => $group_no,
+                'group_key'      => $group_key,
                 'title'         => $title,
                 'dir'           => $the_dir . $the_name . '/',
                 'out_dir'       => $out_dir . $the_name . '/',
@@ -902,15 +1110,30 @@ class Manual
                 $tmp_data['file'] = $this->files[$tmp_file][$lang]['file'];
             }
 
-            if (!$property['is_public'] || substr($property['name'], 0, 1)=='_')
+            # 记录是否属于PHP内置
+            $p_base_class_name = $this->get_base_class_name($property['class_name']);
+            $this->is_php_class_list[$p_base_class_name.'.$'.strtolower($property['name'])] = $property['is_php_class'];
+            if ($p_base_class_name!=$base_class_name)
             {
-                $menu_content_no_public .= '* [$'.str_replace('_', '\\_', $property['name'])."](property.{$property['name']}.html)\n";
-                $data_no_public[$tmp_file] = $tmp_data;
+                $this->is_php_class_list[$p_base_class_name.'.$'.strtolower($property['name'])] = $property['is_php_class'];
             }
-            else
+
+
+            # 如果是继承的，就直接忽略掉
+            if ($property['class_name']==$class_name)
             {
-                $menu_content .= '* [$'.str_replace('_', '\\_', $property['name'])."](property.{$property['name']}.html)\n";
-                $this->files[$tmp_file][$lang] = $tmp_data;
+                $href = "property.{$property['name']}.html";
+
+                if (!$property['is_public'] || substr($property['name'], 0, 1)=='_')
+                {
+                    $menu_content_no_public .= '* [$'.str_replace('_', '\\_', $property['name'])."]({$href})\n";
+                    $data_no_public[$tmp_file] = $tmp_data;
+                }
+                else
+                {
+                    $menu_content .= '* [$'.str_replace('_', '\\_', $property['name'])."]({$href})\n";
+                    $this->files[$tmp_file][$lang] = $tmp_data;
+                }
             }
         }
 
@@ -924,7 +1147,7 @@ class Manual
             (
                 'filename'      => 'method.'.$method['name'],
                 'type'          => $group['type'],
-                'group_no'      => $group_no,
+                'group_key'     => $group_key,
                 'title'         => $title,
                 'dir'           => $the_dir . $the_name . '/',
                 'out_dir'       => $out_dir . $the_name . '/',
@@ -938,15 +1161,29 @@ class Manual
                 $tmp_data['file'] = $this->files[$tmp_file][$lang]['file'];
             }
 
-            if (!$method['is_public'] || (substr($method['name'], 0, 1)=='_' && !in_array($method['name'], array('__construct', '__destruct'))))
+            # 记录是否属于PHP内置
+            $p_base_class_name = $this->get_base_class_name($method['class_name']);
+            $this->is_php_class_list[$p_base_class_name.'.'.strtolower($method['name'])] = $method['is_php_class'];
+            if ($p_base_class_name!=$base_class_name)
             {
-                $menu_content_no_public .= '* ['.str_replace('_', '\\_', $method['name'])."](method.{$method['name']}.html)\n";
-                $data_no_public[$tmp_file] = $tmp_data;
+                $this->is_php_class_list[$p_base_class_name.'.'.strtolower($method['name'])] = $method['is_php_class'];
             }
-            else
+
+            # 如果是继承的，就直接忽略掉
+            if ($method['class_name']==$class_name)
             {
-                $menu_content .= '* ['.str_replace('_', '\\_', $method['name'])."](method.{$method['name']}.html)\n";
-                $this->files[$tmp_file][$lang] = $tmp_data;
+                $href = "method.{$method['name']}.html";
+
+                if (!$method['is_public'] || (substr($method['name'], 0, 1)=='_' && !in_array($method['name'], array('__construct', '__destruct'))))
+                {
+                    $menu_content_no_public .= '* ['.str_replace('_', '\\_', $method['name'])."]({$href})\n";
+                    $data_no_public[$tmp_file] = $tmp_data;
+                }
+                else
+                {
+                    $menu_content .= '* ['.str_replace('_', '\\_', $method['name'])."]({$href})\n";
+                    $this->files[$tmp_file][$lang] = $tmp_data;
+                }
             }
         }
 
@@ -959,6 +1196,13 @@ class Manual
             {
                 $this->files[$tmp_file][$lang] = $tmp_data;
             }
+        }
+
+        $this->is_php_class_list[$base_class_name] = $data['is_php_class'];
+        if ($data['parents'])foreach ($data['parents'] as $p)
+        {
+            $p_base_class_name = $this->get_base_class_name($p['class_name']);
+            $this->is_php_class_list[$p_base_class_name] = $p['is_php_class'];
         }
 
         # 设置菜单
@@ -1033,20 +1277,53 @@ class Manual
                 $file_data = current($lang_files);
             }
 
-            $content .= "* \\[".__($this->groups[$file_data['group_no']]['top_menu_text'], $lang)."\\] [{$file_data['title']}]({$file_data['out_dir']}{$file_data['filename']}.html)  &nbsp; <font style=\"color:#ccc\">(".@date($this->config['date-format'], $file_data['mtime']).")</font>\n";
+            $content .= "* \\[".__($this->groups[$file_data['group_key']]['top_menu_text'], $lang)."\\] [{$file_data['title']}]({$file_data['out_dir']}{$file_data['filename']}.html)  &nbsp; <font style=\"color:#ccc\">(".@date($this->config['date-format'], $file_data['mtime']).")</font>\n";
         }
 
         $this->files['new_list.md'][$lang] = array
         (
             'filename'      => 'new_list',
             'type'          => 'manual',
-            'group_no'      => 0,
+            'group_key'      => 0,
             'title'         => $title,
             'dir'           => '',
             'out_dir'       => '',
             'file_type'     => 'content',
             'content'       => $content,
         );
+    }
+
+    /**
+     * 处理增加API菜单
+     */
+    private function api_add_menu_data($group, $tmp_dir, $lang, $api_list , $first_data = array())
+    {
+        # 加入菜单
+        $this->parent_menu[$tmp_dir][$lang]['../api_list.html'] = __('Class List', $lang);
+
+        if ($first_data)
+        {
+            $menu_content = "* [{$first_data['sort_title']}](../{$first_data['href']})\n";
+        }
+        else
+        {
+            $menu_content = '';
+        }
+
+        if ($api_list)foreach ($api_list as $item)
+        {
+            $menu_content .= "* [{$item['sort_title']}](../{$item['href']})\n";
+        }
+
+        if (isset($this->menus[$tmp_dir][$lang]) && $this->menus[$tmp_dir][$lang])
+        {
+            # 有自定义菜单
+            $this->menus[$tmp_dir][$lang] = trim($this->menus[$lang][$tmp_dir]) ."\n\n---\n\n". $menu_content;
+        }
+        else
+        {
+            $this->menus[$tmp_dir][$lang] = $menu_content;
+        }
     }
 
     /**
@@ -1060,7 +1337,7 @@ class Manual
         (
             'filename'      => 'changelog',
             'type'          => 'manual',
-            'group_no'      => 0,
+            'group_key'     => 'manual',
             'title'         => __('Change Log', $lang),
             'dir'           => '',
             'out_dir'       => '',
@@ -1074,7 +1351,7 @@ class Manual
         (
             'filename'      => 'readme',
             'type'          => 'manual',
-            'group_no'      => 0,
+            'group_key'     => 'manual',
             'title'         => __('Readme', $lang),
             'dir'           => '',
             'out_dir'       => '',
@@ -1088,7 +1365,7 @@ class Manual
         (
             'filename'      => 'upgrade',
             'type'          => 'manual',
-            'group_no'      => 0,
+            'group_key'     => 'manual',
             'title'         => __('Upgrade', $lang),
             'dir'           => '',
             'out_dir'       => '',
@@ -1098,11 +1375,39 @@ class Manual
         );
 
 
+        if (!$this->files['bin_readme.md'][$lang])$this->files['bin_readme.md'][$lang] = array
+        (
+            'filename'      => 'bin_readme',
+            'type'          => 'manual',
+            'group_key'     => 'manual',
+            'title'         => __('Bin Tools Readme', $lang),
+            'dir'           => '',
+            'out_dir'       => '',
+            'file_type'     => 'file',
+            'file'          => DIR_SYSTEM . 'bin/README.md',
+            'mtime'         => filemtime(DIR_SYSTEM . 'bin/README.md'),
+        );
+
+
+        $this->files['todo_list.md'][$lang] = array
+        (
+            'filename'      => 'todo_list',
+            'type'          => 'manual',
+            'group_key'     => 'manual',
+            'title'         => __('TODO List', $lang),
+            'dir'           => '',
+            'out_dir'       => '',
+            'file_type'     => 'content',
+            'content'       => $this->get_todo_html_content($lang),
+        );
+        $this->menus[''][$lang] = str_replace('<span class="badge badge-warning" menu-todo="">0</span>', '<span class="badge badge-warning">'.$this->todo_count.'</span>', $this->menus[''][$lang]);
+
+
         if (!$this->files['license.md'][$lang])$this->files['license.md'][$lang] = array
         (
             'filename'      => 'license',
             'type'          => 'manual',
-            'group_no'      => 0,
+            'group_key'     => 'manual',
             'title'         => __('License', $lang),
             'dir'           => '',
             'out_dir'       => '',
@@ -1129,7 +1434,7 @@ class Manual
                 (
                     'filename'      => 'thank',
                     'type'          => 'manual',
-                    'group_no'      => 0,
+                    'group_key'     => 'manual',
                     'title'         => __('Thanks', $lang),
                     'dir'           => '',
                     'out_dir'       => '',
@@ -1550,10 +1855,8 @@ class Manual
     }
 
 
-    private function format_content($content, $title, $group, $lang)
+    private function format_content($content, $title, $group, $lang, $base_href)
     {
-        global $base_href;
-
         # 文本处理
         $content = preg_replace('#<name>([^\r\n]+)</name>#', '<div class="function-name">'.$title.' -- $1</div>', $content);
 
@@ -1623,12 +1926,64 @@ class Manual
         return $content;
     }
 
+    // 将链接转换为从根目录开始的完整URL
+    private function replace_link_to_md_file($tmp_url, $group)
+    {
+        if (substr($tmp_url, 0, 1)=='/')
+        {
+            # 已是根目录URL
+            $tmp_url = substr($tmp_url, 1);
+        }
+        else
+        {
+            # 得到文档根目录的URL
+            $tmp_url = $group['out_dir'] . $tmp_url;
+        }
+
+        if (strpos($tmp_url, '/')!==false)
+        {
+            # 整理URL
+            $tmp_url_arr = explode('/', $tmp_url);
+            $i = 0;
+            foreach($tmp_url_arr as $tmp)
+            {
+                if ($tmp=='.')
+                {
+                    unset($tmp_url_arr[$i]);
+                }
+                elseif ($tmp=='..')
+                {
+                    if ($i-1>=0)unset($tmp_url_arr[$i-1]);
+                }
+                else
+                {
+                    $i++;
+                }
+            }
+
+            # 得到整理后的URL
+            $tmp_url = implode('/', $tmp_url_arr);
+        }
+
+        if (substr($tmp_url, -5)=='.html')
+        {
+            $tmp_url = substr($tmp_url, 0, -5);
+        }
+        elseif (substr($tmp_url, -1)=='/')
+        {
+            $tmp_url .= 'index';
+        }
+
+        return $tmp_url.'.md';
+    }
+
 
     /**
      * 获取类库的API的HTML
      */
-    private function get_class_html_content($file_data, $title, $group, $lang)
+    private function get_class_html_content($file_data, $title, $group, $lang, $base_href)
     {
+        $config     = $this->config;
         $class_name = strtolower($file_data['class_name']);
         $setting    = $this->api_data[$group['type']]['classes'][$class_name];
 
@@ -1640,8 +1995,9 @@ class Manual
     /**
      * 获取类库方法的API的HTML
      */
-    private function get_method_html_content($file_data, $title, $group, $lang)
+    private function get_method_html_content($file_data, $title, $group, $lang, $base_href)
     {
+        $config      = $this->config;
         $class_name  = strtolower($file_data['class_name']);
         $method_name = $file_data['method_name'];
 
@@ -1655,8 +2011,9 @@ class Manual
     /**
      * 获取类库变量的API的HTML
      */
-    private function get_property_html_content($file_data, $title, $group, $lang)
+    private function get_property_html_content($file_data, $title, $group, $lang, $base_href)
     {
+        $config        = $this->config;
         $class_name    = strtolower($file_data['class_name']);
         $property_name = $file_data['property_name'];
 
@@ -1665,6 +2022,47 @@ class Manual
         ob_start();
         include(DIR_MANUAL.'tpl/api_property.html');
         return ob_get_clean();
+    }
+
+    /**
+     * 获取TODOlist的HTML
+     */
+    private function get_todo_html_content($lang)
+    {
+        $config     = $this->config;
+        $todo_list  = $this->todo_list;
+        $todo_count = $this->todo_count;
+
+        ob_start();
+        include(DIR_MANUAL.'tpl/todo_list.html');
+        return ob_get_clean();
+    }
+
+    /**
+     * 获取一个类的基础名称
+     *
+     * 比如Core_Database的基础类名应该是Database
+     */
+    private function get_base_class_name($class_name)
+    {
+        $class_name       = strtolower(trim($class_name, '\\ '));
+        $class_name_array = explode('_', $class_name, 2);
+
+        if ($class_name_array[0]=='core' && count($class_name_array)==2)
+        {
+            # 系统类库
+            $base_class_name = $class_name_array[1];
+        }
+        else if (preg_match('#^library_((?:[a-z0-9]+)_(?:[a-z0-9]+))_([a-z0-9_]+)$#', $class_name, $m))
+        {
+            $base_class_name = $m[2];
+        }
+        else
+        {
+            $base_class_name = $class_name;
+        }
+
+        return $base_class_name;
     }
 
 

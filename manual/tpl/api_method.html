@@ -34,7 +34,7 @@ if ($setting['return'])
     list($type, $c) = $setting['return'][0];
     if ($type=='mixed')
     {
-        echo '<small><a href="http://www.php.net/manual/zh/language.pseudo-types.php#language.types.mixed" target="_blank">mixed</a></small>';
+        echo '<small><a href="'.$config['php_manual_base_url'].'language.pseudo-types.php#language.types.mixed" target="_blank">mixed</a></small>';
     }
     else
     {
@@ -57,7 +57,7 @@ echo '&nbsp;'.$file_data['class_name'].'::'.$setting['name'].'( '. ($setting['pa
 <span>
 <dt><?php echo $name ?></dt>
 <?php foreach ($set as $tag): ?>
-<dd><?php echo $tag ?></dd>
+<dd><?php echo get_tag_html($name, $tag, $base_href); ?></dd>
 <?php endforeach ?>
 </span>
 <?php endforeach ?>
@@ -113,7 +113,7 @@ if ($setting['file_name'])
     }
 ?>
 <div class="api-filename-div" data-placement="left" title="<?php echo __('Click Open', $lang);?>" data-toggle="tooltip"><span style="padding-top:1px;float:right;"><i class="<?php echo $is_show?'icon-minus':'icon-plus';?>"></i></span>File: <?php echo debug_path($setting['debug_file']);?></div>
-<div class="api-filecode-div"<?php if (!$is_show)echo ' style="display:none;"';?>><pre><code class="first-line: <?php echo $setting['start_line'];?>"><?php echo chars(source($setting['file_name'], $setting['start_line'], $setting['end_line'])); ?></code></pre></div>
+<div class="api-filecode-div"<?php if (!$is_show)echo ' style="display:none;"';?>><pre><code class="gutter: true; first-line: <?php echo $setting['start_line'];?>"><?php echo chars(source($setting['file_name'], $setting['start_line'], $setting['end_line'])); ?></code></pre></div>
 
 </div>
 <script type="text/javascript">

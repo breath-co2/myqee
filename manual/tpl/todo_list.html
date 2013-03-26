@@ -1,0 +1,22 @@
+<h1>
+<?php
+echo __('TODO List', $lang);
+//echo ' <span class="badge badge-warning">'.$todo_count.'</span>';
+?>
+</h1>
+
+
+<?php
+foreach ($todo_list as $file=>$item)
+{
+    $file = debug_path($file);
+    echo "<h2>{$file}</h2>\n";
+    echo '<table class="table-bordered table-striped">';
+    echo '<tr><th width="50" align="center">' . __('Type',$lang) .'</th><th width="50" align="center">'. __('Line',$lang).' </th><th> '. __('TODO Info',$lang) ."</th></tr>\n";
+    foreach ($item as $todo)
+    {
+        echo "<tr><td align=\"center\">{$todo['type']}</td><td align=\"center\">{$todo['line']}</td><td>".MarkdownExtra::defaultTransform($todo['content']."\n")."</td></tr>\n";
+    }
+    echo "</table>\n";
+}
+?>

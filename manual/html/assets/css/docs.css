@@ -52,7 +52,7 @@ body > .navbar .brand:hover {
 .left-div {
   float: left;
   display: block;
-  width: 200px;
+  width: 260px;
 }
 
 .left-div li {white-space: nowrap;}
@@ -67,7 +67,7 @@ body > .navbar .brand:hover {
 .right-div {
   display: block;
   min-height: 30px;
-  margin-left: 220px;
+  margin-left: 280px;
   -webkit-box-sizing: border-box;
   -moz-box-sizing: border-box;
   box-sizing: border-box;
@@ -104,15 +104,23 @@ body > .navbar .brand:hover {
 .right-div h6 {font-size: 12px;}
 
 .right-div pre {
-  -webkit-border-radius: 0px;
-  -moz-border-radius: 0px;
-  border-radius: 0px;
   background-color: #fffff2;
   padding: 0;
 }
+.right-div pre > div {
+  padding: 8px;
+}
+.right-div .api-filecode-div pre{
+  -webkit-border-top-left-radius: 0px;
+  -moz-border-top-left-radius: 0px;
+  border-top-left-radius: 0px;
+  -webkit-border-top-right-radius: 0px;
+  -moz-border-top-right-radius: 0px;
+  border-top-right-radius: 0px;
+}
 .right-div pre .syntaxhighlighter {
-  margin: 5px 0;
-  margin: 5px 0 !important;
+  margin: 0;
+  margin: 0 !important;
   background-color: #fffff2;
   background-color: #fffff2 !important;
 }
@@ -352,9 +360,18 @@ body > .navbar .brand:hover {
 .api-class-div .toc_f{display:inline-block;width:14px;height:22px;vertical-align:middle;background:url(../images/toc.gif) no-repeat -1px -194px;}
 .api-class-div .toc_s,.api-class-div .static{display:inline-block;width:14px;height:22px;vertical-align:middle;background:url(../images/toc.gif) no-repeat -1px -224px;}
 .api-class-div .toc_n{display:inline-block;width:14px;height:22px;vertical-align:middle;}
+.api-class-div .toc .label {font-weight: normal;-webkit-transform: scale(0.6);-moz-transform: scale(0.6);}
 
 .api-constants-div span, .api-constants-div small{color: #aaa;}
-
+.api-extends-div {
+  border: 1px solid #ccc;
+  padding: 3px 6px 10px 6px;
+  background: #fff;
+  margin-bottom: 10px;
+}
+.api-extends-div > ul.toc {
+  margin: 0px;
+}
 
 /* Sections
 -------------------------------------------------- */
@@ -387,7 +404,10 @@ hr.soften {
   border: 0;
 }
 
-
+/* 修正Firefox下代码框错位的问题 */
+.syntaxhighlighter .container:before, .syntaxhighlighter .container:after {
+  display: none;
+}
 
 /* Jumbotrons
 -------------------------------------------------- */
@@ -993,7 +1013,7 @@ form.bs-docs-example {
   position: relative;
   display: block;
   float: left;
-  width: 260px;
+  width: 300px;
   margin: 20px;
 }
 
@@ -1156,13 +1176,13 @@ form.bs-docs-example {
 }
 .bs-docs-sidenav.affix {
   top: 60px;
-  width: 200px;
+  width: 260px;
 }
 .bs-docs-sidenav.affix-bottom {
   position: absolute;
   top: auto;
   bottom: 10px;
-  width: 200px;
+  width: 260px;
 }
 .bs-docs-sidenav ul {
   margin-left: 0;
@@ -1258,7 +1278,7 @@ form.bs-docs-example {
   }
   .bs-docs-sidenav.affix {
     top: 0;
-    width: 200px;
+    width: 250px;
   }
 }
 
