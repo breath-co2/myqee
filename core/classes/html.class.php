@@ -57,7 +57,7 @@ class Core_HTML
      * Convert special characters to HTML entities. All untrusted content
      * should be passed through this method to prevent XSS injections.
      *
-     * echo HTML::chars($username);
+     *     echo HTML::chars($username);
      *
      * @param   string   string to convert
      * @param   boolean  encode existing entities
@@ -73,7 +73,7 @@ class Core_HTML
      * that cannot be represented in HTML with the current character set
      * will be converted to entities.
      *
-     * echo HTML::entities($username);
+     *     echo HTML::entities($username);
      *
      * @param   string   string to convert
      * @param   boolean  encode existing entities
@@ -88,7 +88,7 @@ class Core_HTML
      * Create HTML link anchors. Note that the title is not escaped, to allow
      * HTML elements within links (images, etc).
      *
-     * echo HTML::anchor('/user/profile', 'My Profile');
+     *     echo HTML::anchor('/user/profile', 'My Profile');
      *
      * @param   string  URL or URI string
      * @param   string  link text
@@ -136,7 +136,7 @@ class Core_HTML
      * Creates an HTML anchor to a file. Note that the title is not escaped,
      * to allow HTML elements within links (images, etc).
      *
-     * echo HTML::file_anchor('media/doc/user_guide.pdf', 'User Guide');
+     *     echo HTML::file_anchor('media/doc/user_guide.pdf', 'User Guide');
      *
      * @param   string  name of file to link to
      * @param   string  link text
@@ -164,7 +164,7 @@ class Core_HTML
      * be helpful for spam prevention, but can prevent legitimate robots from
      * reading your content.
      *
-     * echo HTML::obfuscate($text);
+     *     echo HTML::obfuscate($text);
      *
      * @param   string  string to obfuscate
      * @return  string
@@ -197,7 +197,7 @@ class Core_HTML
      * Generates an obfuscated version of an email address. Helps prevent spam
      * robots from finding email addresses.
      *
-     * echo HTML::email($address);
+     *     echo HTML::email($address);
      *
      * @param   string  email address
      * @return  string
@@ -213,7 +213,7 @@ class Core_HTML
      * Creates an email (mailto:) anchor. Note that the title is not escaped,
      * to allow HTML elements within links (images, etc).
      *
-     * echo HTML::mailto($address);
+     *     echo HTML::mailto($address);
      *
      * @param   string  email address to send to
      * @param   string  link text
@@ -237,7 +237,7 @@ class Core_HTML
     /**
      * Creates a style sheet link element.
      *
-     * echo HTML::style('media/css/screen.css');
+     *     echo HTML::style('media/css/screen.css');
      *
      * @param   string  file name
      * @param   array   default attributes
@@ -265,7 +265,7 @@ class Core_HTML
     /**
      * Creates a script link.
      *
-     * echo HTML::script('media/js/jquery.min.js');
+     *     echo HTML::script('media/js/jquery.min.js');
      *
      * @param   string   file name
      * @param   array	default attributes
@@ -291,7 +291,7 @@ class Core_HTML
     /**
      * Creates a image link.
      *
-     * echo HTML::image('media/img/logo.png', array('alt' => 'My Company'));
+     *     echo HTML::image('media/img/logo.png', array('alt' => 'My Company'));
      *
      * @param   string   file name
      * @param   array	default attributes
@@ -315,7 +315,7 @@ class Core_HTML
      * Compiles an array of HTML attributes into an attribute string.
      * Attributes will be sorted using HTML::$attribute_order for consistency.
      *
-     * echo '<div'.HTML::attributes($attrs).'>'.$content.'</div>';
+     *     echo '<div'.HTML::attributes($attrs).'>'.$content.'</div>';
      *
      * @param   array   attribute list
      * @return  string
