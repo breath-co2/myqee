@@ -76,53 +76,13 @@ class Core_Controller
     }
 
     /**
-     * Session对象
+     * 返回Session对象
+     *
      * @return Session
      */
-    protected static function session()
+    public function session()
     {
         return Session::instance();
-    }
-
-    /**
-     * 执行新控制
-     * 若采用非内部调用，则会等同于浏览器的URI执行，请注意防止陷入死循环
-     *
-     * @param string $uri 新的uri
-     * @param boolean $print 是否直接输出
-     * @param boolean $use_route 是否在路由中寻找，默认：是
-     * @param boolean $is_internal 是否内部调用，默认：是
-     * @return string 返回新控制器执行的html
-     */
-    protected static function execute($uri, $print = true, $use_route = true, $is_internal = true)
-    {
-        return HttpIO::execute($uri, $print, $use_route, $is_internal);
-    }
-
-    /**
-     * 页面跳转
-     *
-     * @param   string   redirect location
-     * @param   integer  status code: 301, 302, etc
-     * @return  void
-     * @uses    Core_url::site
-     * @uses    HttpIO::send_headers
-     */
-    protected static function redirect($url, $code = 302)
-    {
-        HttpIO::redirect($url, $code);
-    }
-
-    /**
-     * 页面输出header缓存
-     *
-     * 0表示不缓存
-     *
-     * @param int $time 缓存时间，单位秒
-     */
-    public static function header_cache($time = 86400)
-    {
-        HttpIO::set_cache_header($time);
     }
 
     /**
@@ -183,4 +143,48 @@ class Core_Controller
     {
         $this->show_message($message, -1, $data);
     }
+
+
+    /**
+     * 执行新控制
+     *
+     * 若采用非内部调用，则会等同于浏览器的URI执行，请注意防止陷入死循环
+     *
+     * @param string $uri 新的uri
+     * @param boolean $print 是否直接输出
+     * @param boolean $use_route 是否在路由中寻找，默认：是
+     * @param boolean $is_internal 是否内部调用，默认：是
+     * @return string 返回新控制器执行的html
+     */
+    public static function execute($uri, $print = true, $use_route = true, $is_internal = true)
+    {
+        return HttpIO::execute($uri, $print, $use_route, $is_internal);
+    }
+
+    /**
+     * 页面跳转
+     *
+     * @param   string   redirect location
+     * @param   integer  status code: 301, 302, etc
+     * @return  void
+     * @uses    Core_url::site
+     * @uses    HttpIO::send_headers
+     */
+    public static function redirect($url, $code = 302)
+    {
+        HttpIO::redirect($url, $code);
+    }
+
+    /**
+     * 页面输出header缓存
+     *
+     * 0表示不缓存
+     *
+     * @param int $time 缓存时间，单位秒
+     */
+    public static function header_cache($time = 86400)
+    {
+        HttpIO::set_cache_header($time);
+    }
+
 }
