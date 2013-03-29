@@ -2,6 +2,11 @@
 <?php
 # SVN自动合并工具
 #
+# 支持的功能
+#
+# * 合并版本
+# * 将一个目录文件全部合并到一个带svn版本控制的目录，多余的文件会执行svn delete命令清除Index
+#
 # 通常我们会在working版本(或dev版本)中开发代码，然后把修改的内容合并到trunk中，这个工具就是自动合并指定版本到trunk目录用的
 #
 # 可自动将开发版本文件合并到trunk文件中
@@ -11,7 +16,10 @@
 # svn-tools merge -v 1033:1036              把1034,1035,1036版本合并进trunk（注意不含1033版本）
 # svn-tools merge -v 1055                   把1055版本合并进trunk
 # svn-tools log                             查看没有合并的版本记录
-
+# svn-tools sync-dir -f ~/Sites/test1/ -t ~/Sites/test2/    将test1目录同步到test2目录
+#
+# svn-tools sync-dir 的其它参数
+# * --a 或 --all 将完整同步到目标目录，如果某个文件或文件夹在from目录中不存在但在目标文件中存在，则会用svn delete命令删除掉目标文件中多余的文件
 
 $args = $_SERVER['argv'];
 
@@ -28,6 +36,10 @@ if ($args[1]=='merge')
 else if ($args[1]=='log')
 {
     $obj->analyze_merge_log();
+}
+else if ($args[1]=='sync-dir')
+{
+    $obj->sync_dir();
 }
 else
 {
@@ -116,7 +128,9 @@ Examples:
     %s merge -v 1055               \x1b[34m(把1055版本合并进trunk)\x1b[39m
     %s merge --trunk-url=<TRUNK-URL>  --working-url=<WORKING-URL> -v
     %s merge --trunk-url=<TRUNK-URL>  --working-url=<WORKING-URL> -v -p wwwroot
-", $name, $name , $name, $name , $name);
+    %s sync-dir -f ~/Sites/test1/ -t ~/Sites/test2/         \x1b[34m(把test1目录文件合并到test2目录，不删除目标目录中多余文件)\x1b[39m
+    %s sync-dir -f ~/Sites/test1/ -t ~/Sites/test2/ --all   \x1b[34m(把test1目录文件合并到test2目录，删除目标目录中多余文件)\x1b[39m
+", $name, $name , $name, $name , $name , $name , $name);
         exit();
     }
 
@@ -138,13 +152,18 @@ Examples:
             exit;
         }
 
+
+        $argv = $_SERVER['argv'];
+        unset($argv[0]);
+        unset($argv[1]);
+
         $shortopts = "c:m:";
         $longopts = array
         (
             'dry-run',
             'no-comment',
         );
-        $opts = self::getopt($shortopts, $longopts);
+        $opts = self::getopt($shortopts, $longopts, $argv);
 
         if ( ! $opts )
         {
@@ -237,12 +256,29 @@ Examples:
         }
         */
 
-        // parse arguments
-        $opts = self::getopt('vhp:', array('help', 'verbose', 'path:', 'trunk-url:', 'working-url:'));
 
-        if ( is_array($opts) ) foreach ( $opts as $opt => $val )
+        $argv = $_SERVER['argv'];
+        unset($argv[0]);
+        unset($argv[1]);
+
+        $s  = '';
+        $s .= 'p:';     //-p ...
+        $s .= 'v';      //-a
+        $s .= 'h';      //-h
+
+        $longopts  = array
+        (
+            'path:',           //--path=...
+            'trunk-url:',      //--trunk-url=...
+            'working-url:',    //--working-url=...
+            'verbose',         //--verbose
+            'help',            //--help
+        );
+        $options = self::getopt($s, $longopts, $argv);
+
+        if (is_array($opts))foreach ($opts as $opt => $val)
         {
-            switch ( $opt )
+            switch ($opt)
             {
                 case 'verbose' :
                 case 'v' :
@@ -656,50 +692,440 @@ Examples:
      * @param array $global_options
      * @return array
      */
-    protected static function getopt($options, array $global_options = null)
+    protected static function getopt($options, array $global_options = null, $argv = null)
     {
-        $argv = array_slice($_SERVER['argv'], 2);
-
-        $opts_array = explode(':', trim($options,':'));
-
-        $result = array();
-        foreach ( $opts_array as $opt )
+        if (null===$argv)
         {
-            $found = false;
-            foreach ( $argv as $v )
+            $argv = array_slice($_SERVER['argv'], 1);
+        }
+        $argv = array_values($argv);
+
+
+        $len = strlen($options);
+        $my_options = array();
+
+        $sl = 0;
+        for($i=$len-1; $i>=0; $i--)
+        {
+            $key = $options[$i];
+            if ($key==':')
             {
-                if ( $found )
+                $sl++;
+                continue;
+            }
+
+            # 只接受a-zA-Z0-9
+            if (preg_match('#[^a-zA-Z0-9]+#', $key))continue;
+
+            if ($sl===0)
+            {
+                $my_options[$key] = 1;
+            }
+            elseif ($sl===1)
+            {
+                $my_options[$key.':'] = 1;
+            }
+            else
+            {
+                $my_options[$key.'::'] = 1;
+            }
+
+            $sl = 0;
+        }
+
+        $my_global_options = array();
+        foreach($global_options as $item)
+        {
+            $my_global_options[$item] = 1;
+        }
+
+        $rs = array();
+
+        foreach($argv as $k=>$item)
+        {
+            if (preg_match('#^\-(\-)?([a-z0-9\-]+)=(.*)$#i', $item, $m))
+            {
+                $key   = $m[2];
+                $value = $m[3];
+                if ($m[1]=='-')
                 {
-                    if ( isset($result[$opt]) )
+                    if (!isset($my_global_options[$key.'::']))
                     {
-                        if ( !is_array($result[$opt]) )
-                        {
-                            $result[$opt] = array($result[$opt]);
-                        }
-                        $result[$opt][] = trim($v);
+                        continue;
+                    }
+                }
+                else
+                {
+                    if (!isset($my_options[$key.'::']))
+                    {
+                        continue;
+                    }
+                }
+            }
+            elseif (preg_match('#^\-(\-)?([a-z0-9\-]+)$#i', $item, $m))
+            {
+                $key  = $m[2];
+                if ($m[1]=='-')
+                {
+                    if (isset($my_global_options[$key]))
+                    {
+                        $value = false;
+                    }
+                    elseif (isset($my_global_options[$key.':']))
+                    {
+                        $value = $argv[$k+1];
                     }
                     else
                     {
-                        $result[$opt] = trim($v);
+                        continue;
                     }
-                    $found = false;
                 }
-                elseif ( $v=='-'.$opt )
+                else
                 {
-                    $found = true;
+                    if (isset($my_options[$key]))
+                    {
+                        $value = false;
+                    }
+                    elseif (isset($my_options[$key.':']))
+                    {
+                        $value = $argv[$k+1];
+                    }
+                    elseif (isset($my_options[$key.'::']))
+                    {
+                        $value = false;
+                    }
+                    else
+                    {
+                        continue;
+                    }
                 }
             }
-        }
-
-        if ($global_options)foreach ($global_options as $item)
-        {
-            if ( in_array('--'.$item, $argv) )
+            else
             {
-                $result[$item] = false;
+                continue;
+            }
+
+            if (isset($rs[$key]))
+            {
+                $rs[$key] = (array)$rs[$key];
+                $rs[$key][] = $value;
+            }
+            else
+            {
+                # 赋值
+                $rs[$key] = $value;
             }
         }
 
-        return $result;
+        return $rs;
     }
 
+
+    /**
+     * 同步目录
+     */
+    public function sync_dir()
+    {
+        $argv = $_SERVER['argv'];
+        unset($argv[0]);
+        unset($argv[1]);
+
+        $s  = 'f:';     //-f ...
+        $s .= 't:';     //-t ...
+        $s .= 'a';      //-a
+
+        $longopts  = array
+        (
+            'from:',    //--from=...
+            'to:',      //--to=...
+            'help',
+            't::',
+            'all',      //--all
+        );
+        $options = self::getopt($s, $longopts, $argv);
+
+        $from = null;
+        $to   = null;
+        $this->is_all  = false;
+
+        foreach ($options as $key=>$value)
+        {
+            switch ($key)
+            {
+                case 'f':
+                case 'from':
+                    $from = $value;
+                    break;
+                case 't';
+                case 'to';
+                    $to = $value;
+                    break;
+                case 'a':
+                case 'all':
+                    $this->is_all = true;
+                    break;
+                default:
+                    break;
+            }
+        }
+
+        if (!$from)
+        {
+            echo "缺少参数，需要-f或--f参数\n";
+            exit;
+        }
+        if (!$to)
+        {
+            echo "缺少参数，需要-t或--to参数\n";
+            exit;
+        }
+
+
+        if (!is_dir($from))
+        {
+            echo "指定的from目录不存在\n";
+            exit;
+        }
+
+        if (!is_dir($to))
+        {
+            echo "指定的to目录不存在，是否创建？(yes|no)\n";
+            $stdin = trim(strtolower(fgets(STDIN)));
+            if ($stdin=='yes'|| $stdin=='y')
+            {
+                $r = $this->create_dir($to);
+                if ($r)
+                {
+                    echo "创建目录{$to}成功\n";
+                }
+                else
+                {
+                    echo "目录创建失败,操作终止\n";
+                    exit;
+                }
+            }
+            else
+            {
+                echo "停止.\n";
+                exit;
+            }
+        }
+
+        $from = realpath($from) . '/';
+        $to   = realpath($to) . '/';
+
+        $this->glob_dir($from, $to);
+    }
+
+    private function glob_dir($from, $to)
+    {
+        $all_to_exist_files = array();
+
+        # 目标目录存在
+        if (is_dir($to))
+        {
+            $handle = opendir($to);
+            while (($file_name = readdir($handle))!==false)
+            {
+                if ($file_name=='.'||$file_name=='..')continue;
+                $file = $to . $file_name;
+
+                $file_name = basename($file);
+                if ($file_name=='.svn'||$file_name=='.git')continue;
+
+                $all_to_exist_files[$file_name] = $file;
+            }
+
+            closedir($handle);
+            unset($handle);
+        }
+        else
+        {
+            # 创建一个目录
+            $this->create_dir($to);
+        }
+
+        $handle = opendir($from);
+        while (($file_name = readdir($handle))!==false)
+        {
+            if ($file_name=='.'||$file_name=='..')continue;
+
+            $file = $from . $file_name;
+
+            if ($file_name=='.svn'||$file_name=='.git')continue;
+
+            # 移除目标目录中文件列表
+            if (isset($all_to_exist_files[$file_name]))unset($all_to_exist_files[$file_name]);
+
+            if (is_dir($file))
+            {
+                # 递归的处理目录
+                $this->glob_dir($from.$file_name.'/', $to.$file_name.'/');
+                continue;
+            }
+
+            $to_file = $to . $file_name;
+
+            if (is_file($to_file))
+            {
+                if (@copy($file, $to_file))
+                {
+                    echo "C         $to_file\n";
+                }
+                else
+                {
+                    echo "C  fail   $to_file\n";
+                }
+            }
+            else
+            {
+                if (substr($file_name, 0, 1)=='.')
+                {
+                    if ($this->is_all)
+                    {
+                        # 隐藏的文件
+                        if (@copy($file, $to_file))
+                        {
+                            echo "C         $to_file\n";
+                        }
+                        else
+                        {
+                            echo "C  fail   $to_file\n";
+                        }
+                    }
+                }
+                else
+                {
+                    if (@copy($file, $to_file))
+                    {
+                        echo "C         $to_file\n";
+                    }
+                    else
+                    {
+                        echo "C  fail   $to_file\n";
+                    }
+                }
+            }
+        }
+        closedir($handle);
+        unset($handle);
+
+
+
+        if ($all_to_exist_files)
+        {
+            # 这些文件或目录都是不存在的了，需要删除
+            if (is_dir($to.'.svn/'))
+            {
+                # 通过SVN来删除
+                foreach($all_to_exist_files as $file)
+                {
+                    $cmd = "svn delete $file --force";
+                    echo shell_exec($cmd);
+
+                    # 通过SVN还没有删除，可能本身就不在版本控制中
+                    if (is_file($file))
+                    {
+                        if (@unlink($file))
+                        {
+                            echo "D         $to_file\n";
+                        }
+                        else
+                        {
+                            echo "D  fail   $to_file\n";
+                        }
+                    }
+                    elseif (is_dir($file))
+                    {
+                        $this->remove_dir($file);
+                    }
+                }
+            }
+            else
+            {
+                # 直接删除
+                foreach($all_to_exist_files as $file)
+                {
+                    if (is_dir($file))
+                    {
+                        $this->remove_dir($file);
+                    }
+                    else
+                    {
+                        if (@unlink($file))
+                        {
+                            echo "D         $to_file\n";
+                        }
+                        else
+                        {
+                            echo "D  fail   $to_file\n";
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+
+    private function remove_dir($dir)
+    {
+        if (!is_dir($dir))
+        {
+            return true;
+        }
+
+        $realpath = realpath($dir);
+
+        if (!$realpath || $realpath == '/')
+        {
+            return true;
+        }
+
+        $handle = opendir($realpath);
+        while (($file = readdir($handle)) !== false)
+        {
+            if ( $file != '.' && $file != '..' )
+            {
+                $tmp_dir = $dir . '/' . $file;
+                is_dir($tmp_dir)?$this->remove_dir($tmp_dir):@unlink($tmp_dir);
+            }
+        }
+        closedir($handle);
+
+        if (@rmdir($dir))
+        {
+            echo "D         $dir\n";
+            return true;
+        }
+        else
+        {
+            echo "D  fail   $dir\n";
+            return false;
+        }
+    }
+
+    private function create_dir($dir)
+    {
+        if (is_dir($dir))return true;
+
+        $temp = explode('/', str_replace('\\', '/', $dir) );
+        $cur_dir = '';
+
+        for($i = 0; $i < count($temp); $i++)
+        {
+            $cur_dir .= $temp[$i] . '/';
+            if (!@is_dir($cur_dir))
+            {
+                if (@mkdir($cur_dir, 0755))
+                {
+                }
+                else
+                {
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    }
 }
