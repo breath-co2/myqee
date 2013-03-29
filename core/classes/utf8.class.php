@@ -1126,7 +1126,7 @@ class Core_UTF8
      * [!!] This function is very slow compared to the native version. Avoid
      * using it when possible.
      *
-     * @author  Harry Fuecks <hfuecks@gmail.com
+     * @author  Harry Fuecks <hfuecks@gmail.com>
      * @param   string|array  text to replace
      * @param   string|array  replacement text
      * @param   string|array  subject text
