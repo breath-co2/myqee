@@ -59,31 +59,32 @@ SVN合并、查看合并日志工具
 
 #### 使用方法
 
-* `svn-tools merge -v 1033:1036`              把1034,1035,1036版本合并进trunk（注意不含1033版本）
-* `svn-tools merge -v 1055  `                 把1055版本合并进trunk
-* `svn-tools log`                             查看没有合并的版本记录
-* `svn-tools sync-dir -f ~/Sites/test1/ -t ~/Sites/test2/`    将test1目录同步到test2目录
+命令   |  说明
+------|-------
+`svn-tools merge -v 1033:1036`     |         把1034,1035,1036版本合并进trunk（注意不含1033版本）
+`svn-tools merge -v 1055  `        |         把1055版本合并进trunk
+`svn-tools log`                    |         查看没有合并的版本记录
+`svn-tools sync-dir -f ~/Sites/test1/ -t ~/Sites/test2/`  |  将test1目录同步到test2目录
 
 
 #### 参数说明
 
-**`svn-tools merge` 的参数**
+`svn-tools merge`参数  |  说明
+----------------------|--------
+`--dry-run`           |  输出执行命令模式，而不是直接直接，加上后执行程序将不做实际合并操作
+`--no-comment`        |  只做合并，不做自动提交工作，加上后可仔细提交合结果
 
-* `--dry-run` 输出执行命令模式，而不是直接直接，加上后执行程序将不做实际合并操作
-* `--no-comment` 只做合并，不做自动提交工作，加上后可仔细提交合结果
+`svn-tools log`参数    |  说明
+----------------------|------
+`--trunk-url=***`     |  trunk目录的SVN的URL路径
+`--working-url=***`   |  workding目录的SVN的URL路径
+`-h` 或 `--help`      |  帮助
+`-p` 或 `--paht=***`  |  指定trunk目录的路径
+`-v` 或 `--verbose`   |  查看Log的详细信息
 
-**`svn-tools log` 的参数**
-
-* `--trunk-url=***`     trunk目录的SVN的URL路径
-* `--working-url=***`   workding目录的SVN的URL路径
-* `-h` 或 `--help`      帮助
-* `-p` 或 `--paht=***`  指定trunk目录的路径
-* `-v` 或 `--verbose`   查看Log的详细信息
-
-**`svn-tools sync-dir` 的参数**
-
-* `-f` 或 `--from=***` 源目录，必须参数
-* `-t` 或 `--to=***`   目标目录，必须参数
-* `-a` 或 `--all`      是否完整模式，可选参数<br />
-  将完整同步到目标目录，如果某个文件或文件夹在from目录中不存在但在目标文件中存在，则会用svn delete命令删除掉目标文件中多余的文件
+`svn-tools sync-dir`参数  | 说明
+-------------------------|---------
+`-f` 或 `--from=***`     | 源目录，必须参数
+`-t` 或 `--to=***`       | 目标目录，必须参数
+`-a` 或 `--all`          | 是否完整模式，可选参数<br />将完整同步到目标目录，如果某个文件或文件夹在from目录中不存在但在目标文件中存在，则会用svn delete命令删除掉目标文件中多余的文件
 
