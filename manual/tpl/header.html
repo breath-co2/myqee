@@ -170,14 +170,15 @@
         <div id="page-last-edit-div"></div>
         <?php echo __('View this page in');?> :
         <?php
-            echo '<select>';
+            echo '<select id="lang_select">';
             if ($config['lang'])foreach ($config['lang'] as $k=>$v)
             {
 
-                echo '<option value="'.$k.'">'.$v.'</option>';
+                echo '<option value="'.$k.'"'.($lang==$k?' selected="selected"':'').'>'.$v.'</option>';
             }
             echo '</select>';
         ?>
-        <button class="btn btn-info btn-mini" type="button"><i class="icon-arrow-right icon-white"></i></button>
+        <a href="<?php echo $base_href?$base_href:'./';?>" id="base_href_test_a" style="display:none;"></a>
+        <button onclick="document.location.href='<?php echo $base_href;?>../'+$('#lang_select')[0].value+'/'+document.location.href.substring($('#base_href_test_a')[0].href.length);" class="btn btn-info btn-mini" type="button"><i class="icon-arrow-right icon-white"></i></button>
         <div class="right-clear"></div>
     </div>
