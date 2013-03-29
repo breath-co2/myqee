@@ -15,9 +15,15 @@ $dirname = dirname(__FILE__);
 # 文档目录
 define('DIR_MANUAL', realpath($dirname.'/../../').'/');
 
+# 大目录类型
 $type       = strtolower($args[0]);
+# 类名称
 $class_name = strtolower($args[1]);
+# 文件名
 $file       = $args[2];
+# 文件类型，主要用于控制器读取处理是否shell还是system还是admin
+$dir_type   = $args[3];
+
 if ($type=='core')
 {
     # 核心类库，不用特别处理，已经加载
@@ -38,9 +44,23 @@ else
     exit;
 }
 
+
+if ($dir_type=='controller_system')
+{
+    define('IS_SYSTEM_MODE', 1);
+    define('IS_CLI', false);
+}
+elseif ($dir_type=='controller_admin')
+{
+    define('IS_SYSTEM_ADMIN', true);
+    define('IS_CLI', false);
+}
+
+
 # 载入MyQEE程序，不自动运行，只加载autoload
 $auto_run = false;
 include($dirname.'/../../../index.php');
+
 
 Core::$path_info = '/';
 
@@ -50,6 +70,12 @@ if ($library)
     Core::import_library('com.'.$library);
 }
 
+# 没有项目的话，移除项目类库目录
+if (!$project)
+{
+    Core::$include_path['project'] = array();
+}
+
 
 # 包含文档类库
 require_once($dirname.'/docs.php');
@@ -57,7 +83,6 @@ require_once($dirname.'/docs_class.php');
 require_once($dirname.'/docs_method.php');
 require_once($dirname.'/docs_method_param.php');
 require_once($dirname.'/docs_roperty.php');
-require_once($dirname.'/markdown.php');
 
 
 if ($file)

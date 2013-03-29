@@ -33,7 +33,7 @@ class _Docs
      * @param   string  the comment retreived using ReflectionClass->getDocComment()
      * @return  array   array(string $description, array $tags)
      */
-    public static function parse($comment)
+    public static function parse($comment, $only_comment = false)
     {
         // Normalize all new lines to \n
         $comment = str_replace(array("\r\n", "\n"), "\n", $comment);
@@ -50,6 +50,8 @@ class _Docs
 
             if (preg_match('/^@(\S+)(?:\s*(.+))?$/', $line, $matches))
             {
+                if ($only_comment)continue;
+
                 unset($comment[$i]);
 
                 $name = $matches[1];
@@ -70,14 +72,17 @@ class _Docs
 
                     if ($data)
                     {
-                        $data['commit'] = $matches[2]?$matches[2]:'';
+                        if ($matches[2])
+                        {
+                            $data['comment'] = $matches[2];
+                        }
                         $data['text']   = $text;
                         $text = $data;
                     }
                 }
-                elseif ($name=='uses')
+                elseif ($name=='uses'||$name=='see')
                 {
-                    if (preg_match('/^([a-z0-9_]+)::(\$)?([a-z0-9_]+)$/i', $text, $matches))
+                    if (preg_match('/^([a-z0-9_]+)::(\$)?([a-z0-9_]+)(?:\(\))?$/i', $text, $matches))
                     {
                         $data = self::rf_tag_by_class($matches[1], $matches[3] , $matches[2]?true:false);
                         if ($data)
@@ -99,6 +104,8 @@ class _Docs
                 $comment[$i] = (string)$line;
             }
         }
+
+        if ($only_comment)return $comment;
 
         return array($comment, $tags);
     }
@@ -517,6 +524,7 @@ class _Docs
                         'class_name'   => $data['class_name'],
                         'f'            => $f,
                         'is_php_class' => $data['is_php_class'],
+                        'comment'      => $data['title'],
                     );
                 }
                 else
@@ -544,6 +552,7 @@ class _Docs
                                 (
                                     'class_name'   => $rf2->name,
                                     'is_php_class' => $rf2->getStartLine()?0:1,
+                                    'comment'      => current(self::parse($rf2->getDocComment(), true)),
                                 );
                             }
 
@@ -556,6 +565,7 @@ class _Docs
                         (
                             'class_name'   => $rf->name,
                             'is_php_class' => $rf->getStartLine()?0:1,
+                            'comment'      => current(self::parse($rf->getDocComment(), true)),
                         );
                     }
                 }

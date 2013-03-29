@@ -6,6 +6,6 @@
 * [感谢](thank.html)
 * [修改日志](changelog.html)
 * [读我](readme.html)
-* [授权信息](license.html)
 * [升级注意事项](upgrade.html)
-* [TODO列表 <span class="badge badge-warning" menu-todo="">0</span>](todo_list.html)
+* [TODO列表 <span class="badge badge-warning" menu-todo="true">0</span>](todo_list.html)
+* [授权信息](license.html)
