@@ -3,13 +3,12 @@
 /**
  * Controller_OpenDebugger.
  *
- * @package     Core
- * @subpackage  Controller
- * @author      VeryCD Dev Team
- * @copyright   Copyright (c) 2003 - 2010, VeryCD, Inc.
- * @license     http://www.verycd.com/license.html
- * @link        http://www.verycd.com/
- * @since       Version 4.0
+ * @author     呼吸二氧化碳 <jonwang@myqee.com>
+ * @category   MyQEE
+ * @package    System
+ * @subpackage Core
+ * @copyright  Copyright (c) 2008-2013 myqee.com
+ * @license    http://www.myqee.com/license.html
  */
 class Core_Controller_OpenDebugger extends Controller
 {
