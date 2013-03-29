@@ -19,7 +19,7 @@
 # svn-tools sync-dir -f ~/Sites/test1/ -t ~/Sites/test2/    将test1目录同步到test2目录
 #
 # svn-tools sync-dir 的其它参数
-# * --a 或 --all 将完整同步到目标目录，如果某个文件或文件夹在from目录中不存在但在目标文件中存在，则会用svn delete命令删除掉目标文件中多余的文件
+# * -a 或 --all 将完整同步到目标目录，如果某个文件或文件夹在from目录中不存在但在目标文件中存在，则会用svn delete命令删除掉目标文件中多余的文件
 
 $args = $_SERVER['argv'];
 
