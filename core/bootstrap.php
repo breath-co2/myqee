@@ -67,7 +67,7 @@ define('IS_MBSTRING', extension_loaded('mbstring')?true:false);
  *
  * @var boolean
  */
-define('IS_CLI', (PHP_SAPI==='cli'));
+if (!defined('IS_CLI'))define('IS_CLI', (PHP_SAPI==='cli'));
 
 /**
  * 是否有NameSpace（PHP5.3及以上则为true,以下为False）
@@ -81,7 +81,7 @@ define('HAVE_NS', version_compare(PHP_VERSION,'5.3','>=')?true:false);
  *
  * @var boolean
  */
-define('IS_SYSTEM_MODE', !IS_CLI && isset($_SERVER['HTTP_X_MYQEE_SYSTEM_HASH']) ? true : false);
+if (!defined('IS_SYSTEM_MODE'))define('IS_SYSTEM_MODE', !IS_CLI&&isset($_SERVER['HTTP_X_MYQEE_SYSTEM_HASH'])?true:false);
 
 /**
  * 站点目录
@@ -293,7 +293,7 @@ if (!function_exists('class_alias'))
 /**
  * Bootstrap
  *
- * @author     jonwang(jonwang@myqee.com)
+ * @author     呼吸二氧化碳 <jonwang@myqee.com>
  * @category   Core
  * @copyright  Copyright (c) 2008-2013 myqee.com
  * @license    http://www.myqee.com/license.html
@@ -554,7 +554,7 @@ abstract class Bootstrap
              *
              * @var boolean
              */
-            define('IS_ADMIN_MODE', (!IS_CLI && $request_mode=='admin')?true:false);
+            if (!defined('IS_ADMIN_MODE'))define('IS_ADMIN_MODE', (!IS_CLI && $request_mode=='admin')?true:false);
 
             /**
              * 静态文件URL地址前缀
@@ -637,15 +637,15 @@ abstract class Bootstrap
             {
                 if (IS_SYSTEM_MODE)
                 {
-                    $dir_setting[0] .= '/[system]';
+                    $dir_setting[0] .= '_system';
                 }
                 elseif (IS_CLI)
                 {
-                    $dir_setting[0] .= '/[shell]';
+                    $dir_setting[0] .= '_shell';
                 }
                 elseif (IS_ADMIN_MODE)
                 {
-                    $dir_setting[0] .= '/[admin]';
+                    $dir_setting[0] .= '_admin';
                 }
             }
 
@@ -658,7 +658,7 @@ abstract class Bootstrap
 
         if ($ns)
         {
-            $file = ($ns=='core' ? DIR_CORE : DIR_LIBRARY . str_replace('_', DS,$m[1]) . DS ) . $dir_setting[0] . DS . str_replace('_', DS, $new_class_name) . $dir_setting[1] . EXT;
+            $file = ($ns=='core' ? DIR_CORE : DIR_LIBRARY . str_replace('_', DS,$m[1]) . DS ) . $dir_setting[0] . DS . str_replace('_', DS, $class_file_name) . $dir_setting[1] . EXT;
 
             if (is_file($file))
             {
@@ -789,15 +789,15 @@ abstract class Bootstrap
 
             if (IS_SYSTEM_MODE)
             {
-                $dir .= '/[system]';
+                $dir .= '_system';
             }
             elseif (IS_CLI)
             {
-                $dir .= '/[shell]';
+                $dir .= '_shell';
             }
             elseif (IS_ADMIN_MODE)
             {
-                $dir .= '/[admin]';
+                $dir .= '_admin';
             }
         }
         elseif ($dir=='i18n' || $dir=='config')

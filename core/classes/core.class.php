@@ -42,7 +42,7 @@ function config($key=null)
 /**
  * MyQEE 核心类
  *
- * @author     jonwang(jonwang@myqee.com)
+ * @author     呼吸二氧化碳 <jonwang@myqee.com>
  * @category   MyQEE
  * @package    System
  * @subpackage Core
@@ -694,15 +694,15 @@ abstract class Core_Core extends Bootstrap
 
         if (IS_SYSTEM_MODE)
         {
-            $controller_dir .= DS.'[system]';
+            $controller_dir .= '_system';
         }
         elseif (IS_ADMIN_MODE)
         {
-            $controller_dir .= DS.'[admin]';
+            $controller_dir .= '_admin';
         }
         elseif (IS_CLI)
         {
-            $controller_dir .= DS.'[shell]';
+            $controller_dir .= '_shell';
         }
 
         # 首先找到存在的目录
