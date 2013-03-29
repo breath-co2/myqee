@@ -194,7 +194,6 @@ body > .navbar .brand:hover {
 }
 
 .right-div table {
-  width: 100%;
   margin-bottom: 20px;
 }
 
@@ -207,7 +206,7 @@ body > .navbar .brand:hover {
   border-bottom: 1px #ccc solid;
 }
 .right-div td{
-  padding: 6px;
+  padding: 8px;
   border-top: 1px solid #eee;
 }
 
