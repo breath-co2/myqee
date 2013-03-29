@@ -915,6 +915,8 @@ Examples:
         $to   = realpath($to) . '/';
 
         $this->glob_dir($from, $to);
+
+        echo "\nall done.\n";
     }
 
     private function glob_dir($from, $to)
@@ -968,6 +970,12 @@ Examples:
 
             if (is_file($to_file))
             {
+                if (!$this->is_all && md5_file($to_file)==md5_file($file))
+                {
+                    # 不是完整复制，且md5一样就不复制
+                    continue;
+                }
+
                 if (@copy($file, $to_file))
                 {
                     echo "C         $to_file\n";
