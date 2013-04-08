@@ -24,6 +24,7 @@ $file       = $args[2];
 # 文件类型，主要用于控制器读取处理是否shell还是system还是admin
 $dir_type   = $args[3];
 
+
 if ($type=='core')
 {
     # 核心类库，不用特别处理，已经加载
@@ -44,6 +45,7 @@ else
     exit;
 }
 
+define('_DOC_DIR_TYPE', $dir_type);
 
 if ($dir_type=='controller_system')
 {
@@ -101,15 +103,31 @@ if ($file)
 
 
 
-function get_function_info($class_name)
+function get_function_info($class_name, $dir_type)
 {
-    $class = new _Docs_Class($class_name);
+    if ($dir_type=='orm')
+    {
+        $arr = array();
+        foreach (array('finder', 'data', 'result') as $type)
+        {
+            $orm_class_name = $class_name.'_'.$type;
+            if (class_exists($orm_class_name))
+            {
+                $class = new _Docs_Class($orm_class_name);
+                $arr[$type] = $class->getArrayCopy();
+            }
+        }
+    }
+    else
+    {
+        $class = new _Docs_Class($class_name);
 
-    $str = $class->getArrayCopy();
+        $arr = $class->getArrayCopy();
+    }
 
     echo "ok\n";
-    echo serialize($str);
+    echo serialize($arr);
 }
 
 
-get_function_info($class_name);
+get_function_info($class_name, $dir_type);

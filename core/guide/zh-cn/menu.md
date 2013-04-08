@@ -1,4 +1,3 @@
-* [类库参考](api_list.html)
 * [默认配置](config.html)
 * [Bootstrap及系统常量](bootstrap.html)
 * [常用函数类库](used.html)

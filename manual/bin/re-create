@@ -320,6 +320,16 @@ class Manual
 
     private $todo_count = 0;
 
+    /**
+     * 记录所有类的文件夹设置
+     */
+    private $all_class_dir_setting = array();
+
+    /**
+     * API总数（按组和文件名区分）
+     */
+    private $api_count = array();
+
 
     /**
      * 记录所有函数、方法、变量是否PHP内置
@@ -351,6 +361,7 @@ class Manual
                 'top_menu_text' => 'Welecome',
                 'class_ns'      => '',
                 'class_ns_len'  => 0,
+                'key'           => 'manual',
             ),
             'core' => array
             (
@@ -361,6 +372,7 @@ class Manual
                 'top_menu_text' => 'Core manual',
                 'class_ns'      => 'Core_',
                 'class_ns_len'  => 5,
+                'key'           => 'core',
             ),
             'team' => array
             (
@@ -371,9 +383,91 @@ class Manual
                 'top_menu_text' => 'Team library manual',
                 'class_ns'      => '',
                 'class_ns_len'  => 0,
+                'key'           => 'team',
             ),
         );
 
+
+        $this->all_class_dir_setting = array
+        (
+            'class' => array
+            (
+                'dir_name'     => 'Classes',
+                'dir'          => 'classes',
+                'type'         => 'class',
+                'class_prefix' => '',
+                'out_prefix'   => 'class.',
+                'file_suffix'  => '.class.php',
+                'api_file'     => 'api_classes',
+                'title'        => 'Classes List',
+            ),
+            'model' => array
+            (
+                'dir_name'     => 'Models',
+                'dir'          => 'models',
+                'type'         => 'model',
+                'class_prefix' => 'Model_',
+                'out_prefix'   => 'model.',
+                'file_suffix'  => '.model.php',
+                'api_file'     => 'api_models',
+                'title'        => 'Models List',
+            ),
+            'orm' => array
+            (
+                'dir_name'     => 'ORM',
+                'dir'          => 'orm',
+                'type'         => 'orm',
+                'class_prefix' => 'ORM_',
+                'out_prefix'   => 'orm.',
+                'file_suffix'  => '.orm.php',
+                'api_file'     => 'api_orm',
+                'title'        => 'ORM List',
+            ),
+            'controller' => array
+            (
+                'dir_name'     => 'Default Controllers',
+                'dir'          => 'controllers',
+                'type'         => 'controller',
+                'class_prefix' => 'Controller_',
+                'out_prefix'   => 'controller.',
+                'file_suffix'  => '.controller.php',
+                'api_file'     => 'api_controllers',
+                'title'        => 'Controllers List',
+            ),
+            'controllers_admin' => array
+            (
+                'dir_name'     => 'Admin Controllers',
+                'dir'          => 'controllers_admin',
+                'type'         => 'controller_admin',
+                'class_prefix' => 'Controller_',
+                'out_prefix'   => 'controller_admin.',
+                'file_suffix'  => '.controller.php',
+                'api_file'     => 'api_controllers',
+                'title'        => 'Controllers List',
+            ),
+            'controller_shell' => array
+            (
+                'dir_name'     => 'Shell Controllers',
+                'dir'          => 'controllers_shell',
+                'type'         => 'controller_shell',
+                'class_prefix' => 'Controller_',
+                'out_prefix'   => 'controller_shell.',
+                'file_suffix'  => '.controller.php',
+                'api_file'     => 'api_controllers',
+                'title'        => 'Controllers List',
+            ),
+            'controllers_system' => array
+            (
+                'dir_name'     => 'System Controllers',
+                'dir'          => 'controllers_system',
+                'type'         => 'controller_system',
+                'class_prefix' => 'Controller_',
+                'out_prefix'   => 'controller_system.',
+                'file_suffix'  => '.controller.php',
+                'api_file'     => 'api_controllers',
+                'title'        => 'Controllers List',
+            ),
+        );
 
         # 读取项目配置
         if (is_file(DIR_SYSTEM.'config.php'))
@@ -422,6 +516,7 @@ class Manual
                     'top_menu_text' => 'Project manual',
                     'class_ns'      => '',
                     'class_ns_len'  => 0,
+                    'key'           => 'project.'.$basename,
                 );
             }
         }
@@ -454,6 +549,7 @@ class Manual
                             'top_menu_text' => 'Libray manual',
                             'class_ns'      => 'library_'.$dir1.'_'.$dir2.'_',
                             'class_ns_len'  => strlen('library_'.$dir1.'_'.$dir2.'_'),
+                            'key'           => 'library.'.$dir1.'.'.$dir2,
                         );
                     }
                 }
@@ -549,6 +645,7 @@ class Manual
                     case 'class':
                     case 'method':
                     case 'property':
+                    case 'orm':
                         $tmp_fun = 'get_'.$file_data['file_type'].'_html_content';
                         $content = $this->$tmp_fun($file_data, $title, $group, $lang, $base_href);
 
@@ -828,97 +925,70 @@ class Manual
     // 获取API文件列表
     private function get_api_files($group_key, $lang)
     {
-        $group         = $this->groups[$group_key];
-        $api_list_file = $group['type'].'/'.'api_list.md';
-
-        $this->files[$api_list_file] = array();
-
-
-        $all_dir_setting = array
-        (
-            array
-            (
-                'dir_name'     => '类库',
-                'dir'          => 'classes',
-                'type'         => 'class',
-                'class_prefix' => '',
-                'out_prefix'   => 'class.',
-                'file_suffix'  => '.class.php',
-            ),
-            array
-            (
-                'dir_name'     => '普通控制器',
-                'dir'          => 'controllers',
-                'type'         => 'controller',
-                'class_prefix' => 'Controller_',
-                'out_prefix'   => 'controller.',
-                'file_suffix'  => '.controller.php',
-            ),
-            array
-            (
-                'dir_name'     => '后台控制器',
-                'dir'          => 'controllers/[admin]',
-                'type'         => 'controller_admin',
-                'class_prefix' => 'Controller_',
-                'out_prefix'   => 'controller_admin.',
-                'file_suffix'  => '.controller.php',
-            ),
-            array
-            (
-                'dir_name'     => '命令行制器',
-                'dir'          => 'controllers/[shell]',
-                'type'         => 'controller_shell',
-                'class_prefix' => 'Controller_',
-                'out_prefix'   => 'controller_shell.',
-                'file_suffix'  => '.controller.php',
-            ),
-            array
-            (
-                'dir_name'     => '系统内部控制器',
-                'dir'          => 'controllers/[system]',
-                'type'         => 'controller_system',
-                'class_prefix' => 'Controller_',
-                'out_prefix'   => 'controller_system.',
-                'file_suffix'  => '.controller.php',
-            ),
-            array
-            (
-                'dir_name'     => '模块',
-                'dir'          => 'models',
-                'type'         => 'model',
-                'class_prefix' => 'Model_',
-                'out_prefix'   => 'model.',
-                'file_suffix'  => '.model.php',
-            ),
-        );
-
-
-        $api_list = array();
-        foreach ($all_dir_setting as $no => $dir_setting)
-        {
-            $api_list[$no] = array();
-            $this->get_class_files($group_key, $lang, $dir_setting, &$api_list[$no], '');
-        }
+        $group = $this->groups[$group_key];
 
         # 手册目录没有API
         if ($group['type']=='manual')return;
 
+        $all_api_file = array();
+        foreach ($this->all_class_dir_setting as $no => $dir_setting)
+        {
+            if (!$all_api_file[$dir_setting['api_file']][$no])$all_api_file[$dir_setting['api_file']][$no] = array();
+            $api_list_file = $group['type'].'/'.$dir_setting['api_file'].'.md';
 
+            $this->files[$api_list_file] = array();
+
+            $this->get_class_files($group_key, $lang, $dir_setting, &$all_api_file[$dir_setting['api_file']][$no], '');
+        }
+
+        foreach($all_api_file as $api_file => $api_list)
+        {
+            $this->create_api_list_file($group_key, $lang, $api_file, $api_list);
+        }
+    }
+
+    /**
+     * 创建API列表文件
+     */
+    private function create_api_list_file($group_key, $lang, $api_file, $api_list)
+    {
+        $group = $this->groups[$group_key];
+
+        $count = 0;
         $api_index_content = '';
         if ($api_list)
         {
-            if ($api_list)foreach ($api_list as $k=>$v)
+            $c = count($api_list);
+            $no = key($api_list);
+
+            foreach ($api_list as $k=>$v)
             {
                 if (!$v)continue;
-                $dir_setting = $all_dir_setting[$k];
+                $dir_setting = $this->all_class_dir_setting[$k];
 
-                $api_index_content .= '<h2>'.$dir_setting['dir_name'].'</h2>'."\n".'<ul class="api-class-div toc">';
+                if ($c>1)$api_index_content .= '<h2>'.__($dir_setting['dir_name'], $lang).'</h2>'."\n";
+
+                $api_index_content .= '<ul class="api-class-div toc">';
                 foreach ($v as $item)
                 {
                     $api_index_content .= '<li><span class="'.$item['modifiers'].'"></span> <a href="'.$item['href'].'">'.$item['title']."</a>".$item['commit']."</li>\n";
                 }
                 $api_index_content .= '</ul>';
+
+                $count += count($v);
             }
+        }
+        else
+        {
+            return;
+        }
+
+        # 记录API总数
+        $this->api_count[$group_key][$no] = $count;
+
+        if (!$count>0)
+        {
+            return;
         }
 
         if (!$api_index_content)
@@ -926,17 +996,18 @@ class Manual
             $api_index_content = __('No content', $lang);
         }
 
-        # 处理API LIST
+        $api_list_file = $group['type'].'/'.$api_file.'.md';
+
         $this->files[$api_list_file][$lang] = array
         (
-            'filename'      => 'api_list',
+            'filename'      => $api_file,
             'type'          => $group['type'],
             'group_key'     => $group_key,
-            'title'         => __('Class List', $lang),
+            'title'         => __('API List', $lang),
             'dir'           => '',
             'out_dir'       => $group['out_dir'],
             'file_type'     => 'content',
-            'content'       => "<h1>".__('Class List', $lang)."</h1>\n".$api_index_content,
+            'content'       => "<h1>".__('API List', $lang)."</h1>\n" . $api_index_content,
         );
     }
 
@@ -982,14 +1053,6 @@ class Manual
             if (is_dir($file))
             {
                 $basename = basename($file);
-                if ($dir_setting['type']=='controller')
-                {
-                    # 直接或略
-                    if ($basename=='[shell]'||$basename=='[system]'||$basename=='[admin]')
-                    {
-                        continue;
-                    }
-                }
 
                 if (!preg_match('#^[a-z0-9_]+$#i', $basename))
                 {
@@ -1000,25 +1063,34 @@ class Manual
                 if (is_file($file.$ext))
                 {
                     $api_sub_menu_list[$file.$ext] = array();
-                    $this->get_class_files($group_key, $lang, $dir_setting, $api_sub_menu_list[$file.$ext], $dir.basename($file).'/');
+                    $this->get_class_files($group_key, $lang, $dir_setting, $api_sub_menu_list[$file.$ext], $dir.$basename.'/');
                 }
                 else if (!$dir)
                 {
                     # 根目录时如果没有$file.$ext文件则需要直接处理掉菜单设置
                     $api_list_sub_dir = array();
-                    $this->get_class_files($group_key, $lang, $dir_setting, $api_list_sub_dir, $dir.basename($file).'/');
-                    $api_list = array_merge($api_list, $api_list_sub_dir);
+                    $this->get_class_files($group_key, $lang, $dir_setting, $api_list_sub_dir, $dir.$basename.'/');
 
-                    $filename = strtolower(basename($file));
+                    $filename = strtolower($basename);
                     $tmp_dir  = $prefix . $filename .'/';
 
-                    $this->api_add_menu_data($group, $group['out_dir'].$tmp_dir, $lang, $api_list_sub_dir);
+
+                    if ($dir_setting['type']=='orm')
+                    {
+                        $api_list = array_merge($api_list, $api_list_sub_dir['main']);
+                        $this->api_add_menu_data($group, $group['out_dir'].$tmp_dir, $lang, $api_list_sub_dir['sub_menu'], $dir_setting['type']);
+                    }
+                    else
+                    {
+                        $api_list = array_merge($api_list, $api_list_sub_dir);
+                        $this->api_add_menu_data($group, $group['out_dir'].$tmp_dir, $lang, $api_list_sub_dir, $dir_setting['type']);
+                    }
 
                     unset($api_list_sub_dir);
                 }
                 else
                 {
-                    $this->get_class_files($group_key, $lang, $dir_setting, $api_list, $dir.basename($file).'/');
+                    $this->get_class_files($group_key, $lang, $dir_setting, $api_list, $dir.$basename.'/');
                 }
 
                 continue;
@@ -1028,126 +1100,193 @@ class Manual
                 continue;
             }
 
-
+            # 文件名后缀
+            $ext        = $dir_setting['file_suffix'];
+            # 文件名
             $filename   = strtolower(basename($file, $ext));
 
-            if ($dir)
+            # 处理ORM
+            if ($dir_setting['type']=='orm')
             {
-                $dir_arr = explode('/', trim($dir,'/'));
-                $dirfirst = array_shift($dir_arr);
-                $tmp_name = 'api.' . str_replace('_', '.', ltrim(implode('.', $dir_arr).'.'.$filename,'.'));
-                $tmp_dir = $prefix . $dirfirst .'/';
-            }
-            else
-            {
-                $tmp_name = 'api';
-                $tmp_dir = $prefix . $filename .'/';
-            }
+                $orm_data = $this->paste_class($group_key, $lang, $dir_setting, $dir, $file, $filename, $base_href , true);
 
-            $tmp_file = $group['type'] .'/'. $tmp_dir . $tmp_name .'.md';
-
-            # 临时标题
-            $title = str_replace('/', '_', $dir) . $dir_setting['class_prefix'] . $filename;
-
-            if ($group['type']=='project')
-            {
-                $class_name = strtolower($title);
-            }
-            else
-            {
-                $class_name = strtolower($group['type'] . '_' . $title);
-            }
-
-            # 输出的目录
-            $out_dir = $group['out_dir'] . $tmp_dir;
-
-            $tmpdata = array
-            (
-                'filename'      => $tmp_name,
-                'type'          => $group['type'],
-                'group_key'     => $group_key,
-                'title'         => $title,
-                'class_name'    => $class_name,
-                'class_file'    => $file,
-                'dir'           => $tmp_dir,
-                'out_dir'       => $out_dir,
-                'file_type'     => 'class',
-            );
-
-            if (isset($this->files[$tmp_file][$lang]))
-            {
-                $this->files[$tmp_file][$lang] = array_merge($this->files[$tmp_file][$lang], $tmpdata);
-            }
-            else
-            {
-                $this->files[$tmp_file][$lang] = $tmpdata;
-            }
-
-            $st = array
-            (
-                'tmp_file'      => $tmp_file,
-                'filename'      => $filename,
-                'class_name'    => $class_name,
-                'file'          => $file,
-                'out_dir'       => $out_dir,
-                'dir'           => $tmp_dir,
-                'name'          => $tmp_name,
-                'dir_type'      => $dir_setting['type'],
-            );
-            # 处理当前文件的函数、变量等
-            $setting = $this->get_class_data($st, $group_key, $lang, $dir, $base_href);
-
-            if (!$setting)
-            {
-                # 获取接口数据失败，删除
-                if (!$this->files[$tmp_file][$lang]['file'])
+                $sub_menu = array();
+                foreach(array('Finder', 'Data', 'Result') as $orm_type)
                 {
-                    unset($this->files[$tmp_file][$lang]);
+                    $temp_data = $this->paste_class($group_key, $lang, $dir_setting, $dir.$filename.'/', $file, $orm_type, $base_href, $orm_type);
+
+                    if (!$temp_data)continue;
+                    $temp_data['short_class_name'] = "　　$orm_type";// preg_replace('#_(finder|data|result)$#i', '', $temp_data['short_class_name']) . ' <span class="label label-info">'.$orm_type.'</span>';
+                    if ($dir)
+                    {
+                        $api_list['sub_menu'][] = $temp_data;
+                    }
+                    else
+                    {
+                        $sub_menu[] = $temp_data;
+                    }
                 }
-                content;
-            }
 
-            $temp_data = array
-            (
-                'modifiers'        => $setting['modifiers']?$setting['modifiers']:'public',
-                'href'             => $tmp_dir.$tmp_name.'.html',
-                'title'            => $this->files[$tmp_file][$lang]['title'],
-                'commit'           => ($this->files[$tmp_file][$lang]['commit']?' - '.$this->files[$tmp_file][$lang]['commit']:''),
-                'short_class_name' => $this->files[$tmp_file][$lang]['short_class_name'],
-            );
-            $api_list[] = $temp_data;
-
-            if (isset($api_sub_menu_list[$file]) && $api_sub_menu_list[$file])
-            {
-                $api_list = array_merge($api_list, $api_sub_menu_list[$file]);
-            }
-
-            if (!$dir)
-            {
-                $this->api_add_menu_data($group, $group['out_dir'].$tmp_dir, $lang, $api_sub_menu_list[$file], $temp_data);
-            }
-
-            # 匹配TODO内容
-            $content = str_replace(array("\r\n", "\r"), "\n", file_get_contents($file));
-            if (preg_match_all('#(?:\#|//|@)(?: )*(todo|fixme) ([^\n]+)\n#i', $content, $m))
-            {
-                $line = 0;
-                foreach($m[2] as $k=>$v)
+                if ($dir)
                 {
-                    # 分割成2个
-                    list($content_1, $content) = explode($m[0][$k], $content, 2);
-                    $line += substr_count($content_1, "\n") + 1;
-                    $this->todo_list[$file][] = array
-                    (
-                        'type'    => strtolower($m[1][$k]),
-                        'content' => trim($v),
-                        'line'    => $line,
-                    );
-                    $this->todo_count += 1;
+                    $api_list['main'][] = $orm_data;
+                    $api_list['sub_menu'] = (array)$api_list['sub_menu'];
+                    array_unshift($api_list['sub_menu'], $orm_data);
+                }
+                else
+                {
+                    if (!$api_sub_menu_list[$file]['sub_menu'])
+                    {
+                        $api_sub_menu_list[$file]['sub_menu'] = $sub_menu;
+                    }
+                    else
+                    {
+                        $api_sub_menu_list[$file]['sub_menu'] = array_merge($sub_menu, $api_sub_menu_list[$file]['sub_menu']);
+                    }
+
+                    # 根目录
+                    $api_list[] = $orm_data;
+
+                    if (isset($api_sub_menu_list[$file]['main']) && $api_sub_menu_list[$file]['main'])
+                    {
+                        $api_list = array_merge($api_list, $api_sub_menu_list[$file]['main']);
+                    }
+
+                    # 加ORM菜单
+                    $this->api_add_menu_data($group, $group['out_dir'].$orm_data['dir'], $lang, $api_sub_menu_list[$file]['sub_menu'], $dir_setting['type'], $orm_data);
                 }
             }
-            unset($content);
+            else
+            {
+                $temp_data = $this->paste_class($group_key, $lang, $dir_setting, $dir, $file, $filename, $base_href);
+
+                # 处理API列表
+                $api_list[] = $temp_data;
+                if (isset($api_sub_menu_list[$file]) && $api_sub_menu_list[$file])
+                {
+                    $api_list = array_merge($api_list, $api_sub_menu_list[$file]);
+                }
+
+                if (!$dir)
+                {
+                    # 加菜单
+                    $this->api_add_menu_data($group, $group['out_dir'].$temp_data['dir'], $lang, $api_sub_menu_list[$file], $dir_setting['type'], $temp_data);
+                }
+            }
+
+
+            # 处理TODO内容
+            $this->get_todo_info($file);
         }
+    }
+
+    private function paste_class($group_key, $lang, $dir_setting, $dir, $file, $filename, $base_href, $orm_type = null)
+    {
+        $group = $this->groups[$group_key];
+
+        $filename = strtolower($filename);
+
+        # 输出目录前缀
+        $prefix     = $dir_setting['out_prefix'];
+
+        if ($dir)
+        {
+            $dir_arr  = explode('/', trim($dir, '/'));
+            $dirfirst = array_shift($dir_arr);
+            $tmp_name = (true===$orm_type?'orm.':'api.') . str_replace('_', '.', ltrim(implode('.', $dir_arr).'.'.$filename, '.'));
+            $tmp_dir  = $prefix . $dirfirst .'/';
+        }
+        else
+        {
+            $tmp_name = true===$orm_type?'orm':'api';
+            $tmp_dir  = $prefix . $filename .'/';
+        }
+
+        $title = $dir_setting['class_prefix'] . str_replace('/', '_', $dir) . $filename;
+
+
+        $tmp_file = $group['type'] .'/'. $tmp_dir . $tmp_name .'.md';
+
+        if ($group['type']=='project')
+        {
+            $class_name = strtolower($title);
+        }
+        else
+        {
+            $class_name = strtolower($group['type'] . '_' . $title);
+        }
+
+        # 输出的目录
+        $out_dir = $group['out_dir'] . $tmp_dir;
+
+        $tmpdata = array
+        (
+            'filename'      => $tmp_name,
+            'type'          => $group['type'],
+            'group_key'     => $group_key,
+            'title'         => $title,
+            'class_name'    => $class_name,
+            'class_file'    => $file,
+            'dir'           => $tmp_dir,
+            'out_dir'       => $out_dir,
+            'file_type'     => 'class',
+        );
+
+        if (true===$orm_type)
+        {
+            # ORM
+            $tmpdata['file_type'] = 'orm';
+            $tmpdata['content'] = $class_name;
+            $tmpdata['title'] = $class_name;
+        }
+
+
+        if (isset($this->files[$tmp_file][$lang]))
+        {
+            $this->files[$tmp_file][$lang] = array_merge($this->files[$tmp_file][$lang], $tmpdata);
+        }
+        else
+        {
+            $this->files[$tmp_file][$lang] = $tmpdata;
+        }
+
+        $st = array
+        (
+            'tmp_file'      => $tmp_file,
+            'class_name'    => $class_name,
+            'file'          => $file,
+            'out_dir'       => $out_dir,
+            'dir'           => $tmp_dir,
+            'name'          => $tmp_name,
+            'dir_type'      => $dir_setting['type'],
+            'orm_type'      => $orm_type,
+        );
+
+
+        # 处理当前文件的函数、变量等
+        $class_data = $this->paste_class_data($st, $group_key, $lang, $dir, $base_href);
+
+        if (!$class_data)
+        {
+            # 获取接口数据失败，删除
+            if (!$this->files[$tmp_file][$lang]['file'])
+            {
+                unset($this->files[$tmp_file][$lang]);
+            }
+            return;
+        }
+
+        $temp_data = array
+        (
+            'modifiers'        => $class_data['modifiers']?$class_data['modifiers']:'public',
+            'href'             => $tmp_dir.$tmp_name.'.html',
+            'title'            => $this->files[$tmp_file][$lang]['title'],
+            'commit'           => ($this->files[$tmp_file][$lang]['commit']?' - '.$this->files[$tmp_file][$lang]['commit']:''),
+            'short_class_name' => $this->files[$tmp_file][$lang]['short_class_name'],
+            'dir'              => $tmp_dir,
+        );
+
+        return $temp_data;
     }
 
     /**
@@ -1159,58 +1298,15 @@ class Manual
      * @param string $dir
      * @param array $st
      * @param string $base_href
+     * @param string $orm_type ORM类型，Finder|Data|Result 当类库类型为ORM时使用
      */
-    private function get_class_data($st, $group_key, $lang, $dir, $base_href)
+    private function paste_class_data($st, $group_key, $lang, $dir, $base_href)
     {
         $group = $this->groups[$group_key];
 
-        if (isset($this->api_data[$group['type']]['classes'][$st['class_name']]))
-        {
-            $data = $this->api_data[$group['type']]['classes'][$st['class_name']];
-        }
-        else
-        {
-            $exec = $_SERVER['_'] .' '. DIR_MANUAL .'bin/lib/api_get_info.php '. $group['type'] .' '. $st['class_name'] .' '. escapeshellarg($st['file']) .' '. $st['dir_type'];
+        $data = $this->get_class_data($group['type'], $st['class_name'], $st['file'], $st['dir_type'], $st['orm_type']);
+        if (!$data)return false;
 
-            $data = shell_exec($exec);
-
-            $this->api_data[$group['type']]['classes'][$st['class_name']] = array();
-
-            if (substr($data, 0, 3)=="ok\n")
-            {
-                $data = substr($data, 3);
-            }
-            else
-            {
-                echo "\n      获取{$group['type']} {$st['class_name']}内容错误";
-                echo ",或略此API";
-                echo $data;
-                echo "\n";
-                return false;
-            }
-
-            $data = @unserialize($data);
-
-            if (!$data)
-            {
-                echo "\n      解析{$group['type']} {$st['class_name']}数据失败";
-                echo ",或略此API";
-                echo $data;
-                echo "\n";
-                return false;
-            }
-
-            # 附加dir_type
-            $data['dir_type'] = $st['dir_type'];
-
-            $this->api_data[$group['type']]['classes'][$st['class_name']] = $data;
-        }
-
-        # 记录API公共数据
-        if ($data['tags'])
-        {
-            $this->set_api_global_data($data['tags']);
-        }
 
         $class_name      = $data['class_name'];
         $base_class_name = $this->get_base_class_name($class_name);
@@ -1235,6 +1331,24 @@ class Manual
         $this->files[$tmp_file][$lang]['short_class_name'] = $short_class_name;
         $this->files[$tmp_file][$lang]['class_name']       = $class_name;
         $this->files[$tmp_file][$lang]['commit']           = $data['title'];
+
+
+        # ORM
+        if (true===$st['orm_type'])
+        {
+            $short_class_name .= ' '. __('Overview', $lang);
+
+            $this->files[$tmp_file][$lang]['short_class_name'] = $short_class_name;
+            $this->files[$tmp_file][$lang]['title']            = $class_name .' '. __('Overview', $lang);
+            return $data;
+        }
+
+
+        # 记录API公共数据
+        if ($data['tags'])
+        {
+            $this->set_api_global_data($data['tags']);
+        }
 
 
         # 菜单内容
@@ -1383,8 +1497,105 @@ class Manual
         # 设置上级菜单
         $this->parent_menu[$group['type'] .'/'. $the_dir . $the_name.'/'][$lang]['../'.$the_name.'.html'] = $short_class_name;
 
+        if ($st['orm_type'])
+        {
+            # ORM
+            $name = implode(’.‘, array_splice(explode('_', $short_class_name), 2, -1));
+            if ($name)$name = '.'.$name;
+            $this->parent_menu[$group['type'] .'/'. $the_dir . $the_name.'/'][$lang]['../orm'.$name.'.html'] = preg_replace('#_(data|finder|reset)#i', '', $short_class_name) .' '. __('Overview', $lang);
+        }
+
         return $data;
     }
+
+
+    /**
+     * 获取类的分析数据
+     */
+    private function get_class_data($group_type, $class_name, $file, $dir_type, $orm_type)
+    {
+        if (isset($this->api_data[$group_type][$class_name]))
+        {
+            $data = $this->api_data[$group_type][$class_name];
+        }
+        else
+        {
+            if ($dir_type=='orm' && $orm_type && $orm_type!==true)
+            {
+                $base_class_name = preg_replace('/_'.preg_quote($orm_type).'$/i', '', $class_name);
+            }
+            else
+            {
+                $base_class_name = $class_name;
+            }
+
+            $exec = $_SERVER['_'] .' '. DIR_MANUAL .'bin/lib/api_get_info.php '. $group_type .' '. $base_class_name .' '. escapeshellarg($file) .' '. $dir_type;
+
+            $data = shell_exec($exec);
+
+            $this->api_data[$group_type][$class_name] = array();
+
+            if (substr($data, 0, 3)=="ok\n")
+            {
+                $data = substr($data, 3);
+            }
+            else
+            {
+                echo "\n      获取{$group['type']} {$st['class_name']}内容错误";
+                echo ",或略此API";
+                echo $data;
+                echo "\n";
+                return false;
+            }
+
+            $data = @unserialize($data);
+
+            if (!$data)
+            {
+                echo "\n      解析{$group['type']} {$st['class_name']}数据失败";
+                echo ",或略此API";
+                echo $data;
+                echo "\n";
+                return false;
+            }
+
+            if ($dir_type=='orm')
+            {
+                $data_first = current($data);
+                if ($data_first)
+                {
+                    $orm_name = preg_replace('#_(finder|data|result)$#i', '', $data_first['class_name']);
+                }
+                else
+                {
+                    $orm_name = $class_name;
+                }
+
+                # 整理出ORM的必要数据
+                $this->api_data[$group_type][$base_class_name] = array
+                (
+                    'class_name' => $orm_name,
+                    'title'      => $data_first['title'],
+                    'api'        => $data,
+                );
+
+                foreach(array('finder', 'result', 'data') as $type)
+                {
+                    $this->api_data[$group_type][$base_class_name.'_'.$type] = $data[$type]?$data[$type]:array();
+                }
+
+                $data = $this->api_data[$group_type][$class_name];
+            }
+            else
+            {
+                $this->api_data[$group_type][$class_name] = $data;
+            }
+        }
+
+
+        return $data;
+    }
+
 
     /**
      * 获取页面标题
@@ -1470,10 +1681,11 @@ class Manual
     /**
      * 处理增加API菜单
      */
-    private function api_add_menu_data($group, $tmp_dir, $lang, $api_list , $first_data = array())
+    private function api_add_menu_data($group, $tmp_dir, $lang, $api_list, $dir_type, $first_data = array())
     {
-        # 加入菜单
-        $this->parent_menu[$tmp_dir][$lang]['../api_list.html'] = __('Class List', $lang);
+        if (!isset($this->all_class_dir_setting[$dir_type]))$dir_type = 'class';
+
+        $this->parent_menu[$tmp_dir][$lang]['../'.$this->all_class_dir_setting[$dir_type]['api_file'].'.html'] = __($this->all_class_dir_setting[$dir_type]['title'], $lang);
 
         if ($first_data)
         {
@@ -1492,7 +1704,7 @@ class Manual
         if (isset($this->menus[$tmp_dir][$lang]) && $this->menus[$tmp_dir][$lang])
         {
             # 有自定义菜单
-            $this->menus[$tmp_dir][$lang] = trim($this->menus[$lang][$tmp_dir]) ."\n\n---\n\n". $menu_content;
+            $this->menus[$tmp_dir][$lang] = trim($this->menus[$tmp_dir][$lang]) ."\n\n---\n\n". $menu_content;
         }
         else
         {
@@ -1574,7 +1786,7 @@ class Manual
             'file_type'     => 'content',
             'content'       => $this->get_todo_html_content($lang),
         );
-        $this->menus[''][$lang] = str_replace('<span class="badge badge-warning" menu-todo="true">0</span>', '<span class="badge badge-warning">'.$this->todo_count.'</span>', $this->menus[''][$lang]);
+        $this->menus[''][$lang] = str_replace('<span class="badge badge-info" menu-todo="true">0</span>', '<span class="badge badge-info">'.$this->todo_count.'</span>', $this->menus[''][$lang]);
 
 
         if (!$this->files['license.md'][$lang])$this->files['license.md'][$lang] = array
@@ -1956,13 +2168,36 @@ class Manual
             if ($this->files[$index_file])
             {
                 $title = $this->files[$index_file][$lang]['title'];
-                if ($title)
+
+                if ($group['type']!='manual' && !$dir)
                 {
-                    $menu_content = "* [{$title}](index.html)\n" . $menu_content;
+                    $api_menu = '';
+
+                    $group_key = $group['key'];
+                    if ($this->api_count[$group_key])foreach($this->api_count[$group_key] as $type => $num)
+                    {
+                        if (!$num>0)continue;
+                        $setting = $this->all_class_dir_setting[$type];
+                        $api_menu .= "* [".__($setting['title'], $lang)." <span class=\"badge badge-info\">{$num}</span>]({$setting['api_file']}.html)\n";
+                    }
+
+                    if ($api_menu)
+                    {
+                        $api_menu .= "\n-----\n\n";
+                    }
                 }
                 else
                 {
-                    $menu_content = "* [".__('Overview', $lang)."](index.html)\n" . $menu_content;
+                    $api_menu = '';
+                }
+
+                if ($title)
+                {
+                    $menu_content = "* [{$title}](index.html)\n" . $api_menu . $menu_content;
+                }
+                else
+                {
+                    $menu_content = "* [".__('Overview', $lang)."](index.html)\n" . $api_menu . $menu_content;
                 }
             }
 
@@ -2153,13 +2388,42 @@ class Manual
 
 
     /**
+     * 处理Todo内容
+     *
+     * @param string $file 文件路径
+     */
+    private function get_todo_info($file)
+    {
+        $content = str_replace(array("\r\n", "\r"), "\n", file_get_contents($file));
+        if (preg_match_all('#(?:\#|//|@)(?: )*(todo|fixme) ([^\n]+)\n#i', $content, $m))
+        {
+            $line = 0;
+            foreach($m[2] as $k=>$v)
+            {
+                # 分割成2个
+                list($content_1, $content) = explode($m[0][$k], $content, 2);
+                $line += substr_count($content_1, "\n") + 1;
+                $this->todo_list[$file][] = array
+                (
+                    'type'    => strtolower($m[1][$k]),
+                    'content' => trim($v),
+                    'line'    => $line,
+                );
+                $this->todo_count += 1;
+            }
+        }
+    }
+
+
+    /**
      * 获取类库的API的HTML
      */
     private function get_class_html_content($file_data, $title, $group, $lang, $base_href)
     {
         $config     = $this->config;
         $class_name = strtolower($file_data['class_name']);
-        $setting    = $this->api_data[$group['type']]['classes'][$class_name];
+        $setting    = $this->api_data[$group['type']][$class_name];
+
 
         if (in_array($setting['dir_type'], array('controller_admin', 'controller_shell', 'controller_system')))
         {
@@ -2184,7 +2448,7 @@ class Manual
         $class_name  = strtolower($file_data['class_name']);
         $method_name = $file_data['method_name'];
 
-        $setting     = $this->api_data[$group['type']]['classes'][$class_name]['methods'][$method_name];
+        $setting     = $this->api_data[$group['type']][$class_name]['methods'][$method_name];
 
         if (in_array($setting['dir_type'], array('controller_admin', 'controller_shell', 'controller_system')))
         {
@@ -2210,7 +2474,7 @@ class Manual
         $class_name    = strtolower($file_data['class_name']);
         $property_name = $file_data['property_name'];
 
-        $setting     = $this->api_data[$group['type']]['classes'][$class_name]['properties'][$property_name];
+        $setting     = $this->api_data[$group['type']][$class_name]['properties'][$property_name];
 
         if (in_array($setting['dir_type'], array('controller_admin', 'controller_shell', 'controller_system')))
         {
@@ -2225,6 +2489,22 @@ class Manual
         include(DIR_MANUAL.'tpl/api_property.html');
         return ob_get_clean();
     }
+
+
+    /**
+     * 获取类库的API的HTML
+     */
+    private function get_orm_html_content($file_data, $title, $group, $lang, $base_href)
+    {
+        $config     = $this->config;
+        $class_name = strtolower($file_data['class_name']);
+        $setting    = $this->api_data[$group['type']][$class_name];
+
+        ob_start();
+        include(DIR_MANUAL.'tpl/api_orm.html');
+        return ob_get_clean();
+    }
+
 
     /**
      * 获取TODOlist的HTML

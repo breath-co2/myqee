@@ -35,12 +35,13 @@
                 <li<?php if ($type=='manual')echo ' class="active"';?>><a href="<?php echo $base_href;?>index.html"><?php echo __('Manual index');?></a></li>
                 <li<?php if ($type=='core')echo ' class="active"';?>><a href="<?php echo $base_href;?>core/index.html"><?php echo __('Core manual');?></a></li>
                 <li class="dropdown<?php if ($type=='library')echo ' active';?>">
-                    <a href="#" class="dropdown-toggle" data-toggle="dropdown"><?php echo __('Libray manual');?> <b class="caret"></b></a>
+                    <a href="javascript:" class="dropdown-toggle" data-toggle="dropdown"><?php echo __('Libray manual');?> <b class="caret"></b></a>
                     <ul class="dropdown-menu">
                     <?php
                     if ($libraries)foreach ($libraries as $lib => $libdir)
                     {
-                        echo '<li class="dropdown-submenu" tabindex="-1"><a href="#">'.$lib.'</a>';
+                        $current_lib = current($libdir);
+                        echo '<li class="dropdown-submenu" tabindex="-1"><a href="'.$base_href.'library/'.$lib.'/'.$current_lib.'/index.html">'.$lib.'</a>';
                         echo '<ul class="dropdown-menu">';
                         foreach ($libdir as $dir)
                         {
@@ -107,6 +108,42 @@
 <script type="text/javascript">
 (function()
 {
+    // 防止左侧菜单太长
+    $(window).resize(function(){
+        $('.bs-docs-sidenav').css('maxHeight', $(window).height()-<?php echo (int)$config['page_top'];?>);
+    }).trigger('resize');
+
+    // 优化滚动菜单后切换页面
+    if (localStorage)
+    {
+        var url = document.location.href.split('#')[0].split('?')[0];
+        var path = url.substr(0, url.lastIndexOf('/')+1);
+
+        var scroll = localStorage.getItem('left-div-scroll');
+        if (scroll)
+        {
+            scroll = scroll.split('|');
+            if (scroll[0] == path)
+            {
+                $('.bs-docs-sidenav').scrollTop(scroll[1]);
+            }
+        }
+
+        var tm = null;
+        $('.bs-docs-sidenav').bind('scroll', function(){
+            if (tm)
+            {
+                clearTimeout(tm);
+                tm = null;
+            }
+
+            var top = this.scrollTop;
+            tm = setTimeout(function(){
+                localStorage.setItem('left-div-scroll', path+'|'+top);
+            },50);
+        });
+    }
+
     // 处理menu相关代码
     var href = document.location.href.split('#')[0].split('?')[0];
     $('.left-div a').each(function(){
@@ -135,6 +172,8 @@
         i++;
     });
     });
+
+    $('.bs-docs-sidenav li.active > a > .badge-info').removeClass('badge-info').addClass('badge-important');
 
     // 处理缩进
     var pd = function(obj, nn){

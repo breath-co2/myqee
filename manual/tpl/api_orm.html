@@ -1,0 +1,43 @@
+<h1>
+<?php echo $setting['title'];?>
+</h1>
+
+
+<?php
+$setting_data = $setting['api']['data'];
+if ($setting_data && $setting_data['properties'])
+{
+?>
+<h2>数据字段类型</h2>
+<table>
+    <tr>
+        <th>字段</th>
+        <th>类型</th>
+    </tr>
+    <?php
+    foreach ($setting_data['properties'] as $item)
+    {
+        $m = explode(' ', $item['modifiers']);
+        if (!in_array('public', $m))
+        {
+            continue;
+        }
+    ?>
+    <tr>
+        <td><?php echo $item['name'];?></td>
+        <td><pre><?php var_export($item);?></pre></td>
+    </tr>
+    <?php
+    }
+    ?>
+</table>
+<?php
+}
+?>
+
+<input value="查看数据" type="button" onclick="$('.data-aaaaa').show();" />
+<pre class="data-aaaaa" style="display:none;">
+<?php
+echo htmlspecialchars(print_r($file_data, true).print_r($setting, true));
+?>
+</pre>

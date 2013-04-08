@@ -8,7 +8,7 @@
 </div>
 <script type="text/javascript">
 (function(){
-    $('.right-div').css('minHeight', $('.left-div .bs-docs-sidenav').height()+<?php echo (int)($config['page_top']+$config['page_bottom']);?>);
+    $('.right-div').css('minHeight', Math.max($('.left-div .bs-docs-sidenav').height(), $(window).height())+<?php echo (int)($config['page_top']+$config['page_bottom']);?>);
     // // var resize = function()
     // {
     //     $('.bs-docs-sidenav').css('maxHeight', $(window).height()-<?php echo (int)($config['page_top']);?>);

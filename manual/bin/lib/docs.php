@@ -232,6 +232,10 @@ class _Docs
         {
             return '<small>float</small> ' . $var;
         }
+        elseif ($var ==='')
+        {
+            return '<small>empty</small>';
+        }
         elseif (is_resource($var))
         {
             if (($type = get_resource_type($var)) === 'stream' and $meta = stream_get_meta_data($var))
