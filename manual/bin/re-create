@@ -258,6 +258,300 @@ function get_url($class_name, $method_or_property = '', $base_href = '')
     return $url_str;
 }
 
+
+function dump(&$var, $length = 128, $level = 0)
+{
+    if ($var === null)
+    {
+        return '<small>null</small>';
+    }
+    elseif (is_bool($var))
+    {
+        return '<small>bool</small> ' . ($var ? 'true' : 'false');
+    }
+    elseif (is_float($var))
+    {
+        return '<small>float</small> ' . $var;
+    }
+    elseif ($var ==='')
+    {
+        return '<small>empty</small>';
+    }
+    elseif (is_resource($var))
+    {
+        if (($type = get_resource_type($var)) === 'stream' && $meta = stream_get_meta_data($var))
+        {
+            $meta = stream_get_meta_data($var);
+
+            if (isset($meta['uri']))
+            {
+                $file = $meta['uri'];
+
+                if (function_exists('stream_is_local'))
+                {
+                    // Only exists on PHP >= 5.2.4
+                    if (stream_is_local($file))
+                    {
+                        $file = debug_path($file);
+                    }
+                }
+
+                return '<small>resource</small><span>(' . $type . ')</span> ' . htmlspecialchars($file, ENT_NOQUOTES, 'utf-8');
+            }
+        }
+        else
+        {
+            return '<small>resource</small><span>(' . $type . ')</span>';
+        }
+    }
+    elseif (is_string($var))
+    {
+        // Clean invalid multibyte characters. iconv is only invoked
+        // if there are non ASCII characters in the string, so this
+        // isn't too much of a hit.
+        $var = utf8_clean($var);
+
+        if (utf8_strlen($var) > $length)
+        {
+            // Encode the truncated string
+            $str = htmlspecialchars(urf8_substr($var, 0, $length), ENT_NOQUOTES, 'urf-8') . '&nbsp;&hellip;';
+        }
+        else
+        {
+            // Encode the string
+            $str = htmlspecialchars($var, ENT_NOQUOTES, 'utf-8');
+        }
+
+        return '<small>string</small><span>(' . strlen($var) . ')</span> "' . $str . '"';
+    }
+    elseif (is_array($var))
+    {
+        $output = array();
+
+        // Indentation for this variable
+        $space = str_repeat($s = '    ', $level);
+
+        static $marker = null;
+
+        if ($marker === null)
+        {
+            // Make a unique marker
+            $marker = uniqid("\x00");
+        }
+
+        if (empty($var))
+        {
+            // Do nothing
+        }
+        elseif (isset($var[$marker]))
+        {
+            $output[] = "(\n$space$s*RECURSION*\n$space)";
+        }
+        elseif ($level < 5)
+        {
+            $output[] = "<span>(";
+
+            $var[$marker] = true;
+            foreach ($var as $key => & $val)
+            {
+                if ($key === $marker) continue;
+                if (!is_int($key))
+                {
+                    $key = '"' . htmlspecialchars($key, ENT_NOQUOTES, 'utf-8') . '"';
+                }
+
+                $output[] = "$space$s$key => " . dump($val, $length, $level + 1);
+            }
+            unset($var[$marker]);
+
+            $output[] = "$space)</span>";
+        }
+        else
+        {
+            // Depth too great
+            $output[] = "(\n$space$s...\n$space)";
+        }
+
+        return '<small>array</small><span>(' . count($var) . ')</span> ' . implode("\n", $output);
+    }
+    elseif (is_object($var))
+    {
+        // Copy the object as an array
+        $array = (array)$var;
+
+        $output = array();
+
+        // Indentation for this variable
+        $space = str_repeat($s = '    ', $level);
+
+        $hash = spl_object_hash($var);
+
+        // Objects that are being dumped
+        static $objects = array();
+
+        if (empty($var))
+        {
+            // Do nothing
+        }
+        elseif (isset($objects[$hash]))
+        {
+            $output[] = "{\n$space$s*RECURSION*\n$space}";
+        }
+        elseif ($level < 10)
+        {
+            $output[] = "<code>{";
+
+            $objects[$hash] = true;
+            foreach ($array as $key => & $val)
+            {
+                if ($key[0] === "\x00")
+                {
+                    // Determine if the access is protected or protected
+                    $access = '<small>' . ($key[1] === '*' ? 'protected' : 'private') . '</small>';
+
+                    // Remove the access level from the variable name
+                    $key = substr($key, strrpos($key, "\x00") + 1);
+                }
+                else
+                {
+                    $access = '<small>public</small>';
+                }
+
+                $output[] = "$space$s$access $key => " . dump($val, $length, $level + 1);
+            }
+            unset($objects[$hash]);
+
+            $output[] = "$space}</code>";
+        }
+        else
+        {
+            // Depth too great
+            $output[] = "{\n$space$s...\n$space}";
+        }
+
+        return '<small>object</small> <span>' . get_class($var) . '(' . count($array) . ')</span> ' . implode("\n", $output);
+    }
+    else
+    {
+        return '<small>' . gettype($var) . '</small> ' . htmlspecialchars(print_r($var, true), ENT_NOQUOTES, 'utf-8');
+    }
+}
+
+function utf8_strlen($str)
+{
+    if (extension_loaded('mbstring'))return mb_strlen($str, 'utf-8');
+
+    if (is_ascii($str))return strlen($str);
+    return strlen(utf8_decode($str));
+}
+
+
+function utf8_clean($var, $charset = 'UTF-8')
+{
+    if (is_array($var) || is_object($var))
+    {
+        foreach ($var as $key => $val)
+        {
+            // Recursion!
+            $var[utf8_clean($key)] = utf8_clean($val);
+        }
+    }
+    elseif ( is_string($var) and $var !== '' )
+    {
+        // Remove control characters
+        $var = preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]+/S', '', $var);
+
+        if ( !is_ascii($var) )
+        {
+            // Disable notices
+            $ER = error_reporting(~ E_NOTICE);
+
+            // iconv is expensive, so it is only used when needed
+            $var = iconv($charset, $charset . '//IGNORE', $var);
+
+            // Turn notices back on
+            error_reporting($ER);
+        }
+    }
+
+    return $var;
+}
+
+function utf8_substr($str, $offset, $length = null)
+{
+    if (extension_loaded('mbstring'))return ($length === null) ? mb_substr($str, $offset, mb_strlen($str), 'utf-8') : mb_substr($str, $offset, $length, 'utf-8');
+
+    if (is_ascii($str))return ($length === null) ? substr($str, $offset) : substr($str, $offset, $length);
+
+    // Normalize params
+    $str = (string)$str;
+    $strlen = utf8_strlen($str);
+    $offset = (int)($offset < 0) ? max(0, $strlen + $offset) : $offset; // Normalize to positive offset
+    $length = ($length === null) ? null : (int)$length;
+
+    // Impossible
+    if ( $length === 0 or $offset >= $strlen or ($length < 0 and $length <= $offset - $strlen) ) return '';
+
+    // Whole string
+    if ( $offset == 0 and ($length === null or $length >= $strlen) ) return $str;
+
+    // Build regex
+    $regex = '^';
+
+    // Create an offset expression
+    if ( $offset > 0 )
+    {
+        // PCRE repeating quantifiers must be less than 65536, so repeat when necessary
+        $x = (int)($offset / 65535);
+        $y = (int)($offset % 65535);
+        $regex .= ($x == 0) ? '' : '(?:.{65535}){' . $x . '}';
+        $regex .= ($y == 0) ? '' : '.{' . $y . '}';
+    }
+
+    // Create a length expression
+    if ( $length === null )
+    {
+        $regex .= '(.*)'; // No length set, grab it all
+    }
+    // Find length from the left (positive length)
+    elseif ( $length > 0 )
+    {
+        // Reduce length so that it can't go beyond the end of the string
+        $length = min($strlen - $offset, $length);
+
+        $x = (int)($length / 65535);
+        $y = (int)($length % 65535);
+        $regex .= '(';
+        $regex .= ($x == 0) ? '' : '(?:.{65535}){' . $x . '}';
+        $regex .= '.{' . $y . '})';
+    }
+    // Find length from the right (negative length)
+    else
+    {
+        $x = (int)(- $length / 65535);
+        $y = (int)(- $length % 65535);
+        $regex .= '(.*)';
+        $regex .= ($x == 0) ? '' : '(?:.{65535}){' . $x . '}';
+        $regex .= '.{' . $y . '}';
+    }
+
+    preg_match('/' . $regex . '/us', $str, $matches);
+
+    return $matches[1];
+}
+
+
+function is_ascii($str)
+{
+    if (is_array($str))
+    {
+        $str = implode($str);
+    }
+
+    return !preg_match('/[^\x00-\x7F]/S', $str);
+}
+
+
 class Manual
 {
 
@@ -1376,6 +1670,7 @@ class Manual
                 'class_name'    => $class_name,
                 'property_name' => $property['name'],
                 'file_type'     => 'property',
+                'orm_type'      => $st['orm_type'],
             );
 
             if ($this->files[$tmp_file][$lang]['file'])
@@ -1541,7 +1836,7 @@ class Manual
             }
             else
             {
-                echo "\n      获取{$group['type']} {$st['class_name']}内容错误";
+                echo "\n      获取{$group_type} {$class_name}内容错误";
                 echo ",或略此API";
                 echo $data;
                 echo "\n";
@@ -1552,9 +1847,9 @@ class Manual
 
             if (!$data)
             {
-                echo "\n      解析{$group['type']} {$st['class_name']}数据失败";
+                echo "\n      解析{$group_type} {$class_name}数据失败";
                 echo ",或略此API";
-                echo $data;
+                var_dump($data);
                 echo "\n";
                 return false;
             }

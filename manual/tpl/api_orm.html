@@ -1,5 +1,5 @@
 <h1>
-<?php echo $setting['title'];?>
+<?php echo $file_data['title'];?>
 </h1>
 
 
@@ -9,10 +9,15 @@ if ($setting_data && $setting_data['properties'])
 {
 ?>
 <h2>数据字段类型</h2>
-<table>
+<table width="100%">
     <tr>
-        <th>字段</th>
-        <th>类型</th>
+        <th>键名</th>
+        <th>字段名</th>
+        <th width="80">类型</th>
+        <th width="30">只读</th>
+        <th width="30">虚拟</th>
+        <th>说明</th>
+        <th width="50">查看</th>
     </tr>
     <?php
     foreach ($setting_data['properties'] as $item)
@@ -22,10 +27,94 @@ if ($setting_data && $setting_data['properties'])
         {
             continue;
         }
+
+        // 第一个字符为_的字段忽略
+        if (substr($item['name'], 0, 1)=='_')continue;
+
+
+        $v = @unserialize($item['value_serialized']);
     ?>
     <tr>
-        <td><?php echo $item['name'];?></td>
-        <td><pre><?php var_export($item);?></pre></td>
+        <td>
+            <?php
+            echo '<a title="查看详细" href="api.data/property.' . $item['name'] . '.html">'.$item['name'].'</a>';
+            if (is_array($v) && $v['is_id_field'])
+            {
+                echo ' <i style="color:#a11" class="icon-key" data-toggle="tooltip" title="'.__('PRIMARY', $lang).'"></i>';
+            }
+            ?>
+        </td>
+        <td>
+        <?php
+        if (is_string($v))
+        {
+            echo $v;
+        }
+        elseif (is_array($v))
+        {
+            if (!$v['is_virtual_field'])
+            {
+                // 输出字段名
+                if (isset($v['field_name']) && $v['field_name'])
+                {
+                    if ($v['field_name']!=$item['name'])
+                    {
+                        echo '<font color="red">' . $v['field_name'] .'</font>';
+                    }
+                    else
+                    {
+                        echo $v['field_name'];
+                    }
+                }
+                else
+                {
+                    echo $item['name'];
+                }
+            }
+        }
+        else
+        {
+            echo $item['name'];
+        }
+        ?>
+        </td>
+        <td align="center">
+        <?php
+        if ($item['type'])
+        {
+            echo $item['type'];
+        }
+        elseif (is_array($v))
+        {
+            if ($v['format'])
+            {
+
+            }
+        }
+        ?>
+        </td>
+        <td align="center" style="color:#a11;">
+        <?php
+        if (is_array($v) && $v['is_readonly'])
+        {
+            echo '<i class="icon-ok-sign" data-toggle="tooltip" title="'.__('Readonly Field', $lang).'"></i>';
+        }
+        ?>
+        </td>
+        <td align="center" style="color:#a11;">
+        <?php
+        if (is_array($v) && $v['is_virtual_field'])
+        {
+            echo '<i class="icon-ok-sign" data-toggle="tooltip" title="'.__('Virtual Field', $lang).'"></i>';
+        }
+        ?>
+        </td>
+        <td>
+            <?php echo $item['title'];?>
+        </td>
+        <td align="center">
+            <button class="btn btn-mini" type="button" onclick="document.location.href='api.data/property.<?php echo $item['name'];?>.html';">查看</button>
+        </td>
     </tr>
     <?php
     }

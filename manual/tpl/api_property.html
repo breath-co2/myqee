@@ -28,7 +28,12 @@ echo MarkdownExtra::defaultTransform($setting['description']."\n");
 </div>
 
 <?php
-if (isset($setting['value']))
+if ($file_data['orm_type'] && $file_data['orm_type']=='Data')
+{
+    // 处理ORM显示
+    include(dirname(__FILE__).'/api_property_orm.html');
+}
+elseif (isset($setting['value']))
 {
 ?>
 <blockquote>

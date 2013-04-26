@@ -1155,9 +1155,6 @@ form.bs-docs-example {
      -moz-box-shadow: inset 1px 0 0 rgba(0,0,0,.1), inset -1px 0 0 rgba(0,0,0,.1);
           box-shadow: inset 1px 0 0 rgba(0,0,0,.1), inset -1px 0 0 rgba(0,0,0,.1);
 }
-.bs-docs-sidenav .active > a i {
-  background-image: url("../bootstrap/img/glyphicons-halflings-white.png");
-}
 
 /* Chevrons */
 .bs-docs-sidenav .icon-chevron-right {
