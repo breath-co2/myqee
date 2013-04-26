@@ -657,21 +657,21 @@ class Manual
                 'class_ns_len'  => 0,
                 'key'           => 'manual',
             ),
-            'core' => array
-            (
-                'type'          => 'core',
-                'out_dir'       => 'core/',
-                'dir'           => DIR_SYSTEM.'core/',
-                'base_href'     => '../',
-                'top_menu_text' => 'Core manual',
-                'class_ns'      => 'Core_',
-                'class_ns_len'  => 5,
-                'key'           => 'core',
-            ),
+            // 'core' => array
+            // (
+            //     'type'          => 'core',
+            //     'out_dir'       => 'core/',
+            //     'dir'           => DIR_SYSTEM.'core/',
+            //     'base_href'     => '../',
+            //     'top_menu_text' => 'Core manual',
+            //     'class_ns'      => 'Core_',
+            //     'class_ns_len'  => 5,
+            //     'key'           => 'core',
+            // ),
             'team' => array
             (
                 'type'          => 'team',
-                'out_dir'       => 'team',
+                'out_dir'       => 'team/',
                 'dir'           => DIR_SYSTEM.'team_library/',
                 'base_href'     => '../',
                 'top_menu_text' => 'Team library manual',
@@ -990,7 +990,7 @@ class Manual
                 $this->create_dir($out_dir);
 
                 # 生成文件
-                //echo $out_dir.$file_data['filename'].'.html'."\n";
+                // echo $out_dir.$file_data['filename'].'.html'."\n";
                 //echo $out_dir.$file_data['filename'].'.html';
                 if (false!==file_put_contents($out_dir.$file_data['filename'].'.html', $html))
                 {
@@ -1067,6 +1067,9 @@ class Manual
 
             # 处理最新列表
             $this->set_new_list($lang);
+
+            # 处理空的首页文件
+            $this->set_empty_file($lang);
         }
 
         # 处理上下文列表
@@ -2842,6 +2845,46 @@ class Manual
         return $base_class_name;
     }
 
+    private function set_empty_file($lang)
+    {
+
+        if (!isset($this->files['team/index.md'][$lang]))
+        {
+            $st = array
+            (
+                'title'   => '团队类库',
+                'dir'     => '',
+                'content' => "#团队类库\n\n当前还没有任何文档，请在`team_library/guide/{$lang}/`目录建立`index.md`文档，并重新生成本文档",
+            );
+
+
+            $group = $this->groups['team'];
+            if (!isset($this->menus[$group['out_dir']][$lang]))
+            {
+                $this->menus[$group['out_dir']][$lang] = "* [团队类库文档](index.html)\n";
+            }
+
+            $this->create_empty_file('team', 'index', $st, $lang);
+        }
+    }
+
+
+    private function create_empty_file($group_key, $file, $st, $lang)
+    {
+        $group = $this->groups[$group_key];
+
+        $this->files[$group['out_dir'].'/'.$st['dir'].$file.'.md'][$lang] = array
+        (
+            'filename'  => $file,
+            'type'      => $group['type'],
+            'group_key' => $group_key,
+            'title'     => $st['title'],
+            'dir'       => $st['dir'],
+            'out_dir'   => $group['out_dir'] . '/' . $st['dir'],
+            'file_type' => 'content',
+            'content'   => $st['content'],
+        );
+    }
 
     // 将链接转换为从根目录开始的完整URL
     /*
