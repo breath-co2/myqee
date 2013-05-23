@@ -434,7 +434,7 @@ abstract class Bootstrap
             }
 
             # 在线调试
-            if ( self::_is_online_debug() )
+            if (self::_is_online_debug())
             {
                 $open_debug = 1<<1 | $open_debug;
             }
@@ -479,6 +479,18 @@ abstract class Bootstrap
                 @date_default_timezone_set(self::$core_config['timezone']);
             }
 
+            // 检查配置
+            if (!isset(self::$core_config['runtime_config']))
+            {
+                self::$core_config['runtime_config'] = '';
+            }
+            else if (self::$core_config['runtime_config'] && !preg_match('#^[a-z0-9_]+$#', self::$core_config['runtime_config']))
+            {
+                self::$core_config['runtime_config'] = '';
+            }
+
+
+
             //获取全局$project变量
             global $project, $admin_mode;
 
@@ -495,7 +507,7 @@ abstract class Bootstrap
                 self::$project = $project;
 
                 // 管理员模式
-                if ( isset($admin_mode) && true===$admin_mode )
+                if (isset($admin_mode) && true===$admin_mode)
                 {
                     $request_mode = 'admin';
                 }
@@ -829,10 +841,10 @@ abstract class Bootstrap
         {
             foreach ($the_path as $path)
             {
-                if ( $dir=='config' && self::$core_config['debug_config'] )
+                if ($dir=='config' && self::$core_config['runtime_config'])
                 {
                     # config 在 debug开启的情况下读取debug
-                    $tmpfile_debug = $path . $dir . DS . $file . '.debug' . $the_ext;
+                    $tmpfile_debug = $path . $dir . DS . $file . '.' . self::$core_config['runtime_config'] . $the_ext;
 
                     if (is_file($tmpfile_debug))
                     {

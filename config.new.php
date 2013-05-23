@@ -43,38 +43,6 @@ $config['projects'] = array
 
 
 /**
- * 加载库
- *
- * @var array
- */
-$config['libraries'] = array
-(
-    // 默认会自动加载的类库
-    'autoload' => array
-    (
-
-    ),
-
-    // 命令行下会加载的类库
-    'cli'      => array
-    (
-
-    ),
-
-    // 调试环境下会加载的类库
-    'debug'    => array
-    (
-        'com.myqee.develop',
-    ),
-
-    // 后台会加载的类库
-    'admin'    => array
-    (
-        'com.myqee.administration',
-    ),
-);
-
-/**
  * 静态资源的URL，可以是http://开头，例如 http://assets.test.com/
  *
  * 对应于wwwroot目录下的assets目录，建议绑定二级域名
@@ -84,18 +52,21 @@ $config['libraries'] = array
 $config['url']['assets'] = '/assets/';
 
 /**
- * 读取配置时是否获取***.debug.config.php文件的配置
+ * 实时配置文件
  *
- * 通常本地开发的测试服务器和正式服务器的环境配置都是不相同的，此开关可帮助你在本地读取补充配置
- * 例如设置true后：
- * database.config.php
- * 可被
- * database.debug.config.php
- * 里的数据覆盖
+ * 服务器通常设置为 server，本地开发可设置为 dev1, dev_jonwang 等等。只允许a-z0-9_字符串，留空则禁用
  *
- * @var boolean
+ * 用途说明：
+ * 在团队成员开发时，个人的配置和服务器配置可能会有所不同，所以每个人希望有一个自己独有的配置文件可覆盖默认配置，通过runtime_config设置可轻松读取不同的配置
+ * 比如，在服务器上设置 `$config['runtime_config'] = 'server';` 在本地开发时设置 `$config['runtime_config'] = 'dev';`
+ * 那么，服务器上除了会读取 `config.php` 还会再读取 `config.server.php` 的配置文件，而在开发环境上则读取 `config.dev.php` 配置文件
+ *
+ * !!! V2中 `$config['debug_config'] = false;` 参数已废弃，可用次参数设为debug实现类似功能
+ *
+ * @var string
  */
-$config['debug_config'] = false;
+$config['runtime_config'] = 'server';
+
 
 /**
  * 用于 http://domain/opendebugger 页面开启在线debug功能
@@ -110,6 +81,7 @@ $config['debug_open_password'] = array
 (
     //'myqee' => '123456',
 );
+
 
 /**
  * 调试环境打开关键字
@@ -247,6 +219,40 @@ $config['error500']['type_config'] = 'default';
  * @var string
  */
 $config['asset_allow_suffix'] = 'js|css|jpg|jpeg|png|gif|bmp|pdf|html|htm|mp4|swf';
+
+
+/**
+ * 加载库配置
+ *
+ * @var array
+ */
+$config['libraries'] = array
+(
+    // 默认会自动加载的类库
+    'autoload' => array
+    (
+
+    ),
+
+    // 命令行下会加载的类库
+    'cli'      => array
+    (
+
+    ),
+
+    // 调试环境下会加载的类库
+    'debug'    => array
+    (
+        'com.myqee.develop',
+    ),
+
+    // 后台会加载的类库
+    'admin'    => array
+    (
+        'com.myqee.administration',
+    ),
+);
+
 
 /**
  * nodejs 执行文件默认路径
