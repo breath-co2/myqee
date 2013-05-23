@@ -53,27 +53,40 @@ abstract class Core_Core extends Bootstrap
 {
     /**
      * MyQEE版本号
+     *
      * @var string
      */
-    const VERSION = '3.1.1dev';
+    const VERSION = '3.1';
+
+    /**
+     * 版本发布状态
+     *
+     * stable, rc1, rc2, beta1, beta2, ...
+     *
+     * @var string
+     */
+    const RELEASE  = 'rc1';
 
     /**
      * 项目开发者
+     *
      * @var string
      */
     const CODER = 'jonwang(jonwang@myqee.com)';
 
     /**
      * 页面编码
+     *
      * @var string
      */
-    public static $charset;
+    public static $charset = 'utf-8';
 
     /**
      * 页面传入的PATHINFO参数
+     *
      * @var array
      */
-    public static $arguments;
+    public static $arguments = array();
 
     /**
      * 页面输出内容
@@ -165,7 +178,7 @@ abstract class Core_Core extends Bootstrap
             if (!IS_CLI)
             {
                 # 输出powered by信息
-                header('X-Powered-By: PHP/' . PHP_VERSION . ' MyQEE/' . Core::VERSION );
+                header('X-Powered-By: PHP/' . PHP_VERSION . ' MyQEE/' . Core::VERSION .'/'. Core::RELEASE );
             }
 
             if (IS_DEBUG)
