@@ -46,13 +46,14 @@ class Core_Session
             // Create a new instance
             new Session();
         }
+
         return Session::$instance;
     }
 
     public function __construct($vars = null)
     {
         // This part only needs to be run once
-        if ( Session::$instance === null )
+        if (null===Session::$instance)
         {
             // Load config
             Session::$config = Core::config('session');
@@ -62,16 +63,17 @@ class Core_Session
                 Session::$config['check_string'] = '&$@de23#$%@.d3l-3=!#1';
             }
 
-            if ( !isset(Session::$config['name']) || !preg_match('#^(?=.*[a-z])[a-z0-9_]++$#iD', Session::$config['name']) )
+            if (!isset(Session::$config['name']) || !preg_match('#^(?=.*[a-z])[a-z0-9_]++$#iD', Session::$config['name']))
             {
                 // Name the session, this will also be the name of the cookie
                 Session::$config['name'] = 'PHPSESSINID';
             }
 
-            if ( isset(Session::$config['driver']) && class_exists('Session_Driver_' . Session::$config['driver'], true) )
+            if (isset(Session::$config['driver']) && class_exists('Session_Driver_' . Session::$config['driver'], true))
             {
                 $driver_name = 'Session_Driver_' . Session::$config['driver'];
-                if ( isset(Session::$config['driver_config']) )
+
+                if (isset(Session::$config['driver_config']))
                 {
                     $this->driver = new $driver_name(Session::$config['driver_config']);
                 }
@@ -85,13 +87,12 @@ class Core_Session
                 $this->driver = new Session_Driver_Default();
             }
 
-            if ( $vars )
+            if ($vars)
             {
-                // Set the new data
                 $this->set($vars);
             }
 
-            if ( !isset($_SESSION['_flash_session_']) )
+            if (!isset($_SESSION['_flash_session_']))
             {
                 $_SESSION['_flash_session_'] = array();
             }
@@ -107,12 +108,11 @@ class Core_Session
 
             Session::$instance = $this;
 
-            if ( null===Session::$member && isset($_SESSION['member']) )
-            {
-                Session::$member = new Member($_SESSION['member']);
-            }
+            # 加载用户数据
+            Session::load_member_data();
         }
     }
+
 
     /**
      * 开启SESSION
@@ -201,53 +201,13 @@ class Core_Session
      */
     public function last_actived_time()
     {
-        if ( !isset($_SESSION['_last_actived_time_']) )
+        if (!isset($_SESSION['_last_actived_time_']))
         {
             $_SESSION['_last_actived_time_'] = TIME;
         }
         return $_SESSION['_last_actived_time_'];
     }
 
-    /**
-     * 此方法用于保存session数据
-     *
-     * 只执行一次，系统在关闭前会执行
-     *
-     * @return  void
-     */
-    public static function write_close()
-    {
-        if ( null === Session::$instance )
-        {
-            return false;
-        }
-        static $run = null;
-        if (null===$run)
-        {
-            $run = true;
-
-            if (!$_SESSION['_flash_session_'])
-            {
-                unset($_SESSION['_flash_session_']);
-            }
-
-            if (Session::$member && Session::$member->id>0)
-            {
-                # 设置用户数据
-                $member_data = Session::$member->get_field_data();
-
-                $_SESSION['member'] = $member_data;
-            }
-
-            if (!isset($_SESSION['_last_actived_time_']) || TIME - 300 > $_SESSION['_last_actived_time_'])
-            {
-                # 更新最后活动时间 10分钟更新一次
-                $_SESSION['_last_actived_time_'] = TIME;
-            }
-
-            Session::$instance->driver->write_close();
-        }
-    }
 
     /**
      * 设置SESSION数据
@@ -271,7 +231,7 @@ class Core_Session
 
         foreach ($keys as $key => $val)
         {
-            if ( isset(Session::$protect[$key]) ) continue;
+            if (isset(Session::$protect[$key])) continue;
 
             // Set the key
             $_SESSION[$key] = $val;
@@ -327,11 +287,11 @@ class Core_Session
      *
      * @return  void
      */
-    protected function expire_flash()
+    public function expire_flash()
     {
         if (!empty(Session::$flash))
         {
-            foreach ( Session::$flash as $key => $state )
+            foreach (Session::$flash as $key => $state)
             {
                 if ( $state === 'old' )
                 {
@@ -399,10 +359,39 @@ class Core_Session
 
         foreach ($args as $key)
         {
-            if ( isset(Session::$protect[$key]) ) continue;
+            if (isset(Session::$protect[$key])) continue;
 
-            // Unset the key
             unset($_SESSION[$key]);
+        }
+    }
+
+    /**
+     * 此方法用于保存session数据
+     *
+     * 系统在关闭前会执行
+     *
+     * @return void
+     */
+    public static function write_close()
+    {
+        if (Session::$instance)
+        {
+            Session::$instance = null;
+
+            if (!$_SESSION['_flash_session_'])
+            {
+                unset($_SESSION['_flash_session_']);
+            }
+
+            if (!isset($_SESSION['_last_actived_time_']) || TIME - 300 > $_SESSION['_last_actived_time_'])
+            {
+                # 更新最后活动时间 10分钟更新一次
+                $_SESSION['_last_actived_time_'] = TIME;
+            }
+
+            Session::write_member_data();
+
+            Session::$instance->driver->write_close();
         }
     }
 
@@ -422,10 +411,10 @@ class Core_Session
     public static function create_session_id()
     {
         # 获取一个唯一字符
-        $mt_str = substr(md5(microtime(1).'d2^2**(fgGs@.d3l-'.mt_rand(1, 9999999).HttpIO::IP),2,28);
+        $mt_str = substr(md5(microtime(1).'d2^2**(fgGs@.d3l-' . mt_rand(1, 9999999) . HttpIO::IP), 2, 28);
 
         # 校验位
-        $mt_str .= substr(md5('doe9%32'.$mt_str.Session::$config['check_string']),8,4);
+        $mt_str .= substr(md5('doe9%32' . $mt_str . Session::$config['check_string']), 8, 4);
 
         return $mt_str;
     }
@@ -441,16 +430,42 @@ class Core_Session
         if (strlen($sid)!=32)return false;
         if (!preg_match('/^[a-fA-F\d]{32}$/', $sid))return false;
 
-        $mt_str = substr($sid,0,28);
-        $check_str = substr($sid,-4);
+        $mt_str = substr($sid, 0, 28);
+        $check_str = substr($sid, -4);
 
-        if (substr(md5('doe9%32'.$mt_str.Session::$config['check_string']),8,4) === $check_str)
+        if (substr(md5('doe9%32' . $mt_str . Session::$config['check_string']), 8, 4) === $check_str)
         {
             return true;
         }
         else
         {
             return false;
+        }
+    }
+
+
+    /**
+     * Session在加载时读取用户数据
+     */
+    protected static function load_member_data()
+    {
+        if (null===Session::$member && isset($_SESSION['member']))
+        {
+            Session::$member = new Member($_SESSION['member']);
+        }
+    }
+
+    /**
+     * Session在关闭时写入用户session数据
+     */
+    protected static function write_member_data()
+    {
+        if (Session::$member && Session::$member->id>0)
+        {
+            # 设置用户数据
+            $member_data = Session::$member->get_field_data();
+
+            $_SESSION['member'] = $member_data;
         }
     }
 }

@@ -224,15 +224,17 @@ abstract class Core_OOP_ORM
 
     /**
      * 根据ID获取对象
-     * @param $id 对象ID
+     *
+     * @param $id int 对象ID
+     * @param $use_master boolean 是否使用主数据
      */
-    public function get_by_id($id)
+    public function get_by_id($id, $use_master = false)
     {
         $idfield = $this->id_field_name();
-        if ( $idfield )
+        if ($idfield)
         {
             $this->driver()->where($idfield, $id);
-            return $this->find()->current();
+            return $this->find(null, $use_master)->current();
         }
         else
         {
@@ -244,8 +246,9 @@ abstract class Core_OOP_ORM
      * 根据IDs获取对象
      *
      * @return OOP_ORM_Result
+     * @param $use_master boolean 是否使用主数据
      */
-    public function get_by_ids($ids)
+    public function get_by_ids($ids, $use_master = false)
     {
         $idfield = $this->id_field_name();
 
@@ -253,7 +256,7 @@ abstract class Core_OOP_ORM
         {
             $this->driver()->in($idfield, $ids);
 
-            return $this->find();
+            return $this->find(null, $use_master);
         }
         else
         {
@@ -261,6 +264,11 @@ abstract class Core_OOP_ORM
         }
     }
 
+    /**
+     * 返回最后查询语句
+     *
+     * @return string
+     */
     public function last_query()
     {
         return $this->last_query;

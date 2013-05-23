@@ -1,7 +1,7 @@
 <?php
 
 /**
- * MyQEE ORM 数据库核心类
+ * ORM 数据库核心类
  *
  * @author     jonwang(jonwang@myqee.com)
  * @category   MyQEE
