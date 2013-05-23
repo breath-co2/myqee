@@ -65,7 +65,7 @@ $config['url']['assets'] = '/assets/';
  *
  * @var string
  */
-$config['runtime_config'] = 'server';
+$config['runtime_config'] = '';
 
 
 /**

@@ -401,15 +401,15 @@ abstract class Bootstrap
             spl_autoload_register(array('Bootstrap', 'auto_load'));
 
             # 读取配置
-            if (!is_file(DIR_SYSTEM.'config'.EXT))
+            if (!is_file(DIR_SYSTEM .'config'. EXT))
             {
                 self::_show_error(__('Please rename the file config.new:EXT to config:EXT', array(':EXT'=>EXT)));
             }
 
-            __include_config_file(self::$core_config, DIR_SYSTEM.'config'.EXT);
+            __include_config_file(self::$core_config, DIR_SYSTEM .'config'. EXT);
 
             # 本地调试模式
-            if ( isset(self::$core_config['local_debug_cfg']) && self::$core_config['local_debug_cfg'] )
+            if (isset(self::$core_config['local_debug_cfg']) && self::$core_config['local_debug_cfg'])
             {
                 # 判断是否开启了本地调试
                 if (function_exists('get_cfg_var'))
@@ -424,13 +424,6 @@ abstract class Bootstrap
             else
             {
                 $open_debug = 0;
-            }
-
-            # 读Debug配置
-            if ($open_debug && is_file(DIR_SYSTEM.'debug.config'.EXT))
-            {
-                # 本地debug配置打开
-                __include_config_file(self::$core_config, DIR_SYSTEM.'debug.config'.EXT);
             }
 
             # 在线调试
@@ -461,10 +454,32 @@ abstract class Bootstrap
              */
             define('IS_DEBUG', $open_debug);
 
+
+            # Runtime配置
+            if (!isset(self::$core_config['runtime_config']))
+            {
+                self::$core_config['runtime_config'] = '';
+            }
+            else if (self::$core_config['runtime_config'] && !preg_match('#^[a-z0-9_]+$#', self::$core_config['runtime_config']))
+            {
+                self::$core_config['runtime_config'] = '';
+            }
+
+            if (self::$core_config['runtime_config'])
+            {
+                $runtime_file = DIR_SYSTEM .'config.'. self::$core_config['runtime_config'] . EXT;
+
+                # 读取配置
+                if (is_file($runtime_file))
+                {
+                    __include_config_file(self::$core_config, $runtime_file);
+                }
+            }
+
             if (!IS_CLI)
             {
                 # 输出文件头
-                header('Content-Type: text/html;charset='.self::$core_config['charset']);
+                header('Content-Type: text/html;charset=' . self::$core_config['charset']);
             }
 
             // 设置错误等级
@@ -478,17 +493,6 @@ abstract class Bootstrap
             {
                 @date_default_timezone_set(self::$core_config['timezone']);
             }
-
-            // 检查配置
-            if (!isset(self::$core_config['runtime_config']))
-            {
-                self::$core_config['runtime_config'] = '';
-            }
-            else if (self::$core_config['runtime_config'] && !preg_match('#^[a-z0-9_]+$#', self::$core_config['runtime_config']))
-            {
-                self::$core_config['runtime_config'] = '';
-            }
-
 
 
             //获取全局$project变量
@@ -702,7 +706,7 @@ abstract class Bootstrap
             {
                 foreach (self::$include_path[$type] as $lib_ns=>$path)
                 {
-                    $ns_class_name = ($type=='library'?'library_':'').str_replace('.','_',$lib_ns).'_'.$new_class_name;
+                    $ns_class_name = ($type=='library'?'library_':'') . str_replace('.', '_', $lib_ns) . '_' . $new_class_name;
 
                     if ( self::auto_load($ns_class_name) )
                     {
@@ -914,11 +918,20 @@ abstract class Bootstrap
                 continue;
             }
 
-            $config_file = $set[1] . 'config' . EXT;
+            $config_file = $set[1] .'config'. EXT;
 
             if (is_file($config_file))
             {
                 $config_files[] = $config_file;
+            }
+
+            if (self::$core_config['runtime_config'])
+            {
+                $runtime_config_file = $set[1] .'config.'. self::$core_config['runtime_config'] . EXT;
+                if (is_file($runtime_config_file))
+                {
+                    $config_files[] = $runtime_config_file;
+                }
             }
 
             $load_num++;
