@@ -622,13 +622,13 @@ class Core_Database extends Database_QueryBuilder
         if (!Database::$slow_querys)return true;
 
         // 记录URL信息
-        $data = "\n".str_pad(HttpIO::METHOD,4,' ') .' '. date('H:i:s',TIME) .' - '. str_pad((int)(1000*(microtime(1)-START_TIME)),6,' ',STR_PAD_LEFT) . ' - '. str_pad(HttpIO::IP,15) .' '.$_SERVER["SCRIPT_URI"] .(''!==$_SERVER["QUERY_STRING"]?'?'.$_SERVER["QUERY_STRING"]:'') . (HttpIO::METHOD=='POST'?'   POST:'.json_encode(HttpIO::POST()):'') ."\n";
+        $data = "\n".str_pad(HttpIO::METHOD, 4, ' ') .' '. date('H:i:s', TIME) .' - '. str_pad((int)(1000*(microtime(1)-START_TIME)),6,' ',STR_PAD_LEFT) . ' - '. str_pad(HttpIO::IP, 15) .' '.$_SERVER["SCRIPT_URI"] .(''!==$_SERVER["QUERY_STRING"]?'?'.$_SERVER["QUERY_STRING"]:'') . (HttpIO::METHOD=='POST'?'   POST:'.json_encode(HttpIO::POST()):'') ."\n";
         foreach (Database::$slow_querys as $item)
         {
-            $data .= '     ' . date('H:i:s',$item[0]).' - '.str_pad((int)$item[1],6,' ',STR_PAD_LEFT) . ' - ' . $item[2] . "\n";
+            $data .= '     ' . date('H:i:s', $item[0]).' - '.str_pad((int)$item[1], 6, ' ', STR_PAD_LEFT) . ' - ' . $item[2] . "\n";
         }
 
-        // 写入文件
-        File::create_file(DIR_LOG.'slow_query/'.date('Y/m_d',TIME),$data,FILE_APPEND);
+        // 写入LOG
+        Core::log($data, 'log', 'slow_query/'. date('Y/m_d', TIME));
     }
 }

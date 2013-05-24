@@ -10,6 +10,8 @@ V3.0
   * 增加500错误数据收集的收集功能，可以关闭(配置中`$config['error500']['close'] = true;`即可)
   * 增加上传类库，并支持多驱动协议存放
   * `Core::set_project($project)` 改为 `Core::change_project($project)`
+  * Session类库优化
+  * ORM Finder中`get_by_id()`和`get_by_ids()`方法增加第二个参数$use_master指定是否在主库上查询，默认false
   * 特殊控制器目录修改，解决部分主机不支持特殊字符目录的问题
      * 后台控制器　 `controllers/[admin]/` 目录改为 `controllers_admin/`
      * 命令行控制器 `controllers/[shell]/` 目录改为 `controllers_shell/`
@@ -39,6 +41,7 @@ V3.0
   * 支持手机版本
 * 其它
   * 语言包完善
+  * 各种细节优化
 
 
 

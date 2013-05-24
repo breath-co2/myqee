@@ -114,12 +114,14 @@ class Core_Cache
 
     /**
      * 当前缓存的配置
+     *
      * @var string
      */
     protected $config;
 
     /**
      * 缓存驱动对象
+     *
      * @var Cache_Driver_Memcache
      */
     protected $driver;
@@ -154,6 +156,64 @@ class Core_Cache
 
     public function __construct($name = 'default')
     {
+        $this->load_config($name);
+
+        if ($this->config['driver']==Cache::DRIVER_FILE)
+        {
+            # 缓存类型为文件缓存
+            $write_mode = Core::config('core.file_write_mode');
+
+            if (preg_match('#^(db|cache)://([a-z0-9_]+)/([a-z0-9_]+)$#i', $write_mode , $m))
+            {
+                $new_config = $m[2];
+
+                if ($m[1]=='db')
+                {
+                    $driver = Cache::DRIVER_DATABASE;
+
+                    $this->load_config($new_config);
+
+                }
+                elseif ($driver=='cache')
+                {
+                    # 仍旧是缓存配置
+                    if ($name===$new_config)
+                    {
+                        throw new Exception(__('core config file_write_mode error.'));
+                    }
+                    else
+                    {
+                        $this->load_config($new_config);
+
+                        if ($this->config['driver']==Cache::DRIVER_FILE)
+                        {
+                            # 读取的配置仍旧是文件缓存
+                            throw new Exception(__('core config file_write_mode error.'));
+                        }
+                    }
+                }
+
+                $this->config['prefix'] = $m[3];
+            }
+        }
+
+        $driver = 'Cache_Driver_' . $this->config['driver'];
+        if (!class_exists($driver, true))
+        {
+            throw new Exception(__('The :type driver :driver does not exist', array(':type'=>'Cache', ':driver'=>$this->config['driver'])));
+        }
+
+        $this->driver = new $driver($this->config['driver_config']);
+
+        # 设置前缀
+        if ($this->config['prefix'])
+        {
+            $this->driver->set_prefix($this->config['prefix']);
+        }
+    }
+
+    protected function load_config($name)
+    {
         if (is_array($name))
         {
             $this->config = $name;
@@ -166,20 +226,6 @@ class Core_Cache
         if (!isset($this->config['driver']))
         {
             $this->config['driver'] = Cache::DRIVER_FILE;
-        }
-
-        $driver = 'Cache_Driver_' . $this->config['driver'];
-        if (!class_exists($driver,true))
-        {
-            throw new Exception(__('The :type driver :driver does not exist',array(':type'=>'Cache',':driver'=>$this->config['driver'])));
-        }
-
-        $this->driver = new $driver($this->config['driver_config']);
-
-        # 设置前缀
-        if ($this->config['prefix'])
-        {
-            $this->driver->set_prefix($this->config['prefix']);
         }
     }
 

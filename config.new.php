@@ -69,34 +69,40 @@ $config['runtime_config'] = '';
 
 
 /**
- * 用于 http://domain/opendebugger 页面开启在线debug功能
+ * 用于 http://your_domain/opendebugger 页面开启在线debug功能
  *
- * key为用户名，value为密码
- * 支持多个，留空则关闭此功能
+ * key为用户名，value为密码的md5值，支持多个，留空则关闭此功能
  *
- * @example $config['debug_open_password'] = array('user1'=>'pw1','user2'=>'pw2');
+ * !!! 密码为md5后的值，并非密码明文
+ *
+ * @example $config['debug_open_password'] = array('user1'=>'6e6fdf956d04289354dcf1619e28fe77', 'user2'=>'6e54dcf166fdf956d04289319e28fe77');
  * @var array
  */
 $config['debug_open_password'] = array
 (
-    //'myqee' => '123456',
+    //'myqee' => 'e10adc6e057f20f8833949ba59abbe5e',
 );
 
 
 /**
- * 调试环境打开关键字
+ * 默认打开开发调试环境的关键字
  *
- * 可在php.ini中加入：
+ * !!! 开发时使用Firefox+FireBug将可看到程序执行的各项debug数据，强烈推荐在本地开发时开启此功能，方便开发。但注意：生产环境中绝不能在php.ini设置
  *
- *   [MyQEE]
- *   myqee.debug = On
+ * 如果值为 `myqee.debug` 则可在php.ini中加入：
  *
+ *     [MyQEE]
+ *     myqee.debug = On
  *
- * 强烈推荐在本地开发时开启此功能，方便开发。但注意：生产环境中绝不能在php.ini设置
+ * 如果值为 `test.abc` 则可在php.ini中加入：
+ *
+ *     [MyQEE]
+ *     test.abc = On
  *
  * @var string
  */
 $config['local_debug_cfg'] = 'myqee.debug';
+
 
 /**
  * 页面编码
@@ -104,6 +110,7 @@ $config['local_debug_cfg'] = 'myqee.debug';
  * @var string
  */
 $config['charset'] = 'utf-8';
+
 
 /**
  * 网站根目录
@@ -114,6 +121,55 @@ $config['charset'] = 'utf-8';
  */
 $config['base_url'] = null;
 
+
+/**
+ * Data文件、Log、文件缓存等文件写入模式
+ *
+ * 参数                      | 描述
+ * -------------------------|--------------------------------------------------------------------
+ * normal                   | 正常的文件写入，请确保相应目录有写入权限
+ * disable                  | 禁用所有写入并丢弃内容，可用于SAE,BAE等程序目录不允许写入的安全级别高的环境，安全级别高
+ * db://for_file/filetable  | 用于目录不能写入内容又不希望丢弃数据的情况，系统自动转为写入数据库，将会写入 `$db = new Database('for_file');` 表名称 `filetable` 中
+ * cache://for_file/prefix_ | 同上，将会写入 `$db = new Cache('for_file');` 缓存前缀为 `prefix_`
+ *
+ * @string
+ */
+$config['file_write_mode'] = 'normal';
+
+
+/**
+ * 关闭错误页面记录错误数据
+ *
+ * @boolean
+ */
+$config['error500']['close'] = false;
+
+
+/**
+ * 错误页面数据记录方式
+ *
+ * 参数      | 描述
+ * ---------|-----
+ * file     | 文件(默认方式)
+ * database | 数据库
+ * cache    | 缓存保存
+ *
+ * @string
+ */
+$config['error500']['save_type'] = 'file';
+
+
+/**
+ * 错误页面数据记录方式对应配置
+ *
+ * 例如save_type为database，则此参数为数据库的配置名
+ * 如果save_type为cache，则此参数为驱动的配置名
+ *
+ * @string
+ */
+$config['error500']['type_config'] = 'default';
+
+
 /**
  * 错误等级
  *
@@ -121,11 +177,15 @@ $config['base_url'] = null;
  */
 $config['error_reporting'] = 7;
 
+
 /**
  * 服务器默认文件夹文件
+ *
+ * @example index.htm, default.html
  * @var string
  */
 $config['server_index_page'] = 'index.html';
+
 
 /**
  * 默认控制器
@@ -134,12 +194,14 @@ $config['server_index_page'] = 'index.html';
  */
 $config['default_controller'] = 'index';
 
+
 /**
  * 默认控制器方法
  *
  * @var string
  */
 $config['default_action'] = 'default';
+
 
 /**
  * 默认时区
@@ -183,34 +245,6 @@ $config['server_https_on_key'] = 'HTTPS';
  * @var int
  */
 $config['slow_query_mtime'] = 2000;
-
-/**
- * 关闭错误页面记录错误数据
- *
- * @boolean
- */
-$config['error500']['close'] = false;
-
-/**
- * 错误页面数据记录方式
- *
- * file     - 文件(默认方式)
- * database - 数据库
- * cache    - 缓存保存
- *
- * @string
- */
-$config['error500']['save_type'] = 'file';
-
-/**
- * 错误页面数据记录方式对应配置
- *
- * 例如save_type为database，则此参数为数据库的配置名
- * 如果save_type为cache，则此参数为驱动的配置名
- *
- * @string
- */
-$config['error500']['type_config'] = 'default';
 
 
 /**

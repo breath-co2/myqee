@@ -4,7 +4,7 @@ MyQEE命令行脚本工具
 
 merge-assets
 ------------
-合并项目静态文件输出到wwwroot/asstes/目录
+合并项目静态文件输出到wwwroot/assets/目录
 
 OPTIONS:
 

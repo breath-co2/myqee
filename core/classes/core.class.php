@@ -418,19 +418,41 @@ abstract class Core_Core extends Bootstrap
     }
 
     /**
+     * 是否系统设置禁用文件写入功能
+     *
+     * 可在 `config.php` 中设置 `$config['file_write_mode'] = 'disable';` 如果disable则返回true,否则返回false
+     *
+     * @return boolean
+     */
+    public static function is_file_write_disabled()
+    {
+        if (Core::config('core.file_write_mode')=='disable')
+        {
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
+
+    /**
      * 记录日志
      *
      * @param string $msg 日志内容
      * @param string $type 类型，例如：log,error,debug 等
+     * @param stirng $file 指定文件名，不指定则默认
      * @return boolean
      */
-    public static function log($msg, $type = 'log')
+    public static function log($msg, $type = 'log', $file = null)
     {
+        if (Core::is_file_write_disabled())return true;
+
         # log配置
         $log_config = Core::config('log');
 
         # 不记录日志
-        if ( isset($log_config['use']) && !$log_config['use'] )
+        if (isset($log_config['use']) && !$log_config['use'])
         {
             return true;
         }
@@ -452,11 +474,11 @@ abstract class Core_Core extends Bootstrap
         if (IS_DEBUG)
         {
             # 如果有开启debug模式，输出到浏览器
-            Core::debug()->log($data,$type);
+            Core::debug()->log($data, $type);
         }
 
         # 保存日志
-        return Core::write_log($data, $type);
+        return Core::write_log($data, $type, $file);
     }
 
     /**
@@ -889,11 +911,15 @@ abstract class Core_Core extends Bootstrap
     *
     * @param string $data
     * @param string $type 日志类型
+    * @param stirng $file 指定文件名，不指定则默认
     * @return boolean
     */
-    protected static function write_log($data, $type = 'log')
+    protected static function write_log($data, $type = 'log', $file = null)
     {
         static $pro = null;
+
+        if (!$type)$type = 'log';
+
         if (null===$pro)
         {
             if (preg_match('#^(db|cache)://([a-z0-9_]+)/([a-z0-9_]+)$#i', DIR_LOG , $m))
@@ -906,23 +932,41 @@ abstract class Core_Core extends Bootstrap
             }
         }
 
+        # Log目录采用文件目录
+        if (false===$pro)
+        {
+            $write_mode = Core::config('core.file_write_mode');
+
+            # 禁用写入
+            if ($write_mode=='disable')return true;
+
+            # 再判断是否有转换储存处理
+            if (preg_match('#^(db|cache)://([a-z0-9_]+)/([a-z0-9_]+)$#i', $write_mode , $m))
+            {
+                $pro = $m;
+            }
+        }
+
         if (false===$pro)
         {
             # 以文件的形式保存
 
             $log_config = Core::config('log');
 
-            if ($log_config['file'])
+            if (!$file)
             {
-                $file = date($log_config['file']);
+                if ($log_config['file'])
+                {
+                    $file = date($log_config['file']);
+                }
+                else
+                {
+                    $file = date('Y/m/d/');
+                }
+                $file .= $type . '.log';
             }
-            else
-            {
-                $file = date('Y/m/d/');
-            }
-            $file .= $type.'.log';
 
-            $dir = trim(dirname($file),'/');
+            $dir = trim(dirname($file), '/');
 
             # 如果目录不存在，则创建
             if (!is_dir(DIR_LOG.$dir))
@@ -934,12 +978,12 @@ abstract class Core_Core extends Bootstrap
                     $cur_dir .= $temp[$i] . "/";
                     if (!is_dir(DIR_LOG.$cur_dir))
                     {
-                        @mkdir(DIR_LOG.$cur_dir,0755);
+                        @mkdir(DIR_LOG.$cur_dir, 0755);
                     }
                 }
             }
 
-            return false===@file_put_contents(DIR_LOG.$file, $data.CRLF , FILE_APPEND)?false:true;
+            return false===@file_put_contents(DIR_LOG . $file, $data . CRLF , FILE_APPEND)?false:true;
         }
         else
         {
@@ -949,6 +993,8 @@ abstract class Core_Core extends Bootstrap
             {
                 $db_data = array
                 (
+                    'key'    => md5($file),
+                    'key_str'=> substr($file, 0, 255),
                     'type'   => $type,
                     'day'    => date('Ymd'),
                     'time'   => TIME,
@@ -956,21 +1002,20 @@ abstract class Core_Core extends Bootstrap
                 );
 
                 $obj = new Database($pro[2]);
-                $status = $obj->insert($pro[3],$db_data) ? true:false;
+                $status = $obj->insert($pro[3], $db_data) ? true:false;
             }
             else
             {
-                $class = 'Cache';
                 if ($pro[3])
                 {
-                    $pro[1]['prefix'] = trim($pro[3]).'_';
+                    $pro[1]['prefix'] = trim($pro[3]) . '_';
                 }
 
                 $pro[1]['prefix'] .= $type.'_';
 
                 $obj = new Cache($pro[2]);
 
-                $status = $obj->set(date('Ymd'), $data, 86400*30);        // 存1月
+                $status = $obj->set(date('Ymd').md5($file), $data, 86400*30);        // 存1月
             }
 
             return $status;
@@ -1072,17 +1117,13 @@ abstract class Core_Core extends Bootstrap
         {
             $file = $l . './projects/' . $r . substr($file, strlen(DIR_PROJECT));
         }
-        elseif ( strpos($file, DIR_BULIDER) === 0 )
+        elseif ( strpos($file, DIR_TEMP) === 0 )
         {
-            $file = $l . './data/bulider/' . $r . substr($file, strlen(DIR_BULIDER));
+            $file = $l . './data/temp/' . $r . substr($file, strlen(DIR_TEMP));
         }
         elseif ( strpos($file, DIR_LOG) === 0 )
         {
             $file = $l . './data/log/' . $r . substr($file, strlen(DIR_LOG));
-        }
-        elseif ( strpos($file, DIR_TEMP) === 0 )
-        {
-            $file = $l . './data/temp/' . $r . substr($file, strlen(DIR_TEMP));
         }
         elseif ( strpos($file, DIR_CACHE) === 0 )
         {
@@ -1328,8 +1369,8 @@ abstract class Core_Core extends Bootstrap
                             }
                             break;
                         default:
-                            $file = DIR_LOG.'error500'.DS.str_replace('-', DS, $date).DS.$no.'.log';
-                            if (!is_file($file))
+                            $file = DIR_LOG .'error500'. DS . str_replace('-', DS, $date) . DS . $no . '.log';
+                            if (!File::is_file($file))
                             {
                                 File::create_file($file, $trace_data, null, null, $error_config['type_config']?$error_config['type_config']:'default');
                             }

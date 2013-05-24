@@ -224,7 +224,7 @@ new check_config();
 <tr>
     <td class="td1" align="right">MyQEE 版本：</td>
     <td>
-    <?php echo Core::VERSION; ?>
+    <?php echo Core::VERSION , ' ', Core::RELEASE; ?>
     </td>
 </tr>
 <tr>
