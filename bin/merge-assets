@@ -136,7 +136,7 @@ foreach ($include_path as $path)
 echo "\n修改数/文件数:\n";
 
 # 输出目录
-$out_dir = DIR_ASSETS . $project .'/'
+$out_dir = DIR_ASSETS . $project .'/';
 
 # md5存放的文件
 $cachefile = DIR_CACHE . 'asset_md5_by_proect_'.$project;
