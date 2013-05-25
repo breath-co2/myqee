@@ -1180,7 +1180,8 @@ abstract class Core_Core extends Bootstrap
         Core::close_buffers(false);
 
         # 避免输出的CSS头试抛出页面无法显示
-        @header('Content-Type: text/html;charset=' . Core::config('core.charset'), true);
+        $charset = Core::config('core.charset') ? : Core::$charset;
+        @header('Content-Type: text/html;charset=' . $charset, true);
 
         HttpIO::$status = 404;
         HttpIO::send_headers();
@@ -1244,7 +1245,8 @@ abstract class Core_Core extends Bootstrap
         Core::close_buffers(false);
 
         # 避免输出的CSS头试抛出页面无法显示
-        @header('Content-Type: text/html;charset=' . Core::config('core.charset') , true);
+        $charset = Core::config('core.charset') ? : Core::$charset;
+        @header('Content-Type: text/html;charset=' . $charset , true);
 
         HttpIO::$status = 500;
         HttpIO::send_headers();
