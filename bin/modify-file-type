@@ -1,0 +1,19 @@
+#!/bin/sh
+#使用tofrodos进行文件编码修改的工具
+
+usage() {
+    echo "You should install tofrodos first"
+    echo "1. ubuntu debian: sudo apt-get install tofrodos"
+    echo "2. fedora centos: sudo yum install tofrodos"
+    echo "3. download binary file, install manually (http://www.thefreecountry.com/tofrodos/index.shtml)"
+}
+
+installed=`type fromdos`
+
+#判定是否安装fromdos
+if [ "$installed" != "fromdos is /usr/bin/fromdos" ];then
+    usage
+fi
+
+#进行上层目录下php文件编码修改
+fromdos `find ../ -type f -name '*.php'`
