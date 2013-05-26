@@ -27,6 +27,13 @@ class Core_Config
     protected $tablename = 'config';
 
     /**
+     * 是否采用文件缓存
+     *
+     * @var boolean
+     */
+    protected $is_use_cache;
+
+    /**
      * 配置
      * @var array
      */
@@ -40,6 +47,16 @@ class Core_Config
             if (isset($config['database']) && $config['database']  )$this->database  = $config['database'];
             if (isset($config['tablename']) && $config['tablename'])$this->tablename = $config['tablename'];
         }
+
+        $this->set_use_cache();
+    }
+
+    /**
+     * 设置是否启用缓存模式
+     */
+    protected function set_use_cache()
+    {
+        $this->is_use_cache = Core::config('core.file_write_mode') == 'normal' ? true:false;
     }
 
     /**
@@ -81,7 +98,7 @@ class Core_Config
                             'type'     => $type,
                             'key_md5'  => md5($k),
                             'key_name' => $k,
-                            'value'    => gzcompress(serialize($value[$i]),9),
+                            'value'    => gzcompress(serialize($value[$i]), 9),
                         );
                         $db->values($data);
                     }
@@ -115,9 +132,9 @@ class Core_Config
                     'type'     => $type,
                     'key_md5'  => md5($key),
                     'key_name' => $key,
-                    'value'    => gzcompress(serialize($value),9),
+                    'value'    => gzcompress(serialize($value), 9),
                 );
-                $status = $db->replace( $this->tablename , $data );
+                $status = $db->replace($this->tablename, $data);
                 $status = $status[1];
             }
             if ($status)
@@ -192,10 +209,10 @@ class Core_Config
         $type = (string)$type;
         try
         {
-            if ( is_array($key) )
+            if (is_array($key))
             {
                 # 多个key
-                $db->where('type',$type);
+                $db->where('type', $type);
                 $db->and_where_open();
                 foreach ($key as $k)
                 {
@@ -208,7 +225,7 @@ class Core_Config
             else
             {
                 # 单个key
-                $db->delete( $this->tablename , array('type'=>$type,'key_md5'=>md5($key)) );
+                $db->delete( $this->tablename , array('type'=>$type, 'key_md5'=>md5($key)) );
                 if ($this->config)unset($this->config[$type][$key]);
             }
 
@@ -254,9 +271,9 @@ class Core_Config
      */
     public function reload($from_db=true)
     {
-        $tmpfile = DIR_DATA.'/extends_config_'.Core::$project.'.txt';
+        $tmpfile = DIR_DATA .'extends_config_'. Core::$project .'.txt';
 
-        if ( !$from_db && is_file($tmpfile) )
+        if ($this->is_use_cache && !$from_db && is_file($tmpfile))
         {
             # 在data目录中直接读取
             $this->config = unserialize(file_get_contents($tmpfile));
@@ -269,7 +286,7 @@ class Core_Config
         {
             # 没有缓存数据，则直接在数据库里获取
             $db = new Database($this->database);
-            $config = $db->from($this->tablename)->get(false,true)->as_array();
+            $config = $db->from($this->tablename)->get(false, true)->as_array();
 
             if ($config)
             {
@@ -284,28 +301,39 @@ class Core_Config
                 $this->config = array();
             }
 
-            // 写缓存
-            $rs = File::create_file($tmpfile, serialize($this->config));
+            if ($this->is_use_cache)
+            {
+                // 普通模式下写缓存
+                $rs = File::create_file($tmpfile, serialize($this->config));
 
-            if (IS_DEBUG)Core::debug()->log('save extends config cache '.($rs?'success':'fail').'.');
+                if (IS_DEBUG)Core::debug()->log('save extends config cache ' . ($rs?'success':'fail').'.');
+            }
         }
     }
 
     /**
      * 清除配置缓存
+     *
+     * @return boolean
      */
     public function clear_cache()
     {
+        if (!$this->is_use_cache)
+        {
+            // 非普通文件写入，不缓存，无需清理
+            return true;
+        }
+
         $projects = array_keys((array)Core::config('core.projects'));
         if ($projects)foreach ($projects as $project)
         {
             # 所有项目的配置文件
-            $tmpfile[] = DIR_DATA.'/extends_config'.$project.'.txt';
+            $tmpfile[] = DIR_DATA .'/extends_config'. $project .'.txt';
         }
 
         $rs = File::unlink($tmpfile);
 
-        if (IS_DEBUG)Core::debug()->log('clear extends config cache '.($rs?'success':'fail').'.');
+        if (IS_DEBUG)Core::debug()->log('clear extends config cache '. ($rs?'success':'fail') .'.');
         return $rs;
     }
 }

@@ -46,6 +46,16 @@ class Core_File
     );
 
     /**
+     * 文件是否存在
+     *
+     * @param string $file
+     */
+    public static function is_file($file, $storage = 'default')
+    {
+
+    }
+
+    /**
      * 创建一个文件，多服务器可以自动同步
      *
      * @param string $file
@@ -59,11 +69,14 @@ class Core_File
     {
         $info = File::check_and_get_path($file);
 
+        # 系统禁用了写入功能
+        if (Core::is_file_write_disabled())return false;
+
         if (File::can_do_run($storage))
         {
             # 系统内部运行时或小于等于1台服时执行
 
-            $dir = substr($file,0,(int)strrpos(str_replace('\\','/',$file), '/'));
+            $dir = substr($file, 0, (int)strrpos(str_replace('\\', '/', $file), '/'));
 
             if ($dir && !is_dir($dir))
             {
@@ -85,7 +98,7 @@ class Core_File
         }
         else
         {
-            return File::call_http_host($storage ,'file/create_file', $info[0], $info[1], $data , $flags , $context);
+            return File::call_http_host($storage, 'file/create_file', $info[0], $info[1], $data, $flags, $context);
         }
     }
 
@@ -136,7 +149,7 @@ class Core_File
         }
         else
         {
-            return File::call_http_host($storage,'file/create_dir',$info[0], $info[1], $auto_create_default_file);
+            return File::call_http_host($storage, 'file/create_dir', $info[0], $info[1], $auto_create_default_file);
         }
     }
 
@@ -194,7 +207,7 @@ class Core_File
         }
         else
         {
-            return File::call_http_host($storage,'file/unlink',$info[0], $info[1]);
+            return File::call_http_host($storage, 'file/unlink', $info[0], $info[1]);
         }
     }
 
@@ -239,7 +252,7 @@ class Core_File
         }
         else
         {
-            return File::call_http_host($storage,'file/remove_dir',$info[0], $info[1] );
+            return File::call_http_host($storage, 'file/remove_dir', $info[0], $info[1] );
         }
     }
 

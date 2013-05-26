@@ -53,27 +53,40 @@ abstract class Core_Core extends Bootstrap
 {
     /**
      * MyQEE版本号
+     *
      * @var string
      */
-    const VERSION = '3.1.1dev';
+    const VERSION = '3.1';
+
+    /**
+     * 版本发布状态
+     *
+     * stable, rc1, rc2, beta1, beta2, ...
+     *
+     * @var string
+     */
+    const RELEASE  = 'rc1';
 
     /**
      * 项目开发者
+     *
      * @var string
      */
     const CODER = 'jonwang(jonwang@myqee.com)';
 
     /**
      * 页面编码
+     *
      * @var string
      */
-    public static $charset;
+    public static $charset = 'utf-8';
 
     /**
      * 页面传入的PATHINFO参数
+     *
      * @var array
      */
-    public static $arguments;
+    public static $arguments = array();
 
     /**
      * 页面输出内容
@@ -165,7 +178,7 @@ abstract class Core_Core extends Bootstrap
             if (!IS_CLI)
             {
                 # 输出powered by信息
-                header('X-Powered-By: PHP/' . PHP_VERSION . ' MyQEE/' . Core::VERSION );
+                header('X-Powered-By: PHP/' . PHP_VERSION . ' MyQEE/' . Core::VERSION .'/'. Core::RELEASE);
             }
 
             if (IS_DEBUG)
@@ -174,7 +187,7 @@ abstract class Core_Core extends Bootstrap
 
                 if (Core::$project)
                 {
-                    Core::debug()->info('project: '.Core::$project);
+                    Core::debug()->info('project: ' . Core::$project);
                 }
 
                 if (IS_ADMIN_MODE)
@@ -375,7 +388,7 @@ abstract class Core_Core extends Bootstrap
         {
             $url_asstes = URL_ASSETS;
 
-            list($file, $query) = explode('?', $uri.'?',2);
+            list($file, $query) = explode('?', $uri.'?', 2);
 
             $uri = $file . '?' . (strlen($query)>0?$query.'&':'') . Core::assets_hash($file);
         }
@@ -405,19 +418,41 @@ abstract class Core_Core extends Bootstrap
     }
 
     /**
+     * 是否系统设置禁用文件写入功能
+     *
+     * 可在 `config.php` 中设置 `$config['file_write_mode'] = 'disable';` 如果disable则返回true,否则返回false
+     *
+     * @return boolean
+     */
+    public static function is_file_write_disabled()
+    {
+        if (Core::config('core.file_write_mode')=='disable')
+        {
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
+
+    /**
      * 记录日志
      *
      * @param string $msg 日志内容
      * @param string $type 类型，例如：log,error,debug 等
+     * @param stirng $file 指定文件名，不指定则默认
      * @return boolean
      */
-    public static function log($msg, $type = 'log')
+    public static function log($msg, $type = 'log', $file = null)
     {
+        if (Core::is_file_write_disabled())return true;
+
         # log配置
         $log_config = Core::config('log');
 
         # 不记录日志
-        if ( isset($log_config['use']) && !$log_config['use'] )
+        if (isset($log_config['use']) && !$log_config['use'])
         {
             return true;
         }
@@ -439,11 +474,11 @@ abstract class Core_Core extends Bootstrap
         if (IS_DEBUG)
         {
             # 如果有开启debug模式，输出到浏览器
-            Core::debug()->log($data,$type);
+            Core::debug()->log($data, $type);
         }
 
         # 保存日志
-        return Core::write_log($data, $type);
+        return Core::write_log($data, $type, $file);
     }
 
     /**
@@ -876,11 +911,15 @@ abstract class Core_Core extends Bootstrap
     *
     * @param string $data
     * @param string $type 日志类型
+    * @param stirng $file 指定文件名，不指定则默认
     * @return boolean
     */
-    protected static function write_log($data, $type = 'log')
+    protected static function write_log($data, $type = 'log', $file = null)
     {
         static $pro = null;
+
+        if (!$type)$type = 'log';
+
         if (null===$pro)
         {
             if (preg_match('#^(db|cache)://([a-z0-9_]+)/([a-z0-9_]+)$#i', DIR_LOG , $m))
@@ -893,23 +932,41 @@ abstract class Core_Core extends Bootstrap
             }
         }
 
+        # Log目录采用文件目录
+        if (false===$pro)
+        {
+            $write_mode = Core::config('core.file_write_mode');
+
+            # 禁用写入
+            if ($write_mode=='disable')return true;
+
+            # 再判断是否有转换储存处理
+            if (preg_match('#^(db|cache)://([a-z0-9_]+)/([a-z0-9_]+)$#i', $write_mode , $m))
+            {
+                $pro = $m;
+            }
+        }
+
         if (false===$pro)
         {
             # 以文件的形式保存
 
             $log_config = Core::config('log');
 
-            if ($log_config['file'])
+            if (!$file)
             {
-                $file = date($log_config['file']);
+                if ($log_config['file'])
+                {
+                    $file = date($log_config['file']);
+                }
+                else
+                {
+                    $file = date('Y/m/d/');
+                }
+                $file .= $type . '.log';
             }
-            else
-            {
-                $file = date('Y/m/d/');
-            }
-            $file .= $type.'.log';
 
-            $dir = trim(dirname($file),'/');
+            $dir = trim(dirname($file), '/');
 
             # 如果目录不存在，则创建
             if (!is_dir(DIR_LOG.$dir))
@@ -921,12 +978,12 @@ abstract class Core_Core extends Bootstrap
                     $cur_dir .= $temp[$i] . "/";
                     if (!is_dir(DIR_LOG.$cur_dir))
                     {
-                        @mkdir(DIR_LOG.$cur_dir,0755);
+                        @mkdir(DIR_LOG.$cur_dir, 0755);
                     }
                 }
             }
 
-            return false===@file_put_contents(DIR_LOG.$file, $data.CRLF , FILE_APPEND)?false:true;
+            return false===@file_put_contents(DIR_LOG . $file, $data . CRLF , FILE_APPEND)?false:true;
         }
         else
         {
@@ -936,6 +993,8 @@ abstract class Core_Core extends Bootstrap
             {
                 $db_data = array
                 (
+                    'key'    => md5($file),
+                    'key_str'=> substr($file, 0, 255),
                     'type'   => $type,
                     'day'    => date('Ymd'),
                     'time'   => TIME,
@@ -943,21 +1002,20 @@ abstract class Core_Core extends Bootstrap
                 );
 
                 $obj = new Database($pro[2]);
-                $status = $obj->insert($pro[3],$db_data) ? true:false;
+                $status = $obj->insert($pro[3], $db_data) ? true:false;
             }
             else
             {
-                $class = 'Cache';
                 if ($pro[3])
                 {
-                    $pro[1]['prefix'] = trim($pro[3]).'_';
+                    $pro[1]['prefix'] = trim($pro[3]) . '_';
                 }
 
                 $pro[1]['prefix'] .= $type.'_';
 
                 $obj = new Cache($pro[2]);
 
-                $status = $obj->set(date('Ymd'), $data, 86400*30);        // 存1月
+                $status = $obj->set(date('Ymd').md5($file), $data, 86400*30);        // 存1月
             }
 
             return $status;
@@ -1059,17 +1117,13 @@ abstract class Core_Core extends Bootstrap
         {
             $file = $l . './projects/' . $r . substr($file, strlen(DIR_PROJECT));
         }
-        elseif ( strpos($file, DIR_BULIDER) === 0 )
+        elseif ( strpos($file, DIR_TEMP) === 0 )
         {
-            $file = $l . './data/bulider/' . $r . substr($file, strlen(DIR_BULIDER));
+            $file = $l . './data/temp/' . $r . substr($file, strlen(DIR_TEMP));
         }
         elseif ( strpos($file, DIR_LOG) === 0 )
         {
             $file = $l . './data/log/' . $r . substr($file, strlen(DIR_LOG));
-        }
-        elseif ( strpos($file, DIR_TEMP) === 0 )
-        {
-            $file = $l . './data/temp/' . $r . substr($file, strlen(DIR_TEMP));
         }
         elseif ( strpos($file, DIR_CACHE) === 0 )
         {
@@ -1138,7 +1192,7 @@ abstract class Core_Core extends Bootstrap
 
         if (IS_DEBUG && class_exists('ErrException', false))
         {
-            if ( $msg instanceof Exception )
+            if ($msg instanceof Exception)
             {
                 throw $msg;
             }
@@ -1190,7 +1244,7 @@ abstract class Core_Core extends Bootstrap
         Core::close_buffers(false);
 
         # 避免输出的CSS头试抛出页面无法显示
-        @header('Content-Type: text/html;charset=' . Core::config('core.charset') , true);
+        @header('Content-Type: text/html;charset=' . Core::config('core.charset'), true);
 
         HttpIO::$status = 500;
         HttpIO::send_headers();
@@ -1202,7 +1256,7 @@ abstract class Core_Core extends Bootstrap
 
         if (IS_DEBUG && class_exists('ErrException', false))
         {
-            if ( $msg instanceof Exception )
+            if ($msg instanceof Exception)
             {
                 throw $msg;
             }
@@ -1215,7 +1269,7 @@ abstract class Core_Core extends Bootstrap
         if (IS_CLI)
         {
             echo "\x1b[36m";
-            if ( $msg instanceof Exception )
+            if ($msg instanceof Exception)
             {
                 echo $msg->getMessage() . CRLF;
             }
@@ -1256,10 +1310,10 @@ abstract class Core_Core extends Bootstrap
                 (
                     'project'     => Core::$project,
                     'uri'         => HttpIO::$uri,
-                    'url'         => HttpIO::PROTOCOL.'://'.$_SERVER['HTTP_HOST'].$_SERVER["REQUEST_URI"],
-                    'post'        => HttpIO::POST(null,HttpIO::PARAM_TYPE_OLDDATA),
+                    'url'         => HttpIO::PROTOCOL . '://'.$_SERVER['HTTP_HOST'] . $_SERVER["REQUEST_URI"],
+                    'post'        => HttpIO::POST(null, HttpIO::PARAM_TYPE_OLDDATA),
                     'get'         => $_SERVER['QUERY_STRING'],
-                    'cookie'      => HttpIO::COOKIE(null,HttpIO::PARAM_TYPE_OLDDATA),
+                    'cookie'      => HttpIO::COOKIE(null, HttpIO::PARAM_TYPE_OLDDATA),
                     'client_ip'   => HttpIO::IP,
                     'user_agent'  => HttpIO::USER_AGENT,
                     'referrer'    => HttpIO::REFERRER,
@@ -1277,7 +1331,7 @@ abstract class Core_Core extends Bootstrap
                 $trace_array['use_time']    = microtime(1) - START_TIME;
                 $trace_array['trace']       = $trace_obj;
 
-                $trace_data = base64_encode(gzcompress(serialize($trace_array),9));
+                $trace_data = base64_encode(gzcompress(serialize($trace_array), 9));
                 unset($trace_array);
 
                 $view->error_saved = true;
@@ -1292,6 +1346,18 @@ abstract class Core_Core extends Bootstrap
                     else
                     {
                         $save_type = 'file';
+                    }
+
+                    if ($save_type=='file')
+                    {
+                        # 文件模式
+                        $write_mode = Core::config('core.file_write_mode');
+
+                        if (preg_match('#^(db|cache)://([a-z0-9_]+)/([a-z0-9_]+)$#i', $write_mode , $m))
+                        {
+                            $save_type = $m[1];
+                            $error_config['type_config'] = $m[2];
+                        }
                     }
 
                     switch ($save_type)
@@ -1309,14 +1375,14 @@ abstract class Core_Core extends Bootstrap
                             break;
                         case 'cache':
                             $obj = new Cache($error_config['type_config']?$error_config['type_config']:'default');
-                            if ( !$obj->get($error_no) )
+                            if (!$obj->get($error_no))
                             {
                                 $obj->set($error_no, $trace_data, 7*86400);
                             }
                             break;
                         default:
-                            $file = DIR_LOG.'error500'.DS.str_replace('-', DS, $date).DS.$no.'.log';
-                            if (!is_file($file))
+                            $file = DIR_LOG .'error500'. DS . str_replace('-', DS, $date) . DS . $no . '.log';
+                            if (!File::is_file($file))
                             {
                                 File::create_file($file, $trace_data, null, null, $error_config['type_config']?$error_config['type_config']:'default');
                             }

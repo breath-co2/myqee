@@ -34,7 +34,7 @@ class Core_Cache_Driver_File extends Cache_Driver
         }
         else
         {
-            $config = (array)Core::config('cache/file.'.$config_name);
+            $config = (array)Core::config('cache/file.' . $config_name);
         }
 
         if ($config['storage'])
@@ -164,7 +164,7 @@ class Core_Cache_Driver_File extends Cache_Driver
     }
 
     /**
-     * TODO 暂不支持
+     * TODO 暂不支持删除过期的文件缓存
      *
      */
     public function delete_expired()
@@ -249,7 +249,7 @@ class Core_Cache_Driver_File extends Cache_Driver
      */
     protected function get_filename_by_key($key)
     {
-        return $this->dir . $this->prefix . 'cache_file_' . substr(preg_replace('#[^a-z0-9_\-]*#i','',$key), 0, 50) . '_' . md5($key . '_&@c)ac%he_file');
+        return $this->dir . $this->prefix . 'cache_file_' . substr(preg_replace('#[^a-z0-9_\-]*#i', '', $key), 0, 50) . '_' . md5($key . '_&@c)ac%he_file');
     }
 
     protected function get_expired_setting($key, &$data)

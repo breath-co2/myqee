@@ -32,7 +32,7 @@ $dir_cache   = $dir_data.'cache/';
 
 
 /**
- * LOG目录
+ * LOG目录，同上
  */
 $dir_log     = $dir_data.'log/';
 

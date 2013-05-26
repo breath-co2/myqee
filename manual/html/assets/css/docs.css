@@ -58,10 +58,17 @@ body > .navbar .brand:hover {
 .left-div li {white-space: nowrap;}
 .left-div .left-menu-i-div {
   float: right;
-  padding-right: 5px;
 }
 .left-div .left-menu-i-div i {
-  position: absolute;
+  position: relative;
+}
+.left-div .label,
+.left-div .badge {
+  -webkit-transform: scale(0.8);
+  -moz-transform: scale(0.8);
+  font-size: 10px;
+  font-weight: normal;
+  float: right;
 }
 
 .right-div {
@@ -194,7 +201,6 @@ body > .navbar .brand:hover {
 }
 
 .right-div table {
-  width: 100%;
   margin-bottom: 20px;
 }
 
@@ -207,7 +213,7 @@ body > .navbar .brand:hover {
   border-bottom: 1px #ccc solid;
 }
 .right-div td{
-  padding: 6px;
+  padding: 8px;
   border-top: 1px solid #eee;
 }
 
@@ -1138,10 +1144,9 @@ form.bs-docs-example {
      -moz-border-bottom-right-radius: 6px;
           border-bottom-right-radius: 6px;
 }
-.bs-docs-sidenav .active > a {
+.bs-docs-sidenav li.active > a {
   color: #fff;
   background-color: #08c;
-  position: relative;
   z-index: 2;
   padding: 6px 1em;
   border: 0;
@@ -1149,9 +1154,6 @@ form.bs-docs-example {
   -webkit-box-shadow: inset 1px 0 0 rgba(0,0,0,.1), inset -1px 0 0 rgba(0,0,0,.1);
      -moz-box-shadow: inset 1px 0 0 rgba(0,0,0,.1), inset -1px 0 0 rgba(0,0,0,.1);
           box-shadow: inset 1px 0 0 rgba(0,0,0,.1), inset -1px 0 0 rgba(0,0,0,.1);
-}
-.bs-docs-sidenav .active > a i {
-  background-image: url("../bootstrap/img/glyphicons-halflings-white.png");
 }
 
 /* Chevrons */
@@ -1161,17 +1163,17 @@ form.bs-docs-example {
   margin-right: -6px;
   opacity: .25;
 }
+.bs-docs-sidenav a {
+  position: relative;
+}
 .bs-docs-sidenav a:hover {
   background-color: #f5f5f5;
-}
-.bs-docs-sidenav .active a:hover {
-  background-color: #08c;
 }
 .bs-docs-sidenav a:hover .icon-chevron-right {
   opacity: .5;
 }
-.bs-docs-sidenav .active .icon-chevron-right,
-.bs-docs-sidenav .active a:hover .icon-chevron-right {
+.bs-docs-sidenav li.active > a .icon-chevron-right,
+.bs-docs-sidenav li.active > a:hover .icon-chevron-right {
   opacity: 1;
 }
 .bs-docs-sidenav.affix {

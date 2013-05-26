@@ -10,10 +10,18 @@ V3.0
   * 增加500错误数据收集的收集功能，可以关闭(配置中`$config['error500']['close'] = true;`即可)
   * 增加上传类库，并支持多驱动协议存放
   * `Core::set_project($project)` 改为 `Core::change_project($project)`
+  * Session类库优化
+  * ORM Finder中`get_by_id()`和`get_by_ids()`方法增加第二个参数$use_master指定是否在主库上查询，默认false
+  * 特殊控制器目录修改，解决部分主机不支持特殊字符目录的问题
+     * 后台控制器　 `controllers/[admin]/` 目录改为 `controllers_admin/`
+     * 命令行控制器 `controllers/[shell]/` 目录改为 `controllers_shell/`
+     * 系统控制器　 `controllers/[system]/`目录改为 `controllers_system/ `
+
 * **控制器相关优化**
   * 类命名优化，取消文件夹下双下划线命名方式，统一改成和class，model等相同的命名规则
   * 修复控制器参数大小BUG
   * 避免系统基础控制器可直接被访问到
+  * 重写 `Controller_Shell::getopt()` 获取参数的代码，实现等同于系统的`getopt()`方法的功能
 * **数据库相关优化：**
   * 增加慢查询日志功能，可在config.php中设置慢查询 `$config['slow_query_mtime']` 参数
   * 各驱动优化，避免在连接数据库失败后将数据库用户名、密码等信息暴露到错误堆叠里
@@ -33,6 +41,7 @@ V3.0
   * 支持手机版本
 * 其它
   * 语言包完善
+  * 各种细节优化
 
 
 

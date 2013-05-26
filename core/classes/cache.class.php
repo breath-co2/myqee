@@ -114,12 +114,14 @@ class Core_Cache
 
     /**
      * 当前缓存的配置
+     *
      * @var string
      */
     protected $config;
 
     /**
      * 缓存驱动对象
+     *
      * @var Cache_Driver_Memcache
      */
     protected $driver;
@@ -154,24 +156,17 @@ class Core_Cache
 
     public function __construct($name = 'default')
     {
-        if (is_array($name))
-        {
-            $this->config = $name;
-        }
-        else
-        {
-            $this->config = Core::config('cache.' . $name);
-        }
+        $this->load_config($name);
 
-        if (!isset($this->config['driver']))
+        if ($this->config['driver']==Cache::DRIVER_FILE)
         {
-            $this->config['driver'] = Cache::DRIVER_FILE;
+            $this->check_file_config($name);
         }
 
         $driver = 'Cache_Driver_' . $this->config['driver'];
-        if (!class_exists($driver,true))
+        if (!class_exists($driver, true))
         {
-            throw new Exception(__('The :type driver :driver does not exist',array(':type'=>'Cache',':driver'=>$this->config['driver'])));
+            throw new Exception(__('The :type driver :driver does not exist', array(':type'=>'Cache', ':driver'=>$this->config['driver'])));
         }
 
         $this->driver = new $driver($this->config['driver_config']);
@@ -182,6 +177,7 @@ class Core_Cache
             $this->driver->set_prefix($this->config['prefix']);
         }
     }
+
 
     /**
      * 获取指定KEY的缓存数据
@@ -424,6 +420,19 @@ class Core_Cache
         return $this->last_error_no;
     }
 
+    /**
+     * 设置当前为是否为Session获取模式
+     *
+     * 设置为session模式后，在开启debug情况下访问无缓存状态将不受影响
+     *
+     * @param boolean $open
+     * @return Cache
+     */
+    public function session_mode($open)
+    {
+        $this->session_mode = (boolean)$open;
+    }
+
     public function __get($key)
     {
         return $this->get($key);
@@ -563,15 +572,68 @@ class Core_Cache
     }
 
     /**
-     * 设置当前为是否为Session获取模式
+     * 根据配置名加载配置
      *
-     * 设置为session模式后，在开启debug情况下访问无缓存状态将不受影响
-     *
-     * @param boolean $open
-     * @return Cache
+     * @param string $name
      */
-    public function session_mode($open)
+    protected function load_config($name)
     {
-        $this->session_mode = (boolean)$open;
+        if (is_array($name))
+        {
+            $this->config = $name;
+        }
+        else
+        {
+            $this->config = Core::config('cache.' . $name);
+        }
+
+        if (!isset($this->config['driver']))
+        {
+            $this->config['driver'] = Cache::DRIVER_FILE;
+        }
+    }
+
+    /**
+     * 检查文件缓存配置
+     *
+     * @param string $name
+     * @throws Exception
+     */
+    protected function check_file_config($name)
+    {
+        # 缓存类型为文件缓存
+        $write_mode = Core::config('core.file_write_mode');
+
+        if (preg_match('#^(db|cache)://([a-z0-9_]+)/([a-z0-9_]+)$#i', $write_mode , $m))
+        {
+            $new_config = $m[2];
+
+            if ($m[1]=='db')
+            {
+                $driver = Cache::DRIVER_DATABASE;
+
+                $this->load_config($new_config);
+            }
+            elseif ($driver=='cache')
+            {
+                # 仍旧是缓存配置
+                if ($name===$new_config)
+                {
+                    throw new Exception(__('core config file_write_mode error.'));
+                }
+                else
+                {
+                    $this->load_config($new_config);
+
+                    if ($this->config['driver']==Cache::DRIVER_FILE)
+                    {
+                        # 读取的配置仍旧是文件缓存
+                        throw new Exception(__('core config file_write_mode error.'));
+                    }
+                }
+            }
+
+            $this->config['prefix'] = $m[3];
+        }
     }
 }

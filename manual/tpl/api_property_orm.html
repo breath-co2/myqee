@@ -1,0 +1,473 @@
+<?php
+// 显示ORM字段详细设置
+if (!function_exists('_doc_pasre_mapping'))
+{
+    function _doc_pasre_mapping($mapping, $class_name, $lang)
+    {
+        echo '<tr><td width="120">'.__('Mapping', $lang).'</td><td>';
+        echo '<table style="margin-bottom: 5px;">';
+        echo '<tr><th>字段名</th><th>被映射字段</th></tr>';
+        foreach($mapping as $key=>$item)
+        {
+            echo '<tr><td width="100"><code>'.$class_name . $key .'</code></td><td><code>$this->'. $item . '</code></td></tr>';
+        }
+        echo '</table><div style="margin-bottom: 0;padding: 6px;" class="alert alert-info">说明：假设字段名为:<code>mid</code>, 被映射字段为: <code>$this->id</code>，则表示：数据中的<code>mid</code>字段和当前 ORM 的 <code>id</code>字段在筛选数据时保持一一对应关系。</div>';
+        echo '</td></tr>';
+    }
+
+    function _doc_pasre_where($where, $class_name, $lang)
+    {
+        echo '<tr><td width="120">'.__('查询条件(where)', $lang).'</td><td>';
+        echo '<table style="margin-bottom: 5px;">';
+        echo '<tr><th>字段名</th><th>值</th></tr>';
+        foreach($where as $key=>$item)
+        {
+            echo '<tr><td><code>' . $class_name . $key .'</code></td><td><code>'.$item.'</code></td></tr>';
+        }
+        echo '</table><div style="margin-bottom: 0;padding: 6px;" class="alert alert-info">说明：在查询时将附带这些条件，和Mapping的区别是，Mapping的条件是随每一个Data而变的，而Where中的条件是固定的。</div>';
+        echo '</td></tr>';
+    }
+
+    function _doc_pasre_cache($cache, $setting, $lang)
+    {
+        echo '<tr><td width="120">'.__('Cache Setting', $lang).'</td><td>';
+        echo '<table style="margin-bottom: 5px;">';
+        echo '<tr><th>项目</th><th>值</th></tr>';
+        echo '<tr><td>缓存配置：</td><td>';
+        if ($cache['driver_config'])
+        {
+            echo $cache['driver_config'];
+        }
+        else
+        {
+            echo 'default';
+        }
+        echo '</td></tr>';
+
+        echo '<tr><td>有效期：</td><td>';
+        if ($cache['expire'])
+        {
+            echo $cache['expire'];
+        }
+        else if ($cache['max_age'])
+        {
+            echo $cache['max_age'];
+        }
+        else
+        {
+            echo '默认';
+        }
+        echo '</td></tr>';
+
+        if ($cache['max_hit'])
+        {
+            echo '<tr><td>最大命中数 <i class="icon-info-sign" data-toggle="tooltip" title="设置此参数后将增加一个访问计数器"></i>：</td><td>';
+            echo $cache['max_hit'];
+            echo '</td></tr>';
+        }
+
+        if ($cache['renew_age'] || $cache['renew_hit'])
+        {
+            echo '<tr><td>自动更新率 <i class="icon-info-sign" data-toggle="tooltip" title="例如：200~250,1/100，表示：介于200～250秒之间，命中率1/100，命中后更新"></i>：</td><td>';
+            echo $cache['renew_age'];
+            echo '</td></tr>';
+        }
+
+        if ($cache['renew_hit'])
+        {
+            echo '<tr><td>命中更新率 <i class="icon-info-sign" data-toggle="tooltip" title="例如：800~1000,1/10，表示：介于800~1000次之间，允许程序随机选择是否更新，会增加一个访问计数器"></i>：</td><td>';
+            echo $cache['renew_hit'];
+            echo '</td></tr>';
+        }
+
+
+        echo '</table>';
+        echo '</td></tr>';
+    }
+}
+
+$v = @unserialize($setting['value_serialized']);
+?>
+<blockquote>
+<h3><?php echo __('字段设置');?></h3>
+<table width="100%">
+<tr>
+    <th colspan="2">一般属性</th>
+</tr>
+<tr>
+    <td width="120">字段名</td>
+    <td>
+    <?php
+    if (is_string($v))
+    {
+        echo $v;
+    }
+    elseif (is_array($v))
+    {
+        if (!$v['is_virtual_field'])
+        {
+            // 输出字段名
+            if (isset($v['field_name']) && $v['field_name'])
+            {
+                if ($v['field_name']!=$setting['name'])
+                {
+                    echo '<font color="red">' . $v['field_name'] .'</font>';
+                }
+                else
+                {
+                    echo $v['field_name'];
+                }
+            }
+            else
+            {
+                echo $setting['name'];
+            }
+        }
+        else
+        {
+            echo '<i class="icon-random" data-toggle="tooltip" title="'.__('Virtual Field', $lang).'"></i>';
+        }
+    }
+    else
+    {
+        echo $setting['name'];
+    }
+    ?>
+    </td>
+</tr>
+<?php
+if (is_array($v) && $v['is_id_field'])
+{
+    echo '<tr><td>'.__('PRIMARY', $lang).'</td><td>';
+    echo '<i class="icon-key" data-toggle="tooltip" title="'.__('PRIMARY', $lang).'"></i>';
+    echo '</td></tr>';
+}
+if (is_array($v) && $v['is_readonly'])
+{
+    echo '<tr><td>'.__('Readonly Field', $lang).'</td><td>';
+    echo '<i class="icon-ok-sign"></i>';
+    echo '</td></tr>';
+}
+if (is_array($v) && $v['is_virtual_field'])
+{
+    echo '<tr><td>'.__('Virtual Field', $lang).'</td><td>';
+    echo '<i class="icon-ok-sign"></i>';
+    echo '</td></tr>';
+}
+?>
+</table>
+<?php
+if (is_array($v))
+{
+
+
+    //////////////////// FORMAT
+
+    if ($v['format'])
+    {
+?>
+<table width="100%">
+<tr>
+    <th>数据格式化设置</th>
+</tr>
+<tr>
+    <td>
+    <table style="margin:0">
+    <tr>
+        <th>方法</th>
+        <th>参数</th>
+    </tr>
+<?php
+foreach((array)$v['format'] as $item)
+{
+    echo '<tr>';
+    if (is_array($item))
+    {
+        echo '<td>'.$item[0].'</td><td>'.dump($item[1]).'</td>';
+    }
+    else
+    {
+        echo '<td>'.$item.'</td><td align="center">-</td>';
+    }
+
+    echo '</tr>';
+}
+?>
+    </table>
+    </td>
+</tr>
+</table>
+<?php
+    }
+
+
+    //////////////////// ORM
+    if ($v['orm'])
+    {
+?>
+<table width="100%">
+<tr>
+    <th colspan="2">ORM对象映射设置</th>
+</tr>
+<?php
+    echo '<tr><td width="100">'.__('ORM Name', $lang).'</td>';
+    echo '<td>',$v['orm']['name'],'</td>';
+    echo '</tr>';
+
+    echo '<tr><td width="100">返回</td><td>';
+    if ($v['orm']['return']=='single')
+    {
+        echo '<code>ORM_'.$v['orm']['name'].'_Data</code> 对象';
+    }
+    else
+    {
+        echo '<code>ORM_'.$v['orm']['name'].'_Result</code> 集合';
+    }
+    echo '</td></tr>';
+
+
+    if (is_array($v['orm']['mapping']))
+    {
+        _doc_pasre_mapping($v['orm']['mapping'], 'ORM_'.$v['orm']['name'].'_Data::$', $lang);
+    }
+
+
+    if (is_array($v['orm']['where']))
+    {
+        _doc_pasre_where($v['orm']['where'], 'ORM_'.$v['orm']['name'].'_Data::$', $lang);
+    }
+
+
+    if (is_array($v['orm']['cache']))
+    {
+        _doc_pasre_cache($v['orm']['cache'], $setting, $lang);
+    }
+
+
+    if (isset($v['orm']['limit']))
+    {
+        echo '<tr><td width="100">'.__('limit', $lang).' <i class="icon-info-sign" data-toggle="tooltip" title="设置返回集合的数量，通常在orm[return]=group时使用，orm[return]=single时limit为强制为1"></i></td><td>';
+        echo $v['orm']['limit'];
+        echo '</td></tr>';
+    }
+
+    if (isset($v['orm']['offset']))
+    {
+        echo '<tr><td width="100">'.__('offset', $lang).' <i class="icon-info-sign" data-toggle="tooltip" title="设置查询开始指针偏移量，通常在orm[return]=group时使用"></i></td><td>';
+        echo $v['orm']['offset'];
+        echo '</td></tr>';
+    }
+
+?>
+</table>
+
+
+<?php
+}
+
+///////////////////// DATA
+
+else if (is_array($v['data']))
+{
+?>
+<table width="100%">
+<tr>
+    <th colspan="2">数据获取设置</th>
+</tr>
+<tr>
+    <td width="100">驱动获取驱动</td>
+    <td><?php echo $v['data']['driver'];?></td>
+</tr>
+<?php
+
+if (is_array($v['data']['mapping']))
+{
+    _doc_pasre_mapping($v['data']['mapping'], '', $lang);
+}
+
+
+if (is_array($v['data']['where']))
+{
+    _doc_pasre_where($v['data']['where'], '', $lang);
+}
+
+
+if (is_array($v['data']['cache']))
+{
+    _doc_pasre_cache($v['data']['cache'], $setting, $lang);
+}
+
+switch ($v['data']['driver'])
+{
+    case 'function':
+        echo '<tr><td>回调函数 <i class="icon-info-sign" data-toggle="tooltip" title="会把mapping和where处理后的条件作为一个数组$where_array传给回调函数"></i></td>';
+        echo '<td>';
+        if (is_array($v['data']['function']))
+        {
+            if ($v['data']['function'][0]=='$this')
+            {
+                echo $v['data']['function'][0].'->';
+            }
+            else
+            {
+                echo $v['data']['function'][0].'::';
+            }
+
+            echo $v['data']['function'][1].'($where_array'.($v['data']['function'][0]=='$this'?'':', $this').')';
+        }
+        else
+        {
+            echo $v['data']['function'];
+        }
+        echo '</td></tr>';
+        if (is_array($v['data']['arguments']))
+        {
+            echo '<tr><td>回调函数参数 <i class="icon-info-sign" data-toggle="tooltip" title="需要传递给此方法的参数，注意：是从function的第二个参数开始"></i></td>';
+            echo '<td><table style="margin:0"><tr>';
+            foreach ($v['data']['arguments'] as $item)
+            {
+                echo '<td>'.htmlspecialchars($item).'</td>';
+            }
+            echo '</tr></table></td></tr>';
+        }
+        break;
+
+    case 'database':
+        echo '<tr><td>数据库查询配置</td>';
+        echo '<td>';
+        echo '<table style="margin:0">';
+        echo '<tr><th>项目</th><th>值</th></tr>';
+        echo '<tr><td>数据库配置：</td><td>'.$v['data']['database'].'</td></tr>';
+        echo '<tr><td>表名称：</td><td>'.$v['data']['tablename'].'</td></tr>';
+        if ($v['data']['result_single_row'])
+        {
+            echo '<tr><td>返回单行数据：</td><td><i class="icon-ok-sign"></i></td></tr>';
+        }
+        else
+        {
+            echo '<tr><td>返回查询集合：</td><td><i class="icon-ok-sign"></i></td></tr>';
+        }
+
+        if (isset($v['data']['limit']))
+        {
+            echo '<tr><td>limit：</td><td>'.$v['data']['limit'].'</td></tr>';
+        }
+
+        if (isset($v['data']['offset']))
+        {
+            echo '<tr><td>offset：</td><td>'.$v['data']['offset'].'</td></tr>';
+        }
+
+        if (isset($v['data']['order_by']))
+        {
+            echo '<tr><td>order by：</td><td>';
+
+            echo '<table width="100%" style="margin:0"><tr><th>字段</th><th>排序</th></tr>';
+            if (is_array($v['data']['order_by']))
+            {
+                foreach($v['data']['order_by'] as $kk=>$vv)
+                {
+                    echo '<tr><td>'.$kk.'</td><td align="center"><i class="'.(strtoupper($vv)=='DESC'?'icon-arrow-down':'icon-arrow-up').'" data-toggle="tooltip" title="'.strtoupper($vv).'"></i></td></tr>';
+                }
+            }
+            else
+            {
+                echo '<tr><td>'.$v['data']['order_by'].'</td><td align="center"><i class="icon-arrow-up" data-toggle="tooltip" title="ASC"></i></td></tr>';
+            }
+            echo '</table>';
+            echo '</td></tr>';
+        }
+
+        echo '</table>';
+        echo '</td></tr>';
+
+    case 'rest':
+    case 'url':
+    case 'httpget':
+        echo '<tr><td>REST配置</td>';
+        echo '<td>';
+        echo '<table style="margin:0">';
+        echo '<tr><th>项目</th><th>值</th></tr>';
+        echo '<tr><td>接口URL：</td><td>'.$v['data']['url'].'</td></tr>';
+        echo '<tr><td>Method：</td><td>'.strtoupper($v['data']['method']).'</td></tr>';
+        echo '<tr><td>数据格式：</td><td>'.$v['data']['data_format'].'</td></tr>';
+
+        if ($v['data']['arguments'] && is_array($v['data']['arguments']))
+        {
+            echo '<tr><td>'.__('附加参数：', $lang).'</td><td>';
+            echo '<table style="margin:0">';
+            echo '<tr><th>键</th><th>值</th></tr>';
+            foreach($v['data']['arguments'] as $key=>$item)
+            {
+                echo '<tr><td><code>' . $key .'</code></td><td><code>'.$item.'</code></td></tr>';
+            }
+            echo '</table>';
+            echo '</td></tr>';
+        }
+
+        echo '</table>';
+        echo '</td></tr>';
+        break;
+    default:
+
+        break;
+}
+
+?>
+</table>
+<?php
+}
+
+
+    /////////////////////////////// OBJECT
+    else if ($v['object'])
+    {
+        echo '<table width="100%"><tr><th colspan="2">返回对象设置</th></tr>';
+
+        if (is_array($v['object']))
+        {
+            echo '<tr><td width="100">返回对象：</td><td>'.$v['object']['name'].'</td></tr>';
+            if (is_array($v['object']['callback']))
+            {
+                echo '<tr><td>回调函数：</td><td>';
+
+                $tmp_call_map = array
+                (
+                    'set_data'  => '设置数据',
+                    'get_data'  => '获取数据',
+                    'to_string' => '输出为字符串',
+                    'is_change' => '数据是否修改',
+                );
+
+                echo '<table style="margin:0"><tr><th>回调类型</th><th>回调方法</th></tr>';
+                foreach ($v['object']['callback'] as $kk=>$vv)
+                {
+                    echo '<tr><td>'.$tmp_call_map[$kk].'('.$kk.'):</td><td>'.$v['object']['name'].'::'.$vv.'</td></tr>';
+                }
+                echo '</table>';
+
+                echo '</td></tr>';
+            }
+        }
+        else if (is_string($v['object']))
+        {
+            echo '<tr><td width="100">返回对象：</td><td>'.$v['object'].'</td></tr>';
+        }
+
+        echo '</table>';
+    }
+
+
+
+
+
+
+
+}
+?>
+<div class="api-class-div">
+    <div class="api-filename-div" style="cursor:default;">Setting Code</div>
+    <div class="api-filecode-div"><pre><code><?php echo htmlspecialchars(var_export($v, true));?></code></pre></div>
+</div>
+
+</blockquote>

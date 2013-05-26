@@ -18,6 +18,6 @@ MyQEE V3开始提供了一套更为完善的扩展机制，核心类库都是以
 
 将此内容存放在项目的`classes/database.class.php`中即可。
 
-你会注意到，Database并不是extends到Core_Database，也不是 Library_MyQEE_Test_Database，而是Ex_Database，这是因为自V3开始使用了一种只能的魔术扩展方式，可以对Core类库进行多次扩展，解决了V2中类库和项目无法同时扩展的矛盾。
+你会注意到，Database并不是extends到Core_Database，也不是 Library_MyQEE_Test_Database，而是Ex_Database，这是因为自V3开始使用了一种智能的魔术扩展方式，可以对Core类库进行多次扩展，解决了V2中类库和项目无法同时扩展的矛盾。
 
-!!! MyQEE V2是没有这样的逻辑的，MyQEE V2中应该是扩展到MyQEE_前缀的同名类上
+!!! MyQEE V2是没有这样的逻辑的，MyQEE V2中应该是扩展到MyQEE_前缀的同名类上，比如`Database` extends `MyQEE_Database` 上

@@ -73,6 +73,7 @@ class _Docs_Class extends _Docs
         $this->data['description']       = trim(implode("\n", $description));
         $this->data['properties']        = $this->properties();
         $this->data['methods']           = $this->methods();
+        $this->data['dir_type']          = _DOC_DIR_TYPE;
     }
 
     /**

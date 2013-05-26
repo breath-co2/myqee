@@ -7,5 +7,6 @@
 * [修改日志](changelog.html)
 * [读我](readme.html)
 * [升级注意事项](upgrade.html)
-* [TODO列表 <span class="badge badge-warning" menu-todo="true">0</span>](todo_list.html)
+* [自定义文档编写说明](guide.html)
+* [TODO列表 <span class="badge badge-info" menu-todo="true">0</span>](todo_list.html)
 * [授权信息](license.html)

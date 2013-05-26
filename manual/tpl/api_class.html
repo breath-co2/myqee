@@ -34,7 +34,7 @@ if ($setting['constants'])
     </tr>
 <?php foreach ($setting['constants'] as $name => $value): ?>
     <tr>
-    <td width="40%" style="white-space:nowrap" id="constant:<?php echo $name; ?>"><?php echo $setting['class_name'],'::',$name; ?></td>
+    <td style="white-space:nowrap" id="constant:<?php echo $name; ?>"><?php echo $setting['class_name'],'::',$name; ?></td>
     <td><?php echo $value ?></td>
     </tr>
 <?php endforeach; ?>

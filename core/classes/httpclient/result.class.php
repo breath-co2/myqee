@@ -28,7 +28,7 @@ class Core_HttpClient_Result
         if ( isset($data['code']) ) $this->code = $data['code'];
         if ( isset($data['time']) ) $this->time = $data['time'];
         if ( isset($data['data']) ) $this->data = $data['data'];
-        
+
         if ( isset($data['header']) && is_array($data['header']) ) foreach ( $data['header'] as $item )
         {
             if ( preg_match('#^([a-zA-Z0-9\-]+): (.*)$#', $item, $m) )

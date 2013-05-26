@@ -401,15 +401,15 @@ abstract class Bootstrap
             spl_autoload_register(array('Bootstrap', 'auto_load'));
 
             # 读取配置
-            if (!is_file(DIR_SYSTEM.'config'.EXT))
+            if (!is_file(DIR_SYSTEM .'config'. EXT))
             {
                 self::_show_error(__('Please rename the file config.new:EXT to config:EXT', array(':EXT'=>EXT)));
             }
 
-            __include_config_file(self::$core_config, DIR_SYSTEM.'config'.EXT);
+            __include_config_file(self::$core_config, DIR_SYSTEM .'config'. EXT);
 
             # 本地调试模式
-            if ( isset(self::$core_config['local_debug_cfg']) && self::$core_config['local_debug_cfg'] )
+            if (isset(self::$core_config['local_debug_cfg']) && self::$core_config['local_debug_cfg'])
             {
                 # 判断是否开启了本地调试
                 if (function_exists('get_cfg_var'))
@@ -426,15 +426,8 @@ abstract class Bootstrap
                 $open_debug = 0;
             }
 
-            # 读Debug配置
-            if ($open_debug && is_file(DIR_SYSTEM.'debug.config'.EXT))
-            {
-                # 本地debug配置打开
-                __include_config_file(self::$core_config, DIR_SYSTEM.'debug.config'.EXT);
-            }
-
             # 在线调试
-            if ( self::_is_online_debug() )
+            if (self::_is_online_debug())
             {
                 $open_debug = 1<<1 | $open_debug;
             }
@@ -461,10 +454,32 @@ abstract class Bootstrap
              */
             define('IS_DEBUG', $open_debug);
 
+
+            # Runtime配置
+            if (!isset(self::$core_config['runtime_config']))
+            {
+                self::$core_config['runtime_config'] = '';
+            }
+            else if (self::$core_config['runtime_config'] && !preg_match('#^[a-z0-9_]+$#', self::$core_config['runtime_config']))
+            {
+                self::$core_config['runtime_config'] = '';
+            }
+
+            if (self::$core_config['runtime_config'])
+            {
+                $runtime_file = DIR_SYSTEM .'config.'. self::$core_config['runtime_config'] .'.runtime'. EXT;
+
+                # 读取配置
+                if (is_file($runtime_file))
+                {
+                    __include_config_file(self::$core_config, $runtime_file);
+                }
+            }
+
             if (!IS_CLI)
             {
                 # 输出文件头
-                header('Content-Type: text/html;charset='.self::$core_config['charset']);
+                header('Content-Type: text/html;charset=' . self::$core_config['charset']);
             }
 
             // 设置错误等级
@@ -478,6 +493,7 @@ abstract class Bootstrap
             {
                 @date_default_timezone_set(self::$core_config['timezone']);
             }
+
 
             //获取全局$project变量
             global $project, $admin_mode;
@@ -495,7 +511,7 @@ abstract class Bootstrap
                 self::$project = $project;
 
                 // 管理员模式
-                if ( isset($admin_mode) && true===$admin_mode )
+                if (isset($admin_mode) && true===$admin_mode)
                 {
                     $request_mode = 'admin';
                 }
@@ -608,7 +624,7 @@ abstract class Bootstrap
             $is_alias = true;
             $new_class_name = $class_name_array[1];
         }
-        else if (preg_match('#^library_((?:[a-z0-9]+)_(?:[a-z0-9]+))_([a-z0-9_]+)$#', $class_name,$m))
+        else if (preg_match('#^library_((?:[a-z0-9]+)_(?:[a-z0-9]+))_([a-z0-9_]+)$#', $class_name, $m))
         {
             $ns = 'library/' . str_replace('_', '/', $m[1]);
             $new_class_name = $m[2];
@@ -670,7 +686,7 @@ abstract class Bootstrap
             if (!$is_alias)
             {
                 # 在include path中找
-                foreach (array('project','team_library') as $type)
+                foreach (array('project', 'team_library') as $type)
                 {
                     foreach (self::$include_path[$type] as $path)
                     {
@@ -690,7 +706,7 @@ abstract class Bootstrap
             {
                 foreach (self::$include_path[$type] as $lib_ns=>$path)
                 {
-                    $ns_class_name = ($type=='library'?'library_':'').str_replace('.','_',$lib_ns).'_'.$new_class_name;
+                    $ns_class_name = ($type=='library'?'library_':'') . str_replace('.', '_', $lib_ns) . '_' . $new_class_name;
 
                     if ( self::auto_load($ns_class_name) )
                     {
@@ -829,17 +845,6 @@ abstract class Bootstrap
         {
             foreach ($the_path as $path)
             {
-                if ( $dir=='config' && self::$core_config['debug_config'] )
-                {
-                    # config 在 debug开启的情况下读取debug
-                    $tmpfile_debug = $path . $dir . DS . $file . '.debug' . $the_ext;
-
-                    if (is_file($tmpfile_debug))
-                    {
-                        $found_files[] = $tmpfile_debug;
-                    }
-                }
-
                 $tmpfile = $path . $dir . DS . $file . $the_ext;
 
                 if (is_file($tmpfile))
@@ -902,7 +907,7 @@ abstract class Bootstrap
                 continue;
             }
 
-            $config_file = $set[1] . 'config' . EXT;
+            $config_file = $set[1] .'config'. EXT;
 
             if (is_file($config_file))
             {
@@ -1054,21 +1059,16 @@ abstract class Bootstrap
         # 处理 library 的config
         $config_files = array();
 
-        # 反向排序，从最后一个开始导入
-        $include_path = array_reverse(self::include_path());
-
-        foreach ($include_path as $path)
-        {
-            $config_file = $path . 'config' . EXT;
-
-            if (is_file($config_file))
-            {
-                $config_files[] = $config_file;
-            }
-        }
+        self::get_config_file_by_path($config_files, self::$include_path['project'],      true );
+        self::get_config_file_by_path($config_files, self::$include_path['team_library'], true );
+        self::get_config_file_by_path($config_files, self::$include_path['library'],      false);
+        self::get_config_file_by_path($config_files, self::$include_path['core'],         false);
 
         if ($config_files)
         {
+            # 反向排序，从最后一个开始导入
+            $config_files = array_reverse($config_files);
+
             # 导入config
             self::$config = self::$core_config;
 
@@ -1078,6 +1078,29 @@ abstract class Bootstrap
 
             # 载入config
             __include_config_file(self::$config, $config_files);
+        }
+    }
+
+    protected static function get_config_file_by_path(&$config_files, $paths, $runtime = false)
+    {
+        foreach ($paths as $path)
+        {
+            $config_file = $path . 'config' . EXT;
+
+            if (is_file($config_file))
+            {
+                $config_files[] = $config_file;
+            }
+
+            if ($runtime && self::$core_config['runtime_config'])
+            {
+                $config_file = $path . 'config.'. self::$core_config['runtime_config'] .'.runtime'. EXT;
+
+                if (is_file($config_file))
+                {
+                    $config_files[] = $config_file;
+                }
+            }
         }
     }
 
@@ -1292,11 +1315,10 @@ abstract class Bootstrap
         }
 
         if (!isset($_COOKIE['_debug_open'])) return false;
-        if (!isset(self::$core_config['debug_open_password'])) return false;
-        if (!is_array( self::$core_config['debug_open_password'])) self::$core_config['debug_open_password'] = array( (string) self::$core_config['debug_open_password'] );
+        if (!isset(self::$core_config['debug_open_password']) || !is_array(self::$core_config['debug_open_password'])) return false;
         foreach (self::$core_config['debug_open_password'] as $username => $password)
         {
-            if ($_COOKIE['_debug_open'] == self::get_debug_hash( $username , $password ))
+            if ($_COOKIE['_debug_open'] == self::get_debug_hash($username, $password))
             {
                 return true;
             }
@@ -1343,41 +1365,5 @@ abstract class Bootstrap
         }
 
         return false;
-    }
-
-    /**
-     * 检查给定的pathinfo是否属于给的的项目内的URL
-     *
-     * @param string $u 项目的URL路径
-     * @param string $pathinfo 给定的Pathinfo
-     * @return boolean
-     */
-    private static function _check_is_this_url($u, &$pathinfo)
-    {
-        if ($u=='/')
-        {
-            return true;
-        }
-
-        $u = rtrim($u, '/');
-
-        if (strpos($u, '://'))
-        {
-            $tmppath = self::protocol() . $_SERVER["HTTP_HOST"] . '/' . ltrim($pathinfo, '/');
-        }
-        else
-        {
-            $tmppath = $pathinfo;
-        }
-        $len = strlen($u);
-        if ($len > 0 && substr($tmppath, 0, $len) == $u)
-        {
-            $pathinfo = substr($tmppath, $len);
-            return true;
-        }
-        else
-        {
-            return false;
-        }
     }
 }

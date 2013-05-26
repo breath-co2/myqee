@@ -9,28 +9,6 @@ $config['cookie'] = array
     'httponly' => false,
 );
 
-/**
- * 数据库配置
- */
-$config['database'] = array
-(
-    'default' => array
-    (
-        'type' => 'MySQLI',
-        'connection' => array
-        (
-            'hostname'   => '127.0.0.1',
-        	'database'   => 'myqee',
-        	'username'   => 'root',
-        	'password'   => '123456',
-        	'persistent' => false,
-        ),
-        'table_prefix' => '',
-        'charset'      => 'utf8',
-        'caching'      => false,
-        'profiling'    => true,
-    )
-);
 
 
 $config['session'] = array
@@ -53,33 +31,27 @@ CREATE TABLE `cache` (
     KEY `expire_time` (`expire_time`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 */
-$config['cache/database'] = array
+$config['cache/database']['default'] = array
 (
-    'default' => array
-    (
-        'database'  => 'default',
-        'tablename' => 'cache',
-    ),
+    'database'  => 'default',
+    'tablename' => 'cache',
 );
 
 
 /**
  * 分页配置
  */
-$config['pagination'] = array
+$config['pagination']['default'] = array
 (
-    'default' => array
+    'current_page' => array
     (
-        'current_page' => array
-        (
-            'source' => 'default',  /* source: "query_string" or "route" or "default" */
-            'key'    => '0' ,
-        ),
-        'total_items'    => 0,
-        'items_per_page' => 10,
-        'view'           => 'pagination/basic',
-        'auto_hide'      => true,
-    )
+        'source' => 'default',  /* source: "query_string" or "route" or "default" */
+        'key'    => '0' ,
+    ),
+    'total_items'    => 0,
+    'items_per_page' => 10,
+    'view'           => 'pagination/basic',
+    'auto_hide'      => true,
 );
 
 
@@ -109,6 +81,7 @@ $config['log'] = array
     'format' => ':time - :host::port - :url - :msg',
 );
 
+
 /**
  * 文件保存同步模式
  *
@@ -136,13 +109,13 @@ $config['system_exec_key'] = '';
  * 配置服务器后，可以实现服务器上data目录的文件同步功能，同步逻辑通过本系统完成，如果已经配置了data目录的sync同步机制，只需要配置1个主服务器即可
  * 可通过 HttpCall::sync_exec('test/abc','arg1','arg2','arg3'); 实现在所有服务器上各自运行一遍
  *
- *	 //可以是内网IP，确保服务器之间可以相互访问到，端口请确保指定到apache/IIS/nginx等端口上
- *   array
- *   (
- * 	   '192.168.1.1',		//80端口可省略:80
- * 	   '192.168.1.2:81',
- * 	   '192.168.1.3:81',
- *   )
+ *     //可以是内网IP，确保服务器之间可以相互访问到，端口请确保指定到apache/IIS/nginx等端口上
+ *     array
+ *     (
+ *         '192.168.1.1',        //80端口可省略:80
+ *         '192.168.1.2:81',
+ *         '192.168.1.3:81',
+ *     )
  *
  * @var array
  */

@@ -65,7 +65,7 @@ class Core_HTML
      */
     public static function chars($value, $double_encode = true)
     {
-        return htmlspecialchars((string)$value, ENT_QUOTES, Core::$charset, $double_encode);
+        return @htmlspecialchars((string)$value, ENT_QUOTES, Core::$charset, $double_encode);
     }
 
     /**
@@ -81,7 +81,7 @@ class Core_HTML
      */
     public static function entities($value, $double_encode = true)
     {
-        return htmlentities((string)$value, ENT_QUOTES, Core::$charset, $double_encode);
+        return @htmlentities((string)$value, ENT_QUOTES, Core::$charset, $double_encode);
     }
 
     /**
