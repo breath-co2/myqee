@@ -178,7 +178,7 @@ abstract class Core_Core extends Bootstrap
             if (!IS_CLI)
             {
                 # 输出powered by信息
-                header('X-Powered-By: PHP/' . PHP_VERSION . ' MyQEE/' . Core::VERSION .'/'. Core::RELEASE );
+                header('X-Powered-By: PHP/' . PHP_VERSION . ' MyQEE/' . Core::VERSION .'/'. Core::RELEASE);
             }
 
             if (IS_DEBUG)
@@ -187,7 +187,7 @@ abstract class Core_Core extends Bootstrap
 
                 if (Core::$project)
                 {
-                    Core::debug()->info('project: '.Core::$project);
+                    Core::debug()->info('project: ' . Core::$project);
                 }
 
                 if (IS_ADMIN_MODE)
@@ -388,7 +388,7 @@ abstract class Core_Core extends Bootstrap
         {
             $url_asstes = URL_ASSETS;
 
-            list($file, $query) = explode('?', $uri.'?',2);
+            list($file, $query) = explode('?', $uri.'?', 2);
 
             $uri = $file . '?' . (strlen($query)>0?$query.'&':'') . Core::assets_hash($file);
         }
@@ -1192,7 +1192,7 @@ abstract class Core_Core extends Bootstrap
 
         if (IS_DEBUG && class_exists('ErrException', false))
         {
-            if ( $msg instanceof Exception )
+            if ($msg instanceof Exception)
             {
                 throw $msg;
             }
@@ -1244,7 +1244,7 @@ abstract class Core_Core extends Bootstrap
         Core::close_buffers(false);
 
         # 避免输出的CSS头试抛出页面无法显示
-        @header('Content-Type: text/html;charset=' . Core::config('core.charset') , true);
+        @header('Content-Type: text/html;charset=' . Core::config('core.charset'), true);
 
         HttpIO::$status = 500;
         HttpIO::send_headers();
@@ -1256,7 +1256,7 @@ abstract class Core_Core extends Bootstrap
 
         if (IS_DEBUG && class_exists('ErrException', false))
         {
-            if ( $msg instanceof Exception )
+            if ($msg instanceof Exception)
             {
                 throw $msg;
             }
@@ -1269,7 +1269,7 @@ abstract class Core_Core extends Bootstrap
         if (IS_CLI)
         {
             echo "\x1b[36m";
-            if ( $msg instanceof Exception )
+            if ($msg instanceof Exception)
             {
                 echo $msg->getMessage() . CRLF;
             }
@@ -1310,10 +1310,10 @@ abstract class Core_Core extends Bootstrap
                 (
                     'project'     => Core::$project,
                     'uri'         => HttpIO::$uri,
-                    'url'         => HttpIO::PROTOCOL.'://'.$_SERVER['HTTP_HOST'].$_SERVER["REQUEST_URI"],
-                    'post'        => HttpIO::POST(null,HttpIO::PARAM_TYPE_OLDDATA),
+                    'url'         => HttpIO::PROTOCOL . '://'.$_SERVER['HTTP_HOST'] . $_SERVER["REQUEST_URI"],
+                    'post'        => HttpIO::POST(null, HttpIO::PARAM_TYPE_OLDDATA),
                     'get'         => $_SERVER['QUERY_STRING'],
-                    'cookie'      => HttpIO::COOKIE(null,HttpIO::PARAM_TYPE_OLDDATA),
+                    'cookie'      => HttpIO::COOKIE(null, HttpIO::PARAM_TYPE_OLDDATA),
                     'client_ip'   => HttpIO::IP,
                     'user_agent'  => HttpIO::USER_AGENT,
                     'referrer'    => HttpIO::REFERRER,
@@ -1331,7 +1331,7 @@ abstract class Core_Core extends Bootstrap
                 $trace_array['use_time']    = microtime(1) - START_TIME;
                 $trace_array['trace']       = $trace_obj;
 
-                $trace_data = base64_encode(gzcompress(serialize($trace_array),9));
+                $trace_data = base64_encode(gzcompress(serialize($trace_array), 9));
                 unset($trace_array);
 
                 $view->error_saved = true;
@@ -1346,6 +1346,18 @@ abstract class Core_Core extends Bootstrap
                     else
                     {
                         $save_type = 'file';
+                    }
+
+                    if ($save_type=='file')
+                    {
+                        # 文件模式
+                        $write_mode = Core::config('core.file_write_mode');
+
+                        if (preg_match('#^(db|cache)://([a-z0-9_]+)/([a-z0-9_]+)$#i', $write_mode , $m))
+                        {
+                            $save_type = $m[1];
+                            $error_config['type_config'] = $m[2];
+                        }
                     }
 
                     switch ($save_type)
@@ -1363,7 +1375,7 @@ abstract class Core_Core extends Bootstrap
                             break;
                         case 'cache':
                             $obj = new Cache($error_config['type_config']?$error_config['type_config']:'default');
-                            if ( !$obj->get($error_no) )
+                            if (!$obj->get($error_no))
                             {
                                 $obj->set($error_no, $trace_data, 7*86400);
                             }

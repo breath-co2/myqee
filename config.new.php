@@ -43,6 +43,39 @@ $config['projects'] = array
 
 
 /**
+ * 加载库配置
+ *
+ * @var array
+ */
+$config['libraries'] = array
+(
+    // 默认会自动加载的类库
+    'autoload' => array
+    (
+
+    ),
+
+    // 命令行下会加载的类库
+    'cli'      => array
+    (
+
+    ),
+
+    // 调试环境下会加载的类库
+    'debug'    => array
+    (
+        'com.myqee.develop',
+    ),
+
+    // 后台会加载的类库
+    'admin'    => array
+    (
+        'com.myqee.administration',
+    ),
+);
+
+
+/**
  * 静态资源的URL，可以是http://开头，例如 http://assets.test.com/
  *
  * 对应于wwwroot目录下的assets目录，建议绑定二级域名
@@ -59,8 +92,9 @@ $config['url']['assets'] = '/assets/';
  * 用途说明：
  * 在团队成员开发时，个人的配置和服务器配置可能会有所不同，所以每个人希望有一个自己独有的配置文件可覆盖默认配置，通过runtime_config设置可轻松读取不同的配置
  * 比如，在服务器上设置 `$config['runtime_config'] = 'server';` 在本地开发时设置 `$config['runtime_config'] = 'dev';`
- * 那么，服务器上除了会读取 `config.php` 还会再读取 `config.server.php` 的配置文件，而在开发环境上则读取 `config.dev.php` 配置文件
+ * 那么，服务器上除了会读取 `config.php` 还会再读取 `config.server.runtime.php` 的配置文件，而在开发环境上则读取 `config.dev.runtime.php` 配置文件
  *
+ * !!! 只会读取根目录、团队类库和项目中的 .runtime.php，不支持类库(含Core)中 .runtime.php
  * !!! V2中 `$config['debug_config'] = false;` 参数已废弃，可用次参数设为debug实现类似功能
  *
  * @var string
@@ -85,9 +119,9 @@ $config['debug_open_password'] = array
 
 
 /**
- * 默认打开开发调试环境的关键字
+ * 默认打开开发调试环境的关键字，推荐在本地开发时开启此功能
  *
- * !!! 开发时使用Firefox+FireBug将可看到程序执行的各项debug数据，强烈推荐在本地开发时开启此功能，方便开发。但注意：生产环境中绝不能在php.ini设置
+ * !!! 开发时使用Firefox+FireBug将可查看程序执行的各项debug数据，方便开发。但注意：生产环境中不要开启
  *
  * 如果值为 `myqee.debug` 则可在php.ini中加入：
  *
@@ -125,12 +159,12 @@ $config['base_url'] = null;
 /**
  * Data文件、Log、文件缓存等文件写入模式
  *
- * 参数                      | 描述
- * -------------------------|--------------------------------------------------------------------
- * normal                   | 正常的文件写入，请确保相应目录有写入权限
- * disable                  | 禁用所有写入并丢弃内容，可用于SAE,BAE等程序目录不允许写入的安全级别高的环境，安全级别高
- * db://for_file/filetable  | 用于目录不能写入内容又不希望丢弃数据的情况，系统自动转为写入数据库，将会写入 `$db = new Database('for_file');` 表名称 `filetable` 中
- * cache://for_file/prefix_ | 同上，将会写入 `$db = new Cache('for_file');` 缓存前缀为 `prefix_`
+ * 参数                        | 描述
+ * ---------------------------|--------------------------------------------------------------------
+ * normal                     | 正常的文件写入，请确保相应目录有写入权限
+ * disable                    | 禁用所有写入并丢弃内容，可用于SAE,BAE等程序目录不允许写入的安全级别高的环境，安全级别高
+ * db://for_file/filetable    | 用于目录不能写入内容又不希望丢弃数据的情况，系统自动转为写入数据库，将会写入 `$db = new Database('for_file');` 表名称 `filetable` 中
+ * cache://for_file/prefix_   | 同上，将会使用缓存对象写入 `$cache = new Cache('for_file');` 缓存前缀为 `prefix_`
  *
  * @string
  */
@@ -138,37 +172,44 @@ $config['file_write_mode'] = 'normal';
 
 
 /**
- * 关闭错误页面记录错误数据
+ * 500错误页面相关设置
  *
- * @boolean
+ * @var array
  */
-$config['error500']['close'] = false;
+$config['error500'] = array
+(
+    /**
+     * 关闭错误页面记录错误数据功能
+     *
+     * true - 关闭.关闭后所有的500错误页面只在页面上输出简单错误数据，错误信息不记录在服务器上
+     *
+     * @boolean
+     */
+    'close' => false,
 
+    /**
+     * 错误页面数据记录方式
+     *
+     * 参数      | 描述
+     * ---------|-----
+     * file     | 文件(默认方式)
+     * database | 数据库
+     * cache    | 缓存保存
+     *
+     * @string
+     */
+    'save_type' => 'file',
 
-/**
- * 错误页面数据记录方式
- *
- * 参数      | 描述
- * ---------|-----
- * file     | 文件(默认方式)
- * database | 数据库
- * cache    | 缓存保存
- *
- * @string
- */
-$config['error500']['save_type'] = 'file';
-
-
-/**
- * 错误页面数据记录方式对应配置
- *
- * 例如save_type为database，则此参数为数据库的配置名
- * 如果save_type为cache，则此参数为驱动的配置名
- *
- * @string
- */
-$config['error500']['type_config'] = 'default';
-
+    /**
+     * 错误页面数据记录方式对应配置
+     *
+     * 例如save_type为database，则此参数为数据库的配置名
+     * 如果save_type为cache，则此参数为驱动的配置名
+     *
+     * @string
+     */
+    'type_config' => 'default',
+);
 
 /**
  * 错误等级
@@ -253,39 +294,6 @@ $config['slow_query_mtime'] = 2000;
  * @var string
  */
 $config['asset_allow_suffix'] = 'js|css|jpg|jpeg|png|gif|bmp|pdf|html|htm|mp4|swf';
-
-
-/**
- * 加载库配置
- *
- * @var array
- */
-$config['libraries'] = array
-(
-    // 默认会自动加载的类库
-    'autoload' => array
-    (
-
-    ),
-
-    // 命令行下会加载的类库
-    'cli'      => array
-    (
-
-    ),
-
-    // 调试环境下会加载的类库
-    'debug'    => array
-    (
-        'com.myqee.develop',
-    ),
-
-    // 后台会加载的类库
-    'admin'    => array
-    (
-        'com.myqee.administration',
-    ),
-);
 
 
 /**

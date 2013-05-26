@@ -69,6 +69,16 @@ class Core_Session
                 Session::$config['name'] = 'PHPSESSINID';
             }
 
+            if (IS_DEBUG)
+            {
+                $time = microtime(1);
+                $is_debug = (bool)Core::debug()->profiler()->is_open();
+                if ($is_debug)
+                {
+                    Core::debug()->profiler()->start('Core', 'Session StartTime');
+                }
+            }
+
             if (isset(Session::$config['driver']) && class_exists('Session_Driver_' . Session::$config['driver'], true))
             {
                 $driver_name = 'Session_Driver_' . Session::$config['driver'];
@@ -85,6 +95,17 @@ class Core_Session
             else
             {
                 $this->driver = new Session_Driver_Default();
+            }
+
+            if (IS_DEBUG)
+            {
+                if ($is_debug)
+                {
+                    Core::debug()->profiler()->stop();
+                }
+
+                # 输出Session启动使用时间
+                Core::debug()->info(microtime(1)-$time, 'Session start use time');
             }
 
             if ($vars)
@@ -376,8 +397,6 @@ class Core_Session
     {
         if (Session::$instance)
         {
-            Session::$instance = null;
-
             if (!$_SESSION['_flash_session_'])
             {
                 unset($_SESSION['_flash_session_']);
@@ -392,6 +411,8 @@ class Core_Session
             Session::write_member_data();
 
             Session::$instance->driver->write_close();
+
+            Session::$instance = null;
         }
     }
 
