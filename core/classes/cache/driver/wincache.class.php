@@ -119,7 +119,7 @@ class Core_Cache_Driver_WinCache extends Cache_Driver
         }
 
         if (IS_DEBUG)Core::debug()->info($key, 'wincache set key');
-        
+
         if (is_array($key))
         {
             $return = true;
@@ -132,7 +132,7 @@ class Core_Cache_Driver_WinCache extends Cache_Driver
                     $return = false;
                 }
             }
-        
+
             return $return;
         }
         else

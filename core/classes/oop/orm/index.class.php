@@ -15,12 +15,12 @@ abstract class Core_OOP_ORM_Index
 
     /**
      * 根据主键获取数据
-     * 
+     *
      * 支持如下格式：
      * get_by_primary($p1)
      * get_by_primary($p1,$p2,$p3...)
      * get_by_primary(array($p1,$p2,$p3...))
-     * 
+     *
      * @param int/array $primary_id 主键，支持数组
      * @return mixed
      */
@@ -31,7 +31,7 @@ abstract class Core_OOP_ORM_Index
 
     public function build()
     {
-    
+
     }
 
     /**
@@ -39,6 +39,6 @@ abstract class Core_OOP_ORM_Index
      */
     public function rebuild()
     {
-    
+
     }
 }
