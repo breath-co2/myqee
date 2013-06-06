@@ -32,7 +32,7 @@ class Core_HttpClient_Driver_Fsock
      *
      * @var int
      */
-    protected $multi_exec_num = 100;
+    protected $multi_exec_num = 10;
 
     protected $method = 'GET';
 
@@ -133,6 +133,25 @@ class Core_HttpClient_Driver_Fsock
         return $this;
     }
 
+
+    /**
+     * 设置，获取REST的类型
+     *
+     * @param string $method GET|POST|DELETE|PUT 等，不传则返回当前method
+     *
+     * @return string
+     * @return HttpClient_Driver_Fsock
+     */
+    public function method($method = null)
+    {
+        if (null===$method)return $this->method;
+
+        $this->method = strtoupper($method);
+
+        return $this;
+    }
+
+
     /**
      * 用POST方式提交，支持多个URL
      *
@@ -158,7 +177,7 @@ class Core_HttpClient_Driver_Fsock
     public function post($url, $vars, $timeout = 60)
     {
         # POST模式
-        $this->method = 'POST';
+        $this->method('POST');
 
         if (is_array($url))
         {
@@ -221,6 +240,62 @@ class Core_HttpClient_Driver_Fsock
             return $data;
         }
     }
+
+    /**
+     * PUT方式获取数据，支持多个URL
+     *
+     * @param string/array $url
+     * @param string/array $vars
+     * @param $timeout
+     * @return string, false on failure
+     */
+    public function put($url, $vars, $timeout = 10)
+    {
+        $this->method('PUT');
+
+        if (is_array($url))
+        {
+            $myvars = array();
+            foreach ($url as $k=>$url)
+            {
+                if (isset($vars[$k]))
+                {
+                    if (is_array($vars[$k]))
+                    {
+                        $myvars[$url] = http_build_query($vars[$k]);
+                    }
+                    else
+                    {
+                        $myvars[$url] = $vars[$k];
+                    }
+                }
+            }
+        }
+        else
+        {
+            $myvars = array($url=>$vars);
+        }
+        $this->_post_data = $myvars;
+
+        return $this->get($url, $timeout);
+    }
+
+
+    /**
+     * DELETE方式获取数据，支持多个URL
+     *
+     * @param string/array $url
+     * @param string/array $vars
+     * @param $timeout
+     * @return string, false on failure
+     */
+    public function delete($url, $vars, $timeout = 10)
+    {
+        $this->method('DELETE');
+
+        return $this->get($url, $timeout);
+    }
+
 
     /**
      * 创建一个CURL对象
@@ -311,7 +386,7 @@ class Core_HttpClient_Driver_Fsock
         }
 
         # 设置POST数据
-        if ($this->method=='POST')
+        if ($this->_post_data)
         {
             $vars = (string)$this->_post_data[$the_url];
             $header['Content-Length'] = strlen($vars);
@@ -325,7 +400,7 @@ class Core_HttpClient_Driver_Fsock
         }
         $str .= "\r\n";
 
-        if ($this->method=='POST')
+        if ($this->_post_data)
         {
             // 追加POST数据
             $str .= $vars;

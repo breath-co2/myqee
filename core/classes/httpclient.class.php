@@ -242,6 +242,40 @@ class Core_HttpClient
         return new HttpClient_Result($data);
     }
 
+    /**
+     * PUT方式请求
+     *
+     * @param $url
+     * @param $data
+     * @param $timeout
+     * @return HttpClient_Result
+     */
+    public function put($url, $data, $timeout = 30)
+    {
+        $time = microtime(true);
+        $this->driver()->put($url, $data, $timeout);
+        $time = microtime(true) - $time;
+        $data = $this->driver()->get_resut_data();
+        $data['total_time'] = $time;
+
+        return new HttpClient_Result($data);
+    }
+
+    /**
+     * DELETE方式请求
+     *
+     * @param $url
+     * @param $data
+     * @param $timeout
+     * @return HttpClient_Result
+     */
+    public function delete($url, $timeout = 30)
+    {
+        $this->driver()->method('DELETE');
+
+        return $this->get($url, $timeout);
+    }
+
     public function __call($method, $params)
     {
         if ( method_exists($this->driver(), $method) )
@@ -249,6 +283,25 @@ class Core_HttpClient
             return call_user_func_array(array($this->driver(), $method), $params);
         }
     }
+
+
+    /**
+     * 设置，获取REST的类型
+     *
+     * @param string $method GET|POST|DELETE|PUT 等，不传则返回当前method
+     *
+     * @return string
+     * @return HttpClient_Result
+     */
+    public function method($method = null)
+    {
+        if (null===$method)return $this->driver()->method();
+    
+        $this->driver()->method(strtoupper($method));
+    
+        return $this;
+    }
+
 
     /**
      * 获取当前驱动

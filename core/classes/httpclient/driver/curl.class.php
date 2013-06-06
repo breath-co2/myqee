@@ -34,7 +34,9 @@ class Core_HttpClient_Driver_Curl
      *
      * @var int
      */
-    protected $multi_exec_num = 100;
+    protected $multi_exec_num = 10;
+
+    protected $method = 'GET';
 
     /**
      * 默认连接超时时间，毫秒
@@ -147,6 +149,23 @@ class Core_HttpClient_Driver_Curl
     }
 
     /**
+     * 设置，获取REST的类型
+     *
+     * @param string $method GET|POST|DELETE|PUT 等，不传则返回当前method
+     *
+     * @return string
+     * @return HttpClient_Driver_Curl
+     */
+    public function method($method = null)
+    {
+        if (null===$method)return $this->method;
+
+        $this->method = strtoupper($method);
+
+        return $this;
+    }
+
+    /**
      * 用POST方式提交，支持多个URL
      *
      *   $urls = array
@@ -171,8 +190,9 @@ class Core_HttpClient_Driver_Curl
     public function post($url, $vars, $timeout = 60)
     {
         # POST模式
+
+        $this->method('POST');
         $this->set_option( CURLOPT_HTTPHEADER, array('Expect:') );
-        $this->set_option( CURLOPT_POST, true );
 
         if (is_array($url))
         {
@@ -221,6 +241,23 @@ class Core_HttpClient_Driver_Curl
             $urls = array($url);
         }
 
+        if ($this->method=='GET')
+        {
+            // GET 方式不需要处理
+        }
+        else if ($this->method=='POST')
+        {
+            $this->set_option(CURLOPT_POST, true);
+        }
+        else if ($this->method=='PUT')
+        {
+            $this->set_option(CURLOPT_PUT, true);
+        }
+        else if ($this->method)
+        {
+            $this->set_option(CURLOPT_CUSTOMREQUEST, $this->method);
+        }
+
         $data = $this->request_urls($urls, $timeout);
 
         $this->clear_set();
@@ -235,6 +272,62 @@ class Core_HttpClient_Driver_Curl
             return $data;
         }
     }
+
+    /**
+     * PUT方式获取数据，支持多个URL
+     *
+     * @param string/array $url
+     * @param string/array $vars
+     * @param $timeout
+     * @return string, false on failure
+     */
+    public function put($url, $vars, $timeout = 10)
+    {
+        $this->method('PUT');
+        $this->set_option( CURLOPT_HTTPHEADER, array('Expect:') );
+
+        if (is_array($url))
+        {
+            $myvars = array();
+            foreach ($url as $k=>$url)
+            {
+                if (isset($vars[$k]))
+                {
+                    if (is_array($vars[$k]))
+                    {
+                        $myvars[$url] = http_build_query($vars[$k]);
+                    }
+                    else
+                    {
+                        $myvars[$url] = $vars[$k];
+                    }
+                }
+            }
+        }
+        else
+        {
+            $myvars = array($url=>$vars);
+        }
+        $this->_post_data = $myvars;
+
+        return $this->get($url,$timeout);
+    }
+
+
+    /**
+     * DELETE方式获取数据，支持多个URL
+     *
+     * @param string/array $url
+     * @param string/array $vars
+     * @param $timeout
+     * @return string, false on failure
+     */
+    public function delete($url, $vars, $timeout = 10)
+    {
+        $this->method('DELETE');
+        $this->get($url, $timeout);
+    }
+
 
     /**
      * 创建一个CURL对象
@@ -477,6 +570,7 @@ class Core_HttpClient_Driver_Curl
         $this->ip = null;
         $this->cookies = null;
         $this->referer = null;
+        $this->method     = 'GET';
         $this->_post_data = array();
     }
 }
