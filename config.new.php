@@ -10,24 +10,24 @@ $config['projects'] = array
 (
     // 请在这边加入其它项目，参照default
     /*
-	'admin' => array
+    'admin' => array
     (
-		'name'      => '独立后台',
-		'dir'       => 'admin',
+        'name'      => '独立后台',
+        'dir'       => 'admin',
         'isuse'     => true,
-		'url'	    => '/admin/',
-		'url_admin' => '/',
-	),
-	*/
+        'url'       => '/admin/',
+        'url_admin' => '/',
+    ),
+    */
 
     // 请确保Default放在最后
-	'default' => array
+    'default' => array
     (
-		'name'      => '默认项目',        //名称
-		'dir'       => 'default',        //目录
+        'name'      => '默认项目',        //名称
+        'dir'       => 'default',        //目录
         'isuse'     => true,             //是否启用
-		'url'	    => '/',              //URL根目录，可以是字符串也可以是数组，可以/开头，也可以http://开头。
-	    'url_admin' => '/admin/',        //后台URL根目录，同上
+        'url'       => '/',              //URL根目录，可以是字符串也可以是数组，可以/开头，也可以http://开头。
+        'url_admin' => '/admin/',        //后台URL根目录，同上
         /*
         // 此项目有的加载类库配置
         'libraries' => array
@@ -38,7 +38,7 @@ $config['projects'] = array
             'admin'    => array(),
         ),
         */
-	),
+    ),
 );
 
 

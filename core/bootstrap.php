@@ -133,11 +133,18 @@ define('DIR_WWWROOT', DIR_SYSTEM.'wwwroot'.DS);
 define('DIR_ASSETS', DIR_WWWROOT.'assets'.DS);
 
 
-if (!isset($dir_data )) $dir_data  = DIR_SYSTEM . 'data/';
-if (!isset($dir_log  )) $dir_log   = $dir_data  . 'log/';
-if (!isset($dir_cache)) $dir_cache = $dir_data  . 'cache/';
-if (!isset($dir_temp )) $dir_temp  = null;
+if (!isset($dir_data  )) $dir_data   = DIR_SYSTEM  . 'data/';
+if (!isset($dir_log   )) $dir_log    = $dir_data   . 'log/';
+if (!isset($dir_cache )) $dir_cache  = $dir_data   . 'cache/';
+if (!isset($dir_upload)) $dir_upload = DIR_WWWROOT . 'upload/';
+if (!isset($dir_temp  )) $dir_temp   = null;
 
+/**
+ * 文件上传目录
+ *
+ * @var string
+ */
+define('DIR_UPLOAD', strpos($dir_upload,'://')!==false ? $dir_upload : (realpath($dir_upload)?realpath($dir_upload):DIR_WWWROOT.'upload').DS);
 
 /**
  * 数据目录
