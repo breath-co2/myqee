@@ -21,7 +21,7 @@ class Core_Cookie
 
     public function __construct()
     {
-        if ( null===Cookie::$config )
+        if (null===Cookie::$config)
         {
             Cookie::$config = Core::config('cookie');
         }
@@ -85,11 +85,11 @@ class Core_Cookie
      * @param string $domain cookie作用域
      * @return boolean true/false
      */
-    public static function delete($name, $path = null, $domain = null)
+    public static function delete($name, $path = '/', $domain = null)
     {
         Cookie::check_domain($domain);
 
-        return Cookie::set($name, '', - 864000, $path, $domain, false, false);
+        return Cookie::set($name, '', -864000, $path, $domain, false, false);
     }
 
     /**

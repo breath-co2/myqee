@@ -81,11 +81,11 @@ class Core_Config
                 try
                 {
                     # 先尝试删除旧数据
-                    $db->where('type',$type)
+                    $db->where('type', $type)
                     ->and_where_open();
                     foreach ($key as $k)
                     {
-                        $db->or_where('key_md5',md5($k));
+                        $db->or_where('key_md5', md5($k));
                     }
                     $db->and_where_close()
                     ->delete($this->tablename);
@@ -164,7 +164,7 @@ class Core_Config
      * @param string $key
      * @return fixed
      */
-    public function get($key,$type='')
+    public function get($key, $type='')
     {
         if (null===$this->config)$this->reload(false);
 
@@ -203,7 +203,7 @@ class Core_Config
      * @param string $type
      * @return boolean
      */
-    public function delete($key,$type='')
+    public function delete($key, $type='')
     {
         $db = new Database($this->database);
         $type = (string)$type;
@@ -225,7 +225,7 @@ class Core_Config
             else
             {
                 # 单个key
-                $db->delete( $this->tablename , array('type'=>$type, 'key_md5'=>md5($key)) );
+                $db->delete($this->tablename, array('type'=>$type, 'key_md5'=>md5($key)));
                 if ($this->config)unset($this->config[$type][$key]);
             }
 
@@ -250,7 +250,7 @@ class Core_Config
         $db = new Database($this->database);
         try
         {
-            $db->delete( $this->tablename , array('type'=>$type) );
+            $db->delete($this->tablename, array('type'=>$type));
             if ($this->config)unset($this->config[$type]);
 
             // 删除缓存
@@ -276,7 +276,7 @@ class Core_Config
         if ($this->is_use_cache && !$from_db && is_file($tmpfile))
         {
             # 在data目录中直接读取
-            $this->config = unserialize(file_get_contents($tmpfile));
+            $this->config = @unserialize(file_get_contents($tmpfile));
             if (!is_array($this->config))
             {
                 $this->config = array();
@@ -334,6 +334,7 @@ class Core_Config
         $rs = File::unlink($tmpfile);
 
         if (IS_DEBUG)Core::debug()->log('clear extends config cache '. ($rs?'success':'fail') .'.');
+
         return $rs;
     }
 }

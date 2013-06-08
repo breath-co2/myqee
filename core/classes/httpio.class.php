@@ -16,33 +16,19 @@ if (!defined('_HTTPIO_METHOD'))
     {
         $is_ajax = false;
     }
-    define('_HTTPIO_IS_AJAX',$is_ajax);
+    define('_HTTPIO_IS_AJAX', $is_ajax);
     unset($is_ajax);
 
-    define('_HTTPIO_PROTOCOL',Core::protocol());
 
-    if ( isset($_SERVER['HTTP_X_FORWARDED_FOR']) )
-    {
-        $ip = $_SERVER['HTTP_X_FORWARDED_FOR'];
-    }
-    elseif ( isset($_SERVER['HTTP_CLIENT_IP']) )
-    {
-        $ip = $_SERVER['HTTP_CLIENT_IP'];
-    }
-    elseif ( isset($_SERVER['REMOTE_ADDR']) )
-    {
-        $ip = $_SERVER['REMOTE_ADDR'];
-    }
-    else
-    {
-        $ip = '';
-    }
+    define('_HTTPIO_PROTOCOL', Core::protocol());
 
-    list($ip) = explode(',', $ip);    //启用代理时多IP中取第一个
-    define('_HTTPIO_IP',trim($ip));
+
+    $ip = Core::ip();
+    define('_HTTPIO_IP', $ip[0]);
     unset($ip);
 
-    if ( isset($_SERVER['HTTP_REFERER']) )
+
+    if (isset($_SERVER['HTTP_REFERER']))
     {
         $referrer = $_SERVER['HTTP_REFERER'];
     }
@@ -50,10 +36,11 @@ if (!defined('_HTTPIO_METHOD'))
     {
         $referrer = null;
     }
-    define('_HTTPIO_REFERRER',$referrer);
+    define('_HTTPIO_REFERRER', $referrer);
     unset($referrer);
 
-    if ( isset($_SERVER['HTTP_USER_AGENT']) )
+
+    if (isset($_SERVER['HTTP_USER_AGENT']))
     {
         $user_agent = $_SERVER['HTTP_USER_AGENT'];
     }
@@ -62,7 +49,8 @@ if (!defined('_HTTPIO_METHOD'))
         $user_agent = '';
     }
 
-    define('_HTTPIO_USER_AGENT',$user_agent);
+
+    define('_HTTPIO_USER_AGENT', $user_agent);
     unset($user_agent);
 }
 

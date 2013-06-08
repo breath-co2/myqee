@@ -1015,7 +1015,7 @@ abstract class Core_Core extends Bootstrap
 
                 $obj = new Cache($pro[2]);
 
-                $status = $obj->set(date('Ymd').md5($file), $data, 86400*30);        // 存1月
+                $status = $obj->set(date('Ymd').'_'.md5($file), $data, 86400*30);        // 存1月
             }
 
             return $status;
@@ -1136,6 +1136,10 @@ abstract class Core_Core extends Bootstrap
         elseif ( strpos($file, DIR_ASSETS) === 0 )
         {
             $file = $l . './wwwroot/assets/' . $r . substr($file, strlen(DIR_ASSETS));
+        }
+        elseif ( strpos($file, DIR_UPLOAD) === 0 )
+        {
+            $file = $l . './wwwroot/upload/' . $r . substr($file, strlen(DIR_UPLOAD));
         }
         elseif ( strpos($file, DIR_WWWROOT) === 0 )
         {
@@ -1382,14 +1386,17 @@ abstract class Core_Core extends Bootstrap
                             break;
                         default:
                             $file = DIR_LOG .'error500'. DS . str_replace('-', DS, $date) . DS . $no . '.log';
-                            if (!File::is_file($file))
+                            if (!is_file($file))
                             {
                                 File::create_file($file, $trace_data, null, null, $error_config['type_config']?$error_config['type_config']:'default');
                             }
                             break;
                     }
                 }
-                catch (Exception $e){}
+                catch (Exception $e)
+                {
+
+                }
             }
 
             $view->error_no = $error_no;
@@ -2029,6 +2036,37 @@ abstract class Core_Core extends Bootstrap
         //TODO 须加入文件版本号
         return '';
     }
+
+
+    /**
+     * 返回客户端IP数组列表
+     *
+     * 也可直接用 `HttpIO::IP` 来获取到当前单个IP
+     *
+     * @return array
+     */
+    public static function ip()
+    {
+        $ip = array();
+
+        if (isset($_SERVER['HTTP_X_FORWARDED_FOR']))
+        {
+            $ip = explode(',', str_replace(' ', '', $_SERVER['HTTP_X_FORWARDED_FOR']));
+        }
+
+        if(isset($_SERVER['HTTP_CLIENT_IP']))
+        {
+            $ip = array_merge($ip, explode(',', str_replace(' ', '', $_SERVER['HTTP_CLIENT_IP'])));
+        }
+
+        if (isset($_SERVER['REMOTE_ADDR']))
+        {
+            $ip = array_merge($ip, explode(',', str_replace(' ', '', $_SERVER['REMOTE_ADDR'])));
+        }
+
+        return $ip;
+    }
+
 
     /**
      * 系统调用内容输出函数（请勿自行执行）

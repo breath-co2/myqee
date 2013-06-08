@@ -580,7 +580,7 @@ class Core_File
 		// Get the extension from the filename
 		$extension = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
 
-		if (preg_match('/^(?:jpe?g|png|[gt]if|bmp|swf)$/', $extension))
+		if (preg_match('/^(?:jpe?g|png|[gt]if|bmp|swf)$/', $extension) && function_exists('getimagesize'))
 		{
 			// Use getimagesize() to find the mime type on images
 			$file = getimagesize($filename);
@@ -600,9 +600,8 @@ class Core_File
 			}
 		}
 
-		if (ini_get('mime_magic.magicfile') && function_exists('mime_content_type'))
+		if (function_exists('mime_content_type'))
 		{
-			// The mime_content_type function is only useful with a magic file
 			return mime_content_type($filename);
 		}
 
@@ -611,7 +610,6 @@ class Core_File
 			return File::mime_by_ext($extension);
 		}
 
-		// Unable to find the mime-type
 		return false;
 	}
 
@@ -811,5 +809,16 @@ class Core_File
 	    if ($array_mode && $data)return $data;
 
 	    throw new Exception(__('Not allowed to operate the corresponding directory'));
+	}
+
+
+	/**
+	 * 初始化文件对象
+	 *
+	 * @param string $file 文件名
+	 */
+	public function __construct($file)
+	{
+
 	}
 }

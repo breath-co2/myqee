@@ -26,6 +26,13 @@ class Core_Cache_Driver_File extends Cache_Driver
      */
     protected $storage = 'default';
 
+    /**
+     * 是否禁用文件写入功能
+     *
+     * @var boolean
+     */
+    protected $is_file_write_disalbed = false;
+
     public function __construct($config_name = 'default')
     {
         if (is_array($config_name))
@@ -41,6 +48,8 @@ class Core_Cache_Driver_File extends Cache_Driver
         {
             $this->storage  = $config['storage'];
         }
+
+        $this->is_file_write_disalbed = Core::is_file_write_disabled();
     }
 
     public function __destruct()
@@ -56,6 +65,8 @@ class Core_Cache_Driver_File extends Cache_Driver
      */
     public function get($key)
     {
+        if ($this->is_file_write_disalbed)return null;
+
         if (is_array($key))
         {
             # 支持多取
@@ -100,6 +111,8 @@ class Core_Cache_Driver_File extends Cache_Driver
      */
     public function set($key, $value = null, $lifetime = 3600)
     {
+        if ($this->is_file_write_disalbed)return false;
+
         if (is_array($key))
         {
             # 支持多存
@@ -129,6 +142,8 @@ class Core_Cache_Driver_File extends Cache_Driver
      */
     public function delete($key)
     {
+        if ($this->is_file_write_disalbed)return false;
+
         if (true===$key)
         {
             # 删除全部
@@ -193,6 +208,8 @@ class Core_Cache_Driver_File extends Cache_Driver
      */
     public function increment($key, $offset = 1, $lifetime = 60)
     {
+        if ($this->is_file_write_disalbed)return false;
+
         $filename = $this->get_filename_by_key($key);
 
         if (!file_exists($filename))
