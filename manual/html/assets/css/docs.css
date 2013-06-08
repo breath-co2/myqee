@@ -183,6 +183,15 @@ body > .navbar .brand:hover {
   padding: 0;
 }
 
+.right-div img {
+  border: 1px solid #ccc;
+  background: #fff;
+  padding: 2px;
+}
+.right-div img:hover {
+  border: 1px solid #aaff00;
+}
+
 #page-last-edit-div {
   float: right;
   font-size: 12px;

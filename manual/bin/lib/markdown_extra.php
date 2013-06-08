@@ -21,7 +21,7 @@ class MarkdownExtra extends _MarkdownExtra_TmpImpl
         #   ###### Header 6
         #
         $text = preg_replace_callback('{
-                ^(\!{1,6}|\[\!\!\])  # $1 = string of !\'s
+                ^(\!{3,6}|\[\!\!\])  # $1 = string of !\'s
                 [ ]*
                 (.+?)       # $2 = Header text
                 [ ]*

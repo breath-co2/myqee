@@ -5,7 +5,6 @@
 * [命令行工具说明](bin_readme.html)
 * [感谢](thank.html)
 * [修改日志](changelog.html)
-* [读我](readme.html)
 * [升级注意事项](upgrade.html)
 * [自定义文档编写说明](guide.html)
 * [TODO列表 <span class="badge badge-info" menu-todo="true">0</span>](todo_list.html)
