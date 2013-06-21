@@ -434,9 +434,9 @@ abstract class Core_OOP_ORM_Parse
             }
         }
 
-        $fun = '_get_data_'.strtolower($config['driver'],$obj);
+        $fun = '_get_data_'.$config['driver'];
 
-        return OOP_ORM_Parse::$fun($config);
+        return OOP_ORM_Parse::$fun($config, $obj);
     }
 
     /**
@@ -445,7 +445,7 @@ abstract class Core_OOP_ORM_Parse
      * @param array $config
      * @return array
      */
-    protected static function _get_data_database($config,$obj)
+    protected static function _get_data_database($config, $obj)
     {
         $data = Database::instance($config['database'])->from($config['tablename']);
 
@@ -494,10 +494,15 @@ abstract class Core_OOP_ORM_Parse
      * @param array $config
      * @return array
      */
-    protected static function _get_data_function($config,$obj)
+    protected static function _get_data_function($config, $obj)
     {
         $callfun = $config['function'];
         $args = $config['arguments'];
+
+        if (!is_array($args))
+        {
+            $args = array();
+        }
 
         if (is_array($callfun))
         {
