@@ -93,31 +93,10 @@ class Core_View
         return $this;
     }
 
-    /**
-     * 设置全局视图变量
-     *
-     * @param string/array $key
-     * @param mixed $value
-     */
-    public static function set_global($key, $value = null)
-    {
-        if ( is_array($key) )
-        {
-            foreach ( $key as $k => $v )
-            {
-                View::$_global_data[$k] = $v;
-            }
-        }
-        else
-        {
-            View::$_global_data[$key] = $value;
-        }
-    }
-
     public function render($print = true)
     {
 
-        if ( empty($this->_file) )
+        if (empty($this->_file))
         {
             throw new Exception(__('You must set the file to use within your view before rendering'));
         }
@@ -145,6 +124,38 @@ class Core_View
         {
             return '';
         }
+    }
+
+
+    /**
+     * 设置全局视图变量
+     *
+     * @param string/array $key
+     * @param mixed $value
+     */
+    public static function set_global($key, $value = null)
+    {
+        if ( is_array($key) )
+        {
+            foreach ( $key as $k => $v )
+            {
+                View::$_global_data[$k] = $v;
+            }
+        }
+        else
+        {
+            View::$_global_data[$key] = $value;
+        }
+    }
+
+    /**
+     * 返回全局视图数据
+     *
+     * @return array
+     */
+    public static function get_global_data()
+    {
+        return View::$_global_data;
     }
 
     /**
