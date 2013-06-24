@@ -16,28 +16,35 @@ class Core_Database extends Database_QueryBuilder
      *
      * @var string
      */
-    const TYPE_MySQL = 'MySQL';
+    const TYPE_MYSQL = 'MySQL';
 
     /**
      * MySQLI驱动类型
      *
      * @var string
      */
-    const TYPE_MySQLI = 'MySQLI';
+    const TYPE_MYSQLI = 'MySQLI';
 
     /**
      * Mongo驱动类型
      *
      * @var string
      */
-    const TYPE_Mongo  = 'Mongo';
+    const TYPE_MONGO  = 'Mongo';
 
     /**
      * SQLite驱动类型
      *
      * @var string
      */
-    const TYPE_SQLite  = 'SQLite';
+    const TYPE_SQLITE  = 'SQLite';
+
+    /**
+     * Postgre驱动类型
+     *
+     * @var string
+     */
+    const TYPE_POSTGRE  = 'Postgre';
 
     /**
      * @var array Database instances
@@ -211,7 +218,10 @@ class Core_Database extends Database_QueryBuilder
      */
     public function close_connect()
     {
-        $this->driver->close_connect();
+        if ($this->driver)
+        {
+            $this->driver->close_connect();
+        }
     }
 
     /**

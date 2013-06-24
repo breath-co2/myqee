@@ -12,7 +12,6 @@
  */
 class Core_OOP_ORM_Finder_REST extends OOP_ORM
 {
-
     /**
      * API接口地址
      * @var string
@@ -29,18 +28,30 @@ class Core_OOP_ORM_Finder_REST extends OOP_ORM
     protected $method = 'GET';
 
     /**
+     * 请求接口的参数
+     *
+     * @var array
+     */
+    protected $arguments = array();
+
+    /**
+     * POST,PUT提交的参数
+     *
+     * @var array
+     */
+    protected $post_data = array();
+
+    /**
      * @var HttpClient
      */
     protected $_driver = null;
 
-    function __construct()
-    {
-        if ( null === $this->api_url )
-        {
-            throw new Exception(__('orm api url is not declared.'));
-        }
-        parent::__construct();
-    }
+    /**
+     * 当设置method后记录默认的method，用于在请求完毕后重置method
+     *
+     * @var string
+     */
+    protected $_default_method = null;
 
     /**
      * 设置，获取REST的类型
@@ -54,10 +65,16 @@ class Core_OOP_ORM_Finder_REST extends OOP_ORM
     {
         if (null===$method)return $this->method;
 
+        if (null===$this->_default_method)
+        {
+            $this->_default_method = $this->method;
+        }
+
         $this->method = strtoupper($method);
 
         return $this;
     }
+
 
     /**
      * 获取数据
@@ -67,49 +84,107 @@ class Core_OOP_ORM_Finder_REST extends OOP_ORM
      */
     public function find($query = null)
     {
-        if (is_array($query))
+        if (!$this->api_url)
         {
-            $query = http_build_query($query, '', '&');
+            throw new Exception(__('orm api url is not declared.'));
         }
-        $url = $this->api_url . (strpos($this->api_url, '?') !== false ? '?' : '&') . $query;
+
+        $url = $this->parse_api_fullurl($query);
+
         try
         {
-            if ($this->method=='GET')
+            if ($this->method=='POST')
             {
-                $data = (string)$this->driver()->get($url);
+                $rs = (string)$this->driver()->post($url, $this->parse_api_post_data($query));
             }
             else if ($this->method=='PUT')
             {
-                $data = (string)$this->driver()->put($this->method)->get($url);
+                $rs = (string)$this->driver()->put($url, $this->parse_api_post_data($query));
+            }
+            else if ($this->method=='DELETE')
+            {
+                $rs = (string)$this->driver()->delete($url);
             }
             else
             {
-                $data = (string)$this->driver()->post($url, $this->data);
+                if ($this->method!='GET')
+                {
+                    $this->driver()->method($this->method);
+                }
+
+                $rs = (string)$this->driver()->get($url);
             }
         }
         catch (Exception $e)
         {
             Core::debug()->error('ORM获取数据失败,URL:' . $url);
-            $data = '[]';
+            $rs = '[]';
         }
+
         $this->last_query = $url;
 
         // 处理解析数据
-        $this->parse_find_data($data);
+        $this->parse_result_data($rs);
 
-        return $this->create_group_data($data, true);
+        // 重置数据
+        $this->reset();
+
+        return $this->create_group_data($rs, true);
     }
 
     /**
-     * 解析请求回来的数据
+     * 解析返回完善的请求的URL
      *
-     * @param string $data
-     * @return array
+     * @param string $query
+     * @param string
      */
-    protected function parse_find_data(&$data)
+    protected function parse_api_fullurl($query = null)
     {
-        @json_decode($data, true);
+        $url = $this->api_url;
+
+        if ($query)
+        {
+            if (is_array($query))
+            {
+                $query = http_build_query($query, '', '&');
+            }
+
+            $url .= (strpos($this->api_url, '?') === false ? '?' : '&') . $query;
+        }
+        else if ($this->method!='POST' && $this->method!='PUT')
+        {
+            $url .= (strpos($this->api_url, '?') === false ? '?' : '&') . http_build_query($this->arguments, '', '&');
+        }
+
+        return $url;
     }
+
+
+    /**
+     * 解析用于POST、PUT提交数据的数据
+     *
+     * @param string $query
+     * @param string
+     */
+    protected function parse_api_post_data($query = null)
+    {
+        if ($query)
+        {
+            if (is_array($query))
+            {
+                return http_build_query($query, '', '&');
+            }
+            else
+            {
+                return $query;
+            }
+        }
+        else
+        {
+            return http_build_query($this->arguments, '', '&');
+        }
+    }
+
 
     /**
      * HttpClient对象
@@ -122,16 +197,73 @@ class Core_OOP_ORM_Finder_REST extends OOP_ORM
         return $this->_driver;
     }
 
+
     /**
+     * 设置查询条件
      *
      * @param   mixed   column name or array($column, $alias) or object
      * @param   string  logic operator
      * @param   mixed   column value
-     * @return  MyQEE_OOP_ORM_Finder_DB
+     * @return  OOP_ORM_Finder_REST
      */
     public function where($column, $value = null, $op = '=')
     {
+        $this->arguments['where'][] = array($column, $value, $op);
 
         return $this;
+    }
+
+    /**
+     * 设置 in
+     *
+     * @param string $key
+     * @param array $value
+     * @return OOP_ORM_Finder_REST
+     */
+    public function in($column, $value, $no_in = false)
+    {
+        $this->arguments['in'][] = array($column, $value, $no_in);
+        return $this;
+    }
+
+    /**
+     * 排序
+     *
+     * @param   mixed   column name or array($column, $alias) or object
+     * @param   string  direction of sorting
+     * @return  OOP_ORM_Finder_REST
+     */
+    public function order_by($column, $direction = 'ASC')
+    {
+        $this->arguments['order'][] = array($column, $direction);
+        return $this;
+    }
+
+
+    /**
+     * 解析请求回来的数据
+     *
+     * @param string $data
+     * @return array
+     */
+    protected function parse_result_data(&$data)
+    {
+        $data = @json_decode($data, true);
+    }
+
+    /**
+     * 重置请求数据
+     *
+     * @return $this
+     */
+    protected function reset()
+    {
+        if ($this->_default_method)
+        {
+            $this->method = $this->_default_method;
+            $this->_default_method = null;
+        }
+
+        $this->arguments = array();
     }
 }
