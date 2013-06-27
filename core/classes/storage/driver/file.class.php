@@ -40,7 +40,7 @@ class Core_Storage_Driver_File extends Storage_Driver
             $this->storage  = $config['storage'];
         }
 
-        $this->dir = DIR_SYSTEM . 'data' . DS . 'storage' . DS;
+        $this->dir = DIR_DATA . 'storage' . DS;
     }
 
     /**

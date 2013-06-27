@@ -328,7 +328,7 @@ class Core_Config
         if ($projects)foreach ($projects as $project)
         {
             # 所有项目的配置文件
-            $tmpfile[] = DIR_DATA .'/extends_config'. $project .'.txt';
+            $tmpfile[] = DIR_DATA .'extends_config'. $project .'.txt';
         }
 
         $rs = File::unlink($tmpfile);
