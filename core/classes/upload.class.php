@@ -31,6 +31,14 @@ class Core_Upload
     const ERR_SAVE_FILE  = 11;
 
     /**
+     * 类型为存储类型
+     *
+     * @var string
+     */
+    const TYPE_STORAGE = 'Storage';
+
+
+    /**
      * 文件名中过滤的字符
      *
      * @var string
@@ -96,6 +104,12 @@ class Core_Upload
      */
     protected $filename;
 
+    /**
+     * 驱动对象
+     *
+     * @var Upload_Driver_Storage
+     */
+    protected $driver;
 
     /**
      * 错误号
@@ -176,14 +190,14 @@ class Core_Upload
             // 保存上传文件
             if ($this->config['driver'] == 'default')
             {
-                $this->do_save_file();
+                $this->save_to_file();
 
                 return true;
             }
             else
             {
                 // 通过扩展驱动来实现文件保存
-                $this->save_by_driver();
+                $this->save_to_storage();
             }
         }
         catch (Exception $e)
@@ -193,25 +207,52 @@ class Core_Upload
         }
     }
 
+    /**
+     * 返回当前上传驱动对象
+     *
+     * 若驱动为普通文件方式，则返回当前对象
+     *
+     * @return Upload_Driver_Storage
+     */
+    public function driver()
+    {
+        if ($this->config['driver'] == 'default')
+        {
+            return $this;
+        }
+        else
+        {
+            if (!$this->driver)
+            {
+                $driver = 'Upload_Driver_' . $this->config['driver'];
+                if (!class_exists($driver, true))
+                {
+                    throw new Exception(__('Upload class driver :driver not exist.', array(':driver'=>$this->config['driver'])));
+                }
+
+                $this->driver = new $driver($this->config['driver_config']);
+            }
+
+            $this->driver;
+
+            return $this->driver;
+        }
+    }
+
 
     /**
      * 执行文件保存操作
      *
      * @throws Exception
      */
-    protected function do_save_file()
+    protected function save_to_file()
     {
         // 默认文件上传形式
-        // 考虑到多种线上环境，默认使用copy()做移动，如果失败再使用 move_uploaded_file()
+        $filename = $this->config['upload_path'] . $this->file['name'];
 
-        $filename = $this->configp['upload_path'] . $this->file['name'];
-
-        if (!@copy($this->file['temp'], $filename))
+        if (!@move_uploaded_file($this->file['temp'], $filename))
         {
-            if (!@move_uploaded_file($this->file['temp'], $filename))
-            {
-                throw new Exception('Upload destination error.', Upload::ERR_SAVE_FILE);
-            }
+            throw new Exception('Upload destination error.', Upload::ERR_SAVE_FILE);
         }
 
         // 设置文件权限
@@ -219,11 +260,14 @@ class Core_Upload
     }
 
     /**
-     * 通过扩展驱动来实现文件保存
+     * 通过Storage实现文件保存
+     *
      */
-    protected function save_by_driver()
+    protected function save_to_storage()
     {
-        $this->driver()->save();
+        $storage = new Storage($this->config['storage_config']);
+
+        return $storage->upload($this->file['temp'], $this->filename);
     }
 
 
@@ -367,7 +411,7 @@ class Core_Upload
      */
     protected function is_allowed_filesize()
     {
-        if ($this->config['max_size'] > 0  &&  $this->file['size'] > $this->config['max_size'])
+        if ($this->config['max_size'] > 0 && $this->file['size'] > $this->config['max_size'])
         {
             return false;
         }
@@ -521,7 +565,7 @@ class Core_Upload
     protected static function set_error($error_msg, $error_no = 0)
     {
         Upload::$errno = $error_msg;
-        Upload::$error  = $error_msg;
+        Upload::$error = $error_msg;
     }
 
     /**

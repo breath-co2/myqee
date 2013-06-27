@@ -1123,12 +1123,6 @@ abstract class Bootstrap
             $_SERVER['SCRIPT_URL'] = $tmp_uri[0];
         }
 
-        # 当没有$_SERVER["SCRIPT_URI"] 时拼接起来
-        if (!isset($_SERVER['SCRIPT_URI']))
-        {
-            $_SERVER['SCRIPT_URI'] = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS']=='on'?'https':'http').'://'.$_SERVER['HTTP_HOST'].$_SERVER['SCRIPT_URL'];
-        }
-
         # 处理BASE_URL
         if (isset(self::$core_config['root_path']) && self::$core_config['root_path'])
         {
@@ -1136,11 +1130,15 @@ abstract class Bootstrap
         }
         else if (null === self::$base_url && isset($_SERVER["SCRIPT_NAME"]) && $_SERVER["SCRIPT_NAME"])
         {
+
             $base_url_len = strrpos($_SERVER["SCRIPT_NAME"], '/');
             if (false!==$base_url_len)
             {
                 $base_url_len += 1;
+
+                # 截取到最后一个/的位置
                 $base_url = substr($_SERVER["SCRIPT_NAME"], 0, $base_url_len);
+
                 if (preg_match('#^(.*)/wwwroot/$#', $base_url, $m))
                 {
                     # 特殊处理wwwroot目录
@@ -1155,6 +1153,12 @@ abstract class Bootstrap
             }
         }
 
+        # 当没有$_SERVER["SCRIPT_URI"] 时拼接起来
+        if (!isset($_SERVER['SCRIPT_URI']))
+        {
+            $_SERVER['SCRIPT_URI'] = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS']=='on'?'https':'http').'://'.$_SERVER['HTTP_HOST'].$_SERVER['SCRIPT_URL'];
+        }
+
         if (isset($_SERVER['PATH_INFO']))
         {
             $pathinfo = $_SERVER['PATH_INFO'];
@@ -1163,9 +1167,9 @@ abstract class Bootstrap
         {
             if (isset($_SERVER['REQUEST_URI']))
             {
-                $request_uri = $_SERVER['REQUEST_URI'];
-                $root_uri    = '/'.substr($_SERVER['SCRIPT_FILENAME'], strlen($_SERVER['DOCUMENT_ROOT']));
-                $index_file  = 'index'.EXT;
+                $request_uri = str_replace('\\', '/', $_SERVER['REQUEST_URI']);
+                $root_uri    = '/'. ltrim(str_replace('\\', '/', substr($_SERVER['SCRIPT_FILENAME'], strlen($_SERVER['DOCUMENT_ROOT']))), '/');
+                $index_file  = 'index'. EXT;
 
                 if (substr($root_uri, -strlen($index_file))==$index_file)
                 {
@@ -1178,6 +1182,7 @@ abstract class Bootstrap
                 }
 
                 list($pathinfo) = explode('?', $request_uri, 2);
+                $pathinfo = '/'. ltrim($pathinfo, '/');
             }
             elseif (isset($_SERVER['PHP_SELF']))
             {

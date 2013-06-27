@@ -99,6 +99,11 @@ class Core_Form
             $attributes['type'] = 'text';
         }
 
+        if ($attributes['type'] == 'text' && !isset($attributes['min']) && (!$attributes['value'] || preg_match('#^[0-9.]+$#',$attributes['value'])) && (int)$attributes['value']>=0 )
+        {
+            $attributes['min'] = '0';
+        }
+
         return '<input' . HTML::attributes($attributes) . ' />';
     }
 
@@ -422,4 +427,6 @@ class Core_Form
 
         return '<label' . HTML::attributes($attributes) . '>' . $text . '</label>';
     }
+
+
 }

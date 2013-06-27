@@ -1,9 +1,9 @@
 <?php
 // Define 404 error constant
-define( 'E_PAGE_NOT_FOUND', 43 );
+define('E_PAGE_NOT_FOUND', 43);
 
 // Define database error constant
-define( 'E_DATABASE_ERROR', 44 );
+define('E_DATABASE_ERROR', 44);
 
 /**
  * ErrException.
@@ -30,18 +30,20 @@ class Library_MyQEE_Develop_ErrException extends Exception
     /**
      * @var  array  PHP error code => human readable name
      */
-    public static $php_errors = array(
-        E_PAGE_NOT_FOUND => '404 Error',
-        E_DATABASE_ERROR => 'Database Error',
-        E_ERROR => 'Fatal Error',
-        E_USER_ERROR => 'User Error',
-        E_PARSE => 'Parse Error',
-        E_WARNING => 'Warning',
-        E_USER_WARNING => 'User Warning',
-        E_USER_NOTICE => 'User Notice',
-        E_STRICT => 'Strict',
-        E_NOTICE => 'Notice',
-        E_RECOVERABLE_ERROR => 'Recoverable Error' );
+    public static $php_errors = array
+    (
+        E_PAGE_NOT_FOUND    => '404 Error',
+        E_DATABASE_ERROR    => 'Database Error',
+        E_ERROR             => 'Fatal Error',
+        E_USER_ERROR        => 'User Error',
+        E_PARSE             => 'Parse Error',
+        E_WARNING           => 'Warning',
+        E_USER_WARNING      => 'User Warning',
+        E_USER_NOTICE       => 'User Notice',
+        E_STRICT            => 'Strict',
+        E_NOTICE            => 'Notice',
+        E_RECOVERABLE_ERROR => 'Recoverable Error',
+   );
 
     /**
      * Set exception message.
@@ -49,10 +51,10 @@ class Library_MyQEE_Develop_ErrException extends Exception
      * @param  string  i18n language key for the message
      * @param  array   addition line parameters
      */
-    public function __construct( $message, $code = null )
+    public function __construct($message, $code = null)
     {
-        if ( $code !== null ) $this->code = $code;
-        parent::__construct( $message );
+        if ($code !== null) $this->code = $code;
+        parent::__construct($message);
     }
 
     /**
@@ -62,7 +64,7 @@ class Library_MyQEE_Develop_ErrException extends Exception
      */
     public function __toString()
     {
-        return ( string ) $this->message;
+        return (string) $this->message;
     }
 
     /**
@@ -73,7 +75,7 @@ class Library_MyQEE_Develop_ErrException extends Exception
     public function sendHeaders()
     {
         // Send the 500 header
-        header( 'HTTP/1.1 500 Internal Server Error' );
+        header('HTTP/1.1 500 Internal Server Error');
     }
 
     /**
@@ -83,13 +85,13 @@ class Library_MyQEE_Develop_ErrException extends Exception
      * @throws  ErrorException
      * @return  TRUE
      */
-    public static function error_handler( $code, $error, $file = NULL, $line = NULL )
+    public static function error_handler($code, $error, $file = null, $line = null)
     {
-        if ( (error_reporting() & $code) !== 0 )
+        if ((error_reporting() & $code) !== 0)
         {
             // This error is not suppressed by current error reporting settings
             // Convert the error into an ErrorException
-            throw new ErrorException( $error, $code, 0, $file, $line );
+            throw new ErrorException($error, $code, 0, $file, $line);
         }
 
         // Do not execute the PHP error handler
@@ -104,26 +106,26 @@ class Library_MyQEE_Develop_ErrException extends Exception
      * @param   object   exception object
      * @return  boolean
      */
-    public static function exception_handler( Exception $e, $return = false )
+    public static function exception_handler(Exception $e, $return = false)
     {
         try
         {
             // Get the exception information
-            $type = get_class( $e );
-            $code = $e->getCode();
+            $type    = get_class($e);
+            $code    = $e->getCode();
             $message = $e->getMessage();
-            $file = $e->getFile();
-            $line = $e->getLine();
+            $file    = $e->getFile();
+            $line    = $e->getLine();
 
-            if ( isset( self::$php_errors[$code] ) )
+            if (isset(self::$php_errors[$code]))
             {
                 $code = self::$php_errors[$code];
             }
 
             // Create a text version of the exception
-            $error = self::exception_text( $e );
+            $error = self::exception_text($e);
 
-            if ( IS_CLI )
+            if (IS_CLI)
             {
                 $str = "\n" . $e->__toString() . "\n";
 
@@ -141,31 +143,31 @@ class Library_MyQEE_Develop_ErrException extends Exception
             // Get the exception backtrace
             $trace = $e->getTrace();
 
-            if ( $e instanceof ErrorException )
+            if ($e instanceof ErrorException)
             {
-                if ( version_compare( PHP_VERSION, '5.3', '<' ) )
+                if (version_compare(PHP_VERSION, '5.3', '<'))
                 {
                     // Workaround for a bug in ErrorException::getTrace() that exists in
                     // all PHP 5.2 versions. @see http://bugs.php.net/bug.php?id=45895
-                    for( $i = count( $trace ) - 1; $i > 0; -- $i )
+                    for($i = count($trace) - 1; $i > 0; -- $i)
                     {
-                        if ( isset( $trace[$i - 1]['args'] ) )
+                        if (isset($trace[$i - 1]['args']))
                         {
                             // Re-position the args
                             $trace[$i]['args'] = $trace[$i - 1]['args'];
 
                             // Remove the args
-                            unset( $trace[$i - 1]['args'] );
+                            unset($trace[$i - 1]['args']);
                         }
                     }
                 }
             }
-            if ( $return !== true )
+            if ($return !== true)
             {
-                Core::close_buffers( FALSE );
+                Core::close_buffers(false);
             }
 
-            if ( $e->getCode() == 43 )
+            if ($e->getCode() == 43)
             {
                 HttpIO::$status = 404;
             }
@@ -178,11 +180,11 @@ class Library_MyQEE_Develop_ErrException extends Exception
             // Start an output buffer
             ob_start();
             // Include the exception HTML
-            include Core::find_file( 'views', self::$template );
+            include Core::find_file('views', self::$template);
 
             // Display the contents of the output buffer
             $string = ob_get_clean();
-            if ( $return )
+            if ($return)
             {
                 return $string;
             }
@@ -192,15 +194,15 @@ class Library_MyQEE_Develop_ErrException extends Exception
             }
             return TRUE;
         }
-        catch ( Exception $e )
+        catch (Exception $e)
         {
             // Clean the output buffer if one exists
             ob_get_level() and ob_clean();
 
             // Display the exception text
-            echo self::exception_text( $e ), "\n";
+            echo self::exception_text($e), "\n";
 
-            exit( 1 );
+            exit(1);
         }
     }
 
@@ -212,9 +214,9 @@ class Library_MyQEE_Develop_ErrException extends Exception
      * @param   object  Exception
      * @return  string
      */
-    public static function exception_text( Exception $e )
+    public static function exception_text(Exception $e)
     {
-        return sprintf( '%s [ %s ]: %s ~ %s [ %d ]', get_class( $e ), $e->getCode(), strip_tags( $e->getMessage() ), Core::debug_path( $e->getFile() ), $e->getLine() );
+        return sprintf('%s [ %s ]: %s ~ %s [ %d ]', get_class($e), $e->getCode(), strip_tags($e->getMessage()), Core::debug_path($e->getFile()), $e->getLine());
     }
 
     /**
@@ -226,37 +228,37 @@ class Library_MyQEE_Develop_ErrException extends Exception
      * @param   string  path to debug
      * @return  string
      */
-    public static function trace( array $trace = NULL )
+    public static function trace(array $trace = NULL)
     {
-        if ( $trace === NULL )
+        if ($trace === null)
         {
             // Start a new trace
             $trace = debug_backtrace();
         }
 
         // Non-standard function calls
-        $statements = array( 'include', 'include_once', 'require', 'require_once' );
+        $statements = array('include', 'include_once', 'require', 'require_once');
 
         $output = array();
-        foreach ( $trace as $step )
+        foreach ($trace as $step)
         {
-            if ( ! isset( $step['function'] ) )
+            if (!isset($step['function']))
             {
                 // Invalid trace step
                 continue;
             }
 
-            if ( isset( $step['file'] ) and isset( $step['line'] ) )
+            if (isset($step['file']) and isset($step['line']))
             {
                 // Include the source of this step
-                $source = self::debug_source( $step['file'], $step['line'] );
+                $source = self::debug_source($step['file'], $step['line']);
             }
 
-            if ( isset( $step['file'] ) )
+            if (isset($step['file']))
             {
                 $file = $step['file'];
 
-                if ( isset( $step['line'] ) )
+                if (isset($step['line']))
                 {
                     $line = $step['line'];
                 }
@@ -265,9 +267,9 @@ class Library_MyQEE_Develop_ErrException extends Exception
             // function()
             $function = $step['function'];
 
-            if ( in_array( $step['function'], $statements ) )
+            if (in_array($step['function'], $statements))
             {
-                if ( empty( $step['args'] ) )
+                if (empty($step['args']))
                 {
                     // No arguments
                     $args = array();
@@ -275,25 +277,25 @@ class Library_MyQEE_Develop_ErrException extends Exception
                 else
                 {
                     // Sanitize the file path
-                    $args = array( $step['args'][0] );
+                    $args = array($step['args'][0]);
                 }
             }
-            elseif ( isset( $step['args'] ) )
+            elseif (isset($step['args']))
             {
-                if ( isset( $step['class'] ) )
+                if (isset($step['class']))
                 {
-                    if ( method_exists( $step['class'], $step['function'] ) )
+                    if (method_exists($step['class'], $step['function']))
                     {
-                        $reflection = new ReflectionMethod( $step['class'], $step['function'] );
+                        $reflection = new ReflectionMethod($step['class'], $step['function']);
                     }
                     else
                     {
-                        $reflection = new ReflectionMethod( $step['class'], '__call' );
+                        $reflection = new ReflectionMethod($step['class'], '__call');
                     }
                 }
                 else
                 {
-                    $reflection = new ReflectionFunction( $step['function'] );
+                    $reflection = new ReflectionFunction($step['function']);
                 }
 
                 // Get the function parameters
@@ -301,9 +303,9 @@ class Library_MyQEE_Develop_ErrException extends Exception
 
                 $args = array();
 
-                foreach ( $step['args'] as $i => $arg )
+                foreach ($step['args'] as $i => $arg)
                 {
-                    if ( isset( $params[$i] ) )
+                    if (isset($params[$i]))
                     {
                         // Assign the argument by the parameter name
                         $args[$params[$i]->name] = $arg;
@@ -316,15 +318,15 @@ class Library_MyQEE_Develop_ErrException extends Exception
                 }
             }
 
-            if ( isset( $step['class'] ) )
+            if (isset($step['class']))
             {
                 // Class->method() or Class::method()
                 $function = $step['class'] . $step['type'] . $step['function'];
             }
 
-            $output[] = array( 'function' => $function, 'args' => isset( $args ) ? $args : NULL, 'file' => isset( $file ) ? $file : NULL, 'line' => isset( $line ) ? $line : NULL, 'source' => isset( $source ) ? $source : NULL );
+            $output[] = array('function' => $function, 'args' => isset($args) ? $args : NULL, 'file' => isset($file) ? $file : NULL, 'line' => isset($line) ? $line : NULL, 'source' => isset($source) ? $source : NULL);
 
-            unset( $function, $args, $file, $line, $source );
+            unset($function, $args, $file, $line, $source);
         }
 
         return $output;
@@ -342,33 +344,33 @@ class Library_MyQEE_Develop_ErrException extends Exception
      * @param   integer  number of padding lines
      * @return  string
      */
-    public static function debug_source( $file, $line_number, $padding = 5 )
+    public static function debug_source($file, $line_number, $padding = 5)
     {
         // Open the file and set the line position
-        $file = @fopen( $file, 'r' );
+        $file = @fopen($file, 'r');
         $line = 0;
 
         // Set the reading range
-        $range = array( 'start' => $line_number - $padding, 'end' => $line_number + $padding );
+        $range = array('start' => $line_number - $padding, 'end' => $line_number + $padding);
 
         // Set the zero-padding amount for line numbers
-        $format = '% ' . strlen( $range['end'] ) . 'd';
+        $format = '% ' . strlen($range['end']) . 'd';
 
         $source = '';
-        while ( ($row = @fgets( $file )) !== FALSE )
+        while (($row = @fgets($file)) !== FALSE)
         {
             // Increment the line number
-            if ( ++ $line > $range['end'] ) break;
+            if (++ $line > $range['end']) break;
 
-            if ( $line >= $range['start'] )
+            if ($line >= $range['start'])
             {
                 // Make the row safe for output
-                $row = @htmlspecialchars( $row, ENT_NOQUOTES, Core::$charset );
+                $row = @htmlspecialchars($row, ENT_NOQUOTES, Core::$charset);
 
                 // Trim whitespace and sanitize the row
-                $row = '<span class="number">' . sprintf( $format, $line ) . '</span> ' . $row;
+                $row = '<span class="number">' . sprintf($format, $line) . '</span> ' . $row;
 
-                if ( $line === $line_number )
+                if ($line === $line_number)
                 {
                     // Apply highlighting to this row
                     $row = '<span class="line highlight">' . $row . '</span>';
@@ -384,7 +386,7 @@ class Library_MyQEE_Develop_ErrException extends Exception
         }
 
         // Close the file
-        @fclose( $file );
+        @fclose($file);
 
         return '<pre class="source"><code>' . $source . '</code></pre>';
     }
@@ -398,9 +400,9 @@ class Library_MyQEE_Develop_ErrException extends Exception
      * @param   integer  maximum length of strings
      * @return  string
      */
-    public static function dump( $value, $length = 128 )
+    public static function dump($value, $length = 128)
     {
-        return self::_dump( $value, $length );
+        return self::_dump($value, $length);
     }
 
     /**
@@ -411,40 +413,40 @@ class Library_MyQEE_Develop_ErrException extends Exception
      * @param   integer  recursion level (internal)
      * @return  string
      */
-    private static function _dump( & $var, $length = 128, $level = 0 )
+    private static function _dump(& $var, $length = 128, $level = 0)
     {
-        if ( $var === NULL )
+        if ($var === null)
         {
             return '<small>NULL</small>';
         }
-        elseif ( is_bool( $var ) )
+        elseif (is_bool($var))
         {
             return '<small>bool</small> ' . ($var ? 'TRUE' : 'FALSE');
         }
-        elseif ( is_float( $var ) )
+        elseif (is_float($var))
         {
             return '<small>float</small> ' . $var;
         }
-        elseif ( is_resource( $var ) )
+        elseif (is_resource($var))
         {
-            if ( ($type = get_resource_type( $var )) === 'stream' and $meta = stream_get_meta_data( $var ) )
+            if (($type = get_resource_type($var)) === 'stream' and $meta = stream_get_meta_data($var))
             {
-                $meta = stream_get_meta_data( $var );
+                $meta = stream_get_meta_data($var);
 
-                if ( isset( $meta['uri'] ) )
+                if (isset($meta['uri']))
                 {
                     $file = $meta['uri'];
 
-                    if ( function_exists( 'stream_is_local' ) )
+                    if (function_exists('stream_is_local'))
                     {
                         // Only exists on PHP >= 5.2.4
-                        if ( stream_is_local( $file ) )
+                        if (stream_is_local($file))
                         {
-                            $file = Core::debug_path( $file );
+                            $file = Core::debug_path($file);
                         }
                     }
 
-                    return '<small>resource</small><span>(' . $type . ')</span> ' . htmlspecialchars( $file, ENT_NOQUOTES, Core::$charset );
+                    return '<small>resource</small><span>(' . $type . ')</span> ' . htmlspecialchars($file, ENT_NOQUOTES, Core::$charset);
                 }
             }
             else
@@ -452,60 +454,60 @@ class Library_MyQEE_Develop_ErrException extends Exception
                 return '<small>resource</small><span>(' . $type . ')</span>';
             }
         }
-        elseif ( is_string( $var ) )
+        elseif (is_string($var))
         {
-            if ( strlen( $var ) > $length )
+            if (strlen($var) > $length)
             {
                 // Encode the truncated string
-                $str = htmlspecialchars( substr( $var, 0, $length ), ENT_NOQUOTES, Core::$charset ) . '&nbsp;&hellip;';
+                $str = htmlspecialchars(substr($var, 0, $length), ENT_NOQUOTES, Core::$charset) . '&nbsp;&hellip;';
             }
             else
             {
                 // Encode the string
-                $str = @htmlspecialchars( $var, ENT_NOQUOTES, Core::$charset );
+                $str = @htmlspecialchars($var, ENT_NOQUOTES, Core::$charset);
             }
 
-            return '<small>string</small><span>(' . strlen( $var ) . ')</span> "' . $str . '"';
+            return '<small>string</small><span>(' . strlen($var) . ')</span> "' . $str . '"';
         }
-        elseif ( is_array( $var ) )
+        elseif (is_array($var))
         {
             $output = array();
 
             // Indentation for this variable
-            $space = str_repeat( $s = '	', $level );
+            $space = str_repeat($s = '	', $level);
 
             static $marker = null;
 
-            if ( $marker === null )
+            if ($marker === null)
             {
                 // Make a unique marker
-                $marker = uniqid( "\x00" );
+                $marker = uniqid("\x00");
             }
 
-            if ( empty( $var ) )
+            if (empty($var))
             {
                 // Do nothing
             }
-            elseif ( isset( $var[$marker] ) )
+            elseif (isset($var[$marker]))
             {
                 $output[] = "(\n$space$s*RECURSION*\n$space)";
             }
-            elseif ( $level < 5 )
+            elseif ($level < 5)
             {
                 $output[] = "<span>(";
 
                 $var[$marker] = TRUE;
-                foreach ( $var as $key => & $val )
+                foreach ($var as $key => & $val)
                 {
-                    if ( $key === $marker ) continue;
-                    if ( ! is_int( $key ) )
+                    if ($key === $marker) continue;
+                    if (! is_int($key))
                     {
                         $key = '"' . $key . '"';
                     }
 
-                    $output[] = "$space$s$key => " . self::_dump( $val, $length, $level + 1 );
+                    $output[] = "$space$s$key => " . self::_dump($val, $length, $level + 1);
                 }
-                unset( $var[$marker] );
+                unset($var[$marker]);
 
                 $output[] = "$space)</span>";
             }
@@ -515,54 +517,54 @@ class Library_MyQEE_Develop_ErrException extends Exception
                 $output[] = "(\n$space$s...\n$space)";
             }
 
-            return '<small>array</small><span>(' . count( $var ) . ')</span> ' . implode( "\n", $output );
+            return '<small>array</small><span>(' . count($var) . ')</span> ' . implode("\n", $output);
         }
-        elseif ( is_object( $var ) )
+        elseif (is_object($var))
         {
             // Copy the object as an array
-            $array = ( array ) $var;
+            $array = (array) $var;
 
             $output = array();
 
             // Indentation for this variable
-            $space = str_repeat( $s = '	', $level );
+            $space = str_repeat($s = '	', $level);
 
-            $hash = spl_object_hash( $var );
+            $hash = spl_object_hash($var);
 
             // Objects that are being dumped
             static $objects = array();
 
-            if ( empty( $var ) )
+            if (empty($var))
             {
                 // Do nothing
             }
-            elseif ( isset( $objects[$hash] ) )
+            elseif (isset($objects[$hash]))
             {
                 $output[] = "{\n$space$s*RECURSION*\n$space}";
             }
-            elseif ( $level < 5 )
+            elseif ($level < 5)
             {
                 $output[] = "<code>{";
 
                 $objects[$hash] = TRUE;
-                foreach ( $array as $key => & $val )
+                foreach ($array as $key => & $val)
                 {
-                    if ( $key[0] === "\x00" )
+                    if ($key[0] === "\x00")
                     {
                         // Determine if the access is private or protected
                         $access = '<small>' . ($key[1] === '*' ? 'protected' : 'private') . '</small>';
 
                         // Remove the access level from the variable name
-                        $key = substr( $key, strrpos( $key, "\x00" ) + 1 );
+                        $key = substr($key, strrpos($key, "\x00") + 1);
                     }
                     else
                     {
                         $access = '<small>public</small>';
                     }
 
-                    $output[] = "$space$s$access $key => " . self::_dump( $val, $length, $level + 1 );
+                    $output[] = "$space$s$access $key => " . self::_dump($val, $length, $level + 1);
                 }
-                unset( $objects[$hash] );
+                unset($objects[$hash]);
 
                 $output[] = "$space}</code>";
             }
@@ -572,11 +574,11 @@ class Library_MyQEE_Develop_ErrException extends Exception
                 $output[] = "{\n$space$s...\n$space}";
             }
 
-            return '<small>object</small> <span>' . get_class( $var ) . '(' . count( $array ) . ')</span> ' . implode( "\n", $output );
+            return '<small>object</small> <span>' . get_class($var) . '(' . count($array) . ')</span> ' . implode("\n", $output);
         }
         else
         {
-            return '<small>' . gettype( $var ) . '</small> ' . htmlspecialchars( print_r( $var, TRUE ), ENT_NOQUOTES, Core::$charset );
+            return '<small>' . gettype($var) . '</small> ' . htmlspecialchars(print_r($var, TRUE), ENT_NOQUOTES, Core::$charset);
         }
     }
 
@@ -589,38 +591,38 @@ class Library_MyQEE_Develop_ErrException extends Exception
     public static function shutdown_handler()
     {
         $error = error_get_last();
-        if ( $error )
+        if ($error)
         {
             static $run = null;
-            if ( true === $run ) return;
+            if (true === $run) return;
             $run = true;
-            if ( ((E_ERROR | E_PARSE | E_CORE_ERROR | E_COMPILE_ERROR | E_USER_ERROR | E_RECOVERABLE_ERROR) & $error['type']) !== 0 )
+            if (((E_ERROR | E_PARSE | E_CORE_ERROR | E_COMPILE_ERROR | E_USER_ERROR | E_RECOVERABLE_ERROR) & $error['type']) !== 0)
             {
                 $run = true;
-                self::exception_handler( new ErrorException( $error['message'], $error['type'], 0, $error['file'], $error['line'] ) );
-                exit( 1 );
+                self::exception_handler(new ErrorException($error['message'], $error['type'], 0, $error['file'], $error['line']));
+                exit(1);
             }
         }
 
-        if ( isset( $_REQUEST['debug'] ) )
+        if (isset($_REQUEST['debug']))
         {
-            if ( Core::debug()->profiler( 'output' )->is_open() )
+            if (Core::debug()->profiler('output')->is_open())
             {
-                Core::debug()->profiler( 'output' )->start( 'Views', 'Global Data' );
-                Core::debug()->profiler( 'output' )->stop( array( 'Global Data' => View::get_global_data() ) );
+                Core::debug()->profiler('output')->start('Views', 'Global Data');
+                Core::debug()->profiler('output')->stop(array('Global Data' => View::get_global_data()));
             }
 
             // 输出debug信息
-            $file = Core::find_file( 'views', 'debug/profiler' );
-            if ( $file )
+            $file = Core::find_file('views', 'debug/profiler');
+            if ($file)
             {
                 ob_start();
                 include $file;
                 $out = ob_get_clean();
-                if ( stripos( Core::$output, '</body>' ) !== false )
+                if (stripos(Core::$output, '</body>') !== false)
                 {
 
-                    Core::$output = str_ireplace( '</body>', $out . '</body>', Core::$output );
+                    Core::$output = str_ireplace('</body>', $out . '</body>', Core::$output);
                 }
                 else
                 {
@@ -629,4 +631,4 @@ class Library_MyQEE_Develop_ErrException extends Exception
             }
         }
     }
-} // End Error_Exception
+}

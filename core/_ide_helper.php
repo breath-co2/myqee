@@ -74,6 +74,15 @@ abstract class EX_Database_Driver_MySQLI_Transaction extends Core_Database_Drive
 class Database_Driver_MySQLI extends Core_Database_Driver_MySQLI{}
 class EX_Database_Driver_MySQLI extends Core_Database_Driver_MySQLI{}
 
+class Database_Driver_Postgre_Result extends Core_Database_Driver_Postgre_Result{}
+class EX_Database_Driver_Postgre_Result extends Core_Database_Driver_Postgre_Result{}
+
+abstract class Database_Driver_Postgre_Transaction extends Core_Database_Driver_Postgre_Transaction{}
+abstract class EX_Database_Driver_Postgre_Transaction extends Core_Database_Driver_Postgre_Transaction{}
+
+class Database_Driver_Postgre extends Core_Database_Driver_Postgre{}
+class EX_Database_Driver_Postgre extends Core_Database_Driver_Postgre{}
+
 class Database_Driver_SQLite_Result extends Core_Database_Driver_SQLite_Result{}
 class EX_Database_Driver_SQLite_Result extends Core_Database_Driver_SQLite_Result{}
 
@@ -131,14 +140,14 @@ class EX_HttpClient_Result extends Core_HttpClient_Result{}
 class HttpClient extends Core_HttpClient{}
 class EX_HttpClient extends Core_HttpClient{}
 
-class HttpIO extends Core_HttpIO{}
-class EX_HttpIO extends Core_HttpIO{}
+abstract class HttpIO extends Core_HttpIO{}
+abstract class EX_HttpIO extends Core_HttpIO{}
 
 abstract class I18n extends Core_I18n{}
 abstract class EX_I18n extends Core_I18n{}
 
-class IpSource extends Core_IpSource{}
-class EX_IpSource extends Core_IpSource{}
+abstract class IpSource extends Core_IpSource{}
+abstract class EX_IpSource extends Core_IpSource{}
 
 class Member extends Core_Member{}
 class EX_Member extends Core_Member{}
@@ -209,8 +218,8 @@ class EX_Storage extends Core_Storage{}
 class Str extends Core_Str{}
 class EX_Str extends Core_Str{}
 
-class Text extends Core_Text{}
-class EX_Text extends Core_Text{}
+abstract class Text extends Core_Text{}
+abstract class EX_Text extends Core_Text{}
 
 class Upload extends Core_Upload{}
 class EX_Upload extends Core_Upload{}
@@ -224,17 +233,32 @@ class EX_Valid extends Core_Valid{}
 class View extends Core_View{}
 class EX_View extends Core_View{}
 
-class Controller_Index extends Core_Controller_Index{}
-class EX_Controller_Index extends Core_Controller_Index{}
+class ORM_Test_Finder extends Core_ORM_Test_Finder{}
+class EX_ORM_Test_Finder extends Core_ORM_Test_Finder{}
 
-class Controller_RunTime extends Core_Controller_RunTime{}
-class EX_Controller_RunTime extends Core_Controller_RunTime{}
+class ORM_Test_Data extends Core_ORM_Test_Data{}
+class EX_ORM_Test_Data extends Core_ORM_Test_Data{}
 
-abstract class Controller_Shell extends Core_Controller_Shell{}
-abstract class EX_Controller_Shell extends Core_Controller_Shell{}
+class ORM_Test_Result extends Core_ORM_Test_Result{}
+class EX_ORM_Test_Result extends Core_ORM_Test_Result{}
 
-class Controller_File extends Core_Controller_File{}
-class EX_Controller_File extends Core_Controller_File{}
+class ORM_Test2_AAA_Finder extends Core_ORM_Test2_AAA_Finder{}
+class EX_ORM_Test2_AAA_Finder extends Core_ORM_Test2_AAA_Finder{}
+
+class ORM_Test2_AAA_Data extends Core_ORM_Test2_AAA_Data{}
+class EX_ORM_Test2_AAA_Data extends Core_ORM_Test2_AAA_Data{}
+
+class ORM_Test2_AAA_Result extends Core_ORM_Test2_AAA_Result{}
+class EX_ORM_Test2_AAA_Result extends Core_ORM_Test2_AAA_Result{}
+
+class ORM_Test2_Finder extends Core_ORM_Test2_Finder{}
+class EX_ORM_Test2_Finder extends Core_ORM_Test2_Finder{}
+
+class ORM_Test2_Data extends Core_ORM_Test2_Data{}
+class EX_ORM_Test2_Data extends Core_ORM_Test2_Data{}
+
+class ORM_Test2_Result extends Core_ORM_Test2_Result{}
+class EX_ORM_Test2_Result extends Core_ORM_Test2_Result{}
 
 class Controller_Captcha extends Core_Controller_Captcha{}
 class EX_Controller_Captcha extends Core_Controller_Captcha{}
