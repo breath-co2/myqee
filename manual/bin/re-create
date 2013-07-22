@@ -1854,7 +1854,7 @@ class Manual
                 $base_class_name = $class_name;
             }
 
-            $exec = $_SERVER['_'] .' '. DIR_MANUAL .'bin/lib/api_get_info.php '. $group_type .' '. $base_class_name .' '. escapeshellarg($file) .' '. $dir_type;
+            $exec = (DS==='\\'?'php.exe':'php') .' '. DIR_MANUAL .'bin/lib/api_get_info.php '. $group_type .' '. $base_class_name .' '. escapeshellarg($file) .' '. $dir_type;
 
             $data = shell_exec($exec);
 
