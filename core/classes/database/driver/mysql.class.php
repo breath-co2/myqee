@@ -163,7 +163,7 @@ class Core_Database_Driver_MySQL extends Database_Driver
             $hostname = $this->_get_rand_host($error_host);
             if (false===$hostname)
             {
-                Core::debug()->error($error_host,'error_host');
+                Core::debug()->error($error_host, 'error_host');
 
                 if ($last_error)throw $last_error;
                 throw new Exception('connect mysql server error.');
@@ -180,7 +180,7 @@ class Core_Database_Driver_MySQL extends Database_Driver
                 $error_msg  = '';
                 try
                 {
-                    if ( empty($persistent) )
+                    if (empty($persistent))
                     {
                         $tmplink = mysql_connect($hostname . ($port && $port != 3306 ? ':' . $port : ''), $username, $password, true);
                     }
@@ -198,7 +198,9 @@ class Core_Database_Driver_MySQL extends Database_Driver
 
                 if (false===$tmplink)
                 {
-                    if ( !( $error_msg && 2===$error_code && preg_match('#(Unknown database|Access denied for user)#i', $error_msg)) )
+                    if (IS_DEBUG)throw $e;
+
+                    if (!($error_msg && 2===$error_code && preg_match('#(Unknown database|Access denied for user)#i', $error_msg)))
                     {
                         $error_msg = 'connect mysql server error.';
                     }
@@ -215,19 +217,19 @@ class Core_Database_Driver_MySQL extends Database_Driver
 
                 break;
             }
-            catch ( Exception $e )
+            catch (Exception $e)
             {
                 if (IS_DEBUG)
                 {
-                    Core::debug()->error($username.'@'.$hostname.':'.$port.'.Msg:'.strip_tags($e->getMessage(),'').'.Code:'.$e->getCode(),'connect mysqli server error');
-                    $last_error = new Exception($e->getMessage(),$e->getCode());
+                    Core::debug()->error($username.'@'.$hostname.':'.$port.'.Msg:'.strip_tags($e->getMessage(),'').'.Code:'.$e->getCode(), 'connect mysqli server error');
+                    $last_error = new Exception($e->getMessage(), $e->getCode());
                 }
                 else
                 {
-                    $last_error = new Exception('connect mysql server error',$e->getCode());
+                    $last_error = new Exception('connect mysql server error', $e->getCode());
                 }
 
-                if (2===$e->getCode() && preg_match('#(Unknown database|Access denied for user)#i', $e->getMessage(),$m))
+                if (2===$e->getCode() && preg_match('#(Unknown database|Access denied for user)#i', $e->getMessage(), $m))
                 {
                     // 指定的库不存在，直接返回
                     throw new Exception(strtolower($m[1])=='unknown database'?__('The mysql database does not exist'):__('The mysql database account or password error'));

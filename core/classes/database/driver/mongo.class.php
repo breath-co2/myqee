@@ -197,7 +197,7 @@ class Core_Database_Driver_Mongo extends Database_Driver
                 $options = array();
 
                 // 所有非主数据库都加上replicaSet参数
-                if ( !in_array($hostname, $all_master_hosts) )
+                if (!in_array($hostname, $all_master_hosts))
                 {
                     $options['replicaSet'] = true;
                 }
@@ -214,23 +214,27 @@ class Core_Database_Driver_Mongo extends Database_Driver
                 {
                     if ($username)
                     {
-                        $tmplink = new Mongo("mongodb://{$username}:{$password}@{$hostname}:{$port}/",$options);
+                        $tmplink = new Mongo("mongodb://{$username}:{$password}@{$hostname}:{$port}/", $options);
                     }
                     else
                     {
-                        $tmplink = new Mongo("mongodb://{$hostname}:{$port}/",$options);
+                        $tmplink = new Mongo("mongodb://{$hostname}:{$port}/", $options);
                     }
                 }
                 catch (Exception $e)
                 {
-                    $error_msg     = $e->getMessage();
-                    $error_code    = $e->getCode();
-                    $tmplink       = false;
+                    $error_msg  = $e->getMessage();
+                    $error_code = $e->getCode();
+                    $tmplink    = false;
                 }
 
                 if (false===$tmplink)
                 {
-                    if (!IS_DEBUG)
+                    if (IS_DEBUG)
+                    {
+                        throw $e;
+                    }
+                    else
                     {
                         $error_msg = 'connect mongodb server error.';
                     }
@@ -252,19 +256,19 @@ class Core_Database_Driver_Mongo extends Database_Driver
 
                 break;
             }
-            catch ( Exception $e )
+            catch (Exception $e)
             {
                 if (IS_DEBUG)
                 {
-                    Core::debug()->error(($username?$username.'@':'').$hostname.':'.$port,'connect mongodb server error');
+                    Core::debug()->error(($username?$username.'@':'').$hostname.':'.$port, 'connect mongodb server error');
                     $last_error = new Exception($e->getMessage(),$e->getCode());
                 }
                 else
                 {
-                    $last_error = new Exception('connect mongodb server error',$e->getCode());
+                    $last_error = new Exception('connect mongodb server error', $e->getCode());
                 }
 
-                if ( !in_array($hostname, $error_host) )
+                if (!in_array($hostname, $error_host))
                 {
                     $error_host[] = $hostname;
                 }

@@ -180,7 +180,7 @@ class Core_Database_Driver_MySQLI extends Database_Driver
                 $error_msg  = '';
                 try
                 {
-                    if ( empty($persistent) )
+                    if (empty($persistent))
                     {
                         $tmplink = mysqli_init();
                         mysqli_options($tmplink, MYSQLI_OPT_CONNECT_TIMEOUT, 3);
@@ -200,7 +200,9 @@ class Core_Database_Driver_MySQLI extends Database_Driver
 
                 if (false===$tmplink)
                 {
-                    if ( !( $error_msg && 2===$error_code && preg_match('#(Unknown database|Access denied for user)#i', $error_msg)) )
+                    if (IS_DEBUG)throw $e;
+
+                    if (!($error_msg && 2===$error_code && preg_match('#(Unknown database|Access denied for user)#i', $error_msg)))
                     {
                         $error_msg = 'connect mysqli server error.';
                     }
@@ -219,19 +221,19 @@ class Core_Database_Driver_MySQLI extends Database_Driver
 
                 break;
             }
-            catch ( Exception $e )
+            catch (Exception $e)
             {
                 if (IS_DEBUG)
                 {
-                    Core::debug()->error($username.'@'.$hostname.':'.$port.'.Msg:'.strip_tags($e->getMessage(),'').'.Code:'.$e->getCode(),'connect mysqli server error');
-                    $last_error = new Exception($e->getMessage(),$e->getCode());
+                    Core::debug()->error($username.'@'.$hostname.':'.$port.'.Msg:'.strip_tags($e->getMessage(),'').'.Code:'.$e->getCode(), 'connect mysqli server error');
+                    $last_error = new Exception($e->getMessage(), $e->getCode());
                 }
                 else
                 {
-                    $last_error = new Exception('connect mysqli server error',$e->getCode());
+                    $last_error = new Exception('connect mysqli server error', $e->getCode());
                 }
 
-                if ( 2===$e->getCode() && preg_match('#(Unknown database|Access denied for user)#i', $e->getMessage() , $m) )
+                if (2===$e->getCode() && preg_match('#(Unknown database|Access denied for user)#i', $e->getMessage() , $m))
                 {
                     // 指定的库不存在，直接返回
                     throw new Exception(strtolower($m[1])=='unknown database'?__('The mysql database does not exist'):__('The mysql database account or password error'));

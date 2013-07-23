@@ -175,21 +175,33 @@ class Core_Database_Driver_Postgre extends Database_Driver
 
                 $time = microtime(true);
 
-                if ($persistent)
+                try
                 {
-                    # 持久连接
-                    $tmplink = @pg_pconnect($dsn);
-                    if ($tmplink && pg_connection_status($tmplink) === PGSQL_CONNECTION_BAD && false===pg_ping($tmplink))
+                    if ($persistent)
                     {
-                        throw new Exception('postgre pconnect server error.');
+                        # 持久连接
+                        $tmplink = pg_pconnect($dsn);
+                        if ($tmplink && pg_connection_status($tmplink) === PGSQL_CONNECTION_BAD && false===pg_ping($tmplink))
+                        {
+                            throw new Exception('postgre pconnect server error.');
+                        }
+                    }
+                    else
+                    {
+                        $tmplink = pg_connect($dsn);
                     }
                 }
-                else
+                catch (Exception $e)
                 {
-                    $tmplink = @pg_connect($dsn);
+                    $tmplink = false;
                 }
 
-                if (false===$tmplink)throw new Exception('connect postgre server error.');
+                if (false===$tmplink)
+                {
+                    if (IS_DEBUG)throw $e;
+
+                    throw new Exception('connect postgre server error.');
+                }
 
                 if ($schema)
                 {
@@ -199,10 +211,9 @@ class Core_Database_Driver_Postgre extends Database_Driver
                 Core::debug()->info('postgre://'.$username.'@'.$hostname.':'.$port.'/'.$database.'/ connection time:' . (microtime(true) - $time));
 
                 # 连接ID
-                $this->_connection_ids[$this->_connection_type] = $_connection_id;
+                $this->_connection_ids[$this->_connection_type]                 = $_connection_id;
                 Database_Driver_Postgre::$_connection_instance[$_connection_id] = $tmplink;
-
-                Database_Driver_Postgre::$_current_databases[$_connection_id] = $database;
+                Database_Driver_Postgre::$_current_databases[$_connection_id]   = $database;
 
                 unset($tmplink);
 
@@ -213,11 +224,11 @@ class Core_Database_Driver_Postgre extends Database_Driver
                 if (IS_DEBUG)
                 {
                     Core::debug()->error($username.'@'.$hostname.':'.$port.'.Msg:'.strip_tags($e->getMessage(),'').'.Code:'.$e->getCode(), 'connect postgre server error');
-                    $last_error = new Exception($e->getMessage(),$e->getCode());
+                    $last_error = new Exception($e->getMessage(), $e->getCode());
                 }
                 else
                 {
-                    $last_error = new Exception('connect postgre server error',$e->getCode());
+                    $last_error = new Exception('connect postgre server error', $e->getCode());
                 }
 
                 if (!in_array($hostname, $error_host))

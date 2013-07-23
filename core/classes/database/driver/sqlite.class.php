@@ -138,10 +138,15 @@ class Core_Database_Driver_SQLite extends Database_Driver
 
                 if (false===$tmplink)
                 {
-                    if (!IS_DEBUG)
+                    if (IS_DEBUG)
+                    {
+                        throw $e;
+                    }
+                    else
                     {
                         $error_msg = 'open sqlite error.';
                     }
+
                     throw new Exception($error_msg, $error_code);
                 }
 
@@ -160,11 +165,11 @@ class Core_Database_Driver_SQLite extends Database_Driver
                 if (IS_DEBUG)
                 {
                     Core::debug()->error($db,'open sqlite:'.$db.' error.');
-                    $last_error = new Exception($e->getMessage(),$e->getCode());
+                    $last_error = new Exception($e->getMessage(), $e->getCode());
                 }
                 else
                 {
-                    $last_error = new Exception('open sqlite error.',$e->getCode());
+                    $last_error = new Exception('open sqlite error.', $e->getCode());
                 }
 
                 if ($i==2)
