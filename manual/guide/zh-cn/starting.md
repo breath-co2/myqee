@@ -39,22 +39,22 @@
         'dir'       => 'default',        //目录
         'url'       => '/',              //项目根目录
     )
-        
+
 在 `projects/default/controllers/` 目录中建立 `helloworld.controller.php` 文件，内如如下：
 
     <?php
-    Controller_HelloWorld extend Controller 
+    Controller_HelloWorld extend Controller
     {
         public function action_default()
         {
             echo 'hello world';
         }
     }
-        
+
 在页面上打开 `/helloworld` 路径看看是否有输出？如果有输出 `hello world` 恭喜，第一个测试成功了。
 
 **为什么页面显示404错误？**
- 
+
 * 这个404页面是apache/IIS/nginx等输出的？那么说明你的rewrite没有配置正确或没启用，请参照[安装与配置](setup.html)说明进行修改；
 * 这个404页面是MyQEE输出的界面？说明rewrite已经配置成功，但是 `config.php` 中项目配置的不正确，检查url部分设置；
 

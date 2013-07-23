@@ -1,7 +1,34 @@
-文档编写说明
-------
+# 文档编写、生成说明
 
-欢迎使用迈启PHP多项目框架
+MyQEE的文档采用流行的Markdown格式，后缀为.md，Mac系统推荐使用[Mou](http://mouapp.com/)程序编写，最终可生成html文件。
+
+主文档存放在 `manual/guide/` 目录下。
+
+`menu.md` 为特殊文件，可以自定义设置当前文档的目录菜单，支持2级列表结构。
+
+每个类库、项目都可以定义自己的文档，可在对应目录的guide目录中编写，比如核心类库目录`core/guide/`中就存放在核心类库的.md文档
+
+## 如何重新生成文档html文件
+
+进入manual/bin/目录，执行 `./re-create` 命令，或 `php re-create`，本脚本用php编写，所以需要安装PHP，如果是window系统，则可执行 `php.exe re-create`
+
+执行完毕后，文档将会全部生成到 `manual/html` 目录中，可以直接点击 `index.html` 进行访问。
+
+### 希望在站点里直接访问文档怎么做？
+
+* window下可以把整个html目录复制到wwwroot目录下并改名，比如docs,这样可通过类似 `http://yourhost/docs/` 来直接访问到
+* linux, mac下推荐建立连接，首先cd到wwwroot目录，然后执行 `ln -s ../manual/html/ docs` 这样就建立了一个文件夹连接，就可以通过URL直接访问了
+
+
+
+## 以下为md的一些样例
+
+代码
+
+	<?php
+	phpinfo();
+
+
 !!! **注意**内容 
 
 > ###说明
@@ -54,13 +81,14 @@
 
 > ###测试 
 >
+>
     <?php
     $array1 = array(0 => 'zero_a', 2 => 'two_a', 3 => 'three_a');
     $array2 = array(1 => 'one_b', 3 => 'three_b', 4 => 'four_b');
     $result = $array1 + $array2;
     var_dump($result);
     ?>
->   asdfads
+>   内容
 
 ------------
 
