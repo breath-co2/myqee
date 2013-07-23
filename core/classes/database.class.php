@@ -214,6 +214,16 @@ class Core_Database extends Database_QueryBuilder
     }
 
     /**
+     * 获取当前配置数组
+     *
+     * @return array
+     */
+    public function config()
+    {
+        return $this->config;
+    }
+
+    /**
      * 关闭连接
      */
     public function close_connect()
