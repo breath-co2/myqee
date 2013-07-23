@@ -891,6 +891,29 @@ class Manual
 
         # 生成文件
         $this->_create();
+
+
+        # 生成默认跳转URL
+        $config_lang  = $this->config['lang'];
+        $default_lang = key($config_lang);
+        // manual/index.html
+        file_put_contents(DIR_MANUAL.'index.html', $this->_get_html($default_lang, 'html/'));
+        // manual/html/index.html
+        file_put_contents(DIR_MANUAL.'html/index.html', $this->_get_html($default_lang));
+    }
+
+    private function _get_html($default_lang, $path = '')
+    {
+        $str = <<<EOF
+<html>
+<head>
+    <script type="text/javascript">document.location.href = '{$path}{$default_lang}/index.html';</script>
+</head>
+<body>
+</body>
+</html>
+EOF;
+        return $str;
     }
 
     /**
