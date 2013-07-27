@@ -374,7 +374,7 @@ class Core_Email
            NOTE: In PHP 5.4 get_magic_quotes_gpc() will always return 0 and
              it will probably not exist in future versions at all.
         */
-        if ( MAGIC_QUOTES_GPC && !is_php('5.4'))
+        if (MAGIC_QUOTES_GPC && !version_compare(PHP_VERSION, '5.4', '>='))
         {
             $this->_body = stripslashes($this->_body);
         }
