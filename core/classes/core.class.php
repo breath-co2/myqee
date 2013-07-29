@@ -695,7 +695,7 @@ abstract class Core_Core extends Bootstrap
 
                 return array
                 (
-                    'class'  => 'Controller_' . $found_route['controller'],
+                    'class'  => 'Controller_' . preg_replace('#[^a-zA-Z0-9_]#', '_', trim($found_route['controller'])),
                     'route'  => $found_route,
                 );
             }
@@ -899,6 +899,8 @@ abstract class Core_Core extends Bootstrap
                 Core::debug()->log($uri, 'not found contoller');
             }
         }
+
+        $found['class'] = preg_replace('#[^a-zA-Z0-9_]#', '_', trim($found['class']));
 
         return $found;
     }
