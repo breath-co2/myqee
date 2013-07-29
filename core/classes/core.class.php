@@ -900,7 +900,7 @@ abstract class Core_Core extends Bootstrap
             }
         }
 
-        if (is_array($found['class']) && isset($found['class']))
+        if (is_array($found) && isset($found['class']))
         {
             $found['class'] = preg_replace('#[^a-zA-Z0-9_]#', '_', trim($found['class']));
         }
