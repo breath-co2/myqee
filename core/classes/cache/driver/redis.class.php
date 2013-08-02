@@ -89,6 +89,11 @@ class Core_Cache_Driver_Redis extends Cache_Driver
         if (!isset(Cache_Driver_Redis::$redis[$config_name]))
         {
             $class = 'Redis';
+            if (!class_exists($class, false))
+            {
+                throw new Exception(__('Your redis module of php is not installed, please install the module from http://pecl.php.net/package/redis'));
+            }
+
             Cache_Driver_Redis::$redis[$config_name] = new $class();
             Cache_Driver_Redis::$redis_num[$config_name] = 0;
 

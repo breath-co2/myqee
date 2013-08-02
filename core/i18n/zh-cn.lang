@@ -28,6 +28,9 @@ Swift get data error.Data: :data                               = 获取Swift消�
 Swift get token error.not found X-Auth-Token                   = 获取Swift Token失败，没有发现 X-Auth-Token 头信息
 Swift get token error.not found X-Storage-Url                  = 获取Swift Token失败，没有发现 X-Storage-Url 头信息
 
+Your redis module of php is not installed, please install the module from http://pecl.php.net/package/redis = 你的php没有安装redis模块，请从 http://pecl.php.net/package/redis 安装模块 
+
+
 [Core.Page]
 First    = 首页
 Previous = 上一页
