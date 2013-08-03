@@ -45,8 +45,8 @@ class Core_HTML
         'selected',
         'checked',
         'readonly',
-        'disabled'
-    );
+        'disabled',
+   );
 
     /**
      * @var  boolean  automatically target external URLs to a new window?
@@ -101,27 +101,27 @@ class Core_HTML
      */
     public static function anchor($uri, $title = null, array $attributes = null, $protocol = null)
     {
-        if ( $title === null )
+        if ($title === null)
         {
             // Use the URI as the title
             $title = $uri;
         }
-        if ( $uri === '' )
+        if ($uri === '')
         {
             // Only use the base URL
             $uri = Core::url()->base(false, $protocol);
         }
         else
         {
-            if ( strpos($uri, '://') !== false )
+            if (strpos($uri, '://') !== false)
             {
-                if ( HTML::$windowed_urls === true && empty($attributes['target']) )
+                if (HTML::$windowed_urls === true && empty($attributes['target']))
                 {
                     // Make the link open in a new window
                     $attributes['target'] = '_blank';
                 }
             }
-            elseif ( $uri[0] !== '#' && $uri[0] != '/' )
+            elseif ($uri[0] !== '#' && $uri[0] != '/')
             {
                 // Make the URI absolute for non-id anchors
                 $uri = Core::url($uri, $protocol);
@@ -148,7 +148,7 @@ class Core_HTML
      */
     public static function file_anchor($file, $title = null, array $attributes = null, $protocol = null)
     {
-        if ( $title === null )
+        if ($title === null)
         {
             // Use the file name as the title
             $title = basename($file);
@@ -173,9 +173,9 @@ class Core_HTML
     public static function obfuscate($string)
     {
         $safe = '';
-        foreach ( str_split($string) as $letter )
+        foreach (str_split($string) as $letter)
         {
-            switch ( rand(1, 3) )
+            switch (rand(1, 3))
             {
                 // HTML entity code
                 case 1 :
@@ -226,7 +226,7 @@ class Core_HTML
     {
         // Obfuscate email address
         $email = HTML::email($email);
-        if ( $title === null )
+        if ($title === null)
         {
             // Use the email address as the title
             $title = $email;
@@ -248,7 +248,7 @@ class Core_HTML
      */
     public static function style($file, array $attributes = null, $index = false)
     {
-        if ( strpos($file, '://') === false )
+        if (strpos($file, '://') === false)
         {
             // Add the base URL
             $file = Core::url()->base($index) . $file;
@@ -276,7 +276,7 @@ class Core_HTML
      */
     public static function script($file, array $attributes = null, $index = false)
     {
-        if ( strpos($file, '://') === false )
+        if (strpos($file, '://') === false)
         {
             // Add the base URL
             $file = Core::url()->base($index) . $file;
@@ -301,7 +301,7 @@ class Core_HTML
      */
     public static function image($file, array $attributes = null, $index = false)
     {
-        if ( strpos($file, '://') === false )
+        if (strpos($file, '://') === false)
         {
             // Add the base URL
             $file = Core::url()->base($index) . $file;
@@ -322,11 +322,11 @@ class Core_HTML
      */
     public static function attributes(array $attributes = null)
     {
-        if ( empty($attributes) ) return '';
+        if (empty($attributes))return '';
         $sorted = array();
-        foreach ( HTML::$attribute_order as $key )
+        foreach (HTML::$attribute_order as $key)
         {
-            if ( isset($attributes[$key]) )
+            if (isset($attributes[$key]))
             {
                 // Add the attribute to the sorted list
                 $sorted[$key] = $attributes[$key];
@@ -335,9 +335,9 @@ class Core_HTML
         // Combine the sorted attributes
         $attributes = $sorted + $attributes;
         $compiled = '';
-        foreach ( $attributes as $key => $value )
+        foreach ($attributes as $key => $value)
         {
-            if ( $value === null )
+            if ($value === null)
             {
                 // Skip attributes that have null values
                 continue;

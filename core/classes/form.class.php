@@ -16,14 +16,14 @@ class Core_Form
     /**
      * Generates an opening HTML form tag.
      *
-     * // Form will submit back to the current page using POST
-     * echo Form::open();
+     *     // Form will submit back to the current page using POST
+     *     echo Form::open();
      *
-     * // Form will submit to 'search' using GET
-     * echo Form::open('search', array('method' => 'get'));
+     *     // Form will submit to 'search' using GET
+     *     echo Form::open('search', array('method' => 'get'));
      *
-     * // When "file" inputs are present, you must include the "enctype"
-     * echo Form::open(null, array('enctype' => 'multipart/form-data'));
+     *     // When "file" inputs are present, you must include the "enctype"
+     *     echo Form::open(null, array('enctype' => 'multipart/form-data'));
      *
      * @param   string  form action, defaults to the current request URI
      * @param   array   html attributes
@@ -34,25 +34,19 @@ class Core_Form
      */
     public static function open($action = null, array $attributes = null)
     {
-        if ( $action === null )
-        {
-            // Use the current URI
-            $action = HttpIO::current()->uri;
-        }
-
-        if ( strpos($action, '://') === false )
+        if (strpos($action, '://') === false)
         {
             // Make the URI absolute
             $action = Core::url($action);
         }
 
         // Add the form action to the attributes
-        $attributes['action'] = $action;
+        $attributes['action'] = (string)$action;
 
         // Only accept the default character set
         $attributes['accept-charset'] = Core::$charset;
 
-        if ( !isset($attributes['method']) )
+        if (!isset($attributes['method']))
         {
             // Use POST method
             $attributes['method'] = 'post';
@@ -64,7 +58,7 @@ class Core_Form
     /**
      * Creates the closing form tag.
      *
-     * echo Form::close();
+     *     echo Form::close();
      *
      * @return  string
      */
@@ -93,13 +87,13 @@ class Core_Form
         // Set the input value
         $attributes['value'] = $value;
 
-        if ( !isset($attributes['type']) )
+        if (!isset($attributes['type']))
         {
             // Default type is text
             $attributes['type'] = 'text';
         }
 
-        if ($attributes['type'] == 'text' && !isset($attributes['min']) && (!$attributes['value'] || preg_match('#^[0-9.]+$#',$attributes['value'])) && (int)$attributes['value']>=0 )
+        if ($attributes['type'] == 'text' && !isset($attributes['min']) && (!$attributes['value'] || preg_match('#^[0-9.]+$#', $attributes['value'])) && (int)$attributes['value']>=0)
         {
             $attributes['min'] = '0';
         }
@@ -110,7 +104,7 @@ class Core_Form
     /**
      * Creates a hidden form input.
      *
-     * echo Form::hidden('csrf', $token);
+     *     echo Form::hidden('csrf', $token);
      *
      * @param   string  input name
      * @param   string  input value
@@ -128,7 +122,7 @@ class Core_Form
     /**
      * Creates a password form input.
      *
-     * echo Form::password('password');
+     *     echo Form::password('password');
      *
      * @param   string  input name
      * @param   string  input value
@@ -146,7 +140,7 @@ class Core_Form
     /**
      * Creates a file upload form input. No input value can be specified.
      *
-     * echo Form::file('image');
+     *     echo Form::file('image');
      *
      * @param   string  input name
      * @param   array   html attributes
@@ -163,7 +157,7 @@ class Core_Form
     /**
      * Creates a checkbox form input.
      *
-     * echo Form::checkbox('remember_me', 1, (bool) $remember);
+     *     echo Form::checkbox('remember_me', 1, (bool) $remember);
      *
      * @param   string   input name
      * @param   string   input value
@@ -176,7 +170,7 @@ class Core_Form
     {
         $attributes['type'] = 'checkbox';
 
-        if ( $checked === TRUE )
+        if (true===$checked)
         {
             // Make the checkbox active
             $attributes['checked'] = 'checked';
@@ -188,8 +182,8 @@ class Core_Form
     /**
      * Creates a radio form input.
      *
-     * echo Form::radio('like_cats', 1, $cats);
-     * echo Form::radio('like_cats', 0, !$cats);
+     *     echo Form::radio('like_cats', 1, $cats);
+     *     echo Form::radio('like_cats', 0, !$cats);
      *
      * @param   string   input name
      * @param   string   input value
@@ -202,7 +196,7 @@ class Core_Form
     {
         $attributes['type'] = 'radio';
 
-        if ( $checked === TRUE )
+        if (true===$checked)
         {
             // Make the radio active
             $attributes['checked'] = 'checked';
@@ -214,7 +208,7 @@ class Core_Form
     /**
      * Creates a textarea form input.
      *
-     * echo Form::textarea('about', $about);
+     *     echo Form::textarea('about', $about);
      *
      * @param   string   textarea name
      * @param   string   textarea body
@@ -252,15 +246,15 @@ class Core_Form
         // Set the input name
         $attributes['name'] = $name;
 
-        if ( is_array($selected) )
+        if (is_array($selected))
         {
             // This is a multi-select, god save us!
             $attributes['multiple'] = 'multiple';
         }
 
-        if ( !is_array($selected) )
+        if (!is_array($selected))
         {
-            if ( $selected === null )
+            if ($selected === null)
             {
                 // Use an empty array
                 $selected = array();
@@ -272,16 +266,16 @@ class Core_Form
             }
         }
 
-        if ( empty($options) )
+        if (empty($options))
         {
             // There are no options
             $options = '';
         }
         else
         {
-            foreach ( $options as $value => $name )
+            foreach ($options as $value => $name)
             {
-                if ( is_array($name) )
+                if (is_array($name))
                 {
                     // Create a new optgroup
                     $group = array('label' => $value);
@@ -289,7 +283,7 @@ class Core_Form
                     // Create a new list of options
                     $_options = array();
 
-                    foreach ( $name as $_value => $_name )
+                    foreach ($name as $_value => $_name)
                     {
                         // Force value to be string
                         $_value = (string)$_value;
@@ -297,7 +291,7 @@ class Core_Form
                         // Create a new attribute set for this option
                         $option = array('value' => $_value);
 
-                        if ( in_array($_value, $selected) )
+                        if (in_array($_value, $selected))
                         {
                             // This option is selected
                             $option['selected'] = 'selected';
@@ -320,7 +314,7 @@ class Core_Form
                     // Create a new attribute set for this option
                     $option = array('value' => $value);
 
-                    if ( in_array($value, $selected) )
+                    if (in_array($value, $selected))
                     {
                         // This option is selected
                         $option['selected'] = 'selected';
@@ -341,7 +335,7 @@ class Core_Form
     /**
      * Creates a submit form input.
      *
-     * echo Form::submit(null, 'Login');
+     *      echo Form::submit(null, 'Login');
      *
      * @param   string   input name
      * @param   string  input value
@@ -349,7 +343,7 @@ class Core_Form
      * @return  string
      * @uses	Form::input
      */
-    public static function submit($name , $value, array $attributes = null)
+    public static function submit($name, $value, array $attributes = null)
     {
         $attributes['type'] = 'submit';
 
@@ -359,22 +353,21 @@ class Core_Form
     /**
      * Creates a image form input.
      *
-     * echo Form::image(null, null, array('src' => 'media/img/login.png'));
+     *     echo Form::image(null, null, array('src' => 'media/img/login.png'));
      *
      * @param   string   input name
      * @param   string   input value
      * @param   array	html attributes
-     * @param   boolean  add index file to URL?
      * @return  string
      * @uses	Form::input
      */
-    public static function image($name, $value, array $attributes = null, $index = false)
+    public static function image($name, $value, array $attributes = null)
     {
-        if ( !empty($attributes['src']) )
+        if (!empty($attributes['src']))
         {
-            if ( strpos($attributes['src'], '://') === false )
+            if (strpos($attributes['src'], '://') === false)
             {
-                $attributes['src'] = Core::url($attributes['src'] , $index);
+                $attributes['src'] = Core::url($attributes['src']);
             }
         }
 
@@ -387,7 +380,7 @@ class Core_Form
      * Creates a button form input. Note that the body of a button is NOT escaped,
      * to allow images and other HTML to be used.
      *
-     * echo Form::button('save', 'Save Profile', array('type' => 'submit'));
+     *     echo Form::button('save', 'Save Profile', array('type' => 'submit'));
      *
      * @param   string  input name
      * @param   string  input value
@@ -406,7 +399,7 @@ class Core_Form
     /**
      * Creates a form label. Label text is not automatically translated.
      *
-     * echo Form::label('username', 'Username');
+     *     echo Form::label('username', 'Username');
      *
      * @param   string  target input
      * @param   string  label text
@@ -416,7 +409,7 @@ class Core_Form
      */
     public static function label($input, $text = null, array $attributes = null)
     {
-        if ( $text === null )
+        if ($text === null)
         {
             // Use the input name as the text
             $text = ucwords(preg_replace('/\W+/', ' ', $input));
