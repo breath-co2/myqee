@@ -1340,7 +1340,7 @@ abstract class Core_Core extends Bootstrap
                 $trace_array['use_time']    = microtime(1) - START_TIME;
                 $trace_array['trace']       = $trace_obj;
 
-                $trace_data = serialize($trace_array);
+                $trace_data = base64_encode(gzcompress(serialize($trace_array), 9));
                 unset($trace_array);
 
                 $view->error_saved = true;
