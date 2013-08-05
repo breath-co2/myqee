@@ -1314,7 +1314,7 @@ abstract class Core_Core extends Bootstrap
                 (
                     'project'     => Core::$project,
                     'uri'         => HttpIO::$uri,
-                    'url'         => HttpIO::PROTOCOL . '://'.$_SERVER['HTTP_HOST'] . $_SERVER["REQUEST_URI"],
+                    'url'         => HttpIO::PROTOCOL . $_SERVER['HTTP_HOST'] . $_SERVER["REQUEST_URI"],
                     'post'        => HttpIO::POST(null, HttpIO::PARAM_TYPE_OLDDATA),
                     'get'         => $_SERVER['QUERY_STRING'],
                     'cookie'      => HttpIO::COOKIE(null, HttpIO::PARAM_TYPE_OLDDATA),
@@ -1335,7 +1335,7 @@ abstract class Core_Core extends Bootstrap
                 $trace_array['use_time']    = microtime(1) - START_TIME;
                 $trace_array['trace']       = $trace_obj;
 
-                $trace_data = base64_encode(gzcompress(serialize($trace_array), 9));
+                $trace_data = serialize($trace_array);
                 unset($trace_array);
 
                 $view->error_saved = true;
@@ -1367,7 +1367,7 @@ abstract class Core_Core extends Bootstrap
                     switch ($save_type)
                     {
                         case 'database':
-                            $obj = new Database($error_config['type_config']?$error_config['type_config']:'default');
+                            $obj = $error_config['type_config']?new Database($error_config['type_config']) : new Database();
                             $data = array
                             (
                                 'time'        => strtotime($date.' 00:00:00'),
@@ -1378,7 +1378,7 @@ abstract class Core_Core extends Bootstrap
                             $obj->insert('error500_log', $data);
                             break;
                         case 'cache':
-                            $obj = new Cache($error_config['type_config']?$error_config['type_config']:'default');
+                            $obj = $error_config['type_config']?new Cache($error_config['type_config']) : new Cache();
                             if (!$obj->get($error_no))
                             {
                                 $obj->set($error_no, $trace_data, 7*86400);
@@ -1403,9 +1403,9 @@ abstract class Core_Core extends Bootstrap
             $view->error = $error;
             $view->render(true);
         }
-        catch ( Exception $e )
+        catch (Exception $e)
         {
-            list ( $REQUEST_URI ) = explode('?', $_SERVER['REQUEST_URI'], 2);
+            list ($REQUEST_URI) = explode('?', $_SERVER['REQUEST_URI'], 2);
             $REQUEST_URI = htmlspecialchars(rawurldecode($REQUEST_URI));
             echo '<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0//EN">' .
             CRLF . '<html>' .
