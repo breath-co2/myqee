@@ -143,7 +143,7 @@ abstract class Core_HttpIO
     /**
      * 协议类型
      *
-     * @var  string  protocol: http, https, ftp, cli, etc
+     * @var  string http://, https:// 等
      */
     const PROTOCOL = _HTTPIO_PROTOCOL;
 
