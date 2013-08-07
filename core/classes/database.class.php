@@ -244,7 +244,7 @@ class Core_Database extends Database_QueryBuilder
      */
     public function query($sql, $as_object = false, $use_master = null)
     {
-        if ( null === $use_master && true === $this->is_auto_use_master )
+        if (null === $use_master && true === $this->is_auto_use_master)
         {
             $use_master = true;
         }
@@ -303,7 +303,7 @@ class Core_Database extends Database_QueryBuilder
      * @param boolean $use_master 当$type=select此参数有效，设置true则使用主数据库，设置false则使用从数据库，不设置则使用默认
      * @return  string
      */
-    public function compile($type = 'select', $use_master=null)
+    public function compile($type = 'select', $use_master = null)
     {
         if ( $type=='select' && null === $use_master && true === $this->is_auto_use_master )
         {
@@ -330,7 +330,7 @@ class Core_Database extends Database_QueryBuilder
      */
     public function get($as_object = false, $use_master = null)
     {
-        return $this->query($this->compile('select',$use_master), $as_object, $use_master);
+        return $this->query($this->compile('select', $use_master), $as_object, $use_master);
     }
 
     /**
@@ -342,7 +342,7 @@ class Core_Database extends Database_QueryBuilder
      */
     public function get_one($as_object = false, $use_master = null)
     {
-        return $this->get($as_object,$use_master)->current();
+        return $this->get($as_object, $use_master)->current();
     }
 
     /**
@@ -365,15 +365,15 @@ class Core_Database extends Database_QueryBuilder
      */
     public function update($table = null, $value = null, $where = null)
     {
-        if ( $table )
+        if ($table)
         {
             $this->table($table);
         }
-        if ( $value )
+        if ($value)
         {
             $this->set($value);
         }
-        if ( $where )
+        if ($where)
         {
             $this->where($where);
         }
@@ -392,11 +392,11 @@ class Core_Database extends Database_QueryBuilder
      */
     public function insert($table = null, $value = null)
     {
-        if ( $table )
+        if ($table)
         {
             $this->table($table);
         }
-        if ( $value )
+        if ($value)
         {
             $this->columns(array_keys($value));
             $this->values($value);
@@ -415,11 +415,11 @@ class Core_Database extends Database_QueryBuilder
      */
     public function delete($table = null, $where = null)
     {
-        if ( $table )
+        if ($table)
         {
             $this->table($table);
         }
-        if ( $where )
+        if ($where)
         {
             $this->where($where);
         }
@@ -436,17 +436,26 @@ class Core_Database extends Database_QueryBuilder
      */
     public function count_records($table = null, $where = null)
     {
-        if ( $table )
+        if ($table)
         {
             $this->from($table);
         }
-        if ( $where )
+        if ($where)
         {
             $this->where($where);
         }
+
+        // 记录当前builder信息
+        $builder = $this->_builder;
+
         $this->select($this->expr_value('COUNT(1) AS `total_row_count`'));
 
-        return (int)$this->query($this->compile('select'), false)->get('total_row_count');
+        $count = (int)$this->query($this->compile('select'), false)->get('total_row_count');
+
+        // 将之前获取的builder信息放倒_builder_bak上，以便可使用->recovery_last_builder()方法恢复前一个builder
+        $this->_builder_bak = $builder;
+
+        return $count;
     }
 
     /**
@@ -472,21 +481,22 @@ class Core_Database extends Database_QueryBuilder
      */
     public function merge($table = null, $value = null, $where = null)
     {
-        if ( $table )
+        if ($table)
         {
             $this->table($table);
         }
-        if ( $value )
+        if ($value)
         {
             $this->columns(array_keys($value));
             $this->values($value);
         }
-        if ( $where )
+        if ($where)
         {
             $this->where($where);
         }
+
         $sql = $this->compile('replace');
-        return $this->query($sql, false , true);
+        return $this->query($sql, false, true);
     }
 
     /**
@@ -532,11 +542,11 @@ class Core_Database extends Database_QueryBuilder
      * @return boolean
      * @throws Exception
      */
-    public function create_database( $database, $charset = null, $collate=null )
+    public function create_database($database, $charset = null, $collate=null)
     {
         if (method_exists($this->driver, 'create_database'))
         {
-            return $this->driver->create_database($database,$charset,$collate);
+            return $this->driver->create_database($database, $charset, $collate);
         }
         else
         {
@@ -565,9 +575,9 @@ class Core_Database extends Database_QueryBuilder
         );
 
         // Get the protocol and arguments
-        list ( $db['type'], $connection ) = explode('://', $dsn, 2);
+        list ($db['type'], $connection) = explode('://', $dsn, 2);
 
-        if ( $connection[0] === '/' )
+        if ($connection[0] === '/')
         {
             // Strip leading slash
             $db['database'] = substr($connection, 1);
@@ -576,26 +586,26 @@ class Core_Database extends Database_QueryBuilder
         {
             $connection = parse_url('http://' . $connection);
 
-            if ( isset($connection['user']) )
+            if (isset($connection['user']))
             {
                 $db['username'] = $connection['user'];
             }
 
-            if ( isset($connection['pass']) )
+            if (isset($connection['pass']))
             {
                 $db['password'] = $connection['pass'];
             }
 
-            if ( isset($connection['port']) )
+            if (isset($connection['port']))
             {
                 $db['port'] = $connection['port'];
             }
 
-            if ( isset($connection['host']) )
+            if (isset($connection['host']))
             {
-                if ( $connection['host'] === 'unix(' )
+                if ($connection['host'] === 'unix(')
                 {
-                    list ( $db['persistent'], $connection['path'] ) = explode(')', $connection['path'], 2);
+                    list ($db['persistent'], $connection['path']) = explode(')', $connection['path'], 2);
                 }
                 else
                 {
@@ -603,7 +613,7 @@ class Core_Database extends Database_QueryBuilder
                 }
             }
 
-            if ( isset($connection['path']) && $connection['path'] )
+            if (isset($connection['path']) && $connection['path'])
             {
                 // Strip leading slash
                 $db['database'] = trim(trim(substr($connection['path'], 1),'/'));
@@ -622,7 +632,7 @@ class Core_Database extends Database_QueryBuilder
 
         foreach ( Database::$instances as $database )
         {
-            if ( $database instanceof Database )
+            if ($database instanceof Database)
             {
                 $database->close_connect();
             }

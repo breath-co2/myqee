@@ -12,9 +12,19 @@
  */
 class Core_Database_QueryBuilder
 {
-
-    // Builder ...
+    /**
+     * Builder数组
+     *
+     * @var array
+     */
     protected $_builder;
+
+    /**
+     * Builder备份
+     *
+     * @var array
+     */
+    protected $_builder_bak;
 
     protected $_last_join = null;
 
@@ -62,23 +72,36 @@ class Core_Database_QueryBuilder
     }
 
     /**
-     * select(c1,c2,c3,......)
+     * select(c1, c2, c3,......)
+     *
+     * 如果查询是SELECT * 则不需要设置，系统会自动处理
+     *
+     *      $db->select('id', 'username')->from('members')->get()->as_array();
+     *      echo $db->last_query();     //SELECT `id`, `username` FROM `members`;
+     *
+     *      $db->select('db1.id', 'db2.username')->from('members as db1')->join('mydb as db2')->on('db1.id', 'db2.mid')->get()->as_array();
+     *      echo $db->last_query();     //SELECT `db1`.`id`, `db2`.`username` FROM `members` AS `db1` JOIN ON `db1`.`id` = `db2`.`mid`;
+     *
+     *      // 使用Database::expr_value()方法可以传入一个不被解析的字符串
+     *      $db->select(Database::expr_value('SUM("id") as `id`'))->from('members')->get()->as_array();
+     *      echo $db->last_query();     //SELECT SUM("id") as `id` FROM `members`;
+     *
      *
      * @param   mixed  column name or array($column, $alias) or object
      * @param   ...
      * @return  Database
      */
-    public function select($columns = null)
+    public function select($columns)
     {
-        if ( func_num_args() > 1 )
+        if (func_num_args() > 1)
         {
             $columns = func_get_args();
         }
-        elseif ( is_string($columns) )
+        elseif (is_string($columns))
         {
             $columns = explode(',', $columns);
         }
-        elseif ( is_array($columns) )
+        elseif (!is_array($columns))
         {
             $columns = array($columns);
         }
@@ -104,14 +127,14 @@ class Core_Database_QueryBuilder
     /**
      * 查询最大值
      *
-     *   $db->select_max('test');
+     *    $db->select_max('test')->from('db')->group_by('class_id')->get()->as_array();
      *
      * @param string $conlumn
      * @return  Database
      */
     public function select_max($conlumn)
     {
-        $this->select_adv($conlumn,'max');
+        $this->select_adv($conlumn, 'max');
 
         return $this;
     }
@@ -119,14 +142,14 @@ class Core_Database_QueryBuilder
     /**
      * 查询平均值
      *
-     *   $db->select_min('test');
+     *    $db->select_min('test')->from('db')->group_by('class_id')->get()->as_array();
      *
      * @param string $conlumn
      * @return  Database
      */
     public function select_min($conlumn)
     {
-        $this->select_adv($conlumn,'min');
+        $this->select_adv($conlumn, 'min');
 
         return $this;
     }
@@ -134,14 +157,29 @@ class Core_Database_QueryBuilder
     /**
      * 查询平均值
      *
-     *   $db->select_avg('test');
+     *    $db->select_avg('test')->from('db')->group_by('class_id')->get()->as_array();
      *
      * @param string $conlumn
      * @return  Database
      */
     public function select_avg($conlumn)
     {
-        $this->select_adv($conlumn,'avg');
+        $this->select_adv($conlumn, 'avg');
+
+        return $this;
+    }
+
+    /**
+     * 查询总和
+     *
+     *    $db->select_sum('test')->from('db')->group_by('class_id')->get()->as_array();
+     *
+     * @param string $conlumn
+     * @return  Database
+     */
+    public function select_sum($conlumn)
+    {
+        $this->select_adv($conlumn, 'sum');
 
         return $this;
     }
@@ -203,7 +241,7 @@ class Core_Database_QueryBuilder
      */
     public function values(array $values)
     {
-        if ( is_array($values) && isset($values[0]) && is_array($values[0]) )
+        if (is_array($values) && isset($values[0]) && is_array($values[0]))
         {
             // 多行数据
             // $values = $values;
@@ -226,11 +264,11 @@ class Core_Database_QueryBuilder
      */
     public function set(array $pairs)
     {
-        foreach ( $pairs as $column => $value )
+        foreach ($pairs as $column => $value)
         {
             $column = trim($column);
 
-            if ( preg_match('#^(.*)(\+|\-)$#', $column , $m) )
+            if (preg_match('#^(.*)(\+|\-)$#', $column , $m))
             {
                 $column = $m[1];
                 $op = $m[2];
@@ -281,7 +319,7 @@ class Core_Database_QueryBuilder
      */
     public function value_decrement($column, $value)
     {
-        return $this->value_increment($column , -$value );
+        return $this->value_increment($column , -$value);
     }
 
     /**
@@ -306,15 +344,15 @@ class Core_Database_QueryBuilder
      */
     public function from($tables)
     {
-        if ( func_num_args() > 1 )
+        if (func_num_args() > 1)
         {
             $tables = func_get_args();
         }
-        elseif ( is_string($tables) )
+        elseif (is_string($tables))
         {
             $tables = explode(',', $tables);
         }
-        elseif ( is_array($tables) )
+        elseif (!is_array($tables))
         {
             $tables = array($tables);
         }
@@ -336,6 +374,7 @@ class Core_Database_QueryBuilder
         $this->_builder['join'][] = array('table' => $table, 'type' => $type, 'on' => array());
         end($this->_builder['join']);
         $k = key($this->_builder['join']);
+        unset($this->_last_join);
         $this->_last_join = & $this->_builder['join'][$k];
 
         return $this;
@@ -491,38 +530,78 @@ class Core_Database_QueryBuilder
      */
     public function offset($number)
     {
-        $this->_builder['offset'] = (int)$number;
+        $number = (int)$number;
+        if ($number>0)
+        {
+            $this->_builder['offset'] = $number;
+        }
 
         return $this;
     }
 
     /**
      * 重设数据
+     *
+     * @param $key 不传则全部清除，可选参数 select,select_adv,from,join,where,group_by,having,parameters,set,columns,values,where,index,order_by,distinct,limit,offset,table,last_join,join,on
      * @return $this
      */
-    public function reset()
+    public function reset($key = null)
     {
-        $this->_builder['select']     =
-        $this->_builder['select_adv'] =
-        $this->_builder['from']       =
-        $this->_builder['join']       =
-        $this->_builder['where']      =
-        $this->_builder['group_by']   =
-        $this->_builder['having']     =
-        $this->_builder['parameters'] =
-        $this->_builder['set']        =
-        $this->_builder['columns']    =
-        $this->_builder['values']     =
-        $this->_builder['where']      =
-        $this->_builder['index']      =
-        $this->_builder['order_by']   = array();
+        if ($key)
+        {
+            foreach ((array)$key as $item)
+            {
+                $key = strtolower($key);
+                switch ($key)
+                {
+                    case 'distinct':
+                        $this->_builder['distinct'] = false;
+                        break;
+                    case 'limit':
+                    case 'offset':
+                    case 'table':
+                        $this->_builder[$key] = null;
+                        break;
+                    case 'last_join':
+                    case 'join':
+                    case 'on':
+                        $this->_builder['last_join'] = null;
+                        break;
+                    default:
+                        if (isset($this->_builder[$key]))
+                        {
+                            $this->_builder[$key] = array();
+                        }
+                        break;
+                }
+            }
+        }
+        else
+        {
+            $this->_builder_bak = $this->_builder;
 
-        $this->_builder['distinct']   = false;
+            $this->_builder['select']     =
+            $this->_builder['select_adv'] =
+            $this->_builder['from']       =
+            $this->_builder['join']       =
+            $this->_builder['where']      =
+            $this->_builder['group_by']   =
+            $this->_builder['having']     =
+            $this->_builder['parameters'] =
+            $this->_builder['set']        =
+            $this->_builder['columns']    =
+            $this->_builder['values']     =
+            $this->_builder['where']      =
+            $this->_builder['index']      =
+            $this->_builder['order_by']   = array();
 
-        $this->_builder['limit']      =
-        $this->_builder['offset']     =
-        $this->_builder['table']      =
-        $this->_builder['last_join']  = null;
+            $this->_builder['distinct']   = false;
+
+            $this->_builder['limit']      =
+            $this->_builder['offset']     =
+            $this->_builder['table']      =
+            $this->_builder['last_join']  = null;
+        }
 
         return $this;
     }
@@ -553,9 +632,9 @@ class Core_Database_QueryBuilder
      */
     public function where($column, $value = null, $op = '=')
     {
-        if ( is_array($column) )
+        if (is_array($column))
         {
-            foreach ( $column as $c => $value )
+            foreach ($column as $c => $value)
             {
                 $this->and_where($c, $value, $op);
             }
@@ -574,10 +653,10 @@ class Core_Database_QueryBuilder
      */
     public function and_where($column, $value, $op = '=')
     {
-        if ( !is_object($column) )
+        if (!is_object($column))
         {
             $column = trim($column);
-            if ( preg_match('#^(.*)(>|<|>=|<=|\!=|<>)$#', $column , $m) )
+            if (preg_match('#^(.*)(>|<|>=|<=|\!=|<>)$#', $column , $m))
             {
                 $column = $m[1];
                 $op = $m[2];
@@ -696,7 +775,7 @@ class Core_Database_QueryBuilder
     {
         $this->_builder['limit'] = (int)$number;
 
-        if ( null !== $offset )
+        if (null!==$offset)
         {
             $this->offset($offset);
         }
@@ -738,7 +817,7 @@ class Core_Database_QueryBuilder
      */
     public function mod($column, $mod_dig , $value)
     {
-        return $this->and_where($column, array($mod_dig,$value) , 'mod' );
+        return $this->and_where($column, array($mod_dig, $value) , 'mod');
     }
 
     /**
@@ -751,7 +830,7 @@ class Core_Database_QueryBuilder
      */
     public function or_mod($column, $mod_dig , $value , $op = '=')
     {
-        return $this->or_where($column, array($mod_dig,$value,$op) , 'mod' );
+        return $this->or_where($column, array($mod_dig,$value,$op) , 'mod');
     }
 
     /**
@@ -789,6 +868,32 @@ class Core_Database_QueryBuilder
     public function ignore_index($index)
     {
         $this->_builder['index'][] = array($index,'ignore');
+
+        return $this;
+    }
+
+    /**
+     * 恢复最后一个Builder条件
+     *
+     *      $count = $db->from('mydb')->where('id', 10, '>')->count_records();
+     *      // 在执行count_records()时，所有的builder数据将会被清空
+     *      echo $db->last_query();   // SELECT COUNT(1) AS `total_row_count` FROM `mydb` WHERE `id` > '10'
+     *
+     *      // 恢复builder
+     *      $db->recovery_last_builder();
+     *      $db->limit(20)->order_by('id', 'DESC')->get()->as_array();
+     *
+     *      echo $db->last_query();   // SELECT * FROM `mydb` WHERE `id` > '10' ORDER BY `id` DESC LIMIT 10
+     *
+     *
+     * @return Database
+     */
+    public function recovery_last_builder()
+    {
+        if ($this->_builder_bak)
+        {
+            $this->_builder = $this->_builder_bak;
+        }
 
         return $this;
     }
