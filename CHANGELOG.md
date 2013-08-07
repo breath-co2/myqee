@@ -26,9 +26,11 @@ V3.0
   * 增加慢查询日志功能，可在config.php中设置慢查询 `$config['slow_query_mtime']` 参数
   * 各驱动优化，避免在连接数据库失败后将数据库用户名、密码等信息暴露到错误堆叠里
   * MongoDB优化主从模式查询，改Group查询为aggregate查询（MongoDB必需2.2版本以上，MongoDB扩展必需1.3+版本）
-  * 查询where支持!=和<>，例如：`$db->where('id!=',3)` 或 `$db->where('id<>',3);` 表示查询条件为id不等于3
+  * 查询where支持!=和<>，例如：`$db->where('id!=', 3)` 或 `$db->where('id<>', 3);` 表示查询条件为id不等于3
   * MySQL驱动支持distinct某个字段，例如 `$db->distinct('test_field')`
-  * Database增加`select_max()`,`select_min()`,`select_avg()`等高级查询函数
+  * Database增加`select_max()`, `select_min()`, `select_avg()`, `select_sum()` 等高级查询函数
+  * 增加 `set_builder($builder)` 和 `recovery_last_builder()` 方法，适用与在多条查询中具有类似条件的情况
+  * reset()方法支持重置单个信息，比如 `$db->reset('select');` 可但是重置select的参数
   * 程序里支持`$db = new Database('mysqli://root:123456@127.0.0.1/myqee/')`这样的快速连接写法，省去数据库配置的麻烦
 * **代码开发相关优化**
   * 将shell目录改名bin目录，增加merge-assets、view-error500-log等开发及部署工具

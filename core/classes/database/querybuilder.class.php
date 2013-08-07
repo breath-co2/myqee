@@ -17,14 +17,14 @@ class Core_Database_QueryBuilder
      *
      * @var array
      */
-    protected $_builder;
+    protected $_builder = array();
 
     /**
      * Builder备份
      *
      * @var array
      */
-    protected $_builder_bak;
+    protected $_builder_bak = array();
 
     protected $_last_join = null;
 
@@ -55,6 +55,37 @@ class Core_Database_QueryBuilder
     public function & get_builder()
     {
         return $this->_builder;
+    }
+
+    /**
+     * 设置Builder信息
+     *
+     *      // 设置一样的builder
+     *      $db->from('mytable')->where('id>', 10)->limit(10)->order_by('id', 'DESC');
+     *
+     *      // 获取当前builder
+     *      $builder = $db->get_builder();
+     *
+     *      // 执行查询
+     *      $data1 = $db->where('type', 1)->get()->as_array();
+     *      echo $db->last_query();     //SELECT * FROM `mytable` WHERE `id` > 10 AND `type` = '1' ORDER BY `id` DESC LIMIT 10
+     *
+     *      // 将前面获取的builder重新设置回去
+     *      $db->set_builder($builder);
+     *
+     *      // 再次执行另外一个附加条件的查询
+     *      $data2 = $db->where('type', 3)->get()->as_array();
+     *      echo $db->last_query();     //SELECT * FROM `mytable` WHERE `id` > 10 AND `type` = '3' ORDER BY `id` DESC LIMIT 10
+     *
+     *
+     * @param array $builder builder信息数组，不必完整的，建议通过get_builder()获取后设置
+     * @return Database
+     */
+    public function set_builder(array $builder)
+    {
+        $this->_builder = array_merge($this->_builder, $builder);
+
+        return $this;
     }
 
     /**
@@ -543,7 +574,7 @@ class Core_Database_QueryBuilder
      * 重设数据
      *
      * @param $key 不传则全部清除，可选参数 select,select_adv,from,join,where,group_by,having,parameters,set,columns,values,where,index,order_by,distinct,limit,offset,table,last_join,join,on
-     * @return $this
+     * @return Database
      */
     public function reset($key = null)
     {
@@ -578,7 +609,7 @@ class Core_Database_QueryBuilder
         }
         else
         {
-            $this->_builder_bak = $this->_builder;
+            $this->_builder_bak           = $this->_builder;
 
             $this->_builder['select']     =
             $this->_builder['select_adv'] =
@@ -873,7 +904,22 @@ class Core_Database_QueryBuilder
     }
 
     /**
-     * 恢复最后一个Builder条件
+     * 恢复最后查询或reset时的Builder数据
+     *
+     * 此方法等同于在执行查询前先获取 `$builder = $db->get_builder();` 然后执行SQL完毕后把原先的builder重新设置 `$db->set_builder($builder);`
+     *
+     *      $db->from('mydb')->where('id', 1)->get()->as_array();    // 执行查询
+     *      $db->recovery_last_builder();                            // 恢复
+     *
+     * 等同于下面代码，但明显上面代码更优雅
+     *
+     *      $db->from('mydb')->where('id', 1);
+     *
+     *      $builder = $db->get_builder();      // 在执行前获取builder设置
+     *      $db->get()->as_array();             // 执行查询
+     *      $db->set_builder($builder);         // 将前面获取的builder重新复原
+     *
+     * 例子一
      *
      *      $count = $db->from('mydb')->where('id', 10, '>')->count_records();
      *      // 在执行count_records()时，所有的builder数据将会被清空
