@@ -3,15 +3,15 @@ V3.0
 
 * **核心部分改动及优化**
   * 类库、模块、ORM、控制器等文件名命名实现全统一，全部改为小写方式
-  * libraries/myqee/core类库改为根目录core/目录，并取消`$config['libraries']['core']`的配置项，并增加DIR_CORE常量，此常量目录为core目录
-  * `libraries/bootstrap.php`移动到core目录中，并修改index.php中include文件路径
-  * 完善`Bootstrap::$base_url`的获取
+  * libraries/myqee/core类库改为根目录core/目录，并取消 `$config['libraries']['core']` 的配置项，并增加 `DIR_CORE` 常量，此常量目录为core目录
+  * `libraries/bootstrap.php` 移动到core目录中，并修改index.php中include文件路径
+  * 完善 `Bootstrap::$base_url` 的获取
   * 优化Session的读取，对生成的SessionID增加校验功能，防止伪造
   * 增加500错误数据收集的收集功能，可以关闭(配置中`$config['error500']['close'] = true;`即可)
   * 增加上传类库，并支持多驱动协议存放
   * `Core::set_project($project)` 改为 `Core::change_project($project)`
   * Session类库优化
-  * ORM Finder中`get_by_id()`和`get_by_ids()`方法增加第二个参数$use_master指定是否在主库上查询，默认false
+  * ORM Finder中 `get_by_id()` 和 `get_by_ids()` 方法增加第二个参数$use_master指定是否在主库上查询，默认false
   * 特殊控制器目录修改，解决部分主机不支持特殊字符目录的问题
      * 后台控制器　 `controllers/[admin]/` 目录改为 `controllers_admin/`
      * 命令行控制器 `controllers/[shell]/` 目录改为 `controllers_shell/`
@@ -30,14 +30,14 @@ V3.0
   * MySQL驱动支持distinct某个字段，例如 `$db->distinct('test_field')`
   * Database增加`select_max()`, `select_min()`, `select_avg()`, `select_sum()` 等高级查询函数
   * 增加 `set_builder($builder)` 和 `recovery_last_builder()` 方法，适用与在多条查询中具有类似条件的情况
-  * reset()方法支持重置单个信息，比如 `$db->reset('select');` 可但是重置select的参数
+  * reset()方法支持重置单个信息，比如 `$db->reset('select');` 可单独重置select的参数
   * 程序里支持`$db = new Database('mysqli://root:123456@127.0.0.1/myqee/')`这样的快速连接写法，省去数据库配置的麻烦
 * **代码开发相关优化**
-  * 将shell目录改名bin目录，增加merge-assets、view-error500-log等开发及部署工具
+  * 将shell目录改名bin目录，增加 `merge-assets`、`view-error500-log` 等开发及部署工具
   * 优化Debug功能，支持Chrome浏览器下FirePHP功能
-  * statics控制器改为assets/devmode/控制器，支持开发版本实时优化处理输出css(包括less)和js
+  * statics 控制器改为 assets/devmode/ 控制器，支持开发版本实时优化处理输出css(包括less)和js
 * **Administration类库**
-  * 后台类库使用全新界面，视图使用bootstrap界面框架 详见 [http://twitter.github.com/bootstrap/](http://twitter.github.com/bootstrap/)
+  * 后台类库使用全新界面，视图使用bootstrap界面框架 详见 [http://getbootstrap.com/](http://getbootstrap.com/)
   * CSS采用less方式定义，方便修改
   * JS改为模块化，更方便二次开发
   * 支持手机版本
