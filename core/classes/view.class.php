@@ -22,17 +22,28 @@ class Core_View
     function __construct($file = null, array $data = array())
     {
         $this->set_filename($file);
-        if ( is_array($data) && $data )
+
+        if (is_array($data) && $data)
         {
             $this->_data = $data;
         }
     }
 
+    /**
+     * 设置视图文件名
+     *
+     *      $view = new View();
+     *      $view->set_filename('test_view');
+     *
+     * @param string $file
+     * @throws Exception
+     * @return View
+     */
     public function set_filename($file)
     {
         $realfile = Core::find_file('views', $file);
 
-        if ( $realfile )
+        if ($realfile)
         {
             $this->_file = $realfile;
         }
@@ -40,15 +51,18 @@ class Core_View
         {
             throw new Exception(__('The view :file does not exist', array(':file'=>$file)));
         }
+
+        return $this;
     }
 
     /**
-     * 构造视图
+     * 返回一个实例化好的视图对象
+     *
      * @param string $file
      * @param array $data
      * @return View
      */
-    public static function factory($file = NULL, array $data = NULL)
+    public static function factory($file = null, array $data = array())
     {
         return new View($file, $data);
     }
@@ -63,6 +77,15 @@ class Core_View
         return $this->_data[$key];
     }
 
+    /**
+     * 设置一个内存地址变量
+     *
+     * 和直接set不同的是，设置地址引用的话，可以在修改变量时同时修改
+     *
+     * @param string $key
+     * @param mixed $value
+     * @return View
+     */
     public function bind($key, & $value)
     {
         $this->_data[$key] = & $value;
@@ -72,15 +95,16 @@ class Core_View
 
     /**
      * 设置变量
+     *
      * @param string $key
      * @param $value
      * @return View
      */
     public function set($key, $value = NULL)
     {
-        if ( is_array($key) )
+        if (is_array($key))
         {
-            foreach ( $key as $name => $value )
+            foreach ($key as $name => $value)
             {
                 $this->_data[$name] = $value;
             }
@@ -93,6 +117,13 @@ class Core_View
         return $this;
     }
 
+    /**
+     * 执行视图输出
+     *
+     * @param boolean $print 是否直接echo出，true: 是，false: 将执行完结果的HTML返回
+     * @throws Exception
+     * @return string
+     */
     public function render($print = true)
     {
 
@@ -104,7 +135,7 @@ class Core_View
         // Combine local and global data and capture the output
         $output = View::capture($this->_file, $this->_data);
 
-        if ( $print )
+        if ($print)
         {
             echo $output;
         }
@@ -120,7 +151,7 @@ class Core_View
         {
             return $this->render(false);
         }
-        catch ( Exception $e )
+        catch (Exception $e)
         {
             return '';
         }
@@ -135,9 +166,9 @@ class Core_View
      */
     public static function set_global($key, $value = null)
     {
-        if ( is_array($key) )
+        if (is_array($key))
         {
-            foreach ( $key as $k => $v )
+            foreach ($key as $k => $v)
             {
                 View::$_global_data[$k] = $v;
             }
@@ -161,8 +192,8 @@ class Core_View
     /**
      * 输出tag支持
      *
-     * View::tag('test');
-     * View::tag('test','arg1','arg2');
+     *      View::tag('test');
+     *      View::tag('test','arg1','arg2');
      *
      * @param string $keystr
      */
@@ -171,7 +202,7 @@ class Core_View
         // 获取当前的Tag
         $tags = View::get_tag($keystr);
 
-        if ( $tags )
+        if ($tags)
         {
             $args = func_get_args();    // 获取所有参数
             array_shift($args);         // 将第一个参数移除
@@ -192,24 +223,24 @@ class Core_View
     public static function get_tag($keystr)
     {
         # 判断是否调试输出
-        if ( null===_view_tag_current::$debug )
+        if (null===_view_tag_current::$debug)
         {
-            _view_tag_current::$debug = ( IS_DEBUG && Core::debug()->profiler('view_tag')->is_open() )?true:false;
+            _view_tag_current::$debug = (IS_DEBUG && Core::debug()->profiler('view_tag')->is_open())?true:false;
         }
 
-        if ( _view_tag_current::$debug )
+        if (_view_tag_current::$debug)
         {
             # 如果是调试输出，则直接构造出对象
             $data = array
             (
                 new _view_tag_current($keystr,null),
-            );
+           );
             return $data;
         }
 
         # 获取所有视图TAG
         static $tags = null;
-        if ( null===$tags )
+        if (null===$tags)
         {
             $tags = Core::config('view.tags');
             if (!$tags || !is_array($tags))$tags = array();
@@ -219,7 +250,7 @@ class Core_View
             }
         }
 
-        if ( isset($tags[$keystr]) )
+        if (isset($tags[$keystr]))
         {
             $data = array();
             foreach ($tags[$keystr] as $item)
@@ -240,7 +271,7 @@ class Core_View
         // Import the view variables to local namespace
         extract($myqee_view_data, EXTR_SKIP);
 
-        if ( View::$_global_data )
+        if (View::$_global_data)
         {
             // Import the global view variables to local namespace and maintain references
             extract(View::$_global_data, EXTR_REFS);
@@ -254,7 +285,7 @@ class Core_View
             // Load the view within the current scope
             include $myqee_view_filename;
         }
-        catch ( Exception $e )
+        catch (Exception $e)
         {
             // Delete the output buffer
             ob_end_clean();
@@ -290,7 +321,7 @@ class _view_tag_current
      */
     public function run($c = null)
     {
-        if ( is_array($c) && func_num_args()==1 )
+        if (is_array($c) && func_num_args()==1)
         {
             $args = $c;
         }
@@ -301,24 +332,24 @@ class _view_tag_current
 
         if (self::$debug)
         {
-            echo '{{tag:'.$this->tag_name.'('.implode(',', $args).')}}';
+            echo '{{tag:'. $this->tag_name .'('. implode(',', $args) .')}}';
             return ;
         }
 
         try
         {
-            if ( is_callable($this->tag) )
+            if (is_callable($this->tag))
             {
                 call_user_func_array($this->tag, $args);
             }
             else
             {
-                Core::debug()->error(__('Function :s can not callable.',array(':s'=>$this->tag)));
+                Core::debug()->error(__('Function :s can not callable.', array(':s'=>$this->tag)));
             }
         }
         catch (Exception $e)
         {
-            Core::debug()->error(__('Run function :s error.',array(':s'=>$this->tag)));
+            Core::debug()->error(__('Run function :s error.', array(':s'=>$this->tag)));
         }
     }
 }
