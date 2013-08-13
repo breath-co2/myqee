@@ -323,7 +323,7 @@ abstract class Core_HttpIO
 
             if ($add_allow_origin)
             {
-                header('Access-Control-Allow-Origin: http://' . $host . '/');
+                header('Access-Control-Allow-Origin: '. HttpIO::PROTOCOL . $host . (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS']?($_SERVER['SERVER_PORT']==443?'':':'.$_SERVER['SERVER_PORT']):($_SERVER['SERVER_PORT']==80?'':':'.$_SERVER['SERVER_PORT'])) . '/');
             }
         }
     }
