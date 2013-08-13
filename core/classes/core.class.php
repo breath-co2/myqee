@@ -837,8 +837,9 @@ abstract class Core_Core extends Bootstrap
                     $args = array();
                 }
 
-                $the_id = array();
+                $the_id    = array();
                 $tmp_class = array_shift($args);
+                $tmp_arg   = $tmp_class;
 
                 if (0===strlen($tmp_class))
                 {
@@ -862,6 +863,11 @@ abstract class Core_Core extends Bootstrap
 
                 // 记录找到的index.controller.php
                 $found_index_class = null;
+
+                if (IS_DEBUG)
+                {
+                    $find_log2 = array();
+                }
 
                 foreach ($all_path as $tmp_arr)
                 {
@@ -896,15 +902,16 @@ abstract class Core_Core extends Bootstrap
                         $tmpfile = $tmp_path . 'index' . Core::$dir_setting['controller'][1] . EXT;
                         if (IS_DEBUG)
                         {
-                            $find_log[] = Core::debug_path($tmpfile);
+                            $find_log2[] = Core::debug_path($tmpfile);
                         }
 
                         if (is_file($tmpfile))
                         {
                             if ($the_id)
                             {
-                                $ids = array_merge($ids, $the_id);
+                                array_unshift($args, $tmp_arg);
                             }
+
                             $found_index_class = array
                             (
                                 'file'   => $tmpfile,
@@ -915,6 +922,11 @@ abstract class Core_Core extends Bootstrap
                             );
                         }
                     }
+                }
+
+                if (IS_DEBUG && $find_log2)
+                {
+                    $find_log = array_merge($find_log, $find_log2);
                 }
 
                 // index.controller.php 文件
@@ -935,7 +947,7 @@ abstract class Core_Core extends Bootstrap
             }
             Core::debug()->groupEnd();
 
-            Core::debug()->group('find controller file');
+            Core::debug()->group('find controller files');
             foreach ($find_log as $value)
             {
                 Core::debug()->log($value);
