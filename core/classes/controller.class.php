@@ -15,21 +15,38 @@ class Core_Controller
 
     /**
      * 请求参数
+     *
      * @var array
      */
     public $arguments;
 
     /**
      * 控制器
+     *
      * @var string
      */
     public $controller;
 
     /**
      * 方法
+     *
      * @var string
      */
     public $action;
+
+    /**
+     * 当前请求的URI
+     *
+     * @var string
+     */
+    public $uri;
+
+    /**
+     * 当前请求的目录部分
+     *
+     * @var string
+     */
+    public $directory;
 
     /**
      * 当前控制器信息ID

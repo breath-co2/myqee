@@ -2,13 +2,13 @@
 
 if (!defined('_HTTPIO_METHOD'))
 {
-    define('_HTTPIO_METHOD',$_SERVER["REQUEST_METHOD"]);
+    define('_HTTPIO_METHOD', $_SERVER["REQUEST_METHOD"]);
 
-    if ( isset($_SERVER['HTTP_X_REQUESTED_WITH']) && 'xmlhttprequest'===strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) )
+    if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && 'xmlhttprequest'===strtolower($_SERVER['HTTP_X_REQUESTED_WITH']))
     {
         $is_ajax = true;
     }
-    elseif ( isset($_GET['_ajax']) && $_GET['_ajax']=='true' )
+    elseif (isset($_GET['_ajax']) && $_GET['_ajax']=='true')
     {
         $is_ajax = true;
     }
@@ -131,7 +131,7 @@ abstract class Core_HttpIO
         505 => 'HTTP Version Not Supported',
         507 => 'Insufficient Storage',
         509 => 'Bandwidth Limit Exceeded'
-    );
+   );
 
     /**
      * 请求类型
@@ -286,7 +286,7 @@ abstract class Core_HttpIO
 
         if (false!==$ajax_cross_domain)
         {
-            if ('nono'==$ajax_cross_domain)return ;
+            if ('none'==$ajax_cross_domain)return ;
 
             $info = parse_url($_SERVER['HTTP_REFERER']);
             $host = $info['host'];
@@ -380,20 +380,20 @@ abstract class Core_HttpIO
 
     protected static function _get_format_data($datatype, $key, $type)
     {
-        if ( $type == HttpIO::PARAM_TYPE_OLDDATA )
+        if ($type == HttpIO::PARAM_TYPE_OLDDATA)
         {
             # 如果是要拿原始拷贝，则加后缀
             $datatype .= '_OLD';
         }
         $data = HttpIO::_key_string(HttpIO::$$datatype, $key);
-        if ( null === $data ) return null;
+        if (null === $data) return null;
 
-        if ( !$type )
+        if (!$type)
         {
             # 未安全过滤的数据
             $data = HttpIO::sanitize_decode($data);
         }
-        elseif ( $type == HttpIO::PARAM_TYPE_URL )
+        elseif ($type == HttpIO::PARAM_TYPE_URL)
         {
             # URL 格式数据
             $data = HttpIO::sanitize_decode($data);
@@ -409,11 +409,11 @@ abstract class Core_HttpIO
      */
     public static function sanitize($str)
     {
-        if ( null === $str ) return null;
-        if ( is_array($str) || is_object($str) )
+        if (null === $str) return null;
+        if (is_array($str) || is_object($str))
         {
             $data = array();
-            foreach ( $str as $k => $v )
+            foreach ($str as $k => $v)
             {
                 $data[$k] = HttpIO::sanitize($v);
             }
@@ -421,7 +421,7 @@ abstract class Core_HttpIO
         else
         {
             $str = trim($str);
-            if ( strpos($str, "\r") !== false )
+            if (strpos($str, "\r") !== false)
             {
                 $str = str_replace(array("\r\n", "\r"), "\n", $str);
             }
@@ -437,10 +437,10 @@ abstract class Core_HttpIO
      */
     public static function sanitize_decode($str)
     {
-        if ( null === $str ) return null;
-        if ( is_array($str) || is_object($str) )
+        if (null === $str) return null;
+        if (is_array($str) || is_object($str))
         {
-            foreach ( $str as $k => $v )
+            foreach ($str as $k => $v)
             {
                 $str[$k] = HttpIO::sanitize_decode($v);
             }
@@ -463,7 +463,7 @@ abstract class Core_HttpIO
      */
     public static function redirect($url, $code = 302)
     {
-        if ( strpos($url, '://') === true )
+        if (strpos($url, '://') === true)
         {
             // Make the URI into a URL
             $url = Core::url($url);
@@ -497,7 +497,7 @@ abstract class Core_HttpIO
         if ($time>0)
         {
             @header('Cache-Control: max-age='.$time);
-            @header('Last-Modified: ' . date( 'D, d M Y H:i:s \G\M\T' ));
+            @header('Last-Modified: ' . date('D, d M Y H:i:s \G\M\T'));
             @header('Expires: ' . date('D, d M Y H:i:s \G\M\T', TIME + $time));
             @header('Pragma: cache');
         }
@@ -513,15 +513,15 @@ abstract class Core_HttpIO
 
     protected static function _key_string($arr, $key)
     {
-        if ( !is_array($arr) )return null;
-        if ( $key === null || $key === false || !strlen($key) > 0 )
+        if (!is_array($arr))return null;
+        if ($key === null || $key === false || !strlen($key) > 0)
         {
             return $arr;
         }
         $keyArr = explode('.', $key);
-        foreach ( $keyArr as $key )
+        foreach ($keyArr as $key)
         {
-            if ( is_array($arr) && isset($arr[$key]) )
+            if (is_array($arr) && isset($arr[$key]))
             {
                 $arr = $arr[$key];
             }
@@ -538,9 +538,9 @@ abstract class Core_HttpIO
      */
     public static function send_headers()
     {
-        if ( !headers_sent() )
+        if (!headers_sent())
         {
-            if ( isset($_SERVER['SERVER_PROTOCOL']) )
+            if (isset($_SERVER['SERVER_PROTOCOL']))
             {
                 // Use the default server protocol
                 $protocol = $_SERVER['SERVER_PROTOCOL'];
@@ -551,15 +551,15 @@ abstract class Core_HttpIO
                 $protocol = 'HTTP/1.1';
             }
 
-            if ( HttpIO::$status != 200 )
+            if (HttpIO::$status != 200)
             {
                 // HTTP status line
                 header($protocol . ' ' . HttpIO::$status . ' ' . HttpIO::$messages[HttpIO::$status]);
             }
 
-            foreach ( HttpIO::$headers as $name => $value )
+            foreach (HttpIO::$headers as $name => $value)
             {
-                if ( is_string($name) )
+                if (is_string($name))
                 {
                     // Combine the name and value to make a raw header
                     $value = "{$name}: {$value}";
@@ -618,7 +618,7 @@ abstract class Core_HttpIO
      */
     public static function param($key = null, $default = null)
     {
-        if ( $key === null )
+        if (null===$key)
         {
             return HttpIO::$params;
         }
@@ -634,7 +634,7 @@ abstract class Core_HttpIO
      */
     public static function query(array $params = null)
     {
-        if ( $params === null )
+        if ($params === null)
         {
             // Use only the current parameters
             $params = HttpIO::GET(null, false);
@@ -645,7 +645,7 @@ abstract class Core_HttpIO
             $params = array_merge(HttpIO::GET(null, false), $params);
         }
 
-        if ( empty($params) )
+        if (empty($params))
         {
             // No query parameters
             return '';
@@ -666,39 +666,33 @@ abstract class Core_HttpIO
      */
     public static function uri(array $params = null)
     {
-        if ( null === Core_Route::$current_route )
+        $params_array = HttpIO::param();
+
+        if (null===Core_Route::$current_route)
         {
             $tmpstr = array();
-            if ( HttpIO::$params['directory'] )
+            if ($params_array['directory'])
             {
-                $tmpstr[] = HttpIO::$params['directory'];
+                $tmpstr[] = $params_array['directory'];
             }
-            if ( HttpIO::$params['controller'] )
+
+            $action = strtolower(substr($params_array['action'] , 7));     // Action_Abc -> abc
+            if ($action && $action!='default')
             {
-                $tmpstr[] = str_replace('_','/',HttpIO::$params['controller']);
+                $tmpstr[] = $action;
             }
-            if ( HttpIO::$params['action'] )
+
+            if ($params)
             {
-                $tmpstr[] = HttpIO::$params['action'];
+                foreach ($params as $k=>$v)
+                {
+                    $params_array['arguments'][$k] = $v;
+                }
             }
-            $tmp_params = HttpIO::$params;
-            //            if (!HttpIO::$params['action']){
-            //                $tmp_params['action'] = array_shift($params);
-            //                if (!HttpIO::$params['controller']){
-            //                    $tmp_params['controller'] = array_shift($params);
-            //                }
-            //            }
-            if ( count($tmp_params['arguments']) > count($params) )
+
+            if ($params_array['arguments'])
             {
-                $tmp_params['arguments'] = array_slice($tmp_params['arguments'], 0, - count($params)) + $params;
-            }
-            else
-            {
-                $tmp_params['arguments'] = $params;
-            }
-            if ( $tmp_params['arguments'] )
-            {
-                foreach ( $tmp_params['arguments'] as $v )
+                foreach ($params_array['arguments'] as $v)
                 {
                     $tmpstr[] = $v;
                 }
@@ -707,26 +701,26 @@ abstract class Core_HttpIO
         }
         else
         {
-            if ( !isset($params['directory']) )
+            if (!isset($params['directory']))
             {
                 // Add the current directory
-                $params['directory'] = HttpIO::$params['directory'];
+                $params['directory'] = $params_array['directory'];
             }
 
-            if ( !isset($params['controller']) )
+            if (!isset($params['controller']))
             {
                 // Add the current controller
-                $params['controller'] = HttpIO::$params['controller'];
+                $params['controller'] = $params_array['controller'];
             }
 
-            if ( !isset($params['action']) )
+            if (!isset($params['action']))
             {
                 // Add the current action
-                $params['action'] = HttpIO::$params['action'];
+                $params['action'] = $params_array['action'];
             }
 
             // Add the current parameters
-            $params += HttpIO::$params;
+            $params += $params_array;
 
             return Core::route()->uri($params);
         }
@@ -748,6 +742,17 @@ abstract class Core_HttpIO
     {
         // Create a URI with the current route and convert it to a URL
         return Core::url(HttpIO::uri($params), $protocol);
+    }
+
+
+    /**
+     * 根据控制器设置参数
+     *
+     * @param Controller $controller
+     */
+    public static function set_params_controller(Controller $controller)
+    {
+        HttpIO::$params = get_object_vars($controller);
     }
 
     /**
@@ -792,7 +797,7 @@ abstract class Core_HttpIO
             'mobi',
             'cc',
             'me'
-        );
+       );
 
         $str='';
         foreach($top_level_domain as $v)

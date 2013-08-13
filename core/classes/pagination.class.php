@@ -39,8 +39,11 @@
  */
 class Core_Pagination
 {
-
-    // Merged configuration settings
+    /**
+     * 分页配置
+     *
+     * @var array
+     */
     protected $config = array
     (
         'current_page' => array
@@ -56,72 +59,118 @@ class Core_Pagination
 
     /**
      * 当前页码
+     *
      * @var int
      */
     protected $current_page;
 
-    // Total item count
+    /**
+     * 总数
+     *
+     * @var int
+     */
     protected $total_items;
 
     // How many items to show per page
+    /**
+     * 每页显示数目
+     *
+     * @var int
+     */
     protected $items_per_page;
 
-    // Total page count
+    /**
+     * 总页数
+     *
+     * @var int
+     */
     protected $total_pages;
 
-    // Item offset for the first item displayed on the current page
+    /**
+     * 当前第一个项目
+     *
+     * @var int
+     */
     protected $current_first_item;
 
-    // Item offset for the last item displayed on the current page
+    /**
+     * 当前最后项目
+     *
+     * @var int
+     */
     protected $current_last_item;
 
-    // Previous page number; false if the current page is the first one
+    /**
+     * 上一页码
+     *
+     * @var int
+     */
     protected $previous_page;
 
-    // Next page number; false if the current page is the last one
+    /**
+     * 下一页码
+     *
+     * @var int
+     */
     protected $next_page;
 
-    // First page number; false if the current page is the first one
+    /**
+     * 第一页
+     *
+     * @var int
+     */
     protected $first_page;
 
-    // Last page number; false if the current page is the last one
+    /**
+     * 最后一页
+     *
+     * @var int
+     */
     protected $last_page;
 
-    // Query offset
+    /**
+     * 查询的offset条件
+     *
+     * @var int
+     */
     protected $offset;
 
     /**
-     * Creates a new Pagination object.
+     * 返回一个实例化对象的分页类
      *
-     * @param   array  configuration
+     * @param   string | array configuration
      * @return  Pagination
      */
-    public static function factory(array $config = array())
+    public static function factory($config = 'default')
     {
         return new Pagination($config);
     }
 
     /**
-     * Creates a new Pagination object.
+     * 实例化对象
      *
      * @param   array  configuration
      * @return  void
      */
-    public function __construct(array $config = array())
+    public function __construct($config)
     {
-        // Overwrite system defaults with application defaults
         $this->config = $this->config_group() + $this->config;
 
-        // Pagination setup
+        if (is_string($config))
+        {
+            $config = $this->config_group($config);
+        }
+
         $this->setup($config);
     }
 
     /**
-     * Retrieves a pagination config group from the config file. One config group can
-     * refer to another as its parent, which will be recursively loaded.
+     * 返回预配置中指定key的配置内容
      *
-     * @param   string  pagination config group; "default" if none given
-     * @return  array   config settings
+     * 配置内容在 `Core::config('pagination')` 中
+     *
+     * @param  string 配置组，默认 default
+     * @return array  配置设置
      */
     public function config_group($group = 'default')
     {
@@ -158,7 +207,7 @@ class Core_Pagination
      */
     public function setup(array $config = array())
     {
-        if ( isset($config['group']) )
+        if (isset($config['group']))
         {
             // Recursively load requested config groups
             $config += $this->config_group($config['group']);
@@ -168,7 +217,7 @@ class Core_Pagination
         $this->config = $config + $this->config;
 
         // Only (re)calculate pagination when needed
-        if ($this->current_page === null || isset($config['current_page']) || isset($config['total_items']) || isset($config['items_per_page']))
+        if (null===$this->current_page || isset($config['current_page']) || isset($config['total_items']) || isset($config['items_per_page']))
         {
             // Retrieve the current page number
             if (!empty($this->config['current_page']['page']))
@@ -207,6 +256,7 @@ class Core_Pagination
             $this->offset             = (int)(($this->current_page - 1) * $this->items_per_page);
         }
 
+        var_dump($this->current_page);
         // Chainable method
         return $this;
     }
@@ -223,27 +273,29 @@ class Core_Pagination
         $page = max(1, (int)$page);
 
         // No page number in URLs to first page
-        if ( $page === 1 )
+        if (1===$page)
         {
             $page = null;
         }
 
-        switch ( $this->config['current_page']['source'] )
+        switch ($this->config['current_page']['source'])
         {
             case 'query_string' :
                 return Core::url(HttpIO::$uri) . HttpIO::query(array($this->config['current_page']['key'] => $page));
             case 'route' :
                 return Core::url(Core::route()->uri(array($this->config['current_page']['key'] => $page))) . HttpIO::query();
+            case 'default' :
             default :
                 $tmparr = array();
-                if ( is_numeric($this->config['current_page']['key']) )
+                if (is_numeric($this->config['current_page']['key']))
                 {
-                    for ($i=0;$i<$this->config['current_page']['key'];$i++)
+                    for ($i=0; $i<$this->config['current_page']['key']; $i++)
                     {
                         $tmparr[$i] = (string)HttpIO::$params['arguments'][$i];
                     }
                 }
                 $tmparr[$this->config['current_page']['key']] = $page;
+
                 return Core::url(HttpIO::uri($tmparr)) . HttpIO::query();
         }
 
@@ -266,7 +318,7 @@ class Core_Pagination
     }
 
     /**
-     * Renders the pagination links.
+     * 返回分页HTML
      *
      * @param   mixed   string of the view to use, or a Kohana_View object
      * @return  string  pagination output (HTML)
@@ -274,26 +326,23 @@ class Core_Pagination
     public function render($view = null)
     {
         // Automatically hide pagination whenever it is superfluous
-        if ( $this->config['auto_hide'] === TRUE && $this->total_pages <= 1 ) return '';
+        if ($this->config['auto_hide'] === true && $this->total_pages <= 1) return '';
 
-        if ( $view === null )
+        if (null===$view)
         {
-            // Use the view from config
             $view = $this->config['view'];
         }
 
-        if ( !$view instanceof View )
+        if (!$view instanceof View)
         {
-            // Load the view file
             $view = View::factory($view);
         }
 
-        // Pass on the whole Pagination object
         return $view->set(get_object_vars($this))->set('page', $this)->render(false);
     }
 
     /**
-     * Renders the pagination links.
+     * 输出HTML
      *
      * @return  string  pagination output (HTML)
      */
@@ -327,6 +376,8 @@ class Core_Pagination
 
     /**
      * 获取当前页
+     *
+     * @return int
      */
     public function get_current_page()
     {
@@ -335,6 +386,8 @@ class Core_Pagination
 
     /**
      * 获取总数
+     *
+     * @return int
      */
     public function get_total_items()
     {
@@ -343,6 +396,8 @@ class Core_Pagination
 
     /**
      * 获取每页项目数
+     *
+     * @return int
      */
     public function get_items_per_page()
     {
@@ -359,6 +414,8 @@ class Core_Pagination
 
     /**
      * 获取当前页第一个项目
+     *
+     * @return int
      */
     public function get_current_first_item()
     {
@@ -367,6 +424,8 @@ class Core_Pagination
 
     /**
      * 获取当前页最后一个项目
+     *
+     * @return int
      */
     public function get_current_last_item()
     {
@@ -375,7 +434,10 @@ class Core_Pagination
 
     /**
      * 获取上一页页码
+     *
      * 如果当前是第一页，则返回false
+     *
+     * @return int
      */
     public function get_previous_page()
     {
@@ -384,7 +446,10 @@ class Core_Pagination
 
     /**
      * 获取下一页页码
+     *
      * 如果当前是最后一页，则返回false
+     *
+     * @return int
      */
     public function get_next_page()
     {
@@ -393,6 +458,8 @@ class Core_Pagination
 
     /**
      * 获取第一页页码
+     *
+     * @return int
      */
     public function get_first_page()
     {
@@ -401,6 +468,8 @@ class Core_Pagination
 
     /**
      * 获取最后一页页码
+     *
+     * @return int
      */
     public function get_last_page()
     {
@@ -409,6 +478,8 @@ class Core_Pagination
 
     /**
      * 获取页码Offset值
+     *
+     * @return int
      */
     public function get_offset()
     {

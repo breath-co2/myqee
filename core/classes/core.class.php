@@ -543,6 +543,8 @@ abstract class Core_Core extends Bootstrap
 
                 Controller::$controllers[] = $controller;
 
+                # 是否有必要将action从$arguments中移出
+                $need_shift_action = false;
                 $arguments = $found['args'];
                 if ($arguments)
                 {
@@ -550,6 +552,10 @@ abstract class Core_Core extends Bootstrap
                     if (0===strlen($action))
                     {
                         $action = 'default';
+                    }
+                    else
+                    {
+                        $need_shift_action = true;
                     }
                 }
                 else
@@ -579,7 +585,7 @@ abstract class Core_Core extends Bootstrap
                         throw new Exception(__('Page Not Found'), 404);
                     }
                 }
-                elseif ($arguments)
+                elseif ($need_shift_action)
                 {
                     array_shift($arguments);
                 }
@@ -610,6 +616,8 @@ abstract class Core_Core extends Bootstrap
                 # 将参数传递给控制器
                 $controller->action     = $action_name;
                 $controller->controller = $found['class'];
+                $controller->uri        = $uri;
+                $controller->directory  = $found['dir'];
 
 
                 if (IS_SYSTEM_MODE)
@@ -621,6 +629,9 @@ abstract class Core_Core extends Bootstrap
                 {
                     $controller->arguments = $arguments;
                 }
+
+                # 设置 HttpIO 参数
+                HttpIO::set_params_controller($controller);
 
                 # 前置方法
                 if (method_exists($controller, 'before'))
@@ -691,7 +702,7 @@ abstract class Core_Core extends Bootstrap
      */
     protected static function find_controller($uri)
     {
-        $uri = '/' . trim($uri, ' /');
+        $uri = ltrim($uri, '/');
 
         if (Core::$config['url_suffix'] && substr(strtolower($uri), -strlen(Core::$config['url_suffix']))==Core::$config['url_suffix'])
         {
@@ -723,18 +734,18 @@ abstract class Core_Core extends Bootstrap
             }
         }
 
-        if ($uri!='/')
+        if ($uri!='')
         {
             $uri_arr = explode('/', strtolower($uri));
         }
         else
         {
-            $uri_arr = array('');
+            $uri_arr = array();
         }
 
         if (IS_DEBUG)
         {
-            Core::debug()->log($uri, 'find controller uri');
+            Core::debug()->log('/'. $uri, 'find controller uri');
         }
 
         $include_path = Core::$include_path;
@@ -764,12 +775,23 @@ abstract class Core_Core extends Bootstrap
         {
             foreach ($ipath as $path)
             {
-                $tmp_str = $real_path = $real_class = '';
-                $tmp_path = $path . $controller_dir;
-                $ids = array();
+                $tmp_str  = $real_path = $real_class = '';
+                $tmp_path = $path . $controller_dir . DS;
+                $ids      = array();
+
                 foreach ($uri_arr as $uri_path)
                 {
-                    if (is_numeric($uri_path))
+                    $ds = DS;
+                    if ($uri_path==='')
+                    {
+                        if (count($uri_arr)>1)
+                        {
+                            break;
+                        }
+                        $real_uri_path = '';
+                        $ds = '';
+                    }
+                    elseif (is_numeric($uri_path))
                     {
                         $real_uri_path = '_id';
                         $ids[] = $uri_path;
@@ -789,7 +811,7 @@ abstract class Core_Core extends Bootstrap
                         $real_uri_path = $uri_path;
                     }
 
-                    $tmpdir = $tmp_path . $real_path . $real_uri_path . DS;
+                    $tmpdir = $tmp_path . $real_path . $real_uri_path . $ds;
                     if (IS_DEBUG)
                     {
                         $find_path_log[] = Core::debug_path($tmpdir);
@@ -805,12 +827,29 @@ abstract class Core_Core extends Bootstrap
                             $ns,
                             $tmpdir,
                             ltrim($real_class, '_'),
-                            $ids
+                            $ids,
                         );
                     }
                     else
                     {
                         break;
+                    }
+                }
+
+                // 根目录的
+                if (is_dir($tmp_path))
+                {
+                    $found_path[''][] = array
+                    (
+                        $ns,
+                        $tmp_path,
+                        '',
+                        array(),
+                    );
+
+                    if (IS_DEBUG)
+                    {
+                        $find_path_log[] = Core::debug_path($tmp_path);
                     }
                 }
             }
@@ -827,10 +866,12 @@ abstract class Core_Core extends Bootstrap
 
             foreach ($found_path as $path => $all_path)
             {
-                $tmp_p = substr($uri, strlen($path));
-                if ($tmp_p)
+                $path_len = strlen($path);
+                $tmp_p    = substr($uri, $path_len);
+
+                if (strlen($tmp_p)>0)
                 {
-                    $args = explode('/', substr($uri, strlen($path)));
+                    $args = explode('/', substr($uri, $path_len));
                 }
                 else
                 {
@@ -840,6 +881,7 @@ abstract class Core_Core extends Bootstrap
                 $the_id    = array();
                 $tmp_class = array_shift($args);
                 $tmp_arg   = $tmp_class;
+                $directory = '/'. substr($uri, 0, $path_len) . $tmp_class;
 
                 if (0===strlen($tmp_class))
                 {
@@ -872,8 +914,8 @@ abstract class Core_Core extends Bootstrap
                 foreach ($all_path as $tmp_arr)
                 {
                     list($ns, $tmp_path, $real_path, $ids) = $tmp_arr;
-                    $path_str = $real_path;
                     $tmpfile = $tmp_path . $tmp_class . Core::$dir_setting['controller'][1] . EXT;
+
                     if (IS_DEBUG)
                     {
                         $find_log[] = Core::debug_path($tmpfile);
@@ -885,11 +927,13 @@ abstract class Core_Core extends Bootstrap
                         {
                             $ids = array_merge($ids, $the_id);
                         }
+
                         $found = array
                         (
                             'file'   => $tmpfile,
+                            'dir'    => $directory,
                             'ns'     => $ns,
-                            'class'  => 'Controller_' . $path_str . $real_class,
+                            'class'  => 'Controller_' . $real_path . $real_class,
                             'args'   => $args,
                             'ids'    => $ids,
                         );
@@ -910,13 +954,15 @@ abstract class Core_Core extends Bootstrap
                             if ($the_id)
                             {
                                 array_unshift($args, $tmp_arg);
+                               $directory = substr($directory, 0, -strlen($tmp_arg) - 1);
                             }
 
                             $found_index_class = array
                             (
                                 'file'   => $tmpfile,
+                                'dir'    => $directory,
                                 'ns'     => $ns,
-                                'class'  => 'Controller_' . $path_str . 'Index',
+                                'class'  => 'Controller_' . $real_path . 'Index',
                                 'args'   => $args,
                                 'ids'    => $ids,
                             );
@@ -962,7 +1008,7 @@ abstract class Core_Core extends Bootstrap
             }
             else
             {
-                Core::debug()->log($uri, 'not found contoller');
+                Core::debug()->log('/'. $uri, 'not found contoller');
             }
         }
 
