@@ -242,7 +242,7 @@ abstract class Core_HttpIO
     public static function setup()
     {
         static $run = null;
-        if ( null === $run )
+        if (null===$run)
         {
             $run = true;
             if (!IS_CLI)
@@ -266,6 +266,64 @@ abstract class Core_HttpIO
                 HttpIO::$_REQUEST =& $_REQUEST;
 
                 HttpIO::$uri =& Core::$path_info;
+            }
+
+            // 自动支持子域名AJAX请求
+            if (HttpIO::IS_AJAX && isset($_SERVER['HTTP_REFERER']) && $_SERVER['HTTP_REFERER'])
+            {
+                HttpIO::auto_add_ajax_control_allow_origin();
+            }
+
+        }
+    }
+
+    /**
+     * 自动添加HTML5的AJAX跨越支持
+     */
+    protected static function auto_add_ajax_control_allow_origin()
+    {
+        $ajax_cross_domain = Core::config('ajax_cross_domain');
+
+        if (false!==$ajax_cross_domain)
+        {
+            if ('nono'==$ajax_cross_domain)return ;
+
+            $info = parse_url($_SERVER['HTTP_REFERER']);
+            $host = $info['host'];
+
+            $add_allow_origin = false;
+
+            if (is_array($ajax_cross_domain))
+            {
+                foreach ($ajax_cross_domain as $item)
+                {
+                    if (strpos($item, '*')!==false)
+                    {
+                        $preg = '#^'. str_replace('\\*', '*', preg_quote($item)) .'#$i';
+                        if (preg_match($preg, $host))
+                        {
+                            $add_allow_origin = true;
+                            break;
+                        }
+                    }
+                    elseif ($host==$item)
+                    {
+                        $add_allow_origin = true;
+                        break;
+                    }
+                }
+            }
+            elseif ($ajax_cross_domain)
+            {
+                if ($_SERVER['HTTP_HOST']!=$host && HttpIO::get_primary_domain($_SERVER['HTTP_HOST']) == HttpIO::get_primary_domain($host))
+                {
+                    $add_allow_origin = true;
+                }
+            }
+
+            if ($add_allow_origin)
+            {
+                header('Access-Control-Allow-Origin: http://' . $host . '/');
             }
         }
     }
@@ -692,4 +750,66 @@ abstract class Core_HttpIO
         return Core::url(HttpIO::uri($params), $protocol);
     }
 
+    /**
+     * 获取一个域名的主域名
+     *
+     * 支持传入URL
+     *
+     *      HttpIO::get_primary_domain('test.myqee.com');              //myqee.com
+     *
+     *      HttpIO::get_primary_domain('http://v3.myqee.com/docs/');   //myqee.com
+     *
+     * @param string $host
+     * @return string
+     */
+    public static function get_primary_domain($host)
+    {
+        $host = strtolower($host);
+        if(false!==strpos($host, '/'))
+        {
+            $parse = @parse_url($host);
+            $host  = $parse['host'];
+        }
+
+        $top_level_domain = array
+        (
+            'com',
+            'edu',
+            'gov',
+            'int',
+            'mil',
+            'net',
+            'org',
+            'biz',
+            'info',
+            'pro',
+            'name',
+            'museum',
+            'coop',
+            'aero',
+            'xxx',
+            'idv',
+            'mobi',
+            'cc',
+            'me'
+        );
+
+        $str='';
+        foreach($top_level_domain as $v)
+        {
+            $str .= ($str ? '|' : '') . $v;
+        }
+
+        $matchstr='[^\.]+\.(?:('.$str.')|\w{2}|(('.$str.')\.\w{2}))$';
+        if(preg_match("/". $matchstr ."/ies", $host, $matchs))
+        {
+            $domain = $matchs['0'];
+        }
+        else
+        {
+            $domain = $host;
+        }
+
+        return $domain;
+    }
 }

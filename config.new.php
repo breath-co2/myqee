@@ -297,6 +297,41 @@ $config['asset_allow_suffix'] = 'js|css|jpg|jpeg|png|gif|bmp|pdf|html|htm|mp4|sw
 
 
 /**
+ * HTML5自动跨越请求支持
+ *
+ * 开启后，如果遇到AJAX跨越请求，则会自动加上 Access-Control-Allow-Origin 的支持
+ * 注意，只有支持HTML5的此协议的浏览器有用，IE6,7等浏览器这个
+ *
+ *      header("Access-Control-Allow-Origin: http://.../');
+ *
+ * none - 不自动处理
+ * auto - 自动（可自动允许相同主域名下的所有的请求）
+ * 也可设置一个数组，指定允许的域名，支持通配符*。例如：
+ *
+ *      $config['ajax_cross_domain'] = array
+ *      (
+ *          '*.myqee.com',
+ *          '*.myqee.sinaapp.com',
+ *          'www.queyang.com',
+ *      );
+ *
+ * @var auto | array
+ */
+$config['ajax_cross_domain'] = 'auto';
+
+
+/**
+ * 是否隐藏 X-Powered-By 头部版本输出
+ *
+ * true   - 隐藏
+ * false  - 显示
+ * string - 自定义输出的头信息
+ *
+ * @var boolean | string
+ */
+$config['hide_x_powered_by_header'] = false;
+
+/**
  * nodejs 执行文件默认路径
  * 此功能在devassets等处理css时用到，通常不用改，除非你的node安装目录不是默认目录
  *

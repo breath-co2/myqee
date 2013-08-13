@@ -178,7 +178,25 @@ abstract class Core_Core extends Bootstrap
             if (!IS_CLI)
             {
                 # 输出powered by信息
-                header('X-Powered-By: PHP/' . PHP_VERSION . ' MyQEE/' . Core::VERSION .'/'. Core::RELEASE);
+                $x_powered_by = (isset(Core::$config['hide_x_powered_by_header']) && Core::$config['hide_x_powered_by_header']) ? Core::$config['hide_x_powered_by_header'] : false;
+
+                if (is_string($x_powered_by))
+                {
+                    $str = 'X-Powered-By: ' . trim(str_replace(array("\r", "\n", $x_powered_by), '', $x_powered_by));
+                }
+                else if (!$x_powered_by)
+                {
+                    $str = 'X-Powered-By: PHP/' . PHP_VERSION . ' MyQEE/' . Core::VERSION .'('. Core::RELEASE .')';
+                }
+                else
+                {
+                    $str = null;
+                }
+
+                if ($str)
+                {
+                    header($str);
+                }
             }
 
             if (IS_DEBUG)
