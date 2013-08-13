@@ -118,10 +118,10 @@ class Core_Controller
         }
         else
         {
-            View::factory((IS_ADMIN_MODE?'admin/':'').'message',$out)->render(true);
+            View::factory((IS_ADMIN_MODE?'admin/':'') .'message', $out)->render(true);
         }
 
-        if (method_exists($this,'after'))
+        if (method_exists($this, 'after'))
         {
             $this->after();
         }

@@ -729,15 +729,15 @@ abstract class Core_Core extends Bootstrap
 
         if (IS_SYSTEM_MODE)
         {
-            $controller_dir .= '_system';
+            $controller_dir .= '-system';
         }
         elseif (IS_ADMIN_MODE)
         {
-            $controller_dir .= '_admin';
+            $controller_dir .= '-admin';
         }
         elseif (IS_CLI)
         {
-            $controller_dir .= '_shell';
+            $controller_dir .= '-shell';
         }
 
         # 首先找到存在的目录
@@ -1330,7 +1330,7 @@ abstract class Core_Core extends Bootstrap
                     'trace'       => $trace_obj->__toString(),
                 );
 
-                $date     = date('Y-m-d');
+                $date     = @date('Y-m-d');
                 $no       = strtoupper(substr(md5(serialize($trace_array)), 10, 10));
                 $error_no = $date.'-'.$no;
 

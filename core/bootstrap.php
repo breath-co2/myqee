@@ -660,15 +660,15 @@ abstract class Bootstrap
             {
                 if (IS_SYSTEM_MODE)
                 {
-                    $dir_setting[0] .= '_system';
+                    $dir_setting[0] .= '-system';
                 }
                 elseif (IS_CLI)
                 {
-                    $dir_setting[0] .= '_shell';
+                    $dir_setting[0] .= '-shell';
                 }
                 elseif (IS_ADMIN_MODE)
                 {
-                    $dir_setting[0] .= '_admin';
+                    $dir_setting[0] .= '-admin';
                 }
             }
 
@@ -812,15 +812,15 @@ abstract class Bootstrap
 
             if (IS_SYSTEM_MODE)
             {
-                $dir .= '_system';
+                $dir .= '-system';
             }
             elseif (IS_CLI)
             {
-                $dir .= '_shell';
+                $dir .= '-shell';
             }
             elseif (IS_ADMIN_MODE)
             {
-                $dir .= '_admin';
+                $dir .= '-admin';
             }
         }
         elseif ($dir=='i18n' || $dir=='config')

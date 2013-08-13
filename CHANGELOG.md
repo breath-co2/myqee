@@ -13,9 +13,9 @@ V3.0
   * Session类库优化
   * ORM Finder中 `get_by_id()` 和 `get_by_ids()` 方法增加第二个参数$use_master指定是否在主库上查询，默认false
   * 特殊控制器目录修改，解决部分主机不支持特殊字符目录的问题
-     * 后台控制器　 `controllers/[admin]/` 目录改为 `controllers_admin/`
-     * 命令行控制器 `controllers/[shell]/` 目录改为 `controllers_shell/`
-     * 系统控制器　 `controllers/[system]/`目录改为 `controllers_system/ `
+     * 后台控制器　 `controllers/[admin]/` 目录改为 `controllers-admin/`
+     * 命令行控制器 `controllers/[shell]/` 目录改为 `controllers-shell/`
+     * 系统控制器　 `controllers/[system]/`目录改为 `controllers-system/ `
 
 * **控制器相关优化**
   * 类命名优化，取消文件夹下双下划线命名方式，统一改成和class，model等相同的命名规则

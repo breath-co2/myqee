@@ -630,13 +630,15 @@ class Manual
 
     /**
      * 记录所有函数、方法、变量是否PHP内置
+     *
+     * @var array
      */
     public $is_php_class_list = array();
 
     /**
      * 控制器输出类型
      *
-     * controller|controller_admin|controller_shell|controller_system
+     * @var string controller | controller-admin | controller-shell | controller-system
      */
     public $controller_type = 'controller';
 
@@ -734,35 +736,35 @@ class Manual
                 'api_file'     => 'api_controllers',
                 'title'        => 'Controllers List',
             ),
-            'controllers_admin' => array
+            'controllers-admin' => array
             (
                 'dir_name'     => 'Admin Controllers',
-                'dir'          => 'controllers_admin',
-                'type'         => 'controller_admin',
+                'dir'          => 'controllers-admin',
+                'type'         => 'controller-admin',
                 'class_prefix' => 'Controller_',
-                'out_prefix'   => 'controller_admin.',
+                'out_prefix'   => 'controller-admin.',
                 'file_suffix'  => '.controller.php',
                 'api_file'     => 'api_controllers',
                 'title'        => 'Controllers List',
             ),
-            'controller_shell' => array
+            'controller-shell' => array
             (
                 'dir_name'     => 'Shell Controllers',
-                'dir'          => 'controllers_shell',
-                'type'         => 'controller_shell',
+                'dir'          => 'controllers-shell',
+                'type'         => 'controller-shell',
                 'class_prefix' => 'Controller_',
-                'out_prefix'   => 'controller_shell.',
+                'out_prefix'   => 'controller-shell.',
                 'file_suffix'  => '.controller.php',
                 'api_file'     => 'api_controllers',
                 'title'        => 'Controllers List',
             ),
-            'controllers_system' => array
+            'controllers-system' => array
             (
                 'dir_name'     => 'System Controllers',
-                'dir'          => 'controllers_system',
-                'type'         => 'controller_system',
+                'dir'          => 'controllers-system',
+                'type'         => 'controller-system',
                 'class_prefix' => 'Controller_',
-                'out_prefix'   => 'controller_system.',
+                'out_prefix'   => 'controller-system.',
                 'file_suffix'  => '.controller.php',
                 'api_file'     => 'api_controllers',
                 'title'        => 'Controllers List',
@@ -2760,7 +2762,7 @@ EOF;
         $setting    = $this->api_data[$group['type']][$class_name];
 
 
-        if (in_array($setting['dir_type'], array('controller_admin', 'controller_shell', 'controller_system')))
+        if (in_array($setting['dir_type'], array('controller-admin', 'controller-shell', 'controller-system')))
         {
             $this->controller_type = $setting['dir_type'];
         }
@@ -2785,7 +2787,7 @@ EOF;
 
         $setting     = $this->api_data[$group['type']][$class_name]['methods'][$method_name];
 
-        if (in_array($setting['dir_type'], array('controller_admin', 'controller_shell', 'controller_system')))
+        if (in_array($setting['dir_type'], array('controller-admin', 'controller-shell', 'controller-system')))
         {
             $this->controller_type = $setting['dir_type'];
         }
@@ -2811,7 +2813,7 @@ EOF;
 
         $setting     = $this->api_data[$group['type']][$class_name]['properties'][$property_name];
 
-        if (in_array($setting['dir_type'], array('controller_admin', 'controller_shell', 'controller_system')))
+        if (in_array($setting['dir_type'], array('controller-admin', 'controller-shell', 'controller-system')))
         {
             $this->controller_type = $setting['dir_type'];
         }

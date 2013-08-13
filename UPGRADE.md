@@ -3,7 +3,7 @@ V2.0 TO V3
 
 1. 将原来在v2里的projects的所有文件复制到新下载的V3的projects里，并把 statics 目录修改成 assets
 2. 将自己在v2里写的自有的library的类库复制到team_lib目录中（team_lib是一个全局的团队私有的公共类库目录）
-3. 后台控制器，命令行控制器和系统控制器目录由`controllers/[admin]/`, `controllers/[shell]/`, `controllers/[system]/` 分别移动到了`controllers_admin/`, `controllers_shell/`, `controllers_system/` 目录，请将你自己相应的这些控制器移动过去
+3. 后台控制器，命令行控制器和系统控制器目录由`controllers/[admin]/`, `controllers/[shell]/`, `controllers/[system]/` 分别移动到了`controllers-admin/`, `controllers-shell/`, `controllers-system/` 目录，请将你自己相应的这些控制器移动过去
 4. 检查调整自己的项目和类库的部分代码写法：
    * 请将config.new.php 复制为config.php并对比旧的config.php中配置做相应的修改，具体说明在里面都有
    * 不可以再通过 Core::$config 变量获取config配置（在3.0中此变量为受保护的），必需通过Core::config('…')标准格式来获取
