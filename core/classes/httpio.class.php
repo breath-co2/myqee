@@ -131,7 +131,7 @@ abstract class Core_HttpIO
         505 => 'HTTP Version Not Supported',
         507 => 'Insufficient Storage',
         509 => 'Bandwidth Limit Exceeded'
-   );
+    );
 
     /**
      * 请求类型
@@ -797,7 +797,7 @@ abstract class Core_HttpIO
             'mobi',
             'cc',
             'me'
-       );
+        );
 
         $str='';
         foreach($top_level_domain as $v)

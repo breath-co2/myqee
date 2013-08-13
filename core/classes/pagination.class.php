@@ -256,8 +256,6 @@ class Core_Pagination
             $this->offset             = (int)(($this->current_page - 1) * $this->items_per_page);
         }
 
-        var_dump($this->current_page);
-        // Chainable method
         return $this;
     }
 
