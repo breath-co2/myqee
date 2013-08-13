@@ -842,7 +842,7 @@ abstract class Core_Core extends Bootstrap
 
                 if (0===strlen($tmp_class))
                 {
-                    $tmp_class = 'index';
+                    $tmp_class = 'default';
                 }
                 elseif (is_numeric($tmp_class))
                 {
@@ -858,12 +858,16 @@ abstract class Core_Core extends Bootstrap
                 }
 
                 $real_class = $tmp_class;
+                $tmp_class  = strtolower($tmp_class);
+
+                // 记录找到的index.controller.php
+                $found_index_class = null;
 
                 foreach ($all_path as $tmp_arr)
                 {
                     list($ns, $tmp_path, $real_path, $ids) = $tmp_arr;
                     $path_str = $real_path;
-                    $tmpfile = $tmp_path . strtolower($tmp_class) . Core::$dir_setting['controller'][1] . EXT;
+                    $tmpfile = $tmp_path . $tmp_class . Core::$dir_setting['controller'][1] . EXT;
                     if (IS_DEBUG)
                     {
                         $find_log[] = Core::debug_path($tmpfile);
@@ -886,6 +890,38 @@ abstract class Core_Core extends Bootstrap
 
                         break 2;
                     }
+                    elseif (!$found_index_class && $tmp_class!='index')
+                    {
+                        // 记录 index.controller.php 控制器
+                        $tmpfile = $tmp_path . 'index' . Core::$dir_setting['controller'][1] . EXT;
+                        if (IS_DEBUG)
+                        {
+                            $find_log[] = Core::debug_path($tmpfile);
+                        }
+
+                        if (is_file($tmpfile))
+                        {
+                            if ($the_id)
+                            {
+                                $ids = array_merge($ids, $the_id);
+                            }
+                            $found_index_class = array
+                            (
+                                'file'   => $tmpfile,
+                                'ns'     => $ns,
+                                'class'  => 'Controller_' . $path_str . 'Index',
+                                'args'   => $args,
+                                'ids'    => $ids,
+                            );
+                        }
+                    }
+                }
+
+                // index.controller.php 文件
+                if (!$found && $found_index_class)
+                {
+                    $found = $found_index_class;
+                    break;
                 }
             }
         }
