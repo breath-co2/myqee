@@ -1130,7 +1130,6 @@ abstract class Bootstrap
         }
         else if (null === self::$base_url && isset($_SERVER["SCRIPT_NAME"]) && $_SERVER["SCRIPT_NAME"])
         {
-
             $base_url_len = strrpos($_SERVER["SCRIPT_NAME"], '/');
             if (false!==$base_url_len)
             {
@@ -1161,7 +1160,14 @@ abstract class Bootstrap
 
         if (isset($_SERVER['PATH_INFO']))
         {
-            $pathinfo = $_SERVER['PATH_INFO'];
+            if (substr($_SERVER['PATH_INFO'], 0 , 9) === '/wwwroot/')
+            {
+                $pathinfo = substr($_SERVER['PATH_INFO'], 8);
+            }
+            else
+            {
+                $pathinfo = $_SERVER['PATH_INFO'];
+            }
         }
         else
         {
