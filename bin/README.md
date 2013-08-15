@@ -6,22 +6,24 @@ merge-assets
 ------------
 合并项目静态文件输出到wwwroot/assets/目录
 
-OPTIONS:
+参数   |  说明
+------|-------
+-r    | 全部重新生成
+-a    | 全部项目
 
-    -r 全部重新生成
-    -a 全部项目
+举例:
 
-EXAMPLE:
-
-    生成全部项目assets文件: merge-assets -a
-    全部项目重新生成文件   : merge-assets -a -r
-    生成default项目文件   : merge-assets default
+命令   |  说明
+------|-------
+`merge-assets -a`      | 生成全部项目assets文件
+`merge-assets -a -r`   | 全部项目重新生成文件
+`merge-assets default` | 生成default项目文件
 
 
 注意：此脚本依赖 recess 和 uglifyjs 分别处理css和js：
 
- * recess   https://github.com/twitter/recess
- * uglifyjs https://github.com/mishoo/UglifyJS
+ * recess   - [https://github.com/twitter/recess](https://github.com/twitter/recess)
+ * uglifyjs - [https://github.com/mishoo/UglifyJS](https://github.com/mishoo/UglifyJS)
 
 npm安装recess和uglifyjs：
 

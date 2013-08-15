@@ -23,41 +23,35 @@ MyQEE PHP Framework可以支持Windows/Unix服务器环境，可运行于包括A
 ## Apache配置
 以本站为例：
 
-	<Virtualhost *>
-	    ServerName www.myqee.com
-	    ServerAlias myqee.com
-	    # 注意一定要“/”结尾
-	    DocumentRoot "/home/www/myqee/"
-	 
-	    # 以下内容基本不需要修改
-	    
-	    RewriteEngine On
-	    # 禁止.开头的文件被访问
-	    RewriteRule .*/\..* - [F,L]
-		
-	    # 各个项目的wwwroot下的文件访问
-	    RewriteRule ^/~([a-zA-Z0-9\-_]+)~(.*)$ "/projects/$1/wwwroot/$2" [L]
-	 
-	    # wwwroot目录有文件则定向到该文件上
-	    RewriteCond %{DOCUMENT_ROOT}wwwroot%{REQUEST_FILENAME} -f [OR]
-	    RewriteCond %{DOCUMENT_ROOT}wwwroot%{REQUEST_FILENAME} -d [OR]
-	    RewriteCond %{DOCUMENT_ROOT}wwwroot%{REQUEST_FILENAME} -l
-	    RewriteRule ^/(.*)$ /wwwroot/$1 [L]
-	 
-	    # 文件不存在则都定向到php上执行
-	    RewriteRule ^/(.*)$ /index.php/$1 [PT,L]
-	 
-	 
-	    # 以下为过期设置，可移除
-	    <IfModule expires_module>
-	        ExpiresActive On
-	        ExpiresByType text/css "access plus 3 days"
-	        ExpiresByType image/png "access plus 14 days"
-	        ExpiresByType image/gif "access plus 14 days"
-	        ExpiresByType image/jpeg "access plus 14 days"
-	        ExpiresByType application/x-shockwave-flash "access plus 30 days"
-	    </IfModule>
-	</Virtualhost>
+    <Virtualhost *>
+        # 网站域名，（写入配置时请把中文注释去掉，下同）
+        ServerName www.myqee.com
+     
+        # DocumentRoot一定要/结尾
+        DocumentRoot "D:/php/myqee_v2/"
+     
+        # 以下内容无需修改
+     
+        DirectoryIndex index.html index.php
+        RewriteEngine On
+        RewriteRule .*/\..* - [F,L]
+     
+        RewriteCond %{DOCUMENT_ROOT}wwwroot/%{REQUEST_FILENAME} -f [OR]
+        RewriteCond %{DOCUMENT_ROOT}wwwroot/%{REQUEST_FILENAME} -d
+        RewriteRule ^/(.*)$ /wwwroot/$1 [PT,L]
+     
+        RewriteRule ^/.* /index.php [PT,L]
+     
+        # 以下是一些文件的缓存设置，可修改或去掉
+        <IfModule expires_module>
+            ExpiresActive On
+            ExpiresByType text/css "access plus 3 days"
+            ExpiresByType image/png "access plus 14 days"
+            ExpiresByType image/gif "access plus 14 days"
+            ExpiresByType image/jpeg "access plus 14 days"
+            ExpiresByType application/x-shockwave-flash "access plus 28 days"
+        </IfModule>
+    </Virtualhost>
 	
 !!! 注意在写入配置文件时把中文注释删除或保存为UTF-8编码
 
@@ -65,12 +59,10 @@ MyQEE PHP Framework可以支持Windows/Unix服务器环境，可运行于包括A
 若您无法修改Apache的配置，可在系统目录下加入".htaccess"文件开启rewrite，内容如下：
 
 	RewriteEngine On
-	 
-	RewriteRule ^~([a-zA-Z0-9\-_]+)~(.*)$ "projects/$1/wwwroot/$2" [L]
+	
 	RewriteRule ^(?!(?:wwwroot/|index\.php|projects/[a-zA-Z0-9\-_]+/wwwroot/)).+$ wwwroot/$0 [PT,NS]	
 	 
 	RewriteCond %{REQUEST_FILENAME} !-f
-	RewriteCond %{REQUEST_FILENAME} !-l
 	RewriteCond %{REQUEST_FILENAME} !-d
 	RewriteRule wwwroot/(.*)$ index.php/$1 [PT,L]
 

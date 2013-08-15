@@ -45,7 +45,7 @@ MyQEE PHP框架的的特色：
 	    RewriteCond %{DOCUMENT_ROOT}wwwroot/%{REQUEST_FILENAME} -d
 	    RewriteRule ^/(.*)$ /wwwroot/$1 [PT,L]
 	
-	    RewriteRule ^/(.*)$ /index.php/$1 [PT,L]
+	    RewriteRule ^/.* /index.php [PT,L]
 	    
 	    # 以下是一些文件的缓存设置，可修改或去掉
 	    <IfModule expires_module>
@@ -114,7 +114,7 @@ MyQEE PHP框架的的特色：
 
 升级
 ====
-升级方法及注意事项请看[UPGRADE.md](upguade.html)文件
+升级方法及注意事项请看[UPGRADE.md](upgrade.html)文件
 
 
 修改日志
