@@ -676,6 +676,28 @@ abstract class Core_HttpIO
                 $tmpstr[] = $params_array['directory'];
             }
 
+            if ($params_array['controller'])
+            {
+                $controller = strtolower($params_array['controller']);
+
+                if (preg_match('#^Library_[a-z0-9]+_[a-z0-9]+_([a-z0-9_]+)$#i', $params_array['controller'], $m))
+                {
+                    # 类库中的控制器
+                    $controller = $m[1];
+                }
+
+                $pos = strrpos($controller, '_');
+                if (false!==$pos)
+                {
+                    $controller = substr($controller, $pos + 1);
+                }
+
+                if ($controller!='default')
+                {
+                    $tmpstr[] = $controller;
+                }
+            }
+
             $action = strtolower(substr($params_array['action'] , 7));     // Action_Abc -> abc
             if ($action && $action!='default')
             {
@@ -697,7 +719,8 @@ abstract class Core_HttpIO
                     $tmpstr[] = $v;
                 }
             }
-            return implode('/', $tmpstr);
+
+            return rtrim(implode('/', $tmpstr), '/') . '/';
         }
         else
         {

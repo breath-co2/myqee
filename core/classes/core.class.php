@@ -881,11 +881,11 @@ abstract class Core_Core extends Bootstrap
                 $the_id    = array();
                 $tmp_class = array_shift($args);
                 $tmp_arg   = $tmp_class;
-                $directory = '/'. substr($uri, 0, $path_len) . $tmp_class;
+                $directory = rtrim('/'. substr($uri, 0, $path_len) . $tmp_class, '/');
 
                 if (0===strlen($tmp_class))
                 {
-                    $tmp_class = 'default';
+                    $tmp_class = 'index';
                 }
                 elseif (is_numeric($tmp_class))
                 {
@@ -940,10 +940,10 @@ abstract class Core_Core extends Bootstrap
 
                         break 2;
                     }
-                    elseif (!$found_index_class && $tmp_class!='index')
+                    elseif (!$found_index_class && $tmp_class!='default')
                     {
                         // 记录 index.controller.php 控制器
-                        $tmpfile = $tmp_path . 'index' . Core::$dir_setting['controller'][1] . EXT;
+                        $tmpfile = $tmp_path . 'default' . Core::$dir_setting['controller'][1] . EXT;
                         if (IS_DEBUG)
                         {
                             $find_log2[] = Core::debug_path($tmpfile);
@@ -951,10 +951,14 @@ abstract class Core_Core extends Bootstrap
 
                         if (is_file($tmpfile))
                         {
-                            if ($the_id)
+                            if (null!==$tmp_arg)
                             {
                                 array_unshift($args, $tmp_arg);
-                               $directory = substr($directory, 0, -strlen($tmp_arg) - 1);
+
+                                if (strlen($tmp_arg)>0)
+                                {
+                                    $directory = substr($directory, 0, -strlen($tmp_arg) - 1);
+                                }
                             }
 
                             $found_index_class = array
@@ -962,7 +966,7 @@ abstract class Core_Core extends Bootstrap
                                 'file'   => $tmpfile,
                                 'dir'    => $directory,
                                 'ns'     => $ns,
-                                'class'  => 'Controller_' . $real_path . 'Index',
+                                'class'  => 'Controller_' . $real_path . 'Default',
                                 'args'   => $args,
                                 'ids'    => $ids,
                             );
