@@ -676,6 +676,8 @@ abstract class Core_HttpIO
                 $tmpstr[] = $params_array['directory'];
             }
 
+            # 记录控制器和action的序号
+            $controller_index = $action_index = null;
             if ($params_array['controller'])
             {
                 $controller = strtolower($params_array['controller']);
@@ -692,6 +694,7 @@ abstract class Core_HttpIO
                     $controller = substr($controller, $pos + 1);
                 }
 
+                $controller_index = count($tmpstr);
                 if ($controller!='default')
                 {
                     $tmpstr[] = $controller;
@@ -701,6 +704,7 @@ abstract class Core_HttpIO
             $action = strtolower(substr($params_array['action'] , 7));     // Action_Abc -> abc
             if ($action && $action!='default')
             {
+                $action_index = count($tmpstr);
                 $tmpstr[] = $action;
             }
 
@@ -717,6 +721,34 @@ abstract class Core_HttpIO
                 foreach ($params_array['arguments'] as $v)
                 {
                     $tmpstr[] = $v;
+                }
+            }
+
+            $count = count($tmpstr);
+            for($i=$count-1; $i>=0; $i--)
+            {
+                if ($tmpstr[$i]==='' || null===$tmpstr[$i])
+                {
+                    unset($tmpstr[$i]);
+                }
+                elseif ($tmpstr[$i]=='index')
+                {
+                    if ($i===$action_index)
+                    {
+                        unset($tmpstr[$i]);
+                    }
+                    elseif ($i===$controller_index)
+                    {
+                        unset($tmpstr[$i]);
+                    }
+                    else
+                    {
+                        break;
+                    }
+                }
+                else
+                {
+                    break;
                 }
             }
 

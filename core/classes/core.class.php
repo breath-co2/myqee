@@ -928,6 +928,11 @@ abstract class Core_Core extends Bootstrap
                             $ids = array_merge($ids, $the_id);
                         }
 
+                        if ($tmp_class=='index' && $directory && substr($directory, -6)=='/index')
+                        {
+                            $directory = substr($directory, 0, -6);
+                        }
+
                         $found = array
                         (
                             'file'   => $tmpfile,
