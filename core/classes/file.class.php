@@ -726,14 +726,32 @@ class Core_File
 
         if (is_array($rs))
         {
+            $i = 0;
             foreach ($rs as $item)
             {
-                if ($item!=='success')return false;
+                $i++;
+
+                if ($item!=='success')
+                {
+                    if (IS_DEBUG)
+                    {
+                        Core::debug()->error($i.'/'.count($rs), 'call_http_host rs status');
+                    }
+                    return false;
+                }
             }
         }
         else
         {
-            return $rs==='success'?true:false;
+            if ($rs==='success')
+            {
+                return true;
+            }
+            else
+            {
+                Core::debug()->error('call_http_host error.');
+                return false;
+            }
         }
 
         return $rs;

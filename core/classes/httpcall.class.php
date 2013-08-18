@@ -19,7 +19,7 @@ class Core_HttpCall
      *
      * @var int
      */
-    protected static $connecttimeout_ms = 3000;
+    protected static $connecttimeout_ms = 10000;
 
     public function __construct($group=null)
     {
@@ -314,11 +314,11 @@ class Core_HttpCall
         curl_setopt($ch, CURLOPT_HEADER, false);
         curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_TIMEOUT, $timeout);
+        curl_setopt($ch, CURLOPT_TIMEOUT_MS, max(HttpCall::$connecttimeout_ms, $timeout));
         curl_setopt($ch, CURLOPT_CONNECTTIMEOUT_MS, HttpCall::$connecttimeout_ms);
-        curl_setopt($ch, CURLOPT_POST, true );
-        curl_setopt($ch, CURLOPT_POSTFIELDS, $vars );
-        curl_setopt($ch, CURLOPT_DNS_CACHE_TIMEOUT, 86400 );
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $vars);
+        curl_setopt($ch, CURLOPT_DNS_CACHE_TIMEOUT, 86400);
 
         if ( preg_match('#^https://#i', $url) )
         {

@@ -310,7 +310,7 @@ class Core_HttpClient_Driver_Curl
         }
         $this->_post_data = $myvars;
 
-        return $this->get($url,$timeout);
+        return $this->get($url, $timeout);
     }
 
 
@@ -351,7 +351,7 @@ class Core_HttpClient_Driver_Curl
         if ($this->ip)
         {
             # 如果设置了IP，则把URL替换，然后设置Host的头即可
-            if ( preg_match('#^(http(?:s)?)\://([^/\:]+)(\:[0-9]+)?/#', $the_url.'/',$m) )
+            if (preg_match('#^(http(?:s)?)\://([^/\:]+)(\:[0-9]+)?/#', $the_url.'/',$m))
             {
                 $this->header[] = 'Host: '.$m[2];
                 $the_url = $m[1].'://'.$this->ip.$m[3].'/'.substr($the_url,strlen($m[0]));
@@ -372,26 +372,33 @@ class Core_HttpClient_Driver_Curl
             curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
         }
 
-        if ( $this->cookies )
+        if ($this->cookies)
         {
-            curl_setopt($ch, CURLOPT_COOKIE, http_build_query($this->cookies, '', ';'));
+            if (is_array($this->cookies))
+            {
+                curl_setopt($ch, CURLOPT_COOKIE, http_build_query($this->cookies, '', ';'));
+            }
+            else
+            {
+                curl_setopt($ch, CURLOPT_COOKIE, $this->cookies);
+            }
         }
 
-        if ( $this->referer )
+        if ($this->referer)
         {
             curl_setopt($ch, CURLOPT_REFERER, $this->referer);
         }
 
-        if ( $this->agent )
+        if ($this->agent)
         {
             curl_setopt($ch, CURLOPT_USERAGENT, $this->agent);
         }
-        elseif ( array_key_exists('HTTP_USER_AGENT', $_SERVER) )
+        elseif (array_key_exists('HTTP_USER_AGENT', $_SERVER))
         {
             curl_setopt($ch, CURLOPT_USERAGENT, $_SERVER['HTTP_USER_AGENT']);
         }
 
-        foreach ( $this->_option as $k => $v )
+        foreach ($this->_option as $k => $v)
         {
             curl_setopt($ch, $k, $v);
         }
