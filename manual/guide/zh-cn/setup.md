@@ -64,7 +64,7 @@ MyQEE PHP Framework可以支持Windows/Unix服务器环境，可运行于包括A
 	 
 	RewriteCond %{REQUEST_FILENAME} !-f
 	RewriteCond %{REQUEST_FILENAME} !-d
-	RewriteRule wwwroot/(.*)$ index.php/$1 [PT,L]
+	RewriteRule wwwroot/.* index.php [PT,L]
 
 
 ## Nginx + PHP-FPM 配置样例

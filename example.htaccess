@@ -11,4 +11,4 @@ RewriteRule ^(?!(?:wwwroot/|index\.php|projects/[a-zA-Z0-9\-_]+/wwwroot/)).+$ ww
 
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
-RewriteRule wwwroot/(.*)$ index.php/$1 [PT,L]
+RewriteRule wwwroot/.* index.php [PT,L]
