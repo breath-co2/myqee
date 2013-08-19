@@ -4,7 +4,7 @@
  *
  * @var string
  */
-$config['admin/core']['index_title'] = '欢迎您使用 MyQEE '.MyQEE_VERSION.' 管理平台';
+$config['admin/core']['index_title'] = '欢迎您使用 MyQEE '.MYQEE_VERSION.' 管理平台';
 
 /**
  * 登录后台后是否检查更新

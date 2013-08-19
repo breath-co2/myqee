@@ -170,7 +170,13 @@ function get_url($class_name, $method_or_property = '', $base_href = '')
     $class_name         = strtolower(trim($class_name, '\\ '));
     $method_or_property = strtolower($method_or_property);
 
-    $class_name_array = explode('_', $class_name, 2);
+    # 将bootstrap定位到core中
+    if ($class_name == 'bootstrap')
+    {
+        $class_name = 'core_bootstrap';
+    }
+
+    $class_name_array   = explode('_', $class_name, 2);
 
     # 扩展别名
     if ($class_name_array[0]=='ex')
@@ -1397,6 +1403,13 @@ EOF;
 
         $full_dir = preg_quote($full_dir);
         $files = glob($full_dir.'*');
+
+        # 核心类库中加入Bootstrap
+        if ($dir==='' && $group_key=='core' && $dir_setting['type']=='class')
+        {
+            array_unshift($files, $group['dir'] . 'bootstrap.php');
+        }
+
         foreach($files as $k=>$file)
         {
             if (is_dir($file))
@@ -1444,15 +1457,20 @@ EOF;
 
                 continue;
             }
+            elseif ($dir==='' && $k===0 && $group_key=='core' && $dir_setting['type']=='class')
+            {
+                // bootstrap
+                $filename = strtolower(basename($file, '.php'));
+            }
             elseif (substr($file, -$ext_len)!=$ext)
             {
                 continue;
             }
-
-            # 文件名后缀
-            $ext        = $dir_setting['file_suffix'];
-            # 文件名
-            $filename   = strtolower(basename($file, $ext));
+            else
+            {
+                # 文件名
+                $filename = strtolower(basename($file, $ext));
+            }
 
             # 处理ORM
             if ($dir_setting['type']=='orm')
@@ -1556,7 +1574,7 @@ EOF;
 
         $tmp_file = $group['type'] .'/'. $tmp_dir . $tmp_name .'.md';
 
-        if ($group['type']=='project')
+        if ($group['type']=='project' || $filename=='bootstrap')
         {
             $class_name = strtolower($title);
         }

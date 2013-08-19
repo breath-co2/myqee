@@ -18,7 +18,7 @@ define('START_MEMORY', memory_get_usage());
  *
  * @var string
  */
-define('MyQEE_VERSION', 'v3');
+define('MYQEE_VERSION', 'v3');
 
 /**
  * PHP文件后缀
@@ -105,14 +105,14 @@ define('DIR_CORE', DIR_SYSTEM.'core'.DS);
 define('DIR_PROJECT', DIR_SYSTEM.'projects'.DS);
 
 /**
- * Global公用类库目录
+ * 团队公用类库目录
  *
  * @var string
 */
 define('DIR_TEAM_LIBRARY', DIR_SYSTEM.'team_library'.DS);
 
 /**
- * 模块目录
+ * 第三方类库目录
  *
  * @var string
  */
