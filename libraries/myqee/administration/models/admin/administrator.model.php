@@ -2,7 +2,7 @@
 /**
  * 超级管理员模块
  *
- * @author jonwang
+ * @author 呼吸二氧化碳 <jonwang@myqee.com>
  *
  */
 class Library_MyQEE_Administration_Model_Admin_Administrator extends Model_Admin

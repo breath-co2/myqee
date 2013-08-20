@@ -3,7 +3,7 @@
 /**
  * 超级管理员ORM
  *
- * @author jonwang
+ * @author 呼吸二氧化碳 <jonwang@myqee.com>
  *
  */
 class Library_MyQEE_Administration_ORM_Admin_MemberGroup_Finder extends OOP_ORM_Finder_DB
@@ -241,7 +241,7 @@ class Library_MyQEE_Administration_ORM_Admin_MemberGroup_Finder extends OOP_ORM_
 /**
  * 超级管理员ORM查询结果集
  *
- * @author jonwang
+ * @author 呼吸二氧化碳 <jonwang@myqee.com>
  *
  */
 class Library_MyQEE_Administration_ORM_Admin_MemberGroup_Result extends OOP_ORM_Result
@@ -280,7 +280,7 @@ class Library_MyQEE_Administration_ORM_Admin_MemberGroup_Result extends OOP_ORM_
 /**
  * 超级管理员ORM数据
  *
- * @author jonwang
+ * @author 呼吸二氧化碳 <jonwang@myqee.com>
  *
  */
 class Library_MyQEE_Administration_ORM_Admin_MemberGroup_Data extends OOP_ORM_Data

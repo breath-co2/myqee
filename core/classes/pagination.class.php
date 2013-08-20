@@ -30,7 +30,7 @@
  *       $data = Database::instance()->limit($limit,$offset)->get()->as_array();
  *
  *
- * @author     jonwang(jonwang@myqee.com)
+ * @author     呼吸二氧化碳 <jonwang@myqee.com>
  * @category   MyQEE
  * @package    System
  * @subpackage Core

@@ -3,7 +3,7 @@
 /**
  * 静态文件输出
  *
- * @author jonwang
+ * @author 呼吸二氧化碳 <jonwang@myqee.com>
  *
  */
 class Library_MyQEE_Develop_Controller_Assets extends Controller

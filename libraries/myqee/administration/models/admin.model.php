@@ -12,7 +12,7 @@ if (!defined('MODEL_ADMIN_DATABASE'))
 /**
  * 后台管理基础模块
  *
- * @author jonwang
+ * @author 呼吸二氧化碳 <jonwang@myqee.com>
  *
  */
 class Library_MyQEE_Administration_Model_Admin extends Model

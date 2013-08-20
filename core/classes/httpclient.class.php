@@ -3,7 +3,7 @@
 /**
  * HTTP请求数据核心类
  *
- * @author     jonwang(jonwang@myqee.com)
+ * @author     呼吸二氧化碳 <jonwang@myqee.com>
  * @category   MyQEE
  * @package    System
  * @subpackage Core
@@ -296,9 +296,9 @@ class Core_HttpClient
     public function method($method = null)
     {
         if (null===$method)return $this->driver()->method();
-    
+
         $this->driver()->method(strtoupper($method));
-    
+
         return $this;
     }
 

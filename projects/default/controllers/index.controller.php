@@ -1,7 +1,7 @@
 <?php
 /**
  * 首页控制器
- * @author jonwang
+ * @author 呼吸二氧化碳 <jonwang@myqee.com>
  *
  */
 class Controller_Index extends Controller

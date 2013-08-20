@@ -3,7 +3,7 @@
 /**
  * SHELL 脚本基础控制器
  *
- * @author jonwang
+ * @author 呼吸二氧化碳 <jonwang@myqee.com>
  *
  */
 abstract class Core_Controller_Shell extends Controller

@@ -3,7 +3,7 @@
 /**
  * 上传类 For SAE
  *
- * @author     jonwang(jonwang@myqee.com)
+ * @author     呼吸二氧化碳 <jonwang@myqee.com>
  * @category   MyQEE
  * @package    System
  * @subpackage Core

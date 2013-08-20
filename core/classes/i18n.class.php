@@ -2,7 +2,7 @@
 /**
  * 语言包处理核心类
  *
- * @author     jonwang(jonwang@myqee.com)
+ * @author     呼吸二氧化碳 <jonwang@myqee.com>
  * @category   Core
  * @package    Classes
  * @subpackage Database

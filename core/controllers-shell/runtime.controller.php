@@ -3,7 +3,7 @@
 /**
  * runtime config 更新脚本
  *
- * @author jonwang
+ * @author 呼吸二氧化碳 <jonwang@myqee.com>
  *
  */
 class Core_Controller_RunTime extends Controller_Shell

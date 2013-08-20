@@ -58,7 +58,7 @@ if (!defined('_HTTPIO_METHOD'))
 /**
  * Http输入输出
  *
- * @author     jonwang(jonwang@myqee.com)
+ * @author     呼吸二氧化碳 <jonwang@myqee.com>
  * @category   MyQEE
  * @package    System
  * @subpackage Core

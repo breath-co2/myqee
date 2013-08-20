@@ -5,7 +5,7 @@
  * 这个控制器在正常情况下是不可以访问得到的，只有在内部调用时才会访问的到
  * 当执行File::create_file()等方法时，如果存在多个服务器需要进行同步操作，则系统会通过内部调用的方式请求到这个控制器进行操作
  *
- * @author     jonwang(jonwang@myqee.com)
+ * @author     呼吸二氧化碳 <jonwang@myqee.com>
  * @category   Core
  * @package    Controller
  * @copyright  Copyright (c) 2008-2013 myqee.com

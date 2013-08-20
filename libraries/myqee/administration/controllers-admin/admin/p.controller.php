@@ -2,7 +2,7 @@
 /**
  * 运行各项目后台控制器
  *
- * @author jonwang
+ * @author 呼吸二氧化碳 <jonwang@myqee.com>
  *
  */
 abstract class Library_MyQEE_Administration_Controller_Admin_P extends Controller

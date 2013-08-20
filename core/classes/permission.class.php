@@ -3,12 +3,12 @@
 /**
  * 权限类
  *
- * @author	   jonwang(jonwang@myqee.com)
+ * @author     呼吸二氧化碳 <jonwang@myqee.com>
  * @category   MyQEE
- * @package	   System
+ * @package    System
  * @subpackage Core
  * @copyright  Copyright (c) 2008-2013 myqee.com
- * @license	   http://www.myqee.com/license.html
+ * @license    http://www.myqee.com/license.html
  */
 class Core_Permission
 {

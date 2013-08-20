@@ -72,7 +72,7 @@ abstract class Core_Core extends Bootstrap
      *
      * @var string
      */
-    const CODER = 'jonwang(jonwang@myqee.com)';
+    const CODER = '呼吸二氧化碳 <jonwang@myqee.com>';
 
     /**
      * 页面编码
@@ -2225,7 +2225,7 @@ abstract class Core_Core extends Bootstrap
 /**
  * 无调试对象
  *
- * @author     jonwang(jonwang@myqee.com)
+ * @author     呼吸二氧化碳 <jonwang@myqee.com>
  * @category   Core
  * @package    Classes
  * @subpackage Core

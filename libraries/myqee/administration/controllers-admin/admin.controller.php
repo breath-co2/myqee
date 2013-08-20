@@ -3,7 +3,7 @@
 /**
  * 后台管理功能基础控制器
  *
- * @author jonwang
+ * @author 呼吸二氧化碳 <jonwang@myqee.com>
  *
  */
 abstract class Library_MyQEE_Administration_Controller_Admin extends Controller

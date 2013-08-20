@@ -3,7 +3,7 @@
 /**
  * Memcache For SAE 缓存驱动器
  *
- * @author     jonwang(jonwang@myqee.com)
+ * @author     呼吸二氧化碳 <jonwang@myqee.com>
  * @category   MyQEE
  * @package    Sea
  * @subpackage Sea

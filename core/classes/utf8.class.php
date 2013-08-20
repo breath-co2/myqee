@@ -18,7 +18,7 @@
  *
  * [!!] This file is licensed differently from the rest of MyQEE. As a port of [phputf8](http://phputf8.sourceforge.net/), this file is released under the LGPL.
  *
- * @author     jonwang(jonwang@myqee.com)
+ * @author     呼吸二氧化碳 <jonwang@myqee.com>
  * @category   MyQEE
  * @package    System
  * @subpackage Core
