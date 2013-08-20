@@ -22,7 +22,7 @@
 (boolean) 是否window服务器
 
 ## CRLF
-(boolean) 换行符: `\r\n`
+(string) 换行符: `\r\n`
 
 ## IS_MBSTRING
 (boolean) 系统是否支持mbstring类库函数
