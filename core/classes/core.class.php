@@ -524,7 +524,7 @@ abstract class Core_Core extends Bootstrap
             {
                 require $found['file'];
 
-                if ($found['ns']=='team_library' || $found['ns']=='project')
+                if ($found['ns']=='team-library' || $found['ns']=='project')
                 {
                     $class_name = $found['class'];
                 }
@@ -1233,7 +1233,7 @@ abstract class Core_Core extends Bootstrap
         }
         elseif ( strpos($file, DIR_TEAM_LIBRARY) === 0 )
         {
-            $file = $l . './team_library/' . $r . substr($file, strlen(DIR_TEAM_LIBRARY));
+            $file = $l . './team-library/' . $r . substr($file, strlen(DIR_TEAM_LIBRARY));
         }
         elseif ( strpos($file, DIR_LIBRARY) === 0 )
         {

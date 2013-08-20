@@ -685,7 +685,7 @@ class Manual
             (
                 'type'          => 'team',
                 'out_dir'       => 'team/',
-                'dir'           => DIR_SYSTEM.'team_library/',
+                'dir'           => DIR_SYSTEM.'team-library/',
                 'base_href'     => '../',
                 'title'         => 'Team library manual',
                 'top_menu_text' => 'Team library manual',

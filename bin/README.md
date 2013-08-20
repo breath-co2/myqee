@@ -35,7 +35,7 @@ npm安装recess和uglifyjs：
 
 recreate-ide-helper-file
 ------------------------
-重新生成类库目录中_ide_helper.php文件(此文件在生产环境中是不会用到的)，这个用于自行开发类库时批量生成类库映射文件，如果只是在project和team_library中开发代码则不需要生成ide helper
+重新生成类库目录中_ide_helper.php文件(此文件在生产环境中是不会用到的)，这个用于自行开发类库时批量生成类库映射文件，如果只是在 `project` 和 `team-library` 中开发代码则不需要生成ide helper
 
 我参数，直接执行即可
 
@@ -51,7 +51,7 @@ SVN合并、查看合并日志工具
  * 将一个目录文件全部合并到一个带svn版本控制的目录，多余的文件会执行svn delete命令清除Index
  * 将一个目录的文件同步到一个带svn版本控制的目录
 
-### 关于版本合并功能 
+### 关于版本合并功能
 通常我们会在working版本(或dev版本)中开发代码，然后把修改的内容合并到trunk中，这个工具就是自动合并指定版本到trunk目录用的
 可自动将开发版本文件合并到trunk文件中
 

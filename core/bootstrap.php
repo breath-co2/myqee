@@ -109,7 +109,7 @@ define('DIR_PROJECT', DIR_SYSTEM.'projects'.DS);
  *
  * @var string
 */
-define('DIR_TEAM_LIBRARY', DIR_SYSTEM.'team_library'.DS);
+define('DIR_TEAM_LIBRARY', DIR_SYSTEM.'team-library'.DS);
 
 /**
  * 第三方类库目录
@@ -315,7 +315,7 @@ abstract class Bootstrap
     public static $include_path = array
     (
         'project'      => array(),                                   // 项目类库
-        'team_library' => array('default'=>DIR_TEAM_LIBRARY),        // Team公共类库
+        'team-library' => array('default'=>DIR_TEAM_LIBRARY),        // Team公共类库
         'library'      => array(),                                   // 类库包
         'core'         => array('core'=>DIR_CORE),                   // 核心类库
     );
@@ -693,7 +693,7 @@ abstract class Bootstrap
             if (!$is_alias)
             {
                 # 在include path中找
-                foreach (array('project', 'team_library') as $type)
+                foreach (array('project', 'team-library') as $type)
                 {
                     foreach (self::$include_path[$type] as $path)
                     {
@@ -1067,7 +1067,7 @@ abstract class Bootstrap
         $config_files = array();
 
         self::get_config_file_by_path($config_files, self::$include_path['project'],      true );
-        self::get_config_file_by_path($config_files, self::$include_path['team_library'], true );
+        self::get_config_file_by_path($config_files, self::$include_path['team-library'], true );
         self::get_config_file_by_path($config_files, self::$include_path['library'],      false);
         self::get_config_file_by_path($config_files, self::$include_path['core'],         false);
 

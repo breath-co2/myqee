@@ -1,4 +1,5 @@
 # 核心类库相关配置
+核心类库的配置就在 `core/config.php` 中，提供了默认的配置信息，如果你需要对它内容进行扩展（或替换），无须修改这个文件，请直接修改 `team-library/config.php` 或项目中的 `config.php` 配置即可，比如 `$config['cookie']` 就可以替换或扩展掉core中的 `$config['cookie']` 相关配置。
 
 ## 数据库配置
 
@@ -25,30 +26,30 @@
 
 	// 实例化一个数据库对象
 	$db1 = new Database('default');
-	
-	// 当配置关键字为default时可省略	
+
+	// 当配置关键字为default时可省略
 	$db2 = new Database();
-	
+
 	$db3 = new Database();
-	
+
 	// $db2 和 $db3 为两个不同的实例化对象
 	var_dump($db2===$db3);		// false
-	
-	
+
+
 方法二：
 
 	// 实例化一个可重复使用的数据库对象
 	$db1 = Database::instance('default');
-	
+
 	// 可省略default
 	$db2 = Database::instance();
-	
+
 	$db3 = Database::instance('test');
-	
+
 	// $db1 和 $db2 为同一个实例化对象
 	var_dump($db1===$db2);		// true
 	var_dump($db1===$db3);		// false
-	
+
 
 参数说明
 
@@ -69,7 +70,7 @@ profiling    | 是否开启性能统计 | `true` | `false`
 `hostname` 参数说明:
 参数          |  说明
 -------------|--------------
-hostname     | 服务器，例如 `127.0.0.1`, 支持主从设置   
+hostname     | 服务器，例如 `127.0.0.1`, 支持主从设置
 database     | 库名称，例如 `myqee`
 username     | 数据库账号
 password     | 数据库密码
@@ -113,7 +114,7 @@ persistent   | 是否长连接， `true` | `false`
 ## 缓存配置
 
 缓存配置为 `$config['cache']` 相关参数，下面是一个常见的缓存配置
-	
+
 	// 默认配置
 	$config['cache']['default'] = array
 	(
@@ -163,24 +164,24 @@ persistent   | 是否长连接， `true` | `false`
 
 	$cache = Cache::instance();
 	$cache->set('key', 'value');
-	
+
 	//或
 
 	$cache = new Cache();
 	$cache->set('key', 'value');
-	
-如果想使用 `test` 组的配置缓存，只要换个key即可，例如 `Cache::instance('test')->set('key', 'value');` 
+
+如果想使用 `test` 组的配置缓存，只要换个key即可，例如 `Cache::instance('test')->set('key', 'value');`
 
 **MyQEE的配置都具有类似的统一性，基本上依葫芦画瓢即可，这里以上例中 `default` 的配置说明下：**
 
 首先，它设置的 `driver`（即驱动）为Redis，而 `driver_config` (即当前驱动配置)就是指定 `$config['cache/redis']` 中的配置关键字为 `default`，所以当我们使用 `Cache::instance()` 时实际上就是第一个配置告诉缓存类是要用Redis作为储存驱动，系统会加载Redis的相关类，然后再会根据配置里的redis的配置去连接到相应的redis服务器上，最终实现程序的需求。
 
-当然，这配置也可以合并起来，写成这样： 
+当然，这配置也可以合并起来，写成这样：
 
 
 	$config['cache']['default'] = array
 	(
-	    'driver'        => 'Redis',	
+	    'driver'        => 'Redis',
 	    'driver_config' => array
 		(
 	        array
@@ -192,7 +193,7 @@ persistent   | 是否长连接， `true` | `false`
 		    ),
 		)
     );
-    
+
 你会看到，`driver_config` 如果是字符串就是表示对应的配置的key，而如果是数组，则是实际的配置
 
 
@@ -206,7 +207,7 @@ Redis      | Redis，需要安装Redis扩展， [PhpRedis](https://github.com/ni
 Apc        | Apc缓存
 Database   | 数据库，使用数据库缓存请按下面的DDL建立一个表
 SQLite     | SQLite数据库，同上，需要初始化一个SQLite的表
-WinCache   |  
+WinCache   |
 
 数据库，SQLite 类型的DDL：
 
@@ -253,10 +254,10 @@ WinCache   |
 	    'check_string'   => '$@de23#$%@.dG2.p4Ad',    // 校验字符串
 	);
 
-强烈建议更改 `check_string` 有助于提高系统安全，比如在根目录的 `team_library` 目录的 `config.php` 中加入
+强烈建议更改 `check_string` 有助于提高系统安全，比如在根目录的 `team-library` 目录的 `config.php` 中加入
 
 	$config['session']['check_string'] = 'your rand code';
-	
+
 即可
 
 
@@ -281,7 +282,7 @@ WinCache   |
 
 	$page = new Pagination();      // key为default可省略
 	$page->total_items = 1000;	    // 设置总数，可在数据库或缓存中先获取到
-	
+
 	echo $page->render();			// 输出分页的HTML
 
 
@@ -344,12 +345,12 @@ none     | 表示不同步操作
 系统内部调用接口密钥，留空则系统会使用全部core配置和database序列化拼接后md5产生
 
     $config['system_exec_key'] = '';
-    
+
 WEB服务的服务器列表，**留空则禁用同步功能**（比如只有1台web服务器时请禁用此功能）
 
 	$config['web_server_list'] = array
 	(
-	
+
 	);
 
 配置服务器后，可以实现服务器上data目录的文件同步功能，同步逻辑通过本系统完成，如果已经配置了data目录的sync同步机制，只需要配置1个主服务器即可

@@ -11,7 +11,7 @@
 
 ![MyQEE DIR](../assets/images/dir.png)
 
-从目录结构上可以看出核心类库中拥有包括类库(`classes`)，控制器(`controllers`)，视图(`views`)等目录，并且在`team_library` 中也拥有类似的目录结构。是的，包括每个项目目录，第三方类库目录都可以拥有相同的目录结构，这些目录结构在php执行时可以进行合并后执行，这就是HMVC。
+从目录结构上可以看出核心类库中拥有包括类库(`classes`)，控制器(`controllers`)，视图(`views`)等目录，并且在`team-library` 中也拥有类似的目录结构。是的，包括每个项目目录，第三方类库目录都可以拥有相同的目录结构，这些目录结构在php执行时可以进行合并后执行，这就是HMVC。
 
 ![MyQEE DIR](../assets/images/hmvc.png)
 
