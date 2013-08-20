@@ -62,7 +62,7 @@ PS:控制器类名不区分大小写，不过推荐使用首字母和下划线�
 这样还不够，那么再来一个有意思的做法吧，同样是上面的这些，如果再创建 `/test/abc/defghi.controller.php` 这个控制器呢？显然，此时就会执行到这个控制器。所以，同样的一个URL地址你可以有更多的控制器的创建方法，完全看项目需求，更多的想象空间。
 
 
-## 特殊控制器
+## `index.controller.php` 和 `default.controller.php` 控制器
 
 到这里，你是否觉得控制器是一个非常灵活而有趣的东西？那么我再介绍2个特殊的控制器 `index.controller.php` 和 `default.controller.php` 这2个控制器分别是首页控制器和默认控制。下面分别介绍：
 
@@ -196,12 +196,8 @@ PS:控制器类名不区分大小写，不过推荐使用首字母和下划线�
 
 ### __call($action_name, $arguments) 方法
 
-这个是PHP类库中特殊的方法，用来执行一个不存在的方法，MyQEE同样执行，你可以利用它来处理一些类似404错误输出相关功能，例如一个控制器中，有固定的几个action，如果用户请求了一个不存在的action方法，此时如果设置了 `__call()`，系统就会直接调用，如果没有这个方法，系统则会直接调 `Core::show_404()` 输出一个页面不存在的404页面。
+这个是PHP类库中特殊的方法，用来执行一个不存在的方法，MyQEE同样支持，你可以利用它来处理一些类似404错误输出相关功能，例如一个控制器中，有固定的几个action，如果用户请求了一个不存在的action方法，此时如果设置了 `__call()`，系统就会直接调用，如果没有这个方法，系统则会直接调 `Core::show_404()` 输出一个页面不存在的404页面。
 
-
-## 控制器的扩展
-
-控制器除了可以扩展到`Controller` 这个基类外，还可以扩展到另外一个控制器，比如 `Controller_Test_Abc extend Controller_Test_Core`
 
 ## 后台控制器、系统控制器、命令行控制器
 
@@ -234,8 +230,20 @@ PS:控制器类名不区分大小写，不过推荐使用首字母和下划线�
 
 ***命令行控制***：当你在命令行里使用类似 `php index.php default test abc` 这样的命令执行时，系统会直接进入命令行模式，其中，`default` 表示项目，后面的参数和URL中相似，只不过通常，URL中是以/分开，而命令行里习惯用空格分开。
 
+
 ***系统控制器***：这个主要发生在存在2个或以上的服务器时使用MyQEE系统的同步类库 `HttpCall` 处理服务器同步时会进入的模式。如果你设置了文件同步模式为服务器同步，则在使用 `File` 类进行操作文件时，也会内部调用，具体可参看“系统内部调用”。
 
+
+## 控制器的扩展
+
+推荐控制器都扩展到 `Controller` 这个基类。当然也可以扩展另外一个控制器，比如 `Controller_Test_Abc` extend `Controller_Test_Core`，然后由 `Controller_Test_Core` extend 到 `Controller` 上。
+
+**后台控制器**
+
+如果您使用了MyQEE提供的 `com.myqee.administration` 类库的话，建议所有的后台控制器都扩展到 `Controller_Admin`，这个类后台类库的一个基类，它会扩展到 `Controller` 上，它提供了管理员登录判断等，具体请看第三方类库的MyQEE的Adminstration类库的控制器相关文档。
+
+**命令行控制**
+命令行类库内置了 `Controller_Shell` 基类，它已扩展到了 `Controller` 上，建议所有的命令行控制器都继承 `Controller_Shell` 上，[查看 `Controller_Shel` API](controller-shell.shell/api.html)。
 
 
 
@@ -275,4 +283,4 @@ PS:控制器类名不区分大小写，不过推荐使用首字母和下划线�
 
 另外一个问题也是显而易见的，就是可能会存在控制器名称冲突，例如有2个控制器 `my_test.controller.php` 和 `my-test.controller.php` 他们的控制器名按规则都应该是 `Controller_My_Test`,  在URL访问时，`/my_test/` 加载的是前者，`/my-test/` 加载的是后者，一般情况下都不会有问题，但是你不能同时载入2个文件，否则程序会报错，这个是无法解决的，你只能自行避免。
 
-!! V2不支持这种特殊字符的控制器
+!!! V2不支持这种特殊字符的控制器
