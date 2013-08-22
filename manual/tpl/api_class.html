@@ -1,3 +1,7 @@
+<?php
+$__dir = dirname(__FILE__);
+$st    = $setting;
+?>
 <h1>
 <?php
 echo '<span class="api-class-div"><span data-toggle="tooltip" data-original-title="'.($setting['modifiers']?$setting['modifiers']:'public').'" class="'.($setting['modifiers']?$setting['modifiers']:'public').'"></span></span> ';
@@ -45,133 +49,13 @@ if ($setting['constants'])
 ?>
 
 
-
-
-
-
 <?php
-
 if ($setting['methods'] || $setting['properties'])
 {
-    $hide_html = '';
-    $extend_html = '';
-?>
-<div class="api-class-div">
-<blockquote>
-<h3 id="api-methods" data-placement="left" style="cursor:pointer;" title="<?php echo __('Click Close', $lang);?>" data-toggle="tooltip">
-    <span style="padding-top:1px;float:right;"><i class="<?php echo $is_show?'icon-plus':'icon-minus';?>"></i></span>
-    <?php echo $setting['class_name'] .' '. __('Methods'); ?>
-</h3>
-
-<div class="toc-div">
-<ul class="toc">
-<?php
-$extend_out = false;
-if ($setting['properties'])foreach ($setting['properties'] as $item)
-{
-    if ($setting['class_name']!=$item['class_name'] || $item['is_php_class'])
-    {
-        $href = get_url($item['class_name'], '$'.$item['name'], $base_href);
-    }
-    else
-    {
-        $href = $file_data['filename'].'/property.'.strtolower($item['name']).'.html';
-    }
-
-    $item_html = '<li class="tocfield"><div class="'.trim(str_replace(' static ', '', ' '.$item['modifiers'].' ')).'"></div><div class="toc_'.($item['is_static']?'s':'n').'"></div>'.($item['is_php_class']?'<span data-toggle="tooltip" title="Link To PHP Manual Page" class="label">PHP</span>':'').'<a href="'.$href.'">'.$item['class_name'].'::$'.$item['name'].'</a>'.($item['title']?' - '.$item['title']:'').'</li>'."\n";
-
-    if (!$item['is_public'] || substr($item['name'], 0, 1)=='_')
-    {
-        $hide_html .= $item_html;
-    }
-    else if ($setting['class_name']!=$item['class_name'])
-    {
-        $extend_html .= $item_html;
-    }
-    else
-    {
-        echo $item_html;
-    }
-
-}
-if ($extend_out)
-{
-    echo '</ul></div><ul class="toc">';
+    include($__dir.'/api_class_method_and_property.html');
 }
 ?>
 
-<?php
-$extend_out = false;
-if ($setting['methods'])foreach ($setting['methods'] as $item)
-{
-    if ($setting['class_name']!=$item['class_name'] || $item['is_php_class'])
-    {
-        $href = get_url($item['class_name'], $item['name'], $base_href);
-    }
-    else
-    {
-        $href = $file_data['filename'].'/method.'.strtolower($item['name']).'.html';
-    }
-
-    $item_html = '<li class="tocfield"><div class="'.trim(str_replace(' static ', '', ' '.$item['modifiers'].' ')).'"></div><div class="toc_'.($item['is_static']?'s':'n').'"></div>'.($item['is_php_class']?'<span data-toggle="tooltip" title="Link To PHP Manual Page" class="label">PHP</span>':'').'<a href="'.$href.'">'.$item['class_name'].'::'.$item['name'].'</a>'.($item['title']?' - '.$item['title']:'').'</li>'."\n";
-
-    if (!$item['is_public'] || (substr($item['name'], 0, 1)=='_' && !in_array($item['name'], array('__construct', '__destruct'))))
-    {
-        $hide_html .= $item_html;
-    }
-    else if ($setting['class_name']!=$item['class_name'])
-    {
-        $extend_html .= $item_html;
-    }
-    else
-    {
-        echo $item_html;
-    }
-}
-?>
-</ul>
-<?php
-if ($extend_html)
-{
-    echo '<div class="api-extends-div"><h5>',__('Extend from the parent class methods and variables', $lang),'</h5><ul class="toc">';
-    echo $extend_html;
-    echo '</ul></div>';
-}
-?>
-<?php
-# 隐藏的内容
-if ($hide_html)
-{
-    echo '<div class="api-extends-div" id="hide-item-html-div" style="display:none"><h4>',__('No Public Items', $lang),'</h4><ul class="toc">',$hide_html,'</ul><button class="btn btn-small btn-warning" onclick="$(\'#hide-item-html-div\').fadeOut(null,function(){$(\'#hide-item-html-button\').show();});">'.__('Hide Other NoPublic Items', $lang).'</button></div>';
-?>
-<button id="hide-item-html-button" class="btn btn-small btn-warning" onclick="$('#hide-item-html-div').fadeIn();$(this).nextAll('.tooltip').remove();$(this).hide();" title="<?php echo __('Show private or protected item.', $lang);?>" data-toggle="tooltip" type="button" ><?php echo __('Show Other NoPublic Items', $lang);?></button>
-<?php
-}
-?>
-</div>
-</blockquote>
-</div>
-
-<script type="text/javascript">
-$('#api-methods').click(function(){
-    var self = $(this);
-    var obj = $(this).nextAll('.toc-div');
-    if (obj.css('display')=='none')
-    {
-        obj.fadeIn();
-        self.removeClass('closeblock');
-        $(this).attr('data-original-title', '<?php echo __('Click Close', $lang);?>').find('i').removeClass('icon-plus').addClass('icon-minus');
-    }
-    else
-    {
-        obj.fadeOut(null, function(){self.addClass('closeblock');});
-        $(this).attr('data-original-title', '<?php echo __('Click Open', $lang);?>').find('i').removeClass('icon-minus').addClass('icon-plus');
-    }
-});
-</script>
-<?php
-}
-?>
 
 
 
@@ -193,6 +77,17 @@ if ($setting['tags'])
 </dl>
 </div>
 <?php
+}
+?>
+
+
+
+
+<?php
+$alias_name = '$this';
+if ($setting['methods'])foreach($setting['methods'] as $item)
+{
+    include($__dir.'/api_class_method.html');
 }
 ?>
 

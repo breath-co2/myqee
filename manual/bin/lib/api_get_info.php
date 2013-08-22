@@ -19,10 +19,10 @@ define('DIR_MANUAL', realpath($dirname.'/../../').'/');
 $type       = strtolower($args[0]);
 # 类名称
 $class_name = strtolower($args[1]);
-# 文件名
-$file       = $args[2];
 # 文件类型，主要用于控制器读取处理是否shell还是system还是admin
-$dir_type   = $args[3];
+$dir_type   = $args[2];
+# 文件名
+$file       = $args[3];
 
 
 if ($type=='core')

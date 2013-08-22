@@ -102,35 +102,11 @@ echo '&nbsp;'.$file_data['class_name'].'::'.$setting['name'].'( '. ($setting['pa
 <?php
 if ($setting['file_name'])
 {
-    if ($setting['end_line']-$setting['start_line']<=30)
-    {
-        # 100 行以内的代码直接显示
-        $is_show = true;
-    }
-    else
-    {
-        $is_show = false;
-    }
 ?>
-<div class="api-filename-div" data-placement="left" title="<?php echo __('Click Open', $lang);?>" data-toggle="tooltip"><span style="padding-top:1px;float:right;"><i class="<?php echo $is_show?'icon-minus':'icon-plus';?>"></i></span>File: <?php echo debug_path($setting['debug_file']);?></div>
-<div class="api-filecode-div"<?php if (!$is_show)echo ' style="display:none;"';?>><pre><code class="gutter: true; first-line: <?php echo $setting['start_line'];?>"><?php echo chars(source($setting['file_name'], $setting['start_line'], $setting['end_line'])); ?></code></pre></div>
+<div class="api-filename-div">File: <?php echo debug_path($setting['debug_file']);?></div>
+<div class="api-filecode-div"><pre><code class="gutter: true; first-line: <?php echo $setting['start_line'];?>"><?php echo chars(source($setting['file_name'], $setting['start_line'], $setting['end_line'])); ?></code></pre></div>
 
 </div>
-<script type="text/javascript">
-$('.api-filename-div').click(function(){
-    var obj = $(this).nextAll('.api-filecode-div');
-    if (obj.css('display')=='none')
-    {
-        obj.fadeIn();
-        $(this).attr('data-original-title', '<?php echo __('Click Close', $lang);?>').find('i').removeClass('icon-plus').addClass('icon-minus');
-    }
-    else
-    {
-        obj.fadeOut();
-        $(this).attr('data-original-title', '<?php echo __('Click Open', $lang);?>').find('i').removeClass('icon-minus').addClass('icon-plus');
-    }
-});
-</script>
 <?php
 }
 ?>

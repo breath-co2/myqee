@@ -69,4 +69,23 @@ class _Docs_Method_Param extends _Docs
 
         return $display;
     }
+
+    public function get_text()
+    {
+        $display = '';
+
+        if ($this->data['reference'])
+        {
+            $display .= '& ';
+        }
+
+        $display .= '$' . $this->data['name'] . ' ';
+
+        if ($this->data['default'])
+        {
+            $display .= '= ' . var_export($this->param->getDefaultValue(), true);
+        }
+
+        return $display;
+    }
 }

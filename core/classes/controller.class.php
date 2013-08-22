@@ -14,21 +14,21 @@ class Core_Controller
 {
 
     /**
-     * 请求参数
+     * 页面请求的参数
      *
      * @var array
      */
     public $arguments;
 
     /**
-     * 控制器
+     * 当前访问的控制器
      *
      * @var string
      */
     public $controller;
 
     /**
-     * 方法
+     * 当前调用的方法
      *
      * @var string
      */
@@ -73,6 +73,7 @@ class Core_Controller
 
     /**
      * 用于给系统调用设置对象变量
+     *
      * @param array $data
      */
     public function _callback_set_vars($data)

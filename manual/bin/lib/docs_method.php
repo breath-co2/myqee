@@ -78,6 +78,7 @@ class _Docs_Method extends _Docs
                 }
 
                 $param->data['html'] = $param->get_html();
+                $param->data['text'] = $param->get_text();
 
                 $params[] = $param->getArrayCopy();
             }
@@ -109,7 +110,8 @@ class _Docs_Method extends _Docs
         $this->data['is_public']     = $this->method->isPublic();
         if ($this->data['params'])
         {
-            $this->data['params_short']  = $this->params_short();
+            $this->data['params_short'] = $this->params_short();
+            $this->data['params_text']  = $this->params_text();
         }
     }
 
@@ -148,5 +150,20 @@ class _Docs_Method extends _Docs
         }
 
         return $out;
+    }
+
+    protected function params_text()
+    {
+        if (!$this->data['params'])return '';
+
+        $out = '';
+        foreach ($this->data['params'] as $param)
+        {
+            $out .= ', ' . $param['text'];
+        }
+
+        $out = substr($out, 2);
+
+        return htmlspecialchars($out);
     }
 }

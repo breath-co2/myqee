@@ -122,7 +122,50 @@ if ($setting_data && $setting_data['properties'])
 </table>
 <?php
 }
+
+
+
+
+
+
+
+
+
+
+
+
+$__dir = dirname(__FILE__);
+$st = $setting;
+
+if ($setting['api'])foreach ($setting['api'] as $key=>$api)
+{
+    $st = $api;
+    if ($st['methods'] || $st['properties'])
+    {
+        include($__dir.'/api_class_method_and_property.html');
+    }
+}
+
+/*
+if ($api['methods'])foreach ($api['methods'] as $item)
+{
+    $href = get_url($item['class_name'], $item['name'], $base_href);
+    echo '<h3 class="api-class-div"><span class="tocfield"><span class="'.trim(str_replace(' static ', '', ' '.$item['modifiers'].' ')).'"></span><span class="toc_'.($item['is_static']?'s':'n').'"></span>'.($item['is_php_class']?'<span data-toggle="tooltip" title="Link To PHP Manual Page" class="label">PHP</span> ':'').'<a href="'.$href.'">'.($item['is_static']?'self::':'$this-&gt;').$item['name'].'('. ($item['params']?$item['params_text']:''). ')</a></span></h3>';
+
+    if ($item['description'])echo $item['description'];
+    echo '<br />';
+}
+*/
 ?>
+
+
+
+
+
+
+
+
+
 
 <input value="查看数据" type="button" onclick="$('.data-aaaaa').show();" />
 <pre class="data-aaaaa" style="display:none;">

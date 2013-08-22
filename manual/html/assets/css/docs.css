@@ -98,10 +98,11 @@ body > .navbar .brand:hover {
 
 .right-div h3, .right-div h4, .right-div h5, .right-div h6 {
   margin: 4px 0;
-  padding: 0.3em 0.4em;
+  padding: 0.4em;
   border-bottom: 1px dotted #ccc;
   line-height: 1.3em;
   background: #f4f4f4;
+  border-left: 4px solid lightblue;
 }
 .right-div h1 {font-size: 20px;}
 .right-div h2 {font-size: 18px;}
@@ -109,6 +110,14 @@ body > .navbar .brand:hover {
 .right-div h4 {font-size: 14px;}
 .right-div h5 {font-size: 13px;}
 .right-div h6 {font-size: 12px;}
+
+.right-div h1 img,
+.right-div h2 img {
+  border:none;
+  padding: 0;
+  vertical-align: middle;
+  margin-top: -4px;
+}
 
 .right-div pre {
   background-color: #fffff2;
@@ -312,7 +321,6 @@ body > .navbar .brand:hover {
   background: -webkit-gradient(linear, 0 0, 0 bottom, from(#fffad8), to(#ffee7d));
   background: -moz-linear-gradient(#fffad8, #ffee7d);
   background: linear-gradient(#fffad8, #ffee7d);
-  cursor: pointer;
 }
 .api-class-div .api-filename-div:hover {
   background: #ffe851;

@@ -1,0 +1,74 @@
+<?php
+if ($st['class_name']!=$item['class_name'] || $item['is_php_class'])
+{
+    $href = get_url($item['class_name'], $item['name'], $base_href);
+}
+else
+{
+    $href = $file_data['filename'].'/method.'.strtolower($item['name']).'.html';
+}
+?>
+<div class="api-class-div">
+
+<h2 class="api-class-div">
+<?php
+echo '<span class="tocfield"><span class="'.trim(str_replace(' static ', '', ' '.$item['modifiers'].' ')).'"></span><span class="toc_'.($item['is_static']?'s':'n').'"></span>'.($item['is_php_class']?'<span data-toggle="tooltip" title="Link To PHP Manual Page" class="label">PHP</span> ':'');
+echo '<a href="'.$href.'">'.(
+    $alias_name?
+        (
+            $alias_name[0]=='$'?
+                (
+                    $item['is_static']?
+                        get_base_class_name($item['class_name'], false).'::'
+                    :
+                        $alias_name . '-&gt;'
+                )
+            :
+                $alias_name . '::'
+        )
+    :
+        get_base_class_name($item['class_name']) . '::'
+    )
+    . $item['name'].'( '. ($item['params']?$item['params_text']:''). ')</a>';
+?>
+</h2>
+
+<div class="api-description">
+<?php
+echo MarkdownExtra::defaultTransform($item['description']);
+?>
+</div>
+
+
+<?php if ($item['params']): ?>
+<h3><?php echo __('Parameters'); ?></h3>
+<table>
+<tr>
+    <th><?php echo __('Parameter'); ?></th>
+    <th><?php echo __('Type'); ?></th>
+    <th><?php echo __('Description'); ?></th>
+    <th><?php echo __('Default'); ?></th>
+</tr>
+<?php foreach ($item['params'] as $param): ?>
+<tr>
+<td><strong><code><?php echo '$'.$param['name'] ?></code></strong></td>
+<td><code><?php echo $param['byref']?'byref ':''.$param['type']?$param['type']:'unknown' ?></code></td>
+<td><?php echo preg_match('#^[a-z]#', $param['description'])?ucfirst($param['description']):$param['description']; ?></td>
+<td><?php echo $param['default'] ?></td>
+</tr>
+<?php endforeach; ?>
+</table>
+<?php endif ?>
+
+
+<?php if ($item['return']): ?>
+<h5><?php echo __('Return Values'); ?></h5>
+<ul class="return">
+<?php foreach ($item['return'] as $set): list($type, $text) = $set; ?>
+<li><code><?php echo chars($type) ?></code> <?php echo chars($text) ?></li>
+<?php endforeach ?>
+</ul>
+<?php endif ?>
+
+
+<br />

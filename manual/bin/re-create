@@ -18,6 +18,7 @@ include (dirname(__FILE__).'/lib/markdown_extra.php');
 
 $config_i18n = array();
 $current_lang = '';
+$current_base_href = '';
 
 function __($str, $lang=null)
 {
@@ -37,6 +38,93 @@ function chars($value, $double_encode = true)
 {
     return htmlspecialchars((string)$value, ENT_QUOTES, 'utf-8', $double_encode);
 }
+
+
+/**
+ * 获取一个类的基础名称
+ *
+ * 比如Core_Database的基础类名应该是Database
+ */
+function get_base_class_name($class_name, $tolower = true)
+{
+    $class_name = trim($class_name, '\\ ');
+    if ($tolower)
+    {
+        $class_name = strtolower($class_name);
+    }
+    $class_name_array = explode('_', $class_name, 2);
+
+    if (strtolower($class_name_array[0])=='core' && count($class_name_array)>1)
+    {
+        # 系统类库
+        $base_class_name = $class_name_array[1];
+    }
+    else if (preg_match('#^library_((?:[a-z0-9]+)_(?:[a-z0-9]+))_([a-z0-9_]+)$#i', $class_name, $m))
+    {
+        $base_class_name = $m[2];
+    }
+    else
+    {
+        $base_class_name = $class_name;
+    }
+
+    return $base_class_name;
+}
+
+
+/**
+ * 根据类名称来返回一个文档HTML
+ *
+ * @param $group_type 组类型 core | library | team | project
+ * @param $class_name 类名称，例如 Core_Database
+ * @param $type 类型，目前支持 list
+ * @param $alias_name 转换输出别名，例如 Database, $this
+ */
+function get_html_by_class($group_type, $class_name, $type, $alias_name)
+{
+    global $manual;
+    $class_name = strtolower($class_name);
+
+    $orm_type = 0;
+    if (strpos($class_name, '_')!==false)
+    {
+        $class_arr = explode('_', $class_name, 2);
+        switch ($class_arr[0])
+        {
+            case 'controller':
+                $dir_type = 'controller';
+                break;
+
+            case 'model':
+                $dir_type = 'model';
+                break;
+
+            case 'orm':
+                $dir_type = 'orm';
+                $orm_type = 1;
+                break;
+
+            default:
+                $dir_type = 'class';
+                break;
+        }
+    }
+    else
+    {
+        $dir_type = 'class';
+    }
+
+    $data = $manual->get_class_data($group_type, $class_name, $file, $dir_type, $orm_type);
+
+    if (!$data)
+    {
+        return ' `' . $class_name .'` ';
+    }
+
+    $data['alias_name'] = $alias_name;
+    return $manual->get_class_html($data, $type);
+}
+
 
 /**
  * 获取源代码
@@ -161,22 +249,26 @@ function get_tag_html($name, $text, $path = '')
 }
 
 /**
- * 获取指定Class的URL路径
+ * 更具类名称获取类的信息
+ *
+ * @param $class_name 雷美才
+ * @return array
  */
-function get_url($class_name, $method_or_property = '', $base_href = '')
+function get_class_info(&$class_name)
 {
-    global $manual;
-
-    $class_name         = strtolower(trim($class_name, '\\ '));
-    $method_or_property = strtolower($method_or_property);
-
     # 将bootstrap定位到core中
     if ($class_name == 'bootstrap')
     {
-        $class_name = 'core_bootstrap';
+        $class_name_array = array
+        (
+            'core',
+            'bootstrap',
+        );
     }
-
-    $class_name_array   = explode('_', $class_name, 2);
+    else
+    {
+        $class_name_array = explode('_', $class_name, 2);
+    }
 
     # 扩展别名
     if ($class_name_array[0]=='ex')
@@ -201,6 +293,21 @@ function get_url($class_name, $method_or_property = '', $base_href = '')
         $ns = '';
         $base_class_name = $class_name;
     }
+
+    return array($ns, $base_class_name);
+}
+
+/**
+ * 获取指定Class的URL路径
+ */
+function get_url($class_name, $method_or_property = '', $base_href = '')
+{
+    global $manual;
+
+    $class_name         = strtolower(trim($class_name, '\\ '));
+    $method_or_property = strtolower($method_or_property);
+
+    list($ns, $base_class_name) = get_class_info($class_name);
 
     if ($method_or_property)
     {
@@ -929,11 +1036,14 @@ EOF;
      */
     private function _create()
     {
+        global $current_base_href, $current_lang;
+
         $success = "\x1b[32m✔\x1b[39m";
         $error   = "\x1b[31m✕\x1b[39m";
 
         foreach ($this->config['lang'] as $lang => $lang_name)
         {
+            $current_lang = $lang;
             $untitled_document_title = __('Untitled Document', $lang);
 
             foreach ($this->files as $file => $lang_files)
@@ -953,7 +1063,7 @@ EOF;
 
                 $title       = $file_data['title'];
                 $global_data = $this->get_dir_global_data($lang, $group, $file_data);
-                $base_href   = $global_data['base_href'];
+                $base_href   = $current_base_href = $global_data['base_href'];
 
                 # 根据不同类型处理
                 switch ($file_data['file_type'])
@@ -1659,13 +1769,11 @@ EOF;
     /**
      * 获取类库数据
      *
-     * @param string $menu_content
+     * @param array $st
      * @param int $group_key
      * @param string $lang
      * @param string $dir
-     * @param array $st
      * @param string $base_href
-     * @param string $orm_type ORM类型，Finder|Data|Result 当类库类型为ORM时使用
      */
     private function paste_class_data($st, $group_key, $lang, $dir, $base_href)
     {
@@ -1676,7 +1784,7 @@ EOF;
 
 
         $class_name      = $data['class_name'];
-        $base_class_name = $this->get_base_class_name($class_name);
+        $base_class_name = get_base_class_name($class_name);
         $out_dir         = $st['out_dir'];
         $tmp_file        = $st['tmp_file'];
         $the_dir         = $st['dir'];
@@ -1752,7 +1860,7 @@ EOF;
             }
 
             # 记录是否属于PHP内置
-            $p_base_class_name = $this->get_base_class_name($property['class_name']);
+            $p_base_class_name = get_base_class_name($property['class_name']);
             $this->is_php_class_list[$p_base_class_name.'.$'.$low_name] = $property['is_php_class'];
             if ($p_base_class_name!=$base_class_name)
             {
@@ -1810,7 +1918,7 @@ EOF;
             }
 
             # 记录是否属于PHP内置
-            $p_base_class_name = $this->get_base_class_name($method['class_name']);
+            $p_base_class_name = get_base_class_name($method['class_name']);
             $this->is_php_class_list[$p_base_class_name.'.'.$low_name] = $method['is_php_class'];
             if ($p_base_class_name!=$base_class_name)
             {
@@ -1855,7 +1963,7 @@ EOF;
         $this->is_php_class_list[$base_class_name] = $data['is_php_class'];
         if ($data['parents'])foreach ($data['parents'] as $p)
         {
-            $p_base_class_name = $this->get_base_class_name($p['class_name']);
+            $p_base_class_name = get_base_class_name($p['class_name']);
             $this->is_php_class_list[$p_base_class_name] = $p['is_php_class'];
         }
 
@@ -1880,8 +1988,9 @@ EOF;
     /**
      * 获取类的分析数据
      */
-    private function get_class_data($group_type, $class_name, $file, $dir_type, $orm_type)
+    public function get_class_data($group_type, $class_name, $file, $dir_type, $orm_type)
     {
+        // print_r(func_get_args());
         if (isset($this->api_data[$group_type][$class_name]))
         {
             $data = $this->api_data[$group_type][$class_name];
@@ -1897,7 +2006,7 @@ EOF;
                 $base_class_name = $class_name;
             }
 
-            $exec = (DS==='\\'?'php.exe':'php') .' '. DIR_MANUAL .'bin/lib/api_get_info.php '. $group_type .' '. $base_class_name .' '. escapeshellarg($file) .' '. $dir_type;
+            $exec = (DS==='\\'?'php.exe':'php') .' '. DIR_MANUAL .'bin/lib/api_get_info.php '. $group_type .' '. $base_class_name .' '. $dir_type . ($file?' '.escapeshellarg($file):'');
 
             $data = shell_exec($exec);
 
@@ -2621,6 +2730,9 @@ EOF;
 
     private function format_content($content, $title, $group, $lang, $base_href)
     {
+        global $current_base_href;
+        $current_base_href = $base_href;
+
         # 文本处理
         $content = preg_replace('#<name>([^\r\n]+)</name>#', '<div class="function-name">'.$title.' -- $1</div>', $content);
 
@@ -2682,7 +2794,6 @@ EOF;
             $content = str_replace($m[0], $tmp_html, $content);
         }
         */
-
 
         # 处理MD文件
         $content = MarkdownExtra::defaultTransform($content);
@@ -2775,6 +2886,9 @@ EOF;
      */
     private function get_class_html_content($file_data, $title, $group, $lang, $base_href)
     {
+        global $current_base_href;
+
+        $current_base_href = $base_href;
         $config     = $this->config;
         $class_name = strtolower($file_data['class_name']);
         $setting    = $this->api_data[$group['type']][$class_name];
@@ -2799,6 +2913,9 @@ EOF;
      */
     private function get_method_html_content($file_data, $title, $group, $lang, $base_href)
     {
+        global $current_base_href;
+
+        $current_base_href = $base_href;
         $config      = $this->config;
         $class_name  = strtolower($file_data['class_name']);
         $method_name = $file_data['method_name'];
@@ -2825,6 +2942,9 @@ EOF;
      */
     private function get_property_html_content($file_data, $title, $group, $lang, $base_href)
     {
+        global $current_base_href;
+
+        $current_base_href = $base_href;
         $config        = $this->config;
         $class_name    = strtolower($file_data['class_name']);
         $property_name = $file_data['property_name'];
@@ -2851,6 +2971,9 @@ EOF;
      */
     private function get_orm_html_content($file_data, $title, $group, $lang, $base_href)
     {
+        global $current_base_href;
+
+        $current_base_href = $base_href;
         $config     = $this->config;
         $class_name = strtolower($file_data['class_name']);
         $setting    = $this->api_data[$group['type']][$class_name];
@@ -2875,32 +2998,6 @@ EOF;
         return ob_get_clean();
     }
 
-    /**
-     * 获取一个类的基础名称
-     *
-     * 比如Core_Database的基础类名应该是Database
-     */
-    private function get_base_class_name($class_name)
-    {
-        $class_name       = strtolower(trim($class_name, '\\ '));
-        $class_name_array = explode('_', $class_name, 2);
-
-        if ($class_name_array[0]=='core' && count($class_name_array)==2)
-        {
-            # 系统类库
-            $base_class_name = $class_name_array[1];
-        }
-        else if (preg_match('#^library_((?:[a-z0-9]+)_(?:[a-z0-9]+))_([a-z0-9_]+)$#', $class_name, $m))
-        {
-            $base_class_name = $m[2];
-        }
-        else
-        {
-            $base_class_name = $class_name;
-        }
-
-        return $base_class_name;
-    }
 
     private function set_empty_file($lang)
     {
@@ -2943,6 +3040,22 @@ EOF;
         );
     }
 
+    /**
+     * 获取类库的API的HTML
+     */
+    public function get_class_html($setting)
+    {
+        global $current_base_href, $current_lang;
+        $lang       = $current_lang;
+        $base_href  = $current_base_href;
+        $config     = $this->config;
+        $class_name = $setting['class_name'];
+
+
+        ob_start();
+        include(DIR_MANUAL.'tpl/api_class_tag_list.html');
+        return ob_get_clean();
+    }
     // 将链接转换为从根目录开始的完整URL
     /*
     function replace_link_to_md_file($tmp_url, $group)
