@@ -1,4 +1,4 @@
-MyQEE PHP Framework
+MyQEE PHP Framework  ![MyQEE DIR](./manual/html/assets/images/passing.png)
 ====
 
 ## 简介
