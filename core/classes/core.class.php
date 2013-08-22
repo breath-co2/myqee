@@ -182,7 +182,7 @@ abstract class Core_Core extends Bootstrap
 
                 if (is_string($x_powered_by))
                 {
-                    $str = 'X-Powered-By: ' . trim(str_replace(array("\r", "\n", $x_powered_by), '', $x_powered_by));
+                    $str = 'X-Powered-By: ' . trim(str_replace(array("\r", "\n"), '', $x_powered_by));
                 }
                 else if (!$x_powered_by)
                 {
