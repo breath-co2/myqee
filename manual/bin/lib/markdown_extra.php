@@ -80,6 +80,11 @@ class MarkdownExtra extends _MarkdownExtra_TmpImpl
             $matches[1] = str_replace('manual/html/assets/', '../assets/', $matches[1]);
         }
 
+        if (false!==strpos($matches[1], '../html/'))
+        {
+            $matches[1] = str_replace('../html/', '', $matches[1]);
+        }
+
         return '('.$matches[1].'.'.$matches[2].')';
     }
 
