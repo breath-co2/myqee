@@ -74,4 +74,4 @@ Core::import_library() 参数写法修改了，例如：以前是 `Core::import_
 经过以上几步修改，基本上就可以正常工作了。如果仍旧有错误，请根据错误提示进行相应修改
 
 
-更详细的修改请看[CHANGELOG.md](changelog.html)文件
+更详细的修改请看[CHANGELOG.md](CHANGELOG.md)文件
