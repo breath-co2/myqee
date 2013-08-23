@@ -68,7 +68,8 @@ body > .navbar .brand:hover {
   -moz-transform: scale(0.8);
   font-size: 10px;
   font-weight: normal;
-  float: right;
+  position: absolute;
+  right: 20px;
 }
 
 .right-div {
