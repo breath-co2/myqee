@@ -28,6 +28,7 @@ $config['projects'] = array
         'isuse'     => true,             //是否启用
         'url'       => '/',              //URL根目录，可以是字符串也可以是数组，可以/开头，也可以http://开头。
         'url_admin' => '/admin/',        //后台URL根目录，同上
+        'url_rest'  => '/api/',          //RESTFul接口起始URI，同上
         /*
         // 此项目有的加载类库配置
         'libraries' => array
@@ -36,6 +37,7 @@ $config['projects'] = array
             'cli'      => array(),
             'debug'    => array(),
             'admin'    => array(),
+            'rest'     => array(),
         ),
         */
     ),
@@ -61,13 +63,19 @@ $config['libraries'] = array
 
     ),
 
+    // RESTFul模式时会加载的类库
+    'rest'     => array
+    (
+
+    ),
+
     // 调试环境下会加载的类库
     'debug'    => array
     (
         'com.myqee.develop',
     ),
 
-    // 后台会加载的类库
+    // 后台模式时会加载的类库
     'admin'    => array
     (
         'com.myqee.administration',

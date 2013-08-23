@@ -100,7 +100,7 @@ PS:控制器类名不区分大小写，不过推荐使用首字母和下划线�
 5. /test/abc/def/123.controller.php
 6. /test/abc/def/**default.controller.php**
 7. /test/abc/def.controller.php
-8. /test/abc/**/default.controller.php**
+8. /test/abc/**default.controller.php**
 9. /test/abc.controller.php
 10. /test/**default.controller.php**
 11. /test.controller.php
@@ -205,7 +205,7 @@ PS:控制器类名不区分大小写，不过推荐使用首字母和下划线�
 {{class.core.controller|list|$this}}
 
 
-## 后台控制器、系统控制器、命令行控制器
+## 后台控制器、系统控制器、命令行控制器、RESTFul控制器
 
 除了正常的控制器外，MyQEE还提供了3种控制器类型对于3种运行模式。每个请求只会存在一种模式，并且在系统执行时就会判断好，这样分开可以起到相互分离、方便开发维护、提升安全的作用，**这也是MyQEE框架特有的**。这几种模式的控制器除了目录不一样，其它所有的规则都是一样。
 
@@ -214,6 +214,7 @@ PS:控制器类名不区分大小写，不过推荐使用首字母和下划线�
 * 后台控制器 - `controllers-admin` 目录
 * 系统控制器 - `controllers-system` 目录
 * 命令行控制器 - `controllers-shell` 目录
+* RESTFul控制器 - `controllers-rest` 目录
 
 ***后台控制器***：当一个URL请求时，MyQEE首先会根据URL去判断是属于哪个项目，然后会再判断是否符合项目设置中 `url_admin` 的URL规则，如果符合，此时系统进入后台模式，所有加载的控制器都会在 `controllers-admin` 目录中寻找，而不会在 `controllers` 里寻找，所以不用担心自己的后台控制器被前端访问到。
 
@@ -221,17 +222,23 @@ PS:控制器类名不区分大小写，不过推荐使用首字母和下划线�
 
     $config['projects'] = array
     (
-        'default' => array
+        $config['projects'] = array
         (
-            'name'      => '默认项目',
-            'dir'       => 'default',
-            'isuse'     => true,
-            'url'       => '/',
-            'url_admin' => '/admin/',
+            'default' => array
+            (
+                'name'      => '默认项目',
+                'dir'       => 'default',
+                'isuse'     => true,
+                'url'       => '/',
+                'url_admin' => '/admin/',
+                'url_rest'  => '/api/',
+            ),
         ),
     );
 
 当请求 `/test/abc/def/` 这样的URL时，会被认为是普通控制器，只会读到 `controllers` 目录中的控制器，而如果是 `/admin/test/abc/def/` 则会被认为是后台控制器，因为它符合 `url_admin` 中设置的URL前缀，那么它会在 `controllers-admin` 目录中寻找控制器。
+
+***RESTFul***：当你提供一些基于RESTFul协议接口时，可以将控制器存放在 `controllers-rest` 目录中，不必担心和其它控制器混淆，另外，MyQEE还内置了验证、加密等协议提供使用，同时，系统提供了对 [PHPRPC](http://phprpc.org/) 的支持。
 
 
 ***命令行控制***：当你在命令行里使用类似 `php index.php default test abc` 这样的命令执行时，系统会直接进入命令行模式，其中，`default` 表示项目，后面的参数和URL中相似，只不过通常，URL中是以/分开，而命令行里习惯用空格分开。

@@ -57,10 +57,12 @@
 (boolean) 是否系统内部调用，这个会发生在开启文件同步模式的情况下的服务器间内部通讯的时候，正常用户请求下均为false，当true时，控制器将从 `controllers-system` 目录中读取而不是 `controllers`目录
 
 ## IS_ADMIN_MODE
-(boolean) 是否后台模式，当true时，控制器将从 `controllers-admin` 目录中读取而不是 `controllers`目录
+(boolean) 是否后台模式，当true时，控制器将从 `controllers-admin` 目录中读取控制器
 
+## IS_REST_MODE
+(boolean) 是否RESTFul模式，当true时，控制器将从 `controllers-rest` 目录中读取控制器
 ## DIR_SYSTEM
-(string) 系统目录
+(string) 系统目录，当true时，控制器将从 `controllers-system` 目录中读取控制器
 
 ## DIR_CORE
 (string) 核心类库目录

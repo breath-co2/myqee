@@ -580,6 +580,13 @@ abstract class Bootstrap
             if (!defined('IS_ADMIN_MODE'))define('IS_ADMIN_MODE', (!IS_CLI && $request_mode=='admin')?true:false);
 
             /**
+             * 是否RestFul模式
+             *
+             * @var boolean
+             */
+            if (!defined('IS_REST_MODE'))define('IS_REST_MODE', (!IS_CLI && $request_mode=='rest')?true:false);
+
+            /**
              * 静态文件URL地址前缀
              *
              * @var string
@@ -669,6 +676,10 @@ abstract class Bootstrap
                 elseif (IS_ADMIN_MODE)
                 {
                     $dir_setting[0] .= '-admin';
+                }
+                elseif (IS_REST_MODE)
+                {
+                    $dir_setting[0] .= '-rest';
                 }
             }
 
@@ -821,6 +832,10 @@ abstract class Bootstrap
             elseif (IS_ADMIN_MODE)
             {
                 $dir .= '-admin';
+            }
+            elseif (IS_REST_MODE)
+            {
+                $dir .= '-rest';
             }
         }
         elseif ($dir=='i18n' || $dir=='config')
@@ -1039,7 +1054,7 @@ abstract class Bootstrap
         # 重置
         self::$include_path['library'] = array();
 
-        foreach (array('autoload', 'cli', 'admin', 'debug') as $type)
+        foreach (array('autoload', 'cli', 'admin', 'debug', 'rest') as $type)
         {
             if (!isset($lib_config[$type]) || !$lib_config[$type])continue;
 
@@ -1050,6 +1065,10 @@ abstract class Bootstrap
             else if ($type=='admin')
             {
                 if (!IS_ADMIN_MODE)continue;
+            }
+            else if ($type=='rest')
+            {
+                if (!IS_REST_MODE)continue;
             }
             else if ($type=='debug')
             {
@@ -1223,17 +1242,43 @@ abstract class Bootstrap
         {
             if (!preg_match('#^[a-z0-9_]+$#i', $project)) continue;
 
+            $rest_url  = array();
             $admin_url = array();
-            if (isset($item['admin_url']) && $item['admin_url'])
+
+            if (isset($item['url_rest']) && $item['url_rest'])
             {
-                foreach ((array)$item['admin_url'] as $tmp_url)
+                foreach ((array)$item['url_rest'] as $tmp_url)
                 {
                     if (preg_match('#^http(s)?\://#i', $tmp_url))
                     {
-                        if (($path_info_admin = self::_get_pathinfo($tmp_url)) !== false)
+                        if (($url_path_info = self::_get_pathinfo($tmp_url)) !== false)
                         {
                             self::$project   = $project;
-                            self::$path_info = $path_info_admin;
+                            self::$path_info = $url_path_info;
+                            self::$base_url  = $tmp_url;
+                            $request_mode    = 'rest';
+
+                            break 2;
+                        }
+                    }
+                    else
+                    {
+                        # /开头的后台URL
+                        $rest_url[] = $tmp_url;
+                    }
+                }
+            }
+
+            if (isset($item['url_admin']) && $item['url_admin'])
+            {
+                foreach ((array)$item['url_admin'] as $tmp_url)
+                {
+                    if (preg_match('#^http(s)?\://#i', $tmp_url))
+                    {
+                        if (($url_path_info = self::_get_pathinfo($tmp_url)) !== false)
+                        {
+                            self::$project   = $project;
+                            self::$path_info = $url_path_info;
                             self::$base_url  = $tmp_url;
                             $request_mode    = 'admin';
 
@@ -1258,19 +1303,29 @@ abstract class Bootstrap
                         self::$path_info = $path_info;
                         self::$base_url  = $url;
 
-                        if ($admin_url)
+                        if ($rest_url)foreach ($rest_url as $tmp_url)
                         {
-                            foreach ($admin_url as $url2)
+                            # 处理后台URL不是 http:// 或 https:// 开头的形式
+                            if (($url_path_info = self::_get_pathinfo($tmp_url)) !== false)
                             {
-                                # 处理后台URL不是 http:// 或 https:// 开头的形式
-                                if (($path_info_admin = self::_get_pathinfo($url2)) !== false)
-                                {
-                                    self::$path_info = $path_info_admin;
-                                    self::$base_url .= ltrim($url2, '/');
-                                    $request_mode    = 'admin';
+                                self::$path_info = $url_path_info;
+                                self::$base_url .= ltrim($tmp_url, '/');
+                                $request_mode    = 'rest';
 
-                                    break 3;
-                                }
+                                break 3;
+                            }
+                        }
+
+                        if ($admin_url)foreach ($admin_url as $tmp_url)
+                        {
+                            # 处理后台URL不是 http:// 或 https:// 开头的形式
+                            if (($url_path_info = self::_get_pathinfo($tmp_url)) !== false)
+                            {
+                                self::$path_info = $url_path_info;
+                                self::$base_url .= ltrim($tmp_url, '/');
+                                $request_mode    = 'admin';
+
+                                break 3;
                             }
                         }
 

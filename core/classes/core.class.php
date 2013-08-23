@@ -213,6 +213,11 @@ abstract class Core_Core extends Bootstrap
                     Core::debug()->info('admin mode');
                 }
 
+                if (IS_REST_MODE)
+                {
+                    Core::debug()->info('RESTFul mode');
+                }
+
                 Core::debug()->group('include path');
                 foreach ( Core::include_path() as $value )
                 {
@@ -763,6 +768,10 @@ abstract class Core_Core extends Bootstrap
         elseif (IS_ADMIN_MODE)
         {
             $controller_dir .= '-admin';
+        }
+        elseif (IS_REST_MODE)
+        {
+            $controller_dir .= '-rest';
         }
         elseif (IS_CLI)
         {
@@ -1828,14 +1837,28 @@ abstract class Core_Core extends Bootstrap
             {
                 if (isset($p_config['url_admin']) && $p_config['url_admin'])
                 {
-                    $admin_url = current((array)$p_config['url_admin']);
-                    if (false===strpos($admin_url[0],'://'))
+                    $current_url = current((array)$p_config['url_admin']);
+                    if (false===strpos($current_url[0],'://'))
                     {
-                        $url .= trim($admin_url,'/');
-                        $url  = trim($url,'/').'/';
+                        $url .= trim($current_url, '/');
+                        $url  = trim($url, '/') .'/';
                     }
                 }
             }
+
+            if (IS_REST_MODE)
+            {
+                if (isset($p_config['url_rest']) && $p_config['url_rest'])
+                {
+                    $current_url = current((array)$p_config['url_rest']);
+                    if (false===strpos($current_url[0], '://'))
+                    {
+                        $url .= trim($current_url, '/');
+                        $url  = trim($url,'/') .'/';
+                    }
+                }
+            }
+
             Core::$base_url = $url;
 
             # 重置$include_path

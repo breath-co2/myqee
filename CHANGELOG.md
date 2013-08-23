@@ -20,6 +20,7 @@ V3.0
 * **控制器相关优化**
   * 类命名优化，取消文件夹下双下划线命名方式，统一改成和class，model等相同的命名规则
   * 修复控制器参数大小BUG
+  * 增加RESTFul的支持，RESTFul的控制器存放在 `controllers-rest/` 目录，可使用 `IS_REST_MODE` 进行判断
   * 避免系统基础控制器可直接被访问到
   * 重写 `Controller_Shell::getopt()` 获取参数的代码，实现等同于系统的`getopt()`方法的功能
 * **数据库相关优化：**
