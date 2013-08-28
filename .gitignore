@@ -9,5 +9,4 @@ Icon?
 /config.php
 /debug.config.php
 /data/*
-/manual/html/*
-!/manual/html/assets/*
+/manual/html/zh-cn/*
