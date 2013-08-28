@@ -51,7 +51,7 @@ body > .navbar .brand:hover {
 
 code {
   background-color: #f9f2f4;
-  border: none;
+  border: 1px solid #f8eaee;
   color: #c7254e;
 }
 
@@ -151,12 +151,15 @@ code {
   -moz-border-radius: 0px;
   border-radius: 0px;
   color: #e9e4e5;
+  font-size: 13px;
+  line-height: 1.1em;
+  font-family: "Consolas", "Bitstream Vera Sans Mono", "Courier New", Courier, monospace;
 }
 .right-div pre > code {
   padding: 7px 0 6px 0;
-  display: block;
   font-size: 13px;
   line-height: 1.1em;
+  display: block;
   font-family: "Consolas", "Bitstream Vera Sans Mono", "Courier New", Courier, monospace;
 }
 
@@ -185,10 +188,10 @@ code {
   background-color: #fffff2 !important;
 }*/
 
-.right-div p, .right-div > .content > ol, .right-div > .content > ul {
+.right-div .content > p,.right-div .content .api-description > p, .right-div > .content > ol, .right-div > .content > ul {
   padding:0 14px;
 }
-.right-div table.table-bordered {
+.right-div .content > table, .right-div .api-class-div > table {
   margin:10px;
 }
 
@@ -399,7 +402,13 @@ code {
   background: linear-gradient(#fffbe1, #ffe851);
 }
 
-.api-class-div pre { font-size: 1em; line-height: 1.4em; direction: ltr ; padding: 0; }
+.api-class-div pre { 
+  font-size: 1em; 
+  line-height: 1.2em;
+  padding: 0 5px;
+  font-size: 12px;
+  font-family: "Consolas", "Bitstream Vera Sans Mono", "Courier New", Courier, monospace;
+}
 .api-class-div .syntaxhighlighter{margin: 5px 0;margin: 5px 0 !important;}
 
 .api-class-div div.class-list div.class { width: 50%; }

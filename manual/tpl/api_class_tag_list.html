@@ -21,7 +21,7 @@ if ($setting['properties'])foreach ($setting['properties'] as $item)
 {
     $href = get_url($item['class_name'], '$'.$item['name'], $base_href);
 
-    $item_html = '<tr><td class="tocfield"><div class="'.trim(str_replace(' static ', '', ' '.$item['modifiers'].' ')).'"></div><div class="toc_'.($item['is_static']?'s':'n').'"></div>'.($item['is_php_class']?'<span data-toggle="tooltip" title="Link To PHP Manual Page" class="label">PHP</span>':'').'<a href="'.$href.'">'.($setting['alias_name']?($setting['alias_name'][0]=='$'?($item['is_static'] && $setting['alias_name']=='$this'?'self::$':$setting['alias_name'].'->'):'::$'):$item['class_name'].'::$').$item['name'].'</a></td><td>'.($item['title']?$item['title']:'').'</td></tr>'."\n";
+    $item_html = '<tr><td class="tocfield"><div class="'.trim(str_replace(' static ', '', ' '.$item['modifiers'].' ')).'"></div><div class="toc_'.($item['is_static']?'s':'n').'"></div>'.($item['is_php_class']?'<span data-toggle="tooltip" title="Link To PHP Manual Page" class="label">PHP</span>':'').'<a href="'.$href.'">'.($setting['alias_name']?($setting['alias_name'][0]=='$'?($item['is_static'] && $setting['alias_name']=='$this'?'self::$':$setting['alias_name'].'->'):$setting['alias_name'].'::$'):$item['class_name'].'::$').$item['name'].'</a></td><td>'.($item['title']?$item['title']:'').'</td></tr>'."\n";
 
     if (!$item['is_public'] || substr($item['name'], 0, 1)=='_')
     {
@@ -49,7 +49,7 @@ if ($setting['methods'])foreach ($setting['methods'] as $item)
 {
     $href = get_url($item['class_name'], $item['name'], $base_href);
 
-    $item_html = '<tr><td class="tocfield"><div class="'.trim(str_replace(' static ', '', ' '.$item['modifiers'].' ')).'"></div><div class="toc_'.($item['is_static']?'s':'n').'"></div>'.($item['is_php_class']?'<span data-toggle="tooltip" title="Link To PHP Manual Page" class="label">PHP</span>':'').'<a href="'.$href.'">'.($setting['alias_name']?($setting['alias_name'][0]=='$'?($item['is_static'] && $setting['alias_name']=='$this'?'self::':$setting['alias_name'].'->'):'::'):$item['class_name'].'::').$item['name'].'('. ($item['params']?$item['params_text']:''). ')</a></td><td>'.($item['title']?$item['title']:'').'</td></tr>'."\n";
+    $item_html = '<tr><td class="tocfield"><div class="'.trim(str_replace(' static ', '', ' '.$item['modifiers'].' ')).'"></div><div class="toc_'.($item['is_static']?'s':'n').'"></div>'.($item['is_php_class']?'<span data-toggle="tooltip" title="Link To PHP Manual Page" class="label">PHP</span>':'').'<a href="'.$href.'">'.($setting['alias_name']?($setting['alias_name'][0]=='$'?($item['is_static'] && $setting['alias_name']=='$this'?'self::':$setting['alias_name'].'->'):$setting['alias_name'].'::'):$item['class_name'].'::').$item['name'].'('. ($item['params']?$item['params_text']:''). ')</a></td><td>'.($item['title']?$item['title']:'').'</td></tr>'."\n";
 
     if (!$item['is_public'] || (substr($item['name'], 0, 1)=='_' && !in_array($item['name'], array('__construct', '__destruct'))))
     {
