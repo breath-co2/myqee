@@ -1,13 +1,12 @@
 新手入门
 ------
 
-### 首先了解下MyQEE是如何运行的
+### 了解MyQEE是如何运行的
 
-服务器rewrite配置的原则是“如果有实际文件则直接访问文件，否则rewrite到 `wwwroot/index.php` 上”，所以当访问一个URL时，只要不存都会经过index.php文件。index.php会加载 `core/bootstrap.php` 文件，这是一个系统底层启动的类库，也是MyQEE系统中唯一不能扩展的类（`Core`类库也会extend Bootstrap上，Core是可以扩展的）。在Bootstrap里会根据URL判断是哪个项目，然后会加载项目中的类库和配置，然后会根据后面的URL去寻找控制器和方法，然后执行用户程序。
+当一个URL请求时，通过 `index.php` 载入 `core/bootstrap.php` 文件（这是MyQEE的基础启动类库），然后会根据 `config.php` 里的 `$config['projects']` 项目配置匹配当前URL确定项目，再读取项目相关配置后，根据URI或者是路由设置加载控制器，执行相应的action方法。
 
 
-
-### 下面熟悉下MyQEE的文件目录结构
+### 熟悉MyQEE的文件目录结构
 
 ![MyQEE DIR](../../html/assets/images/dir.png)
 
@@ -18,7 +17,7 @@
 从上图可以看出，虽然程序实际所在的目录分别放在3个类库目录中，但是在程序执行时，HMVC逻辑就像右侧合并目录后的结果一样，这样我们可以合理的规划代码存放在最合理的地方。
 
 <br>
-系统默认只加载当前项目目录、团队类库和核心类库，并不会加载第三方类库，如果需要加载第三方类库可在`config.php`中配置，具体配置方法可参考 [config.php配置](config.html) 中关于`projects`相关配置说明。
+系统默认只加载当前项目目录、团队类库和核心类库，并不会加载第三方类库，如果需要加载第三方类库可在`config.php`中配置，具体配置方法可参考 [config.php配置](config.md) 中关于`projects`相关配置说明。
 
 在您下载的MyQEE程序中，有一个`config.new.php`文件，您可以把这个文件直接改名(或复制)为config.php，然后根据自己需求进行简单配置即可。
 
@@ -55,7 +54,7 @@
 
 **为什么页面显示404错误？**
 
-* 这个404页面是apache/IIS/nginx等输出的？那么说明你的rewrite没有配置正确或没启用，请参照[安装与配置](setup.html)说明进行修改；
+* 这个404页面是apache/IIS/nginx等输出的？那么说明你的rewrite没有配置正确或没启用，请参照[安装与配置](setup.md)说明进行修改；
 * 这个404页面是MyQEE输出的界面？说明rewrite已经配置成功，但是 `config.php` 中项目配置的不正确，检查url部分设置；
 
 

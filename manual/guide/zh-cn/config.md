@@ -25,13 +25,15 @@
 
 数据库DDL如下：
 	
-	CREATE TABLE IF NOT EXISTS `config` (
-	  `type` varchar(32) NOT NULL COMMENT '分类类型',
-	  `key_md5` varchar(32) NOT NULL COMMENT 'key md5',
-	  `key_name` varchar(128) NOT NULL COMMENT '关键字',
-	  `value` blob NOT NULL COMMENT '值',
-	  PRIMARY KEY (`type`,`key_md5`)
-	) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='配置表';
+``` mysql
+CREATE TABLE IF NOT EXISTS `config` (
+  `type` varchar(32) NOT NULL COMMENT '分类类型',
+  `key_md5` varchar(32) NOT NULL COMMENT 'key md5',
+  `key_name` varchar(128) NOT NULL COMMENT '关键字',
+  `value` blob NOT NULL COMMENT '值',
+  PRIMARY KEY (`type`,`key_md5`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='配置表';
+```
 
 `Core::config()` 将返回一个Config的对象，这个对象的具体的操作课参考[Config类API](core/class.config/api.html)
 

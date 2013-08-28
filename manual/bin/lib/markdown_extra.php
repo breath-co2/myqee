@@ -10,6 +10,7 @@ class MarkdownExtra extends _MarkdownExtra_TmpImpl
             'doReplaceClassListTag' => 1,
             'autoChangeUrlLink' => 1,
             'autoChangeUrlImage' => 1,
+            'autoCode' => 49,
             'doHeaders2' => 11,
         );
 
@@ -109,6 +110,104 @@ class MarkdownExtra extends _MarkdownExtra_TmpImpl
     function _doReplaceClass_callback_atx($matches)
     {
 
+    }
+
+    function autoCode($text) {
+        $text = preg_replace_callback('{
+                ```(?:[ ]*)([a-zA-Z0-9_]+)(?:\r|\n)
+                (
+                    (?>
+                        .*\n+
+                    )+
+                )
+                ```
+            }Uxm',
+            array(&$this, '_autoCode_callback_atx'), $text);
+
+        return $text;
+    }
+
+    function _autoCode_callback_atx($matches)
+    {
+        $codeblock = $matches[2];
+
+        // $codeblock = $this->outdent($codeblock);
+        $codeblock = htmlspecialchars($codeblock, ENT_NOQUOTES);
+
+        # trim leading newlines and trailing newlines
+        $codeblock = preg_replace('/\A\n+|\n+\z/', '', $codeblock);
+
+        if ($matches[1])
+        {
+            static $larr = array
+            (
+                'applescript',
+                'actionscript3',
+                'as3',
+                'bash',
+                'shell',
+                'coldfusion',
+                'cf',
+                'cpp',
+                'c',
+                'c#',
+                'c-sharp',
+                'csharp',
+                'css',
+                'delphi',
+                'pascal',
+                'diff',
+                'patch',
+                'pas',
+                'erl',
+                'erlang',
+                'groovy',
+                'java',
+                'jfx',
+                'javafx',
+                'js',
+                'jscript',
+                'javascriptperl',
+                'pl',
+                'php',
+                'text',
+                'plain',
+                'py',
+                'python',
+                'ruby',
+                'rails',
+                'ror',
+                'rb',
+                'sass',
+                'scss',
+                'scala',
+                'sql',
+                'mysql',
+                'vb',
+                'vbnet',
+                'xml',
+                'xhtml',
+                'xslt',
+                'html',
+                'yaml',
+                'yml',
+            );
+
+            $lang = strtolower(trim($matches[1]));
+            if (!in_array($lang, $larr))
+            {
+                $lang = 'php';
+            }
+            if ($lang=='mysql')$lang = 'sql';
+            $c = ' class="brush: '.$lang.'"';
+        }
+        else
+        {
+            $c = '';
+        }
+        $codeblock = "<pre><code{$c}>$codeblock\n</code></pre>";
+
+        return "\n\n".$this->hashBlock($codeblock)."\n\n";
     }
 
 }

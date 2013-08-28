@@ -35,9 +35,9 @@ npm安装recess和uglifyjs：
 
 recreate-ide-helper-file
 ------------------------
-重新生成类库目录中_ide_helper.php文件(此文件在生产环境中是不会用到的)，这个用于自行开发类库时批量生成类库映射文件，如果只是在 `project` 和 `team-library` 中开发代码则不需要生成ide helper
+此工具是给第三方类库开发者使用的批量生成类库类库目录中 `_ide_helper.php` 映射文件(此文件在生产环境中是不会用到的)，如果只是在 `project` 和 `team-library` 中开发代码则不需要生成ide helper
 
-我参数，直接执行即可
+无参数，直接执行即可
 
 
 

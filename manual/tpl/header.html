@@ -18,12 +18,25 @@
 @media (min-width: 768px) and (max-width: 979px) {
   .bs-docs-sidenav.affix {
     top: 0;
-    width: 200px;
+    width: 263px;
   }
 }
 </style>
+<script type="text/javascript" src="<?php echo $base_href;?>../assets/js/sea.js"></script>
 <script src="<?php echo $base_href;?>../assets/js/jquery-1.9.1.min.js" type="text/javascript"></script>
-<script type="text/javascript" src="<?php echo $base_href;?>../assets/bootstrap/js/bootstrap.min.js"></script>
+<script type="text/javascript">
+seajs.config({
+  base: "<?php echo $base_href;?>../assets/"
+});
+
+var docConfig = {
+    pageTop : <?php echo $config['page_top'];?>,
+    pageBottom : <?php echo $config['page_bottom'];?>
+};
+
+seajs.use('bootstrap/js/bootstrap.min.js');
+</script>
+
 </head>
 <body data-spy="scroll" data-target=".bs-docs-sidebar">
 <div class="navbar navbar-inverse navbar-fixed-top">
@@ -108,104 +121,10 @@
     ?>
     </div>
 </div>
+<script type="text/javascript" src="<?php echo $base_href;?>../assets/js/init_menu.js"></script>
 
-<script type="text/javascript">
-(function()
-{
-    // 防止左侧菜单太长
-    $(window).resize(function(){
-        $('.bs-docs-sidenav').css('maxHeight', $(window).height()-<?php echo (int)$config['page_top'];?>);
-    }).trigger('resize');
-
-    // 优化滚动菜单后切换页面
-    if (localStorage)
-    {
-        var url = document.location.href.split('#')[0].split('?')[0];
-        var path = url.substr(0, url.lastIndexOf('/')+1);
-
-        var scroll = localStorage.getItem('left-div-scroll');
-        if (scroll)
-        {
-            scroll = scroll.split('|');
-            if (scroll[0] == path)
-            {
-                $('.bs-docs-sidenav').scrollTop(scroll[1]);
-            }
-        }
-
-        var tm = null;
-        $('.bs-docs-sidenav').bind('scroll', function(){
-            if (tm)
-            {
-                clearTimeout(tm);
-                tm = null;
-            }
-
-            var top = this.scrollTop;
-            tm = setTimeout(function(){
-                localStorage.setItem('left-div-scroll', path+'|'+top);
-            },50);
-        });
-    }
-
-    // 处理menu相关代码
-    var href = document.location.href.split('#')[0].split('?')[0];
-    $('.left-div a').each(function(){
-        if (this.href==href)
-        {
-            $(this.parentNode).addClass('active');
-        }
-        this.innerHTML = '<div class="left-menu-i-div"><i class="icon-chevron-right"></i></div>'+this.innerHTML;
-    });
-    $('.left-div .top-menu i').addClass('icon-chevron-up');
-
-    $('.left-div ul').each(function(){
-        var i = 0;
-        $(this).children('li').each(function(){
-        if (this.getElementsByTagName('A').length==0)
-        {
-            if (i==0)
-            {
-                this.innerHTML = '<a href="javascript:" class="text menu_title">'+this.innerHTML+'</a>';
-            }
-            else
-            {
-                this.innerHTML = '<a href="javascript:" class="text">'+this.innerHTML+'</a>';
-            }
-        }
-        i++;
-    });
-    });
-
-    $('.bs-docs-sidenav li.active > a > .badge-info').removeClass('badge-info').addClass('badge-important');
-
-    // 处理缩进
-    var pd = function(obj, nn){
-        obj.children('li').each(function(){
-            var oo = $(this);
-            if (nn>0)
-            {
-                oo.children('a').css('paddingLeft', (nn+1)+'em');
-            }
-            pd(oo.children('ul'), nn+1);
-        });
-    }
-    pd($('.bs-docs-sidenav > ul'), 0);
-
-    $('.left-div hr').remove();
-})();
-
-(function()
-{
-    var t = $(window).width() <= 980 ? 70 : 0;
-    $(window).bind('resize',function(){t=$(window).width()<=980?70:0;});
-
-    setTimeout(function (){
-        $('.bs-docs-sidenav').affix({offset: {top: function(){return t;}, bottom: <?php echo $config['page_bottom']?(int)$config['page_bottom']:10;?>}})
-    }, 100);
-})();
-</script>
 <div class="right-div">
+<div class="content content-box">
     <div class="right-clear"></div>
     <div class="prev-next-div"></div>
 

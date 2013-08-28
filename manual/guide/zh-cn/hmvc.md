@@ -38,26 +38,28 @@ MyQEE系统中将各种用途的类库做了分类，包括：项目，团队类
 
 打开根目录的 `config.php` (不存在则把 `config.new.php` 复制为 `config.php`)，可以看到最上面的 `$config['projects']` 相关设置，是的，所有需要加载的类库都会在这个里面定义；
 
-
-    // 请确保Default放在最后
-    'default' => array
+    $config['projects'] = array
     (
-        'name'      => '默认项目',        //名称
-        'dir'       => 'default',        //目录
-        'isuse'     => true,             //是否启用
-        'url'       => '/',              //URL根目录，可以是字符串也可以是数组，可以/开头，也可以http://开头。
-        'url_admin' => '/admin/',        //后台URL根目录，同上
-        /*
-        // 此项目有的加载类库配置
-        'libraries' => array
+        // 请确保Default放在最后
+        'default' => array
         (
-            'autoload' => array(),
-            'cli'      => array(),
-            'debug'    => array(),
-            'admin'    => array(),
+            'name'      => '默认项目',        //名称
+            'dir'       => 'default',        //目录
+            'isuse'     => true,             //是否启用
+            'url'       => '/',              //URL根目录，可以是字符串也可以是数组，可以/开头，也可以http://开头。
+            'url_admin' => '/admin/',        //后台URL根目录，同上
+            /*
+            // 此项目有的加载类库配置
+            'libraries' => array
+            (
+                'autoload' => array(),
+                'cli'      => array(),
+                'debug'    => array(),
+                'admin'    => array(),
+            ),
+            */
         ),
-        */
-    ),
+    );
     
 你会看到 `libraries` 的相关设置被注释掉了，是的，如果你需要给某人项目默认加载某个类库，直接按这个格式填写即可。
 
