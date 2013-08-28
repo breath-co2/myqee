@@ -10,3 +10,4 @@ Icon?
 /debug.config.php
 /data/*
 /manual/html/*
+!/manual/html/assets/*
