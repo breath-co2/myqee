@@ -208,17 +208,23 @@ class Core_Database_Driver_Mongo extends Database_Driver
                     $options['persist'] = is_string($persistent)?$persistent:'x';
                 }
 
+                static $mclass = null;
+                if (null===$mclass)
+                {
+                    $mclass = class_exists('MongoClient', false)?'MongoClient':'Mongo';
+                }
+
                 $error_code = 0;
                 $error_msg  = '';
                 try
                 {
                     if ($username)
                     {
-                        $tmplink = new Mongo("mongodb://{$username}:{$password}@{$hostname}:{$port}/", $options);
+                        $tmplink = new $mclass("mongodb://{$username}:{$password}@{$hostname}:{$port}/", $options);
                     }
                     else
                     {
-                        $tmplink = new Mongo("mongodb://{$hostname}:{$port}/", $options);
+                        $tmplink = new $mclass("mongodb://{$hostname}:{$port}/", $options);
                     }
                 }
                 catch (Exception $e)
@@ -653,7 +659,8 @@ class Core_Database_Driver_Mongo extends Database_Driver
                     {
                         # 查询唯一值
                         $result = $connection->command(
-                            array(
+                            array
+                            (
                                 'distinct' => $tablename,
                                 'key'      => $options['distinct'] ,
                                 'query'    => $options['where']
@@ -678,6 +685,8 @@ class Core_Database_Driver_Mongo extends Database_Driver
                     }
                     elseif ( $options['group_by'] )
                     {
+                        $have_dot = false;
+
                         $select = $options['select'];
                         # group by
                         $group_opt = array();
@@ -692,7 +701,16 @@ class Core_Database_Driver_Mongo extends Database_Driver
                             $group_opt['_id'] = array();
                             foreach ($options['group_by'] as $item)
                             {
-                                $group_opt['_id'][$item] = '$'.$item;
+                            	if (false!==strpos($item, '.'))
+                            	{
+                            		$have_dot = true;
+                            		$group_opt['_id'][str_replace('.', '->', $item)] = '$'.$item;
+                            	}
+                            	else
+                            	{
+                                    $group_opt['_id'][$item] = '$'.$item;
+                            	}
+
                                 if ( !isset($select[$item]) )$select[$item] = 1;
                             }
                         }
@@ -709,7 +727,6 @@ class Core_Database_Driver_Mongo extends Database_Driver
                         }
 
                         $group_opt['_count'] = array('$sum'=>1);
-                        $have_dot = false;
                         if ($select)
                         {
                             foreach ($select as $k=>$v)
@@ -824,7 +841,18 @@ class Core_Database_Driver_Mongo extends Database_Driver
                             if ($result['ok']==1 && is_array($result['result']))$result = $result['result'];
                             if ($have_dot)foreach ($result as &$item)
                             {
-                                $result2[] = array();
+
+                            	// 处理 _ID 字段
+                            	if (is_array($item['_id']))foreach ($item['_id'] as $k=>$v)
+                            	{
+                            	    if (false!==strpos($k, '->'))
+                            	    {
+                            	        $item['_id'][str_replace('->', '.', $k)] = $v;
+                            	        unset($item['_id'][$k]);
+                            	    }
+                            	}
+
+                            	// 处理 select 的字段
                                 foreach ($item as $k=>$v)
                                 {
                                     if (false!==strpos($k,'->'))
