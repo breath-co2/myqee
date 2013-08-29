@@ -63,9 +63,10 @@ define(function(require, exports, module) {
 
 
 
-
-// 加载高亮代码
-seajs.use(['syntaxhighlighter/styles/shCoreEmacs.css', 'syntaxhighlighter/scripts/shCore.js', 'syntaxhighlighter/scripts/shAutoloader.js'], function()
+seajs.use('syntaxhighlighter/scripts/shCore.js', function()
+{
+// 加载高亮代码,先加载 shCore.js 避免加载 shAutoloader.js 出问题
+seajs.use(['syntaxhighlighter/styles/shCoreEmacs.css', 'syntaxhighlighter/scripts/shAutoloader.js'], function()
 {
     $('.right-div').tooltip({selector: "*[data-toggle=tooltip]"});
 
@@ -84,7 +85,7 @@ seajs.use(['syntaxhighlighter/styles/shCoreEmacs.css', 'syntaxhighlighter/script
       ;
       for(var i = 0; i < args.length; i++)
       {
-          result.push(args[i].replace('@', seajs.data.base + '/syntaxhighlighter/scripts/'));
+          result.push(args[i].replace('@', seajs.data.base + 'syntaxhighlighter/scripts/'));
       }
 
       return result
@@ -122,4 +123,5 @@ seajs.use(['syntaxhighlighter/styles/shCoreEmacs.css', 'syntaxhighlighter/script
     ));
     SyntaxHighlighter.all();
 
+});
 });
