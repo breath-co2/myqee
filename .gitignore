@@ -10,3 +10,6 @@ Icon?
 /debug.config.php
 /data/*
 /manual/html/zh-cn/*
+/libraries/autoload.php
+/libraries/composer/*
+/composer.lock

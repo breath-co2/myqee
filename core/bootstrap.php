@@ -404,8 +404,34 @@ abstract class Bootstrap
         {
             $run = true;
 
+            # PHP5.3 支持 composer 的加载
+            if (HAVE_NS && is_file(DIR_LIBRARY .'autoload.php'))
+            {
+                try
+                {
+                    require DIR_LIBRARY .'autoload.php';
+                }
+                catch (Exception $e)
+                {
+                    self::_show_error($e->getMessage());
+                }
+
+                $composer = true;
+            }
+            else
+            {
+                $composer = false;
+            }
+
+            /**
+             * 是否加载了Composer
+             *
+             * @var boolean
+             */
+            define('IS_COMPOSER_LOADED', $composer);
+
             # 注册自动加载类
-            spl_autoload_register(array('Bootstrap', 'auto_load'));
+            spl_autoload_register(array('Bootstrap', 'auto_load'), true, true);
 
             # 读取配置
             if (!is_file(DIR_SYSTEM .'config'. EXT))
