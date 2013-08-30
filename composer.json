@@ -1,17 +1,17 @@
 {
-    "name": "myqee/myqee",
-    "description": "The MyQEE PHP Framework",
-    "version": "3.0.1-dev",
-    "keywords": ["myqee", "framework"],
-    "authors": [
-        {
-            "name": "jonwang",
-            "email": "jonwang@queyang.com",
-            "homepage": "http://www.queyang.com/"
-        }
-    ],
-    "config": {
-    	"vendor-dir" : "libraries",
-    	"bin-dir" : "bin"
+  "name": "myqee/myqee",
+  "description": "The MyQEE PHP Framework",
+  "version": "3.0.1-dev",
+  "keywords": ["myqee", "framework"],
+  "authors": [
+    {
+      "name": "jonwang",
+      "email": "jonwang@queyang.com",
+      "homepage": "http://www.queyang.com/"
     }
+  ],
+  "config": {
+    "vendor-dir" : "libraries",
+    "bin-dir" : "bin"
+  }
 }

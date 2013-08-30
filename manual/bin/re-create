@@ -952,6 +952,8 @@ class Manual
                     if ($dir2=='.'||$dir2=='..')continue;
                     if (is_dir($dir2))
                     {
+                        if (!is_file($dir2.'/.myqeelibrary'))continue;
+
                         $dir2 = basename($dir2);
                         $this->libraries[$dir1][] = $dir2;
 

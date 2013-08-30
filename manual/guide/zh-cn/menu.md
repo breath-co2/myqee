@@ -16,10 +16,15 @@
 
 * 深度历练
 * [命令行工具说明](bin_readme.md)
-* [最近修改文档列表](new_list.md)
+* [使用 Composer 开源软件包](composer.md)
+
+-----
+
+* 其它信息
 * [感谢](thank.md)
-* [修改日志](changelog.md)
 * [升级注意事项](upgrade.md)
 * [文档编写、生成说明](guide.md)
+* [修改日志](changelog.md)
+* [最近修改文档列表](new_list.md)
 * [TODO列表 <span class="badge badge-info" menu-todo="true">0</span>](todo_list.md)
 * [授权信息](license.md)

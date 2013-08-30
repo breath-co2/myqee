@@ -12,6 +12,7 @@ MyQEE是一个开源、快速、优雅的轻量级PHP框架，支持HMVC模式�
 
 * MyQEE是一套轻量级的框架，但不是简陋的框架，系统具备完善的底层类库和强大的扩展功能设计；
 * 特有的 [HMVC](./manual/guide/zh-cn/hmvc.md) (分层MVC设计)和多项目支持，开发更灵活；
+* 支持时下最流行的PHP包管理器 [Composer](http://getcomposer.org/) ，并且可以使用 Composer 安装 MyQEE 提供的官方类库；
 * 代码一致性设计：例如 `MySQL` 和 `MongoDB` 的查询语句完全不同，但是在 MyQEE 里可以做到实现90%的一致性，你的代码既可以使用在 `MySQL` 的环境里也可以用在 `MongoDB` 上；
 * 包括`Database`, `Cache`, `HttpClient`, `Session`, `Storage`, `Upload` 等支持多驱动，可以适应不同环境的需求，其中数据库支持 `MySQL`, `MySQLI`, `Mongo`, `SQLite`, `Postgre`，缓存支持 `Memcache`, `File`, `Redis`, `Apc`, `Database`, `SQLite`, `WinCache` 等；
 * 数据库提供强大的 `QueryBuilder` 功能，可实现同相同程序兼容多种数据库，解决SQL注入隐患和迁移环境后顾之忧；
