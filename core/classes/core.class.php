@@ -937,9 +937,9 @@ abstract class Core_Core extends Bootstrap
                             $ids = array_merge($ids, $the_id);
                         }
 
-                        if ($tmp_class=='index' && $directory && substr($directory, -6)=='/index')
+                        if ($directory && substr($directory, -1-strlen($tmp_class))=='/'.$tmp_class)
                         {
-                            $directory = substr($directory, 0, -6);
+                            $directory = substr($directory, 0, -1-strlen($tmp_class));
                         }
 
                         $found = array
