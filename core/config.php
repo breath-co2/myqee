@@ -40,17 +40,30 @@ $config['cache/database']['default'] = array
 
 /**
  * 分页配置
+ *
+ * 参数            |  说明
+ * ---------------|------------------------
+ * source, key    | 这2个参数配合确定分页数获取源
+ * auto_hide      | 设置 true 表示自动隐藏<=1个分页的URL的HTML（输出为空html）
+ * total_items    | 告诉程序总共有多少项目，以便计算分页数
+ * items_per_page | 每页显示的数目
+ *
+ *
+ * source 有3个值为： query_string | route | default
+ *
+ * * 当 source = query_string 时，key建议为page，这样分页就是类似 `/uri/?page=1`  `/uri/?page=2` 这样形式
+ * * 当 source = default 时，key建议为0，这样分页就类似 `/uri/2/`   `/uri/3/`  这样
+ * * 当 source = route 时，表示使用路由配置，此时的key为路由设置中的对应的key
+ *
+ * @var array
  */
 $config['pagination']['default'] = array
 (
-    'current_page' => array
-    (
-        'source' => 'default',  /* source: "query_string" or "route" or "default" */
-        'key'    => '0' ,
-    ),
+    'source'         => 'default',
+    'key'            => '0',
     'total_items'    => 0,
     'items_per_page' => 10,
-    'view'           => 'pagination/basic',
+    'view'           => 'pagination/basic',     // 视图views中的文件
     'auto_hide'      => true,
 );
 
