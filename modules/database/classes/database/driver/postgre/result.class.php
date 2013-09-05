@@ -3,14 +3,14 @@
 /**
  * 数据库Postgre返回类
  *
- * @author      呼吸二氧化碳 <jonwang@myqee.com>
- * @category    MyQEE
- * @package     System
- * @subpackage  Core
- * @copyright   Copyright (c) 2008-2013 myqee.com
- * @license     http://www.myqee.com/license.html
+ * @author     呼吸二氧化碳 <jonwang@myqee.com>
+ * @category   MyQEE
+ * @package    Module
+ * @subpackage Database
+ * @copyright  Copyright (c) 2008-2013 myqee.com
+ * @license    http://www.myqee.com/license.html
  */
-class Core_Database_Driver_Postgre_Result extends Database_Result
+class Module_Database_Driver_Postgre_Result extends Database_Result
 {
     public function __destruct()
     {

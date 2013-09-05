@@ -1,16 +1,16 @@
 <?php
 
 /**
- * MySQL事务
+ * MySQLI事务
  *
  * @author     呼吸二氧化碳 <jonwang@myqee.com>
  * @category   MyQEE
- * @package    System
- * @subpackage Core
+ * @package    Module
+ * @subpackage Database
  * @copyright  Copyright (c) 2008-2013 myqee.com
  * @license    http://www.myqee.com/license.html
  */
-abstract class Core_Database_Driver_MySQL_Transaction extends Database_Transaction
+abstract class Module_Database_Driver_MySQLI_Transaction extends Database_Transaction
 {
     /**
      * 当前连接ID
@@ -22,7 +22,7 @@ abstract class Core_Database_Driver_MySQL_Transaction extends Database_Transacti
 
     /**
      * 开启事务
-     * @return Database_Driver_MySQL_Transaction
+     * @return Database_Driver_MySQLI_Transaction
      */
     public function start()
     {
@@ -80,7 +80,7 @@ abstract class Core_Database_Driver_MySQL_Transaction extends Database_Transacti
      */
     public function commit()
     {
-        if (!$this->id || !$this->_haveid()) return false;
+        if (!$this->id || ! $this->_haveid()) return false;
 
         if ($this->is_root())
         {
@@ -90,7 +90,7 @@ abstract class Core_Database_Driver_MySQL_Transaction extends Database_Transacti
                 # 还有没有提交的子事务
                 end(self::$transactions[$this->_connection_id]);
                 $subid = key(self::$transactions[$this->_connection_id]);
-                if ( !$this->_release_save_point($subid) )
+                if (!$this->_release_save_point($subid))
                 {
                     throw new Exception('commit error');
                 }
@@ -126,7 +126,8 @@ abstract class Core_Database_Driver_MySQL_Transaction extends Database_Transacti
         if (!$this->_haveid()) return false;
 
         if ($this->is_root())
-        { //父事务
+        {
+            //父事务
             $status = $this->_query('ROLLBACK;');
             $this->_query('SET AUTOCOMMIT=1;');
             if ($status)

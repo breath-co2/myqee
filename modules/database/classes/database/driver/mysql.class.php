@@ -1,16 +1,16 @@
 <?php
 
 /**
- * 数据库MySQLI返回类
+ * 数据库MySQL返回类
  *
- * @author      呼吸二氧化碳 <jonwang@myqee.com>
- * @category    MyQEE
- * @package     System
- * @subpackage  Core
- * @copyright   Copyright (c) 2008-2013 myqee.com
- * @license     http://www.myqee.com/license.html
+ * @author     呼吸二氧化碳 <jonwang@myqee.com>
+ * @category   MyQEE
+ * @package    Module
+ * @subpackage Database
+ * @copyright  Copyright (c) 2008-2013 myqee.com
+ * @license    http://www.myqee.com/license.html
  */
-class Core_Database_Driver_MySQLI extends Database_Driver
+class Module_Database_Driver_MySQL extends Database_Driver
 {
     /**
      * MySQL使用反引号标识符
@@ -62,7 +62,7 @@ class Core_Database_Driver_MySQLI extends Database_Driver
         # 最后检查连接时间
         static $last_check_connect_time = 0;
 
-        if ( !$connection_id || !isset(Database_Driver_MySQLI::$_connection_instance[$connection_id]) )
+        if ( !$connection_id || !isset(Database_Driver_MySQL::$_connection_instance[$connection_id]) )
         {
             $this->_connect();
         }
@@ -86,7 +86,7 @@ class Core_Database_Driver_MySQLI extends Database_Driver
     /**
      * 获取当前连接
      *
-     * @return mysqli
+     * @return mysql
      */
     public function connection()
     {
@@ -96,9 +96,9 @@ class Core_Database_Driver_MySQLI extends Database_Driver
         # 获取连接ID
         $connection_id = $this->connection_id();
 
-        if ( $connection_id && isset(Database_Driver_MySQLI::$_connection_instance[$connection_id]) )
+        if ( $connection_id && isset(Database_Driver_MySQL::$_connection_instance[$connection_id]) )
         {
-            return Database_Driver_MySQLI::$_connection_instance[$connection_id];
+            return Database_Driver_MySQL::$_connection_instance[$connection_id];
         }
         else
         {
@@ -117,7 +117,7 @@ class Core_Database_Driver_MySQLI extends Database_Driver
         }
 
         # 检查下是否已经有连接连上去了
-        if ( Database_Driver_MySQLI::$_connection_instance )
+        if ( Database_Driver_MySQL::$_connection_instance )
         {
             if (is_array($hostname))
             {
@@ -144,7 +144,7 @@ class Core_Database_Driver_MySQLI extends Database_Driver
             {
                 $_connection_id = $this->_get_connection_hash($host, $port, $username);
 
-                if ( isset(Database_Driver_MySQLI::$_connection_instance[$_connection_id]) )
+                if ( isset(Database_Driver_MySQL::$_connection_instance[$_connection_id]) )
                 {
                     $this->_connection_ids[$this->_connection_type] = $_connection_id;
 
@@ -163,14 +163,14 @@ class Core_Database_Driver_MySQLI extends Database_Driver
             $hostname = $this->_get_rand_host($error_host);
             if (false===$hostname)
             {
-                Core::debug()->error($error_host,'error_host');
+                Core::debug()->error($error_host, 'error_host');
 
                 if ($last_error)throw $last_error;
-                throw new Exception('connect mysqli server error.');
+                throw new Exception('connect mysql server error.');
             }
 
             $_connection_id = $this->_get_connection_hash($hostname, $port, $username);
-            Database_Driver_MySQLI::$_current_connection_id_to_hostname[$_connection_id] = $hostname.':'.$port;
+            Database_Driver_MySQL::$_current_connection_id_to_hostname[$_connection_id] = $hostname.':'.$port;
 
             try
             {
@@ -182,13 +182,11 @@ class Core_Database_Driver_MySQLI extends Database_Driver
                 {
                     if (empty($persistent))
                     {
-                        $tmplink = mysqli_init();
-                        mysqli_options($tmplink, MYSQLI_OPT_CONNECT_TIMEOUT, 3);
-                        mysqli_real_connect($tmplink, $hostname, $username, $password, $database, $port, null, MYSQLI_CLIENT_COMPRESS);
+                        $tmplink = mysql_connect($hostname . ($port && $port != 3306 ? ':' . $port : ''), $username, $password, true);
                     }
                     else
                     {
-                        $tmplink = new mysqli($hostname, $username, $password, $database, $port);
+                        $tmplink = mysql_pconnect($hostname . ($port && $port != 3306 ? ':' . $port : ''), $username, $password);
                     }
                 }
                 catch (Exception $e)
@@ -204,18 +202,16 @@ class Core_Database_Driver_MySQLI extends Database_Driver
 
                     if (!($error_msg && 2===$error_code && preg_match('#(Unknown database|Access denied for user)#i', $error_msg)))
                     {
-                        $error_msg = 'connect mysqli server error.';
+                        $error_msg = 'connect mysql server error.';
                     }
                     throw new Exception($error_msg, $error_code);
                 }
 
-                if (IS_DEBUG)Core::debug()->info('mysqli://'.$username.'@'.$hostname.':'.$port.'/'.$database.'/ connection time:' . (microtime(true) - $time));
+                if (IS_DEBUG)Core::debug()->info('mysql://'.$username.'@'.$hostname.'/ connection time:' . (microtime(true) - $time));
 
                 # 连接ID
                 $this->_connection_ids[$this->_connection_type] = $_connection_id;
-                Database_Driver_MySQLI::$_connection_instance[$_connection_id] = $tmplink;
-
-                Database_Driver_MySQLI::$_current_databases[$_connection_id] = $database;
+                Database_Driver_MySQL::$_connection_instance[$_connection_id] = $tmplink;
 
                 unset($tmplink);
 
@@ -230,17 +226,17 @@ class Core_Database_Driver_MySQLI extends Database_Driver
                 }
                 else
                 {
-                    $last_error = new Exception('connect mysqli server error', $e->getCode());
+                    $last_error = new Exception('connect mysql server error', $e->getCode());
                 }
 
-                if (2===$e->getCode() && preg_match('#(Unknown database|Access denied for user)#i', $e->getMessage() , $m))
+                if (2===$e->getCode() && preg_match('#(Unknown database|Access denied for user)#i', $e->getMessage(), $m))
                 {
                     // 指定的库不存在，直接返回
                     throw new Exception(strtolower($m[1])=='unknown database'?__('The mysql database does not exist'):__('The mysql database account or password error'));
                 }
                 else
                 {
-                    if ( !in_array($hostname, $error_host) )
+                    if (!in_array($hostname, $error_host))
                     {
                         $error_host[] = $hostname;
                     }
@@ -263,11 +259,11 @@ class Core_Database_Driver_MySQLI extends Database_Driver
         try
         {
             $connection_id = $this->connection_id();
-            $connection = Database_Driver_MySQLI::$_connection_instance[$connection_id];
+            $connection = Database_Driver_MySQL::$_connection_instance[$connection_id];
 
             if ($connection)
             {
-                $ping_status = mysqli_ping($connection);
+                $ping_status = mysql_ping($connection);
             }
             else
             {
@@ -294,7 +290,7 @@ class Core_Database_Driver_MySQLI extends Database_Driver
             }
             else
             {
-                throw new Exception('connect mysqli server error');
+                throw new Exception('connect mysql server error');
             }
         }
 
@@ -304,22 +300,22 @@ class Core_Database_Driver_MySQLI extends Database_Driver
      * 关闭链接
      */
     public function close_connect()
-{
+    {
         if ($this->_connection_ids)foreach ($this->_connection_ids as $key=>$connection_id)
         {
-            if ($connection_id && Database_Driver_MySQLI::$_connection_instance[$connection_id])
+            if ($connection_id && Database_Driver_MySQL::$_connection_instance[$connection_id])
             {
-                Core::debug()->info('close '.$key.' mysqli '.Database_Driver_MySQLI::$_current_connection_id_to_hostname[$connection_id].' connection.');
-                @mysqli_close(Database_Driver_MySQLI::$_connection_instance[$connection_id]);
+                Core::debug()->info('close '.$key.' mysql '.Database_Driver_MySQL::$_current_connection_id_to_hostname[$connection_id].' connection.');
+                @mysql_close(Database_Driver_MySQL::$_connection_instance[$connection_id]);
 
-                unset(Database_Driver_MySQLI::$_connection_instance[$connection_id]);
-                unset(Database_Driver_MySQLI::$_current_databases[$connection_id]);
-                unset(Database_Driver_MySQLI::$_current_charset[$connection_id]);
-                unset(Database_Driver_MySQLI::$_current_connection_id_to_hostname[$connection_id]);
+                unset(Database_Driver_MySQL::$_connection_instance[$connection_id]);
+                unset(Database_Driver_MySQL::$_current_databases[$connection_id]);
+                unset(Database_Driver_MySQL::$_current_charset[$connection_id]);
+                unset(Database_Driver_MySQL::$_current_connection_id_to_hostname[$connection_id]);
             }
             else
             {
-                Core::debug()->info($key.' mysqli '.Database_Driver_MySQLI::$_current_connection_id_to_hostname[$connection_id].' connection has closed.');
+                Core::debug()->info($key.' mysql '.Database_Driver_MySQL::$_current_connection_id_to_hostname[$connection_id].' connection has closed.');
             }
 
             $this->_connection_ids[$key] = null;
@@ -329,8 +325,8 @@ class Core_Database_Driver_MySQLI extends Database_Driver
     /**
      * 切换表
      *
-     * @param   string Database
-     * @return  void
+     * @param string Database
+     * @return void
      */
     protected function _select_db($database)
     {
@@ -338,9 +334,9 @@ class Core_Database_Driver_MySQLI extends Database_Driver
 
         $connection_id = $this->connection_id();
 
-        if (!$connection_id || !isset(Database_Driver_MySQLI::$_current_databases[$connection_id]) || $database!=Database_Driver_MySQLI::$_current_databases[$connection_id])
+        if (!$connection_id || !isset(Database_Driver_MySQL::$_current_databases[$connection_id]) || $database!=Database_Driver_MySQL::$_current_databases[$connection_id])
         {
-            $connection = Database_Driver_MySQLI::$_connection_instance[$connection_id];
+            $connection = Database_Driver_MySQL::$_connection_instance[$connection_id];
 
             if (!$connection)
             {
@@ -349,9 +345,9 @@ class Core_Database_Driver_MySQLI extends Database_Driver
                 return;
             }
 
-            if ( !mysqli_select_db($connection,$database) )
+            if ( !mysql_select_db($database,$connection) )
             {
-                throw new Exception('选择数据表错误:' . mysqli_error($connection), mysqli_errno($connection));
+                throw new Exception('选择数据表错误:' . mysql_error($connection) . mysql_errno($connection));
             }
 
             if (IS_DEBUG)
@@ -361,7 +357,7 @@ class Core_Database_Driver_MySQLI extends Database_Driver
             }
 
             # 记录当前已选中的数据库
-            Database_Driver_MySQLI::$_current_databases[$connection_id] = $database;
+            Database_Driver_MySQL::$_current_databases[$connection_id] = $database;
         }
     }
 
@@ -400,7 +396,7 @@ class Core_Database_Driver_MySQLI extends Database_Driver
      * 设置编码
      *
      * @param string $charset
-     * @throws Exception
+     * @throws \Exception
      * @return void|boolean
      */
     public function set_charset($charset)
@@ -408,7 +404,7 @@ class Core_Database_Driver_MySQLI extends Database_Driver
         if (!$charset)return;
 
         $connection_id = $this->connection_id();
-        $connection = Database_Driver_MySQLI::$_connection_instance[$connection_id];
+        $connection = Database_Driver_MySQL::$_connection_instance[$connection_id];
 
         if (!$connection_id || !$connection)
         {
@@ -422,10 +418,10 @@ class Core_Database_Driver_MySQLI extends Database_Driver
         {
             // Determine if we can use mysql_set_charset(), which is only
             // available on PHP 5.2.3+ when compiled against MySQL 5.0+
-            $_set_names = ! function_exists('mysqli_set_charset');
+            $_set_names = ! function_exists('mysql_set_charset');
         }
 
-        if ( isset(Database_Driver_MySQLI::$_current_charset[$connection_id]) && $charset == Database_Driver_MySQLI::$_current_charset[$connection_id] )
+        if ( isset(Database_Driver_MySQL::$_current_charset[$connection_id]) && $charset==Database_Driver_MySQL::$_current_charset[$connection_id] )
         {
             return true;
         }
@@ -433,21 +429,21 @@ class Core_Database_Driver_MySQLI extends Database_Driver
         if (true===$_set_names)
         {
             // PHP is compiled against MySQL 4.x
-            $status = (bool)mysqli_query($connection,'SET NAMES ' . $this->quote($charset));
+            $status = (bool)mysql_query('SET NAMES ' . $this->quote($charset), $connection);
         }
         else
         {
             // PHP is compiled against MySQL 5.x
-            $status = mysqli_set_charset($connection, $charset);
+            $status = mysql_set_charset($charset, $connection);
         }
 
         if ( $status === false )
         {
-            throw new Exception('Error:' . mysqli_error($connection), mysqli_errno($connection));
+            throw new Exception('Error:' . mysql_error($connection), mysql_errno($connection));
         }
 
         # 记录当前设置的编码
-        Database_Driver_MySQLI::$_current_charset[$connection_id] = $charset;
+        Database_Driver_MySQL::$_current_charset[$connection_id] = $charset;
     }
 
     public function escape($value)
@@ -456,9 +452,9 @@ class Core_Database_Driver_MySQLI extends Database_Driver
 
         $this->_change_charset($value);
 
-        if ( ($value = mysqli_real_escape_string($connection, $value)) === false )
+        if ( ($value = mysql_real_escape_string($value,$connection)) === false )
         {
-            throw new Exception('Error:' . mysqli_errno($connection), mysqli_error($connection));
+            throw new Exception('Error:' . mysql_error($connection), mysql_errno($connection));
         }
 
         return "'$value'";
@@ -472,13 +468,13 @@ class Core_Database_Driver_MySQLI extends Database_Driver
      * @param string $sql 查询语句
      * @param string $as_object 是否返回对象
      * @param boolean $use_connection_type 是否使用主数据库，不设置则自动判断
-     * @return Database_Driver_MySQLI_Result
+     * @return Database_Driver_MySQL_Result
      */
     public function query($sql, $as_object=null, $use_connection_type=null)
     {
         $sql = trim($sql);
 
-        if ( preg_match('#^([a-z]+)(:? |\n|\r)#i', $sql, $m) )
+        if ( preg_match('#^([a-z]+)(:? |\n|\r)#i',$sql,$m) )
         {
             $type = strtoupper($m[1]);
         }
@@ -536,7 +532,7 @@ class Core_Database_Driver_MySQLI extends Database_Driver
             if ( $is_sql_debug )
             {
                 $host = $this->_get_hostname_by_connection_hash($this->connection_id());
-                $benchmark = Core::debug()->profiler('sql')->start('Database', 'mysqli://' . ($host['username']?$host['username'].'@':'') . $host['hostname'] . ($host['port'] && $host['port'] != '3306' ? ':' . $host['port'] : ''));
+                $benchmark = Core::debug()->profiler('sql')->start('Database', 'mysql://' . ($host['username']?$host['username'].'@':'') . $host['hostname'] . ($host['port'] && $host['port'] != '3306' ? ':' . $host['port'] : ''));
             }
         }
 
@@ -549,7 +545,7 @@ class Core_Database_Driver_MySQLI extends Database_Driver
         }
 
         // Execute the query
-        if ( ($result = mysqli_query($connection, $sql)) === false )
+        if ( ($result = mysql_query($sql, $connection)) === false )
         {
             if ( isset($benchmark) )
             {
@@ -559,13 +555,13 @@ class Core_Database_Driver_MySQLI extends Database_Driver
 
             if ( IS_DEBUG )
             {
-                $err = 'Error:' . mysqli_error($connection) . '. SQL:' . $sql;
+                $err = 'Error:' . mysql_error($connection) . '. SQL:' . $sql;
             }
             else
             {
-                $err = mysqli_error($connection);
+                $err = mysql_error($connection);
             }
-            throw new Exception($err, mysqli_errno($connection));
+            throw new Exception($err, mysql_errno($connection));
         }
 
         if ( isset($benchmark) )
@@ -590,9 +586,9 @@ class Core_Database_Driver_MySQLI extends Database_Driver
 
                 if ( strtoupper(substr($sql,0,6))=='SELECT' )
                 {
-                    $re = $connection->query('EXPLAIN ' . $sql);
+                    $re = mysql_query('EXPLAIN ' . $sql, $connection );
                     $i = 0;
-                    while ( true == ($row = $re->fetch_array(MYSQLI_NUM)) )
+                    while ( true == ($row = mysql_fetch_array($re , MYSQL_NUM)) )
                     {
                         $data[$i]['select_type']      = (string)$row[1];
                         $data[$i]['table']            = (string)$row[2];
@@ -626,19 +622,19 @@ class Core_Database_Driver_MySQLI extends Database_Driver
             // Return a list of insert id and rows created
             return array
             (
-                mysqli_insert_id($connection),
-                mysqli_affected_rows($connection)
+                mysql_insert_id($connection),
+                mysql_affected_rows($connection)
             );
         }
         elseif ( $type === 'UPDATE' || $type === 'DELETE' )
         {
             // Return the number of rows affected
-            return mysqli_affected_rows($connection);
+            return mysql_affected_rows($connection);
         }
         else
         {
             // Return an iterator of results
-            return new Database_Driver_MySQLI_Result( $result, $sql, $as_object ,$this->config );
+            return new Database_Driver_MySQL_Result( $result, $sql, $as_object ,$this->config );
         }
     }
 
@@ -725,6 +721,7 @@ class Core_Database_Driver_MySQLI extends Database_Driver
             }
         }
 
+
         return $this->_quote_identifier($value);
     }
 
@@ -766,9 +763,9 @@ class Core_Database_Driver_MySQLI extends Database_Driver
     protected function _quote_identifier($column)
     {
         if (is_array($column))
-		{
-			list($column, $alias) = $column;
-		}
+        {
+            list($column, $alias) = $column;
+        }
 
         if ( is_object($column) )
         {
@@ -788,68 +785,68 @@ class Core_Database_Driver_MySQLI extends Database_Driver
                 $column = $this->_quote_identifier((string)$column);
             }
         }
-		else
-		{
+        else
+        {
 			# 转换为字符串
-			$column = trim((string)$column);
+            $column = trim((string)$column);
 
-			if ( preg_match('#^(.*) AS (.*)$#i',$column,$m) )
-			{
-			    $column = $m[1];
-			    $alias  = $m[2];
-			}
+            if ( preg_match('#^(.*) AS (.*)$#i',$column,$m) )
+            {
+                $column = $m[1];
+                $alias  = $m[2];
+            }
 
-			if ($column === '*')
-			{
-				return $column;
-			}
-			elseif (strpos($column, '"') !== false)
-			{
-				// Quote the column in FUNC("column") identifiers
-				$column = preg_replace('/"(.+?)"/e', '$this->_quote_identifier("$1")', $column);
-			}
-			elseif (strpos($column, '.') !== false)
-			{
-				$parts = explode('.', $column);
+            if ($column === '*')
+            {
+                return $column;
+            }
+            elseif (strpos($column, '"') !== false)
+            {
+                // Quote the column in FUNC("column") identifiers
+                $column = preg_replace('/"(.+?)"/e', '$this->_quote_identifier("$1")', $column);
+            }
+            elseif (strpos($column, '.') !== false)
+            {
+                $parts = explode('.', $column);
 
-				$prefix = $this->config['table_prefix'];
-				if ($prefix)
-				{
-					// Get the offset of the table name, 2nd-to-last part
-					$offset = count($parts) - 2;
+                $prefix = $this->config['table_prefix'];
+                if ($prefix)
+                {
+                    // Get the offset of the table name, 2nd-to-last part
+                    $offset = count($parts) - 2;
 
                     if ( !$this->_as_table || !in_array($parts[$offset],$this->_as_table) )
                     {
                         $parts[$offset] = $prefix . $parts[$offset];
                     }
-				}
+                }
 
-				foreach ($parts as & $part)
-				{
-					if ($part !== '*')
-					{
-						// Quote each of the parts
+                foreach ($parts as & $part)
+                {
+                    if ($part !== '*')
+                    {
+                        // Quote each of the parts
 					    $this->_change_charset($part);
 						$part = $this->_identifier.str_replace($this->_identifier,'',$part).$this->_identifier;
-					}
-				}
+                    }
+                }
 
-				$column = implode('.', $parts);
-			}
-			else
-			{
+                $column = implode('.', $parts);
+            }
+            else
+            {
 			    $this->_change_charset($column);
 				$column = $this->_identifier.str_replace($this->_identifier,'',$column).$this->_identifier;
-			}
-		}
+            }
+        }
 
-		if ( isset($alias) )
-		{
+        if ( isset($alias) )
+        {
 		    $this->_change_charset($alias);
 			$column .= ' AS '.$this->_identifier.str_replace($this->_identifier,'',$alias).$this->_identifier;
-		}
+        }
 
-		return $column;
+        return $column;
     }
 
     protected function _compile_selete($builder)

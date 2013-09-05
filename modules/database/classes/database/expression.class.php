@@ -4,12 +4,12 @@
  *
  * @author     呼吸二氧化碳 <jonwang@myqee.com>
  * @category   MyQEE
- * @package    System
- * @subpackage Core
+ * @package    Module
+ * @subpackage Database
  * @copyright  Copyright (c) 2008-2013 myqee.com
  * @license    http://www.myqee.com/license.html
  */
-class Core_Database_Expression
+class Module_Database_Expression
 {
 
     // Raw expression string

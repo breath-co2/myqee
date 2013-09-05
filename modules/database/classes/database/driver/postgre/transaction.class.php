@@ -5,12 +5,12 @@
  *
  * @author     呼吸二氧化碳 <jonwang@myqee.com>
  * @category   MyQEE
- * @package    System
- * @subpackage Core
+ * @package    Module
+ * @subpackage Database
  * @copyright  Copyright (c) 2008-2013 myqee.com
  * @license    http://www.myqee.com/license.html
  */
-abstract class Core_Database_Driver_Postgre_Transaction extends Database_Transaction
+abstract class Module_Database_Driver_Postgre_Transaction extends Database_Transaction
 {
     /**
      * 当前连接ID

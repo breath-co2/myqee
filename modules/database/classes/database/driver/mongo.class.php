@@ -3,16 +3,14 @@
 /**
  * 数据库Mongo驱动
  *
- * TODO 尚处于测试阶段
- *
- * @author      呼吸二氧化碳 <jonwang@myqee.com>
- * @category    MyQEE
- * @package     System
- * @subpackage  Core
- * @copyright   Copyright (c) 2008-2013 myqee.com
- * @license     http://www.myqee.com/license.html
+ * @author     呼吸二氧化碳 <jonwang@myqee.com>
+ * @category   MyQEE
+ * @package    Module
+ * @subpackage Database
+ * @copyright  Copyright (c) 2008-2013 myqee.com
+ * @license    http://www.myqee.com/license.html
  */
-class Core_Database_Driver_Mongo extends Database_Driver
+class Module_Database_Driver_Mongo extends Database_Driver
 {
     /**
      * 记录当前连接所对应的数据库
