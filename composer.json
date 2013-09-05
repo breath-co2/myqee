@@ -1,8 +1,9 @@
 {
   "name": "myqee/myqee",
   "description": "The MyQEE PHP Framework",
-  "version": "3.0.1-dev",
+  "type": "project",
   "keywords": ["myqee", "framework"],
+  "license": "Apache-2.0",
   "authors": [
     {
       "name": "jonwang",
@@ -10,8 +11,18 @@
       "homepage": "http://www.queyang.com/"
     }
   ],
+  "require": {
+    "myqee/installer": "3.*",
+    "myqee/core": "3.*",
+    "myqee/develop": "3.*"
+  },
+  "minimum-stability": "dev",
   "config": {
-    "vendor-dir" : "libraries",
     "bin-dir" : "bin"
+  },
+  "scripts": {
+    "post-autoload-dump": [
+      "MyQEE\\Installer\\InstallerScript::postAutoloadDump"
+    ]
   }
 }

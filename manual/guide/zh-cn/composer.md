@@ -36,12 +36,7 @@ Composer 的包配置文件是根目录下的 `composer.json` 文件，默认 My
 
 ## 注意事项
 
-Composer 默认安装包的路径是 `vendor` 目录, 在 MyQEE 里我们定义了安装在 `libraries` 目录：
+MyQEE 加载的并不是 `vendor/autoload.php` 文件，而是 `vendor/autoload-for-myqee.php`， 当 composer 安装完毕后，安装程序会判断是否依赖非 MyQEE 生态圈的包，如果不存在则不会创建 `vendor/autoload-for-myqee.php`，系统也就不会加载 composer 的 autoload，这样可以节约更多资源。
 
-``` javascript
-  "config": {
-    "vendor-dir" : "libraries",
-    "bin-dir" : "bin"
-  }
-```
-安装在 `libraries` 目录的包并不要求必需遵循 MyQEE 的目录和文件结构，当然 MyQEE 官方提供的包除了支持 [PSR-0](https://github.com/php-fig/fig-standards/blob/master/accepted/PSR-0.md) 规范外，还会支持 MyQEE 本身的加载规则，所以你可以使用 Composer 来安装和维护 MyQEE 的扩展类库。
+只有判断存在不是 MyQEE 生态圈的包，安装脚本才会创建 `vendor/autoload-for-myqee.php` 软连接，有了这个文件，MyQEE 就会载入 composer 的 autoload 了。
+

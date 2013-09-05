@@ -119,6 +119,20 @@ define('DIR_TEAM_LIBRARY', DIR_SYSTEM.'team-library'.DS);
 define('DIR_LIBRARY', DIR_SYSTEM.'libraries'.DS);
 
 /**
+ * 组件目录
+ *
+ * @var string
+ */
+define('DIR_MODULE', DIR_SYSTEM.'modules'.DS);
+
+/**
+ * 第三方类库目录
+ *
+ * @var string
+ */
+define('DIR_VENDOR', DIR_SYSTEM.'vendor'.DS);
+
+/**
  * WWW目录
  *
  * @var string
@@ -405,11 +419,11 @@ abstract class Bootstrap
             $run = true;
 
             # PHP5.3 支持 composer 的加载
-            if (HAVE_NS && is_file(DIR_LIBRARY .'autoload.php'))
+            if (HAVE_NS && is_file(DIR_VENDOR.'autoload-for-myqee.php'))
             {
                 try
                 {
-                    require DIR_LIBRARY .'autoload.php';
+                    require DIR_VENDOR.'autoload-for-myqee.php';
                 }
                 catch (Exception $e)
                 {
@@ -666,8 +680,16 @@ abstract class Bootstrap
         }
         else if (preg_match('#^library_((?:[a-z0-9]+)_(?:[a-z0-9]+))_([a-z0-9_]+)$#', $class_name, $m))
         {
-            $ns = 'library/' . str_replace('_', '/', $m[1]);
+            $ns = 'library';
+            $ns_name = str_replace('_', DS, $m[1]);
             $new_class_name = $m[2];
+        }
+        else if (preg_match('#^module_(.*)$#', $class_name, $m))
+        {
+            # Module 组件
+            $ns = 'module';
+            list($ns_name)  = explode('_', $m[1], 2);
+            $new_class_name = $m[1];
         }
         else
         {
@@ -718,7 +740,19 @@ abstract class Bootstrap
 
         if ($ns)
         {
-            $file = ($ns=='core' ? DIR_CORE : DIR_LIBRARY . str_replace('_', DS,$m[1]) . DS ) . $dir_setting[0] . DS . str_replace('_', DS, $class_file_name) . $dir_setting[1] . EXT;
+            if ($ns=='core')
+            {
+                $file = DIR_CORE;
+            }
+            elseif ($ns=='module')
+            {
+                $file = DIR_MODULE . $ns_name . DS;
+            }
+            else
+            {
+                $file =  DIR_LIBRARY . $ns_name . DS;
+            }
+            $file .= $dir_setting[0] . DS . str_replace('_', DS, $class_file_name) . $dir_setting[1] . EXT;
 
             if (is_file($file))
             {
@@ -746,13 +780,32 @@ abstract class Bootstrap
             }
 
             # 没有找到文件且为项目类库，尝试在某个命名空间的类库中寻找
-            foreach (array('library', 'core') as $type)
+            static $module_dir = array();
+
+            list($tmp_prefix) = explode('_', $new_class_name, 2);
+            if (!isset($module_dir[$tmp_prefix]))
             {
-                foreach (self::$include_path[$type] as $lib_ns=>$path)
+                $module_dir[$tmp_prefix] = is_dir(DIR_MODULE .$tmp_prefix. DS);
+            }
+
+            $include_path = self::$include_path;
+            $include_path['module'] = array();
+            if ($module_dir[$tmp_prefix])
+            {
+                # 生成一个module路径，比如 Database_Driver_MySQL 就是在 module/database 中
+                $include_path['module'] = array
+                (
+                    'module' => DIR_MODULE .$tmp_prefix. DS,
+                );
+            }
+
+            foreach (array('library', 'module', 'core') as $type)
+            {
+                foreach ($include_path[$type] as $lib_ns=>$path)
                 {
                     $ns_class_name = ($type=='library'?'library_':'') . str_replace('.', '_', $lib_ns) . '_' . $new_class_name;
 
-                    if ( self::auto_load($ns_class_name) )
+                    if (self::auto_load($ns_class_name))
                     {
                         if (!$is_alias && class_exists($class_name, false))
                         {

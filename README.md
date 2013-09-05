@@ -37,6 +37,22 @@ MyQEE是一个开源、快速、优雅的轻量级PHP框架，支持HMVC模式�
 
 系统要求：推荐lamp架构，php至少5.2.3以上版本，推荐5.3以上最新版本，apache或nginx需要支持rewrite
 
+使用 Composer 直接安装MyQEE：
+
+``` bash
+    composer create-project myqee/myqee ./test
+```
+
+如果你已经安装过 [composer](http://getcomposer.org/) 只需要上面一条命令即可把MyQEE安装到 `./test` 目录。
+
+如果你没有安装过 `composer` ，很简单，运行：
+
+``` bash
+    curl -sS https://getcomposer.org/installer | php
+    mv composer.phar /usr/local/bin/composer
+```
+如果你是window系统，请参考 [http://getcomposer.org/doc/00-intro.md#installation-windows](http://getcomposer.org/doc/00-intro.md#installation-windows)
+
 **Apache配置样例：**
 	
 ``` ApacheConf

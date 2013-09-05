@@ -1,9 +1,9 @@
 {
-  "name": "myqee/myqee",
+  "name": "myqee/core",
   "description": "MyQEE Core for Composer",
   "keywords": ["MyQEE", "framework"],
   "homepage": "http://www.myqee.com/",
-  "type": "library",
+  "type": "myqee-core",
   "license": "Apache-2.0",
   "authors": [
     {
@@ -13,8 +13,18 @@
     }
   ],
   "require": {
-    "php": ">=5.3.0"
+    "php": ">=5.3.0",
+    "myqee/installer": "3.*"
   },
+  "bin" : [
+    "bin/merge-assets",
+    "bin/modify-file-type",
+    "bin/recreate-ide-helper-file",
+    "bin/svn-tools",
+    "bin/svn-tools.ini",
+    "bin/view-error500-log",
+    "bin/README.md"
+  ],
   "autoload": {
     "psr-0": {"MyQEE\\Core": "src/"}
   }
