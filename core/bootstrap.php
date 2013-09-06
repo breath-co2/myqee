@@ -482,6 +482,8 @@ abstract class Bootstrap
             /**
              * 是否开启DEBUG模式
              *
+             * 开启远程debug方式：访问 `/opendebugger` 页面，会看到有要输入调试开启账号和密码，这个配置在 `config.php` 的 `$config['debug_open_password']` 中
+             *
              *     if (IS_DEBUG>>1)
              *     {
              *         //开启了在线调试
@@ -500,6 +502,24 @@ abstract class Bootstrap
              * @var int
              */
             define('IS_DEBUG', $open_debug);
+
+            if ($open_debug && isset($_REQUEST['debug']))
+            {
+                $open_profiler = true;
+            }
+            else
+            {
+                $open_profiler = false;
+            }
+
+            /**
+             * 是否开启分析器
+             *
+             * 只有 DEBUG 打开时，IS_OPEN_PROFILER 才有可能被打开，打开方法：当打开 DEBUG 后，在地址栏GET参数中加入 `debug=yes` 访问
+             *
+             * @var boolean
+             */
+            define('IS_OPEN_PROFILER', $open_profiler);
 
 
             # Runtime配置
