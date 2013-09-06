@@ -12,10 +12,6 @@
       "homepage": "http://www.queyang.com/"
     }
   ],
-  "require": {
-    "php": ">=5.3.0",
-    "myqee/installer": "3.*"
-  },
   "bin" : [
     "bin/merge-assets",
     "bin/modify-file-type",

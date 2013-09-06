@@ -12,11 +12,10 @@
     }
   ],
   "require": {
-    "myqee/installer": "3.*",
-    "myqee/core": "3.*",
-    "myqee/develop": "3.*"
+    "myqee/installer": "~3.0",
+    "myqee/core": "~3.0",
+    "myqee/develop": "~3.0"
   },
-  "minimum-stability": "dev",
   "config": {
     "bin-dir" : "bin"
   },
