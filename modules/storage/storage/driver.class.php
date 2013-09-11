@@ -3,12 +3,12 @@
  * 存储驱动
  *
  * @author     呼吸二氧化碳 <jonwang@myqee.com>
- * @category   Core
- * @package    Classes
+ * @category   Module
+ * @package    Storage
  * @copyright  Copyright (c) 2008-2013 myqee.com
  * @license    http://www.myqee.com/license.html
  */
-abstract class Core_Storage_Driver
+abstract class Module_Storage_Driver
 {
     protected $config = array();
 

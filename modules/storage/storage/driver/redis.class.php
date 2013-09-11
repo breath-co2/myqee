@@ -4,13 +4,12 @@
  * Redis Storage驱动器
  *
  * @author     呼吸二氧化碳 <jonwang@myqee.com>
- * @category   MyQEE
- * @package    System
- * @subpackage Core
+ * @category   Module
+ * @package    Storage
  * @copyright  Copyright (c) 2008-2013 myqee.com
  * @license    http://www.myqee.com/license.html
  */
-class Core_Storage_Driver_Redis extends Storage_Driver
+class Module_Storage_Driver_Redis extends Storage_Driver
 {
 
     /**
