@@ -13,7 +13,6 @@ $dir_system_len = strlen(DIR_SYSTEM);
 // 处理 core
 create_ide_helper('core');
 
-
 // 处理类库
 foreach (glob(DIR_SYSTEM.'libraries/*', GLOB_NOSORT)  as $file)
 {
@@ -107,7 +106,7 @@ function paste_files($lib, $dir_type, $class_dir, $p_dir='')
     {
         if ($lib=='core')
         {
-            $preg_str = '#(abstract )?class (Core_)([a-z0-9_]+)(\r | |\n)#Uis';
+            $preg_str = '#(abstract )?class (Core_)([a-z0-9_]+)(\r| |\n)#Uis';
         }
         elseif (substr($lib, 0, 10)=='libraries/')
         {
