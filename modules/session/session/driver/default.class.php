@@ -4,13 +4,12 @@
  * MyQEE Session 缓存驱动器
  *
  * @author     呼吸二氧化碳 <jonwang@myqee.com>
- * @category   MyQEE
- * @package    System
- * @subpackage Core
+ * @category   Module
+ * @package    Session
  * @copyright  Copyright (c) 2008-2013 myqee.com
  * @license    http://www.myqee.com/license.html
  */
-class Core_Session_Driver_Default
+class Module_Session_Driver_Default
 {
 
     public function __construct()
