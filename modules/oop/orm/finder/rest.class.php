@@ -4,13 +4,12 @@
  * MyQEE ORM REST核心类
  *
  * @author     呼吸二氧化碳 <jonwang@myqee.com>
- * @category   MyQEE
- * @package    System
- * @subpackage Core
+ * @category   Module
+ * @package    ORM
  * @copyright  Copyright (c) 2008-2013 myqee.com
  * @license    http://www.myqee.com/license.html
  */
-class Core_OOP_ORM_Finder_REST extends OOP_ORM
+class Module_OOP_ORM_Finder_REST extends OOP_ORM
 {
     /**
      * API接口地址
