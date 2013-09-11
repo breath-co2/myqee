@@ -576,6 +576,10 @@ abstract class Core_Core extends Bootstrap
                     {
                         $action_name = 'action_default';
                     }
+                    elseif ($action_name!='' && (!$arguments || $arguments===array('')) && method_exists($controller, 'action_index'))
+                    {
+                        $action_name = 'action_index';
+                    }
                     elseif (method_exists($controller, '__call'))
                     {
                         $controller->__call($action_name, $arguments);
