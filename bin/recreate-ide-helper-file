@@ -15,37 +15,55 @@ create_ide_helper('core');
 
 
 // 处理类库
-foreach ( glob( DIR_SYSTEM.'libraries/*', GLOB_NOSORT )  as $file )
+foreach (glob(DIR_SYSTEM.'libraries/*', GLOB_NOSORT)  as $file)
 {
-    if ( $file[0] == '.' ) continue;
+    if ($file[0] == '.') continue;
 
     if (is_dir($file))
     {
-        foreach ( glob( preg_quote($file).'/*', GLOB_NOSORT )  as $the_lib )
+        foreach (glob(preg_quote($file).'/*', GLOB_NOSORT)  as $the_lib)
         {
-            if ( $the_lib[0] == '.' ) continue;
+            if ($the_lib[0] == '.')continue;
 
             if (is_dir($the_lib))
             {
-                $lib_path = substr($the_lib,$dir_system_len);
+                $lib_path = substr($the_lib, $dir_system_len);
                 create_ide_helper($lib_path);
             }
         }
     }
 }
 
+// 处理module
+foreach (glob(DIR_SYSTEM.'modules/*', GLOB_NOSORT)  as $the_lib)
+{
+    if ($the_lib[0] == '.')continue;
+
+    if (is_dir($the_lib))
+    {
+        $lib_path = substr($the_lib, $dir_system_len);
+
+        create_ide_helper($lib_path, true);
+    }
+}
 
 
 
 
-
-function create_ide_helper($lib)
+function create_ide_helper($lib, $is_module = false)
 {
     $str = '';
-    $str .= paste_files($lib, 'classes'     , DIR_SYSTEM .$lib.'/classes/');
-    $str .= paste_files($lib, 'orm'         , DIR_SYSTEM .$lib.'/orm/');
-    $str .= paste_files($lib, 'controllers' , DIR_SYSTEM .$lib.'/controllers/');
-    $str .= paste_files($lib, 'models'      , DIR_SYSTEM .$lib.'/models/');
+    if ($is_module)
+    {
+        $str  = paste_files($lib, 'classes', DIR_SYSTEM .$lib);
+    }
+    else
+    {
+        $str .= paste_files($lib, 'classes'     , DIR_SYSTEM .$lib.'/classes/');
+        $str .= paste_files($lib, 'orm'         , DIR_SYSTEM .$lib.'/orm/');
+        $str .= paste_files($lib, 'controllers' , DIR_SYSTEM .$lib.'/controllers/');
+        $str .= paste_files($lib, 'models'      , DIR_SYSTEM .$lib.'/models/');
+    }
 
     $file = DIR_SYSTEM.$lib.'/_ide_helper'.EXT;
     if ($str==='')
@@ -81,7 +99,7 @@ function create_ide_helper($lib)
 /**
  * 解析class类文件
  */
-function paste_files($lib,$dir,$class_dir,$p_dir='')
+function paste_files($lib, $dir_type, $class_dir, $p_dir='')
 {
     $str = '';
 
@@ -89,17 +107,22 @@ function paste_files($lib,$dir,$class_dir,$p_dir='')
     {
         if ($lib=='core')
         {
-            $preg_str = '#(abstract )?class (Core_)([a-z0-9_]+)( |\r|\n)#Uis';
+            $preg_str = '#(abstract )?class (Core_)([a-z0-9_]+)(\r | |\n)#Uis';
         }
-        elseif (substr($lib,0,10)=='libraries/')
+        elseif (substr($lib, 0, 10)=='libraries/')
         {
-            $preg_str = '#(abstract )?class (library_'.str_replace(array('_','\\','/'),array('','_','_'),substr($lib,10)).'_)([a-z0-9_]+)( |\r|\n)#Uis';
+            $preg_str = '#(abstract )?class (library_'.str_replace(array('_', '\\', '/'), array('', '_', '_'), substr($lib, 10)) .'_)([a-z0-9_]+)(\r| |\n)#Uis';
+        }
+        elseif (substr($lib, 0, 8)=='modules/')
+        {
+            $preg_str = '#(abstract )?class (module_)([a-z0-9_]+)(\r| |\n)#Uis';
         }
         else
         {
             echo 'dir: '.$lib.' not defined'."\n";
             return;
         }
+
         $dirArr = array
         (
             'orm'         => '.orm'.EXT,
@@ -108,37 +131,37 @@ function paste_files($lib,$dir,$class_dir,$p_dir='')
             'models'      => '.model'.EXT,
         );
 
-        if (!isset($dirArr[$dir]))
+        if (!isset($dirArr[$dir_type]))
         {
-            echo 'dir: '.$dir.' not defined'."\n";
+            echo 'dir: '.$dir_type.' not defined'."\n";
             return;
         }
 
-        $ext = $dirArr[$dir];
+        $ext = $dirArr[$dir_type];
         $ext_len = strlen($ext);
         $dir_len = strlen($class_dir);
 
-        $files = glob( preg_quote($class_dir).'*', GLOB_NOSORT );
+        $files = glob(preg_quote($class_dir).'*', GLOB_NOSORT);
 
 
-        foreach ( $files as $file )
+        foreach ($files as $file)
         {
-            if ( $file[0] == '.' ) continue;
+            if ($file[0] == '.') continue;
 
-            $file_name = substr($file,$dir_len);
+            $file_name = substr($file, $dir_len);
             if (is_dir($file))
             {
-                $str .= paste_files($lib , $dir , $file.'/' , $p_dir.'/'.$file_name);
+                $str .= paste_files($lib, $dir_type, $file.'/', $p_dir .'/'. $file_name);
                 continue;
             }
 
-            if (substr($file,-$ext_len)!=$ext)continue;
+            if (substr($file, -$ext_len)!=$ext)continue;
 
 
             $content = file_get_contents($file);
 
             // 匹配类名称
-            if (preg_match($preg_str, $content,$m))
+            if (preg_match($preg_str, $content, $m))
             {
                 $abstract  = $m[1];
                 $ns        = $m[2];
@@ -151,23 +174,23 @@ function paste_files($lib,$dir,$class_dir,$p_dir='')
                 continue;
             }
 
-            $str .= "\r\n\r\n{$abstract}class {$classname} extends {$ns}{$classname}{}\r\n{$abstract}class EX_{$classname} extends {$ns}{$classname}{}";
+            $str .= "\r\n\r\n{$abstract}class {$classname} extends {$ns}{$classname}{}\r\n{$abstract}class Ex_{$classname} extends {$ns}{$classname}{}";
 
-            if ($dir=='orm')
+            if ($dir_type=='orm')
             {
                 // ORM 需要特殊处理
-                if ( preg_match('#^ORM_([a-z0-9_]+)_(Data|Finder|Result|Index)$#i', $classname ,$m2) )
+                if (preg_match('#^ORM_([a-z0-9_]+)_(Data|Finder|Result|Index)$#i', $classname, $m2))
                 {
                     $obj_key = array('data'=>'Data','finder'=>'Finder','result'=>'Result','index'=>'Index');
-                    if ( isset($obj_key[strtolower($m2[2])]) ) unset($obj_key[strtolower($m2[2])]);
+                    if (isset($obj_key[strtolower($m2[2])])) unset($obj_key[strtolower($m2[2])]);
 
                     foreach ($obj_key as $item)
                     {
-                        if (preg_match('#(abstract )?class '.$ns.'ORM_'.$m2[1].'_'.$item.'#i', $content,$m3))
+                        if (preg_match('#(abstract)?class '.$ns.'ORM_'.$m2[1].'_'.$item.'#i', $content,$m3))
                         {
                             $abstract2  = $m3[1];
                             $classname2 = 'ORM_'.$m2[1].'_'.$item;
-                            $str .= "\r\n\r\n{$abstract2}class {$classname2} extends {$ns}{$classname2}{}\r\n{$abstract2}class EX_{$classname2} extends {$ns}{$classname2}{}";
+                            $str .= "\r\n\r\n{$abstract2}class {$classname2} extends {$ns}{$classname2}{}\r\n{$abstract2}class Ex_{$classname2} extends {$ns}{$classname2}{}";
                         }
                     }
                 }

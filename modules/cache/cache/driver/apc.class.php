@@ -9,7 +9,7 @@
  * @copyright  Copyright (c) 2008-2013 myqee.com
  * @license    http://www.myqee.com/license.html
  */
-class Modeul_Cache_Driver_Apc extends Cache_Driver
+class Module_Cache_Driver_Apc extends Cache_Driver
 {
     public function __construct()
     {

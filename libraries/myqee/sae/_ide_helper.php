@@ -2,8 +2,8 @@
 exit;
 
 
-class HttpClient_Driver_SAE extends Library_MyQEE_SAE_HttpClient_Driver_SAE{}
-class EX_HttpClient_Driver_SAE extends Library_MyQEE_SAE_HttpClient_Driver_SAE{}
+class Cache_Driver_Memcache extends Library_MyQEE_SAE_Cache_Driver_Memcache{}
+class Ex_Cache_Driver_Memcache extends Library_MyQEE_SAE_Cache_Driver_Memcache{}
 
-class SAE_Cache_Driver_Memcache extends Library_MyQEE_SAE_Cache_Driver_Memcache{}
-class EX_Cache_Driver_Memcache extends Library_MyQEE_SAE_Cache_Driver_Memcache{}
+class HttpClient_Driver_SAE extends Library_MyQEE_SAE_HttpClient_Driver_SAE{}
+class Ex_HttpClient_Driver_SAE extends Library_MyQEE_SAE_HttpClient_Driver_SAE{}
