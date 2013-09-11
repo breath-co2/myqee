@@ -4,13 +4,12 @@
  * Apc缓存驱动器
  *
  * @author     呼吸二氧化碳 <jonwang@myqee.com>
- * @category   MyQEE
- * @package    System
- * @subpackage Core
+ * @category   Module
+ * @package    Cache
  * @copyright  Copyright (c) 2008-2013 myqee.com
  * @license    http://www.myqee.com/license.html
  */
-class Core_Cache_Driver_Apc extends Cache_Driver
+class Modeul_Cache_Driver_Apc extends Cache_Driver
 {
     public function __construct()
     {

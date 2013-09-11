@@ -4,13 +4,12 @@
  * 缓存核心类
  *
  * @author     呼吸二氧化碳 <jonwang@myqee.com>
- * @category   MyQEE
- * @package    System
- * @subpackage Core
+ * @category   Module
+ * @package    Cache
  * @copyright  Copyright (c) 2008-2013 myqee.com
  * @license	   http://www.myqee.com/license.html
  */
-class Core_Cache
+class Module_Cache
 {
     /**
      * 驱动类型为APC

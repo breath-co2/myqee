@@ -4,13 +4,12 @@
  * SQLite缓存驱动器
  *
  * @author     呼吸二氧化碳 <jonwang@myqee.com>
- * @category   MyQEE
- * @package    System
- * @subpackage Core
+ * @category   Module
+ * @package    Cache
  * @copyright  Copyright (c) 2008-2013 myqee.com
  * @license	   http://www.myqee.com/license.html
  */
-class Core_Cache_Driver_SQLite extends Cache_Driver_Database
+class Module_Cache_Driver_SQLite extends Cache_Driver_Database
 {
     /**
      * 默认缓存时间
