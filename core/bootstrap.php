@@ -331,6 +331,7 @@ abstract class Bootstrap
         'project'      => array(),                                   // 项目类库
         'team-library' => array('default'=>DIR_TEAM_LIBRARY),        // Team公共类库
         'library'      => array(),                                   // 类库包
+        'module'       => array(),                                   // Module
         'core'         => array('core'=>DIR_CORE),                   // 核心类库
     );
 
@@ -762,7 +763,7 @@ abstract class Bootstrap
         {
             if ($ns=='core')
             {
-                $file = DIR_CORE;
+                $file = DIR_CORE . $dir_setting[0] . DS;
             }
             elseif ($ns=='module')
             {
@@ -770,9 +771,10 @@ abstract class Bootstrap
             }
             else
             {
-                $file =  DIR_LIBRARY . $ns_name . DS;
+                $file =  DIR_LIBRARY . $ns_name . DS . $dir_setting[0] . DS;
             }
-            $file .= $dir_setting[0] . DS . str_replace('_', DS, $class_file_name) . $dir_setting[1] . EXT;
+
+            $file .= str_replace('_', DS, $class_file_name) . $dir_setting[1] . EXT;
 
             if (is_file($file))
             {
@@ -905,56 +907,54 @@ abstract class Bootstrap
         # 是否只需要寻找到第一个文件
         $only_need_one_file = true;
 
-        if ($dir == 'classes')
+        switch ($dir)
         {
-            $file = strtolower(str_replace('_', '/', $file));
-            if (null===$ext)$the_ext = '.class' . EXT;
-        }
-        else if ($dir == 'models')
-        {
-            $file = strtolower(str_replace('_', '/', $file));
-            if (null===$ext)$the_ext = '.model' . EXT;
-        }
-        else if ( $dir == 'controllers' )
-        {
-            $file = strtolower(str_replace('_', '/', $file));
-            if (null===$ext)$the_ext = '.controller' . EXT;
+            case 'models':
+                $file = strtolower(str_replace('_', '/', $file));
+                if (null===$ext)$the_ext = '.model' . EXT;
+                break;
+            case 'controllers':
+                $file = strtolower(str_replace('_', '/', $file));
+                if (null===$ext)$the_ext = '.controller' . EXT;
 
-            if (IS_SYSTEM_MODE)
-            {
-                $dir .= '-system';
-            }
-            elseif (IS_CLI)
-            {
-                $dir .= '-shell';
-            }
-            elseif (IS_ADMIN_MODE)
-            {
-                $dir .= '-admin';
-            }
-            elseif (IS_REST_MODE)
-            {
-                $dir .= '-rest';
-            }
+                if (IS_SYSTEM_MODE)
+                {
+                    $dir .= '-system';
+                }
+                elseif (IS_CLI)
+                {
+                    $dir .= '-shell';
+                }
+                elseif (IS_ADMIN_MODE)
+                {
+                    $dir .= '-admin';
+                }
+                elseif (IS_REST_MODE)
+                {
+                    $dir .= '-rest';
+                }
+                break;
+            case 'i18n':
+            case 'config':
+                if (null===$ext)$the_ext = '.lang';
+                $only_need_one_file = false;
+                break;
+            case 'views':
+                if (null===$ext)$the_ext = '.view' . EXT;
+                $file = strtolower($file);
+                break;
+            case 'orm':
+                if (null===$ext)$the_ext = '.orm' . EXT;
+                #orm
+                $file = preg_replace('#^(.*)_[a-z0-9]+$#i', '$1', $file);
+                $file = strtolower(str_replace('_', '/', $file));
+                break;
+            case 'classes':
+            default:
+                $file = strtolower(str_replace('_', '/', $file));
+                if (null===$ext)$the_ext = '.class' . EXT;
+                break;
         }
-        elseif ($dir=='i18n' || $dir=='config')
-        {
-            if (null===$ext)$the_ext = '.lang';
-            $only_need_one_file = false;
-        }
-        elseif ($dir=='views')
-        {
-            if (null===$ext)$the_ext = '.view' . EXT;
-            $file = strtolower($file);
-        }
-        elseif ($dir == 'orm')
-        {
-            if (null===$ext)$the_ext = '.orm' . EXT;
-            #orm
-            $file = preg_replace('#^(.*)_[a-z0-9]+$#i', '$1', $file);
-            $file = strtolower(str_replace('_', '/', $file));
-        }
-
 
         # 寻找到的文件
         $found_files = array();
@@ -962,11 +962,36 @@ abstract class Bootstrap
         # 采用当前项目目录
         $include_path = self::$include_path;
 
-        foreach ($include_path as $the_path)
+        if ($dir == 'classes')
         {
+            # 类库目录增加 module 目录
+            list($module_name) = explode('/', $file, 2);
+            $module_dir = DIR_MODULE . $module_name . DS;
+
+            if (is_dir($module_dir))
+            {
+                $include_path['module'] = array($module_dir);
+            }
+        }
+        else
+        {
+            $include_path['module'] = array();
+        }
+
+        foreach ($include_path as $key => $the_path)
+        {
+            if ($key=='module')
+            {
+                $tmpdir = '';
+            }
+            else
+            {
+                $tmpdir = $dir . DS;
+            }
+
             foreach ($the_path as $path)
             {
-                $tmpfile = $path . $dir . DS . $file . $the_ext;
+                $tmpfile = $path . $tmpdir . $file . $the_ext;
 
                 if (is_file($tmpfile))
                 {
