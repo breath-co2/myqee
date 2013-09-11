@@ -4,13 +4,12 @@
  * MyQEE ORM 核心类
  *
  * @author     呼吸二氧化碳 <jonwang@myqee.com>
- * @category   MyQEE
- * @package    System
- * @subpackage Core
+ * @category   Module
+ * @package    ORM
  * @copyright  Copyright (c) 2008-2013 myqee.com
  * @license    http://www.myqee.com/license.html
  */
-abstract class Core_OOP_ORM
+abstract class Module_OOP_ORM
 {
 
     /**
