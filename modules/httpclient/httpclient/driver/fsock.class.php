@@ -3,13 +3,12 @@
  * Http请求Fsock驱动核心类
  *
  * @author     呼吸二氧化碳 <jonwang@myqee.com>
- * @category   MyQEE
- * @package    System
- * @subpackage Core
+ * @category   Module
+ * @package    HttpClient
  * @copyright  Copyright (c) 2008-2013 myqee.com
  * @license    http://www.myqee.com/license.html
  */
-class Core_HttpClient_Driver_Fsock
+class Module_HttpClient_Driver_Fsock
 {
     protected $http_data = array();
 

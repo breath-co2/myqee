@@ -4,13 +4,12 @@
  * Wget Curl驱动核心
  *
  * @author     呼吸二氧化碳 <jonwang@myqee.com>
- * @category   MyQEE
- * @package    System
- * @subpackage Core
+ * @category   Module
+ * @package    HttpClient
  * @copyright  Copyright (c) 2008-2013 myqee.com
  * @license    http://www.myqee.com/license.html
  */
-class Core_HttpClient_Driver_Curl
+class Module_HttpClient_Driver_Curl
 {
 
     protected $http_data = array();
