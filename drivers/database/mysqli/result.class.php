@@ -10,7 +10,7 @@
  * @copyright  Copyright (c) 2008-2013 myqee.com
  * @license    http://www.myqee.com/license.html
  */
-class Driver_Database_MySQLI_Result extends Database_Result
+class Driver_Database_Driver_MySQLI_Result extends Database_Result
 {
     public function __destruct()
     {
