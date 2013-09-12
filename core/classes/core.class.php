@@ -1240,51 +1240,59 @@ abstract class Core_Core extends Bootstrap
 
         $file = str_replace('\\', DS, $file);
 
-        if ( strpos($file, DIR_CORE) === 0 )
+        if (strpos($file, DIR_CORE) === 0)
         {
             $file = $l . './core/' . $r . substr($file, strlen(DIR_CORE));
         }
-        elseif ( strpos($file, DIR_TEAM_LIBRARY) === 0 )
+        elseif (strpos($file, DIR_TEAM_LIBRARY) === 0)
         {
             $file = $l . './team-library/' . $r . substr($file, strlen(DIR_TEAM_LIBRARY));
         }
-        elseif ( strpos($file, DIR_LIBRARY) === 0 )
+        elseif (strpos($file, DIR_LIBRARY) === 0)
         {
             $file = $l . './libraries/' . $r . substr($file, strlen(DIR_LIBRARY));
         }
-        elseif ( strpos($file, DIR_PROJECT) === 0 )
+        elseif (strpos($file, DIR_MODULE) === 0)
+        {
+            $file = $l . './modules/' . $r . substr($file, strlen(DIR_MODULE));
+        }
+        elseif (strpos($file, DIR_DRIVER) === 0)
+        {
+            $file = $l . './drivers/' . $r . substr($file, strlen(DIR_DRIVER));
+        }
+        elseif (strpos($file, DIR_PROJECT) === 0)
         {
             $file = $l . './projects/' . $r . substr($file, strlen(DIR_PROJECT));
         }
-        elseif ( strpos($file, DIR_TEMP) === 0 )
+        elseif (strpos($file, DIR_TEMP) === 0)
         {
             $file = $l . './data/temp/' . $r . substr($file, strlen(DIR_TEMP));
         }
-        elseif ( strpos($file, DIR_LOG) === 0 )
+        elseif (strpos($file, DIR_LOG) === 0)
         {
             $file = $l . './data/log/' . $r . substr($file, strlen(DIR_LOG));
         }
-        elseif ( strpos($file, DIR_CACHE) === 0 )
+        elseif (strpos($file, DIR_CACHE) === 0)
         {
             $file = $l . './data/cache/' . $r . substr($file, strlen(DIR_CACHE));
         }
-        elseif ( strpos($file, DIR_DATA) === 0 )
+        elseif (strpos($file, DIR_DATA) === 0)
         {
             $file = $l . './data/' . $r . substr($file, strlen(DIR_DATA));
         }
-        elseif ( strpos($file, DIR_ASSETS) === 0 )
+        elseif (strpos($file, DIR_ASSETS) === 0)
         {
             $file = $l . './wwwroot/assets/' . $r . substr($file, strlen(DIR_ASSETS));
         }
-        elseif ( strpos($file, DIR_UPLOAD) === 0 )
+        elseif (strpos($file, DIR_UPLOAD) === 0)
         {
             $file = $l . './wwwroot/upload/' . $r . substr($file, strlen(DIR_UPLOAD));
         }
-        elseif ( strpos($file, DIR_WWWROOT) === 0 )
+        elseif (strpos($file, DIR_WWWROOT) === 0)
         {
             $file = $l . './wwwroot/' . $r . substr($file, strlen(DIR_WWWROOT));
         }
-        elseif ( strpos($file, DIR_SYSTEM) === 0 )
+        elseif (strpos($file, DIR_SYSTEM) === 0)
         {
             $file = $l . './' . $r . substr($file, strlen(DIR_SYSTEM));
         }

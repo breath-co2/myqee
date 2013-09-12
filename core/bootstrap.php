@@ -126,6 +126,13 @@ define('DIR_LIBRARY', DIR_SYSTEM.'libraries'.DS);
 define('DIR_MODULE', DIR_SYSTEM.'modules'.DS);
 
 /**
+ * 驱动目录
+ *
+ * @var string
+ */
+define('DIR_DRIVER', DIR_SYSTEM.'drivers'.DS);
+
+/**
  * 第三方类库目录
  *
  * @var string
@@ -331,7 +338,8 @@ abstract class Bootstrap
         'project'      => array(),                                   // 项目类库
         'team-library' => array('default'=>DIR_TEAM_LIBRARY),        // Team公共类库
         'library'      => array(),                                   // 类库包
-        'module'       => array(),                                   // Module
+        'driver'       => array(),                                   // 驱动
+        'module'       => array(),                                   // 组件
         'core'         => array('core'=>DIR_CORE),                   // 核心类库
     );
 
@@ -712,6 +720,13 @@ abstract class Bootstrap
             list($ns_name)  = explode('_', $m[1], 2);
             $new_class_name = $m[1];
         }
+        else if (preg_match('#^driver_([a-z0-9]+)_driver_([a-z0-9_]+)$#', $class_name, $m))
+        {
+            # 驱动
+            $ns = 'driver';
+            $ns_name = $m[1];
+            $new_class_name = $m[2];
+        }
         else
         {
             $ns = '';
@@ -761,22 +776,29 @@ abstract class Bootstrap
 
         if ($ns)
         {
-            if ($ns=='core')
+            switch ($ns)
             {
-                $file = DIR_CORE . $dir_setting[0] . DS;
-            }
-            elseif ($ns=='module')
-            {
-                $file = DIR_MODULE;
+                case 'core':
+                    $file = DIR_CORE . $dir_setting[0] . DS;
+                    break;
+                case 'module':
+                    $file = DIR_MODULE;
 
-                if ($new_class_name==$ns_name)
-                {
-                    $file .= $ns_name . DS;
-                }
-            }
-            else
-            {
-                $file =  DIR_LIBRARY . $ns_name . DS . $dir_setting[0] . DS;
+                    if ($new_class_name==$ns_name)
+                    {
+                        $file .= $ns_name . DS;
+                    }
+                    break;
+                case 'driver':
+                    $file = DIR_DRIVER . $ns_name . DS;
+                    if (false===strpos($new_class_name, '_'))
+                    {
+                        $file .= $new_class_name . DS;
+                    }
+                    break;
+                default:
+                    $file = DIR_LIBRARY . $ns_name . DS . $dir_setting[0] . DS;
+                    break;
             }
 
             $file .= str_replace('_', DS, $class_file_name) . $dir_setting[1] . EXT;
@@ -806,17 +828,20 @@ abstract class Bootstrap
                 }
             }
 
+            $include_path = self::$include_path;
+
             # 没有找到文件且为项目类库，尝试在某个命名空间的类库中寻找
             static $module_dir = array();
+            static $driver_dir = array();
 
-            list($tmp_prefix) = explode('_', $new_class_name, 2);
+
+            # 处理组件
+            list($tmp_prefix, $tmp_ns, $tmp_driver) = explode('_', $new_class_name, 4);
             if (!isset($module_dir[$tmp_prefix]))
             {
                 $module_dir[$tmp_prefix] = is_dir(DIR_MODULE .$tmp_prefix. DS);
             }
 
-            $include_path = self::$include_path;
-            $include_path['module'] = array();
             if ($module_dir[$tmp_prefix])
             {
                 # 生成一个module路径，比如 Database_Driver_MySQL 就是在 module/database 中
@@ -826,7 +851,27 @@ abstract class Bootstrap
                 );
             }
 
-            foreach (array('library', 'module', 'core') as $type)
+
+            # 处理驱动
+            if ($tmp_driver && $tmp_ns=='driver')
+            {
+                $driver = $tmp_ns .'/'. $tmp_driver;
+                if (!isset($driver_dir[$driver]))
+                {
+                    $driver_dir[$driver] = is_dir(DIR_DRIVER .$tmp_prefix. DS .$tmp_driver. DS);
+                }
+
+                if ($driver_dir[$driver])
+                {
+                    $include_path['driver'] = array
+                    (
+                        'driver' => DIR_DRIVER,
+                    );
+                }
+            }
+
+
+            foreach (array('library', 'driver', 'module', 'core') as $type)
             {
                 foreach ($include_path[$type] as $lib_ns=>$path)
                 {
@@ -912,6 +957,8 @@ abstract class Bootstrap
         # 是否只需要寻找到第一个文件
         $only_need_one_file = true;
 
+        $file = str_replace('\\', '/', $file);
+
         switch ($dir)
         {
             case 'models':
@@ -969,7 +1016,7 @@ abstract class Bootstrap
 
         if ($dir == 'classes')
         {
-            # 类库目录增加 module 目录
+            # 处理 module 和 driver
             if (false===strpos($file, '/'))
             {
                 list($module_name) = explode('/', $file, 2);
@@ -978,6 +1025,23 @@ abstract class Bootstrap
             else
             {
                 $module_dir = DIR_MODULE;
+
+                $driver_dir = DIR_DRIVER;
+                list($tmp_prefix, $tmp_ns, $tmp_driver, $tmp_name) = explode('/', $file, 4);
+                if ($tmp_ns=='driver' && $tmp_driver)
+                {
+                    $driver_dir .= $tmp_prefix .DS;
+                    if (!$tmp_name)
+                    {
+                        $tmp_name = $tmp_driver;
+                    }
+                    $driver_dir .= $tmp_driver .DS;
+                }
+
+                if (is_dir($driver_dir))
+                {
+                    $include_path['driver'] = array($driver_dir);
+                }
             }
 
             if (is_dir($module_dir))
@@ -985,29 +1049,34 @@ abstract class Bootstrap
                 $include_path['module'] = array($module_dir);
             }
         }
-        else
-        {
-            $include_path['module'] = array();
-        }
 
         foreach ($include_path as $key => $the_path)
         {
+            if (!$the_path)continue;
+
             if ($key=='module')
             {
+                $tmpdir = '';
+                $tmpfile = $file;
+            }
+            elseif ($key==='driver')
+            {
+                $tmpfile = $tmp_name;
                 $tmpdir = '';
             }
             else
             {
                 $tmpdir = $dir . DS;
+                $tmpfile = $file;
             }
 
             foreach ($the_path as $path)
             {
-                $tmpfile = $path . $tmpdir . $file . $the_ext;
+                $tmp_filename = $path . $tmpdir . $tmpfile . $the_ext;
 
-                if (is_file($tmpfile))
+                if (is_file($tmp_filename))
                 {
-                    $found_files[] = $tmpfile;
+                    $found_files[] = $tmp_filename;
                     if ($only_need_one_file) break;
                 }
             }

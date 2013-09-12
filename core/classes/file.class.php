@@ -26,6 +26,8 @@ class Core_File
         DIR_WWWROOT,
         DIR_TEAM_LIBRARY,
         DIR_PROJECT,
+        DIR_MODULE,
+        DIR_DRIVER,
         DIR_SYSTEM,
         DIR_ASSETS,
     );
