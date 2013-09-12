@@ -767,7 +767,12 @@ abstract class Bootstrap
             }
             elseif ($ns=='module')
             {
-                $file = DIR_MODULE . $ns_name . DS;
+                $file = DIR_MODULE;
+
+                if ($new_class_name==$ns_name)
+                {
+                    $file .= $ns_name . DS;
+                }
             }
             else
             {
@@ -817,7 +822,7 @@ abstract class Bootstrap
                 # 生成一个module路径，比如 Database_Driver_MySQL 就是在 module/database 中
                 $include_path['module'] = array
                 (
-                    'module' => DIR_MODULE .$tmp_prefix. DS,
+                    'module' => DIR_MODULE,
                 );
             }
 
@@ -965,8 +970,15 @@ abstract class Bootstrap
         if ($dir == 'classes')
         {
             # 类库目录增加 module 目录
-            list($module_name) = explode('/', $file, 2);
-            $module_dir = DIR_MODULE . $module_name . DS;
+            if (false===strpos($file, '/'))
+            {
+                list($module_name) = explode('/', $file, 2);
+                $module_dir = DIR_MODULE . $module_name . DS;
+            }
+            else
+            {
+                $module_dir = DIR_MODULE;
+            }
 
             if (is_dir($module_dir))
             {
