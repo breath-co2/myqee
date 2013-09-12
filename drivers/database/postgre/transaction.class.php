@@ -1,16 +1,16 @@
 <?php
 
 /**
- * MySQL事务
+ * Postgre事务
  *
  * @author     呼吸二氧化碳 <jonwang@myqee.com>
- * @category   MyQEE
- * @package    Module
- * @subpackage Database
+ * @category   Driver
+ * @package    Database
+ * @subpackage Postgre
  * @copyright  Copyright (c) 2008-2013 myqee.com
  * @license    http://www.myqee.com/license.html
  */
-abstract class Module_Database_Driver_MySQL_Transaction extends Database_Transaction
+abstract class Driver_Database_Driver_Postgre_Transaction extends Database_Transaction
 {
     /**
      * 当前连接ID
@@ -22,7 +22,7 @@ abstract class Module_Database_Driver_MySQL_Transaction extends Database_Transac
 
     /**
      * 开启事务
-     * @return Database_Driver_MySQL_Transaction
+     * @return Database_Driver_Postgre_Transaction
      */
     public function start()
     {
@@ -37,13 +37,13 @@ abstract class Module_Database_Driver_MySQL_Transaction extends Database_Transac
         # 获取唯一ID
         $this->id = uniqid('TaId_' . rand());
 
-        if (isset(self::$transactions[$this->_connection_id]))
+        if (isset(Database_Driver_Postgre_Transaction::$transactions[$this->_connection_id]))
         {
             # 已存在事务，则该事务为子事务
             if ($this->_set_save_point())
             {
                 //保存事务点
-                self::$transactions[$this->_connection_id][$this->id] = true;
+                Database_Driver_Postgre_Transaction::$transactions[$this->_connection_id][$this->id] = true;
             }
             else
             {
@@ -55,11 +55,10 @@ abstract class Module_Database_Driver_MySQL_Transaction extends Database_Transac
         else
         {
             # 开启新事务
-            $this->_query('SET AUTOCOMMIT=0;');
             if (true === $this->_query('START TRANSACTION;'))
             {
                 # 如果没有建立到当前主服务器的连接，该操作会隐式的建立
-                self::$transactions[$this->_connection_id] = array($this->id => true);
+                Database_Driver_Postgre_Transaction::$transactions[$this->_connection_id] = array($this->id => true);
             }
             else
             {
@@ -85,19 +84,18 @@ abstract class Module_Database_Driver_MySQL_Transaction extends Database_Transac
         if ($this->is_root())
         {
             # 父事务
-            while (count(self::$transactions[$this->_connection_id]) > 1)
+            while (count(Database_Driver_Postgre_Transaction::$transactions[$this->_connection_id]) > 1)
             {
                 # 还有没有提交的子事务
-                end(self::$transactions[$this->_connection_id]);
-                $subid = key(self::$transactions[$this->_connection_id]);
-                if ( !$this->_release_save_point($subid) )
+                end(Database_Driver_Postgre_Transaction::$transactions[$this->_connection_id]);
+                $subid = key(Database_Driver_Postgre_Transaction::$transactions[$this->_connection_id]);
+                if (!$this->_release_save_point($subid))
                 {
                     throw new Exception('commit error');
                 }
             }
             $status = $this->_query('COMMIT;');
-            $this->_query('SET AUTOCOMMIT=1;');
-            if ($status) unset(self::$transactions[$this->_connection_id]);
+            if ($status) unset(Database_Driver_Postgre_Transaction::$transactions[$this->_connection_id]);
         }
         else
         {
@@ -128,10 +126,9 @@ abstract class Module_Database_Driver_MySQL_Transaction extends Database_Transac
         if ($this->is_root())
         { //父事务
             $status = $this->_query('ROLLBACK;');
-            $this->_query('SET AUTOCOMMIT=1;');
             if ($status)
             {
-                unset(self::$transactions[$this->_connection_id]);
+                unset(Database_Driver_Postgre_Transaction::$transactions[$this->_connection_id]);
             }
         }
         else
@@ -157,7 +154,7 @@ abstract class Module_Database_Driver_MySQL_Transaction extends Database_Transac
     public function is_root()
     {
         if (!$this->id) return false;
-        return isset(self::$transactions[$this->_connection_id]) && key(self::$transactions[$this->_connection_id]) == $this->id;
+        return isset(Database_Driver_Postgre_Transaction::$transactions[$this->_connection_id]) && key(Database_Driver_Postgre_Transaction::$transactions[$this->_connection_id]) == $this->id;
     }
 
     /**
@@ -170,7 +167,7 @@ abstract class Module_Database_Driver_MySQL_Transaction extends Database_Transac
         if (!$this->is_root())
         {
             //只有子事务才需要保存点
-            if ( true === $this->_query("SAVEPOINT {$this->id};") )
+            if (true === $this->_query("SAVEPOINT {$this->id};"))
             {
                 return true;
             }
@@ -187,9 +184,9 @@ abstract class Module_Database_Driver_MySQL_Transaction extends Database_Transac
     {
         if (!$this->is_root())
         {
-            if ( true === $this->_query("RELEASE SAVEPOINT {$id};") )
+            if (true === $this->_query("RELEASE SAVEPOINT {$id};"))
             {
-                unset(self::$transactions[$this->_connection_id][$id]);
+                unset(Database_Driver_Postgre_Transaction::$transactions[$this->_connection_id][$id]);
                 return true;
             }
         }
@@ -202,7 +199,7 @@ abstract class Module_Database_Driver_MySQL_Transaction extends Database_Transac
      */
     protected function _haveid()
     {
-        return isset(self::$transactions[$this->_connection_id]) && isset(self::$transactions[$this->_connection_id][$this->id]);
+        return isset(Database_Driver_Postgre_Transaction::$transactions[$this->_connection_id]) && isset(Database_Driver_Postgre_Transaction::$transactions[$this->_connection_id][$this->id]);
     }
 
 }

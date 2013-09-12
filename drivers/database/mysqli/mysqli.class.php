@@ -4,13 +4,13 @@
  * 数据库MySQLI返回类
  *
  * @author     呼吸二氧化碳 <jonwang@myqee.com>
- * @category   MyQEE
- * @package    Module
- * @subpackage Database
+ * @category   Driver
+ * @package    Database
+ * @subpackage MySQLI
  * @copyright  Copyright (c) 2008-2013 myqee.com
  * @license    http://www.myqee.com/license.html
  */
-class Module_Database_Driver_MySQLI extends Database_Driver
+class Driver_Database_Driver_MySQLI extends Database_Driver
 {
     /**
      * MySQL使用反引号标识符
@@ -62,13 +62,13 @@ class Module_Database_Driver_MySQLI extends Database_Driver
         # 最后检查连接时间
         static $last_check_connect_time = 0;
 
-        if ( !$connection_id || !isset(Database_Driver_MySQLI::$_connection_instance[$connection_id]) )
+        if (!$connection_id || !isset(Database_Driver_MySQLI::$_connection_instance[$connection_id]))
         {
             $this->_connect();
         }
 
         # 如果有当前连接，检查连接
-        if ( $last_check_connect_time>0 && time()-$last_check_connect_time>=5 )
+        if ($last_check_connect_time>0 && time()-$last_check_connect_time>=5)
         {
             # 5秒后检查一次连接状态
             $this->_check_connect();
@@ -96,7 +96,7 @@ class Module_Database_Driver_MySQLI extends Database_Driver
         # 获取连接ID
         $connection_id = $this->connection_id();
 
-        if ( $connection_id && isset(Database_Driver_MySQLI::$_connection_instance[$connection_id]) )
+        if ($connection_id && isset(Database_Driver_MySQLI::$_connection_instance[$connection_id]))
         {
             return Database_Driver_MySQLI::$_connection_instance[$connection_id];
         }
@@ -117,7 +117,7 @@ class Module_Database_Driver_MySQLI extends Database_Driver
         }
 
         # 检查下是否已经有连接连上去了
-        if ( Database_Driver_MySQLI::$_connection_instance )
+        if (Database_Driver_MySQLI::$_connection_instance)
         {
             if (is_array($hostname))
             {
@@ -140,11 +140,11 @@ class Module_Database_Driver_MySQLI extends Database_Driver
             }
 
             # 先检查是否已经有相同的连接连上了数据库
-            foreach ( $hostconfig as $host )
+            foreach ($hostconfig as $host)
             {
                 $_connection_id = $this->_get_connection_hash($host, $port, $username);
 
-                if ( isset(Database_Driver_MySQLI::$_connection_instance[$_connection_id]) )
+                if (isset(Database_Driver_MySQLI::$_connection_instance[$_connection_id]))
                 {
                     $this->_connection_ids[$this->_connection_type] = $_connection_id;
 
@@ -193,9 +193,9 @@ class Module_Database_Driver_MySQLI extends Database_Driver
                 }
                 catch (Exception $e)
                 {
-                    $error_msg     = $e->getMessage();
-                    $error_code    = $e->getCode();
-                    $tmplink       = false;
+                    $error_msg  = $e->getMessage();
+                    $error_code = $e->getCode();
+                    $tmplink    = false;
                 }
 
                 if (false===$tmplink)
@@ -225,7 +225,7 @@ class Module_Database_Driver_MySQLI extends Database_Driver
             {
                 if (IS_DEBUG)
                 {
-                    Core::debug()->error($username.'@'.$hostname.':'.$port.'.Msg:'.strip_tags($e->getMessage(),'').'.Code:'.$e->getCode(), 'connect mysqli server error');
+                    Core::debug()->error($username.'@'.$hostname.':'.$port.'.Msg:'.strip_tags($e->getMessage(), '') .'.Code:'. $e->getCode(), 'connect mysqli server error');
                     $last_error = new Exception($e->getMessage(), $e->getCode());
                 }
                 else
@@ -240,7 +240,7 @@ class Module_Database_Driver_MySQLI extends Database_Driver
                 }
                 else
                 {
-                    if ( !in_array($hostname, $error_host) )
+                    if (!in_array($hostname, $error_host))
                     {
                         $error_host[] = $hostname;
                     }
@@ -274,15 +274,15 @@ class Module_Database_Driver_MySQLI extends Database_Driver
                 $ping_status = false;
             }
         }
-        catch ( Exception $e )
+        catch (Exception $e)
         {
             $error_num++;
             $ping_status = false;
         }
 
-        if ( !$ping_status )
+        if (!$ping_status)
         {
-            if ( $error_num<5 )
+            if ($error_num<5)
             {
                 $this->close_connect();
                 # 等待3毫秒
@@ -349,7 +349,7 @@ class Module_Database_Driver_MySQLI extends Database_Driver
                 return;
             }
 
-            if ( !mysqli_select_db($connection,$database) )
+            if (!mysqli_select_db($connection,$database))
             {
                 throw new Exception('选择数据表错误:' . mysqli_error($connection), mysqli_errno($connection));
             }
@@ -370,23 +370,23 @@ class Module_Database_Driver_MySQLI extends Database_Driver
      */
     public function compile($builder, $type = 'selete')
     {
-        if ( $type == 'selete' )
+        if ($type == 'selete')
         {
             return $this->_compile_selete($builder);
         }
-        else if ( $type == 'insert' )
+        else if ($type == 'insert')
         {
             return $this->_compile_insert($builder);
         }
-        elseif ( $type == 'replace' )
+        elseif ($type == 'replace')
         {
             return $this->_compile_insert($builder, 'REPLACE');
         }
-        elseif ( $type == 'update' )
+        elseif ($type == 'update')
         {
             return $this->_compile_update($builder);
         }
-        elseif ( $type == 'delete' )
+        elseif ($type == 'delete')
         {
             return $this->_compile_delete($builder);
         }
@@ -418,14 +418,14 @@ class Module_Database_Driver_MySQLI extends Database_Driver
         }
 
         static $_set_names = null;
-        if ( null === $_set_names )
+        if (null === $_set_names)
         {
             // Determine if we can use mysql_set_charset(), which is only
             // available on PHP 5.2.3+ when compiled against MySQL 5.0+
             $_set_names = ! function_exists('mysqli_set_charset');
         }
 
-        if ( isset(Database_Driver_MySQLI::$_current_charset[$connection_id]) && $charset == Database_Driver_MySQLI::$_current_charset[$connection_id] )
+        if (isset(Database_Driver_MySQLI::$_current_charset[$connection_id]) && $charset == Database_Driver_MySQLI::$_current_charset[$connection_id])
         {
             return true;
         }
@@ -441,7 +441,7 @@ class Module_Database_Driver_MySQLI extends Database_Driver
             $status = mysqli_set_charset($connection, $charset);
         }
 
-        if ( $status === false )
+        if ($status === false)
         {
             throw new Exception('Error:' . mysqli_error($connection), mysqli_errno($connection));
         }
@@ -456,7 +456,7 @@ class Module_Database_Driver_MySQLI extends Database_Driver
 
         $this->_change_charset($value);
 
-        if ( ($value = mysqli_real_escape_string($connection, $value)) === false )
+        if (($value = mysqli_real_escape_string($connection, $value)) === false)
         {
             throw new Exception('Error:' . mysqli_errno($connection), mysqli_error($connection));
         }
@@ -478,7 +478,7 @@ class Module_Database_Driver_MySQLI extends Database_Driver
     {
         $sql = trim($sql);
 
-        if ( preg_match('#^([a-z]+)(:? |\n|\r)#i', $sql, $m) )
+        if (preg_match('#^([a-z]+)(:? |\n|\r)#i', $sql, $m))
         {
             $type = strtoupper($m[1]);
         }
@@ -498,15 +498,15 @@ class Module_Database_Driver_MySQLI extends Database_Driver
             $type = 'MASTER';
         }
         $slaverType = array('SELECT', 'SHOW', 'EXPLAIN');
-        if ( $type!='MASTER' && in_array($type, $slaverType) )
+        if ($type!='MASTER' && in_array($type, $slaverType))
         {
-            if ( true===$use_connection_type )
+            if (true===$use_connection_type)
             {
                 $use_connection_type = 'master';
             }
             else if (is_string($use_connection_type))
             {
-                if (!preg_match('#^[a-z0-9_]+$#i',$use_connection_type))$use_connection_type = 'master';
+                if (!preg_match('#^[a-z0-9_]+$#i', $use_connection_type))$use_connection_type = 'master';
             }
             else
             {
@@ -525,15 +525,15 @@ class Module_Database_Driver_MySQLI extends Database_Driver
         $connection = $this->connection();
 
         # 记录调试
-        if( IS_DEBUG )
+        if(IS_DEBUG)
         {
             Core::debug()->info($sql,'MySQL');
 
             static $is_sql_debug = null;
 
-            if ( null === $is_sql_debug ) $is_sql_debug = (bool)Core::debug()->profiler('sql')->is_open();
+            if (null === $is_sql_debug) $is_sql_debug = (bool)Core::debug()->profiler('sql')->is_open();
 
-            if ( $is_sql_debug )
+            if ($is_sql_debug)
             {
                 $host = $this->_get_hostname_by_connection_hash($this->connection_id());
                 $benchmark = Core::debug()->profiler('sql')->start('Database', 'mysqli://' . ($host['username']?$host['username'].'@':'') . $host['hostname'] . ($host['port'] && $host['port'] != '3306' ? ':' . $host['port'] : ''));
@@ -541,23 +541,23 @@ class Module_Database_Driver_MySQLI extends Database_Driver
         }
 
         static $is_no_cache = null;
-        if ( null === $is_no_cache ) $is_no_cache = (bool)Core::debug()->profiler('nocached')->is_open();
+        if (null === $is_no_cache) $is_no_cache = (bool)Core::debug()->profiler('nocached')->is_open();
         //显示无缓存数据
-        if ( $is_no_cache && strtoupper(substr($sql, 0, 6)) == 'SELECT' )
+        if ($is_no_cache && strtoupper(substr($sql, 0, 6)) == 'SELECT')
         {
             $sql = 'SELECT SQL_NO_CACHE' . substr($sql, 6);
         }
 
         // Execute the query
-        if ( ($result = mysqli_query($connection, $sql)) === false )
+        if (($result = mysqli_query($connection, $sql)) === false)
         {
-            if ( isset($benchmark) )
+            if (isset($benchmark))
             {
                 // This benchmark is worthless
                 $benchmark->delete();
             }
 
-            if ( IS_DEBUG )
+            if (IS_DEBUG)
             {
                 $err = 'Error:' . mysqli_error($connection) . '. SQL:' . $sql;
             }
@@ -568,10 +568,10 @@ class Module_Database_Driver_MySQLI extends Database_Driver
             throw new Exception($err, mysqli_errno($connection));
         }
 
-        if ( isset($benchmark) )
+        if (isset($benchmark))
         {
             # 在线查看SQL情况
-            if ( $is_sql_debug )
+            if ($is_sql_debug)
             {
                 $data = array();
                 $data[0]['db']            = $host['hostname'] . '/' . $this->config['connection']['database'] . '/';
@@ -588,11 +588,11 @@ class Module_Database_Driver_MySQLI extends Database_Driver
                 $data[0]['all rows']      = '';
                 $data[0]['possible_keys'] = '';
 
-                if ( strtoupper(substr($sql,0,6))=='SELECT' )
+                if (strtoupper(substr($sql,0,6))=='SELECT')
                 {
                     $re = $connection->query('EXPLAIN ' . $sql);
                     $i = 0;
-                    while ( true == ($row = $re->fetch_array(MYSQLI_NUM)) )
+                    while (true == ($row = $re->fetch_array(MYSQLI_NUM)))
                     {
                         $data[$i]['select_type']      = (string)$row[1];
                         $data[$i]['table']            = (string)$row[2];
@@ -621,7 +621,7 @@ class Module_Database_Driver_MySQLI extends Database_Driver
         // Set the last query
         $this->last_query = $sql;
 
-        if ( $type === 'INSERT' || $type === 'REPLACE' )
+        if ($type === 'INSERT' || $type === 'REPLACE')
         {
             // Return a list of insert id and rows created
             return array
@@ -630,7 +630,7 @@ class Module_Database_Driver_MySQLI extends Database_Driver
                 mysqli_affected_rows($connection)
             );
         }
-        elseif ( $type === 'UPDATE' || $type === 'DELETE' )
+        elseif ($type === 'UPDATE' || $type === 'DELETE')
         {
             // Return the number of rows affected
             return mysqli_affected_rows($connection);
@@ -638,32 +638,32 @@ class Module_Database_Driver_MySQLI extends Database_Driver
         else
         {
             // Return an iterator of results
-            return new Database_Driver_MySQLI_Result( $result, $sql, $as_object ,$this->config );
+            return new Database_Driver_MySQLI_Result($result, $sql, $as_object ,$this->config);
         }
     }
 
     public function quote($value)
     {
-        if ( $value === null )
+        if ($value === null)
         {
             return 'NULL';
         }
-        elseif ( $value === true )
+        elseif ($value === true)
         {
             return "'1'";
         }
-        elseif ( $value === false )
+        elseif ($value === false)
         {
             return "'0'";
         }
-        elseif ( is_object($value) )
+        elseif (is_object($value))
         {
-            if ( $value instanceof Database )
+            if ($value instanceof Database)
             {
                 // Create a sub-query
                 return '(' . $value->compile() . ')';
             }
-            elseif ( $value instanceof Database_Expression )
+            elseif ($value instanceof Database_Expression)
             {
                 // Use a raw expression
                 return $value->value();
@@ -674,15 +674,15 @@ class Module_Database_Driver_MySQLI extends Database_Driver
                 return $this->quote((string)$value);
             }
         }
-        elseif ( is_array($value) )
+        elseif (is_array($value))
         {
             return '(' . implode(', ', array_map(array($this, __FUNCTION__), $value)) . ')';
         }
-        elseif ( is_int($value) )
+        elseif (is_int($value))
         {
             return "'".(int)$value."'";
         }
-        elseif ( is_float($value) )
+        elseif (is_float($value))
         {
             // Convert to non-locale aware float to prevent possible commas
             return sprintf('%F', $value);
@@ -704,7 +704,7 @@ class Module_Database_Driver_MySQLI extends Database_Driver
     public function quote_table($value,$auto_as_table=false)
     {
         // Assign the table by reference from the value
-        if ( is_array($value) )
+        if (is_array($value))
         {
             $table = & $value[0];
         }
@@ -713,9 +713,9 @@ class Module_Database_Driver_MySQLI extends Database_Driver
             $table = & $value;
         }
 
-        if ( $this->config['table_prefix'] && is_string($table) && strpos($table, '.') === false )
+        if ($this->config['table_prefix'] && is_string($table) && strpos($table, '.') === false)
         {
-            if ( stripos($table,' AS ')!==false )
+            if (stripos($table,' AS ')!==false)
             {
                 $table = $this->config['table_prefix'] . $table;
             }
@@ -737,7 +737,7 @@ class Module_Database_Driver_MySQLI extends Database_Driver
      * @return boolean
      * @throws Exception
      */
-    public function create_database( $database, $charset = null, $collate=null )
+    public function create_database($database, $charset = null, $collate=null)
     {
         $config = $this->config;
         $this->config['connection']['database'] = null;
@@ -752,7 +752,7 @@ class Module_Database_Driver_MySQLI extends Database_Driver
         }
         try
         {
-            $result = $this->query($sql,null,true)->result();
+            $result = $this->query($sql, null, true)->result();
             $this->config = $config;
             return $result;
         }
@@ -770,14 +770,14 @@ class Module_Database_Driver_MySQLI extends Database_Driver
 			list($column, $alias) = $column;
 		}
 
-        if ( is_object($column) )
+        if (is_object($column))
         {
-            if ( $column instanceof Database )
+            if ($column instanceof Database)
             {
                 // Create a sub-query
                 $column = '(' . $column->compile() . ')';
             }
-            elseif ( $column instanceof Database_Expression )
+            elseif ($column instanceof Database_Expression)
             {
                 // Use a raw expression
                 $column = $column->value();
@@ -793,7 +793,7 @@ class Module_Database_Driver_MySQLI extends Database_Driver
 			# 转换为字符串
 			$column = trim((string)$column);
 
-			if ( preg_match('#^(.*) AS (.*)$#i',$column,$m) )
+			if (preg_match('#^(.*) AS (.*)$#i',$column,$m))
 			{
 			    $column = $m[1];
 			    $alias  = $m[2];
@@ -818,7 +818,7 @@ class Module_Database_Driver_MySQLI extends Database_Driver
 					// Get the offset of the table name, 2nd-to-last part
 					$offset = count($parts) - 2;
 
-                    if ( !$this->_as_table || !in_array($parts[$offset],$this->_as_table) )
+                    if (!$this->_as_table || !in_array($parts[$offset],$this->_as_table))
                     {
                         $parts[$offset] = $prefix . $parts[$offset];
                     }
@@ -830,7 +830,7 @@ class Module_Database_Driver_MySQLI extends Database_Driver
 					{
 						// Quote each of the parts
 					    $this->_change_charset($part);
-						$part = $this->_identifier.str_replace($this->_identifier,'',$part).$this->_identifier;
+						$part = $this->_identifier . str_replace($this->_identifier, '', $part) . $this->_identifier;
 					}
 				}
 
@@ -839,14 +839,14 @@ class Module_Database_Driver_MySQLI extends Database_Driver
 			else
 			{
 			    $this->_change_charset($column);
-				$column = $this->_identifier.str_replace($this->_identifier,'',$column).$this->_identifier;
+				$column = $this->_identifier . str_replace($this->_identifier, '', $column) . $this->_identifier;
 			}
 		}
 
-		if ( isset($alias) )
+		if (isset($alias))
 		{
 		    $this->_change_charset($alias);
-			$column .= ' AS '.$this->_identifier.str_replace($this->_identifier,'',$alias).$this->_identifier;
+			$column .= ' AS ' . $this->_identifier . str_replace($this->_identifier,'',$alias).$this->_identifier;
 		}
 
 		return $column;
@@ -860,7 +860,7 @@ class Module_Database_Driver_MySQLI extends Database_Driver
 
         $query = 'SELECT ';
 
-        if ( $builder['distinct'] )
+        if ($builder['distinct'])
         {
             if (true===$builder['distinct'])
             {
@@ -880,7 +880,7 @@ class Module_Database_Driver_MySQLI extends Database_Driver
 
         $this->format_select_adv($builder);
 
-        if ( empty($builder['select']) )
+        if (empty($builder['select']))
         {
             $query .= '*';
         }
@@ -889,58 +889,58 @@ class Module_Database_Driver_MySQLI extends Database_Driver
             $query .= implode(', ', array_unique(array_map($quote_ident, $builder['select'])));
         }
 
-        if ( !empty($builder['from']) )
+        if (!empty($builder['from']))
         {
             // Set tables to select from
-            $query .= ' FROM ' . implode(', ', array_unique(array_map($quote_table, $builder['from'],array(true))));
+            $query .= ' FROM ' . implode(', ', array_unique(array_map($quote_table, $builder['from'], array(true))));
         }
 
-        if ( !empty($builder['index']) )
+        if (!empty($builder['index']))
         {
-            foreach ( $builder['index'] as $item )
+            foreach ($builder['index'] as $item)
             {
-                $query .= ' '.strtoupper($item[1]).' INDEX('.$this->_quote_identifier($item[0]).')';
+                $query .= ' '. strtoupper($item[1]) .' INDEX('.$this->_quote_identifier($item[0]) .')';
             }
         }
 
-        if ( !empty($builder['join']) )
+        if (!empty($builder['join']))
         {
             // Add tables to join
             $query .= ' ' . $this->_compile_join($builder['join']);
         }
 
-        if ( !empty($builder['where']) )
+        if (!empty($builder['where']))
         {
             // Add selection conditions
             $query .= ' WHERE ' . $this->_compile_conditions($builder['where'], $builder['parameters']);
         }
 
-        if ( !empty($builder['group_by']) )
+        if (!empty($builder['group_by']))
         {
             // Add sorting
             $query .= ' GROUP BY ' . implode(', ', array_map($quote_ident, $builder['group_by']));
         }
 
-        if ( !empty($builder['having']) )
+        if (!empty($builder['having']))
         {
             // Add filtering conditions
             $query .= ' HAVING ' . $this->_compile_conditions($builder['having'], $builder['parameters']);
         }
 
-        if ( !empty($builder['order_by']) )
+        if (!empty($builder['order_by']))
         {
             // Add sorting
             $query .= ' ' . $this->_compile_order_by($builder['order_by']);
         }
-        elseif ( $builder['where'] )
+        elseif ($builder['where'])
         {
             # 如果查询中有in查询，采用自动排序方式
             $in_query = null;
-            foreach ( $builder['where'] as $item )
+            foreach ($builder['where'] as $item)
             {
-                if ( isset($item['AND']) && $item['AND'][1] == 'in' )
+                if (isset($item['AND']) && $item['AND'][1] == 'in')
                 {
-                    if ( count($item['AND'][1]) > 1 )
+                    if (count($item['AND'][1]) > 1)
                     {
                         # 大于1项才需要排序
                         $in_query = $item['AND'];
@@ -948,19 +948,19 @@ class Module_Database_Driver_MySQLI extends Database_Driver
                     break;
                 }
             }
-            if ( $in_query )
+            if ($in_query)
             {
                 $query .= ' ORDER BY FIELD(' . $this->_quote_identifier($in_query[0]) . ', ' . implode(', ', $this->quote($in_query[2])) . ')';
             }
         }
 
-        if ( $builder['limit'] !== null )
+        if ($builder['limit'] !== null)
         {
             // Add limiting
             $query .= ' LIMIT ' . $builder['limit'];
         }
 
-        if ( $builder['offset'] !== null )
+        if ($builder['offset'] !== null)
         {
             // Add offsets
             $query .= ' OFFSET ' . $builder['offset'];
@@ -976,7 +976,7 @@ class Module_Database_Driver_MySQLI extends Database_Driver
      */
     protected function _compile_insert($builder, $type = 'INSERT')
     {
-        if ( $type != 'REPLACE' )
+        if ($type != 'REPLACE')
         {
             $type = 'INSERT';
         }
@@ -986,17 +986,17 @@ class Module_Database_Driver_MySQLI extends Database_Driver
         // Add the column names
         $query .= ' (' . implode(', ', array_map(array($this, '_quote_identifier'), $builder['columns'])) . ') ';
 
-        if ( is_array($builder['values']) )
+        if (is_array($builder['values']))
         {
             // Callback for quoting values
             $quote = array($this, 'quote');
 
             $groups = array();
-            foreach ( $builder['values'] as $group )
+            foreach ($builder['values'] as $group)
             {
-                foreach ( $group as $i => $value )
+                foreach ($group as $i => $value)
                 {
-                    if ( is_string($value) && isset($builder['parameters'][$value]) )
+                    if (is_string($value) && isset($builder['parameters'][$value]))
                     {
                         // Use the parameter value
                         $group[$i] = $builder['parameters'][$value];
@@ -1015,10 +1015,10 @@ class Module_Database_Driver_MySQLI extends Database_Driver
             $query .= (string)$builder['values'];
         }
 
-        if ( $type == 'REPLACE' )
+        if ($type == 'REPLACE')
         {
             //where
-            if ( !empty($builder['where']) )
+            if (!empty($builder['where']))
             {
                 // Add selection conditions
                 $query .= ' WHERE ' . $this->_compile_conditions($builder['where'], $builder['parameters']);
@@ -1036,25 +1036,25 @@ class Module_Database_Driver_MySQLI extends Database_Driver
         // Add the columns to update
         $query .= ' SET ' . $this->_compile_set($builder['set'], $builder['parameters']);
 
-        if ( !empty($builder['where']) )
+        if (!empty($builder['where']))
         {
             // Add selection conditions
             $query .= ' WHERE ' . $this->_compile_conditions($builder['where'], $builder['parameters']);
         }
 
-        if ( !empty($builder['order_by']) )
+        if (!empty($builder['order_by']))
         {
             // Add sorting
             $query .= ' ' . $this->_compile_order_by($builder['order_by']);
         }
 
-        if ( $builder['limit'] !== null )
+        if ($builder['limit'] !== null)
         {
             // Add limiting
             $query .= ' LIMIT ' . $builder['limit'];
         }
 
-        if ( $builder['offset'] !== null )
+        if ($builder['offset'] !== null)
         {
             // Add offsets
             $query .= ' OFFSET ' . $builder['offset'];
@@ -1068,7 +1068,7 @@ class Module_Database_Driver_MySQLI extends Database_Driver
         // Start an update query
         $query = 'DELETE FROM' . $this->quote_table($builder['table'],false);
 
-        if ( !empty($builder['where']) )
+        if (!empty($builder['where']))
         {
             $this->_init_as_table($builder);
 
@@ -1089,11 +1089,11 @@ class Module_Database_Driver_MySQLI extends Database_Driver
     protected function _compile_order_by(array $columns)
     {
         $sort = array();
-        foreach ( $columns as $group )
+        foreach ($columns as $group)
         {
-            list ( $column, $direction ) = $group;
+            list ($column, $direction) = $group;
 
-            if ( !empty($direction) )
+            if (!empty($direction))
             {
                 // Make the direction uppercase
                 $direction = ' ' . strtoupper($direction);
@@ -1118,14 +1118,14 @@ class Module_Database_Driver_MySQLI extends Database_Driver
         $last_condition = null;
 
         $sql = '';
-        foreach ( $conditions as $group )
+        foreach ($conditions as $group)
         {
             // Process groups of conditions
-            foreach ( $group as $logic => $condition )
+            foreach ($group as $logic => $condition)
             {
-                if ( $condition === '(' )
+                if ($condition === '(')
                 {
-                    if ( !empty($sql) && $last_condition !== '(' )
+                    if (!empty($sql) && $last_condition !== '(')
                     {
                         // Include logic operator
                         $sql .= ' ' . $logic . ' ';
@@ -1133,29 +1133,29 @@ class Module_Database_Driver_MySQLI extends Database_Driver
 
                     $sql .= '(';
                 }
-                elseif ( $condition === ')' )
+                elseif ($condition === ')')
                 {
                     $sql .= ')';
                 }
                 else
                 {
-                    if ( !empty($sql) && $last_condition !== '(' )
+                    if (!empty($sql) && $last_condition !== '(')
                     {
                         // Add the logic operator
                         $sql .= ' ' . $logic . ' ';
                     }
 
                     // Split the condition
-                    list ( $column, $op, $value ) = $condition;
+                    list ($column, $op, $value) = $condition;
 
-                    if ( $value === null )
+                    if ($value === null)
                     {
-                        if ( $op === '=' )
+                        if ($op === '=')
                         {
                             // Convert "val = NULL" to "val IS NULL"
                             $op = 'IS';
                         }
-                        elseif ( $op === '!=' || $op === '<>' )
+                        elseif ($op === '!=' || $op === '<>')
                         {
                             // Convert "val != NULL" to "valu IS NOT NULL"
                             $op = 'IS NOT';
@@ -1165,33 +1165,33 @@ class Module_Database_Driver_MySQLI extends Database_Driver
                     // Database operators are always uppercase
                     $op = strtoupper($op);
 
-                    if ( is_array($value) && count($value)<=1 )
+                    if (is_array($value) && count($value)<=1)
                     {
                         # 将in条件下只有1条数据的改为where方式
-                        if ( $op == 'IN' )
+                        if ($op == 'IN')
                         {
                             $op = '=';
                             $value = current($value);
                         }
-                        elseif ( $op == 'NOT IN' )
+                        elseif ($op == 'NOT IN')
                         {
                             $op = '!=';
                             $value = current($value);
                         }
                     }
 
-                    if ( $op === 'BETWEEN' && is_array($value) )
+                    if ($op === 'BETWEEN' && is_array($value))
                     {
                         // BETWEEN always has exactly two arguments
-                        list ( $min, $max ) = $value;
+                        list ($min, $max) = $value;
 
-                        if ( is_string($min) && array_key_exists($min, $parameters) )
+                        if (is_string($min) && array_key_exists($min, $parameters))
                         {
                             // Set the parameter as the minimum
                             $min = $parameters[$min];
                         }
 
-                        if ( is_string($max) && array_key_exists($max, $parameters) )
+                        if (is_string($max) && array_key_exists($max, $parameters))
                         {
                             // Set the parameter as the maximum
                             $max = $parameters[$max];
@@ -1200,13 +1200,13 @@ class Module_Database_Driver_MySQLI extends Database_Driver
                         // Quote the min and max value
                         $value = $this->quote($min) . ' AND ' . $this->quote($max);
                     }
-                    elseif ( $op == 'MOD' )
+                    elseif ($op == 'MOD')
                     {
                         $value = $this->quote($value[0]) .' '.strtoupper($value[2]).' '. $this->quote($value[1]);
                     }
                     else
                     {
-                        if ( is_string($value) && array_key_exists($value, $parameters) )
+                        if (is_string($value) && array_key_exists($value, $parameters))
                         {
                             // Set the parameter as the value
                             $value = $parameters[$value];
@@ -1238,7 +1238,7 @@ class Module_Database_Driver_MySQLI extends Database_Driver
     {
         $statements = array();
 
-        foreach ( $joins as $join )
+        foreach ($joins as $join)
         {
             $statements[] = $this->_compile_join_on($join);
         }
@@ -1248,7 +1248,7 @@ class Module_Database_Driver_MySQLI extends Database_Driver
 
     protected function _compile_join_on($join)
     {
-        if ( $join['type'] )
+        if ($join['type'])
         {
             $sql = strtoupper($join['type']) . ' JOIN';
         }
@@ -1261,12 +1261,12 @@ class Module_Database_Driver_MySQLI extends Database_Driver
         $sql .= ' ' . $this->quote_table($join['table'],true) . ' ON ';
 
         $conditions = array();
-        foreach ( $join['on'] as $condition )
+        foreach ($join['on'] as $condition)
         {
             // Split the condition
-            list ( $c1, $op, $c2 ) = $condition;
+            list ($c1, $op, $c2) = $condition;
 
-            if ( $op )
+            if ($op)
             {
                 // Make the operator uppercase and spaced
                 $op = ' ' . strtoupper($op);
@@ -1292,12 +1292,12 @@ class Module_Database_Driver_MySQLI extends Database_Driver
     protected function _compile_set(array $values, $parameters)
     {
         $set = array();
-        foreach ( $values as $group )
+        foreach ($values as $group)
         {
             // Split the set
-            list ( $column, $value , $op ) = $group;
+            list ($column, $value , $op) = $group;
 
-            if ( $op=='+' || $op=='-' )
+            if ($op=='+' || $op=='-')
             {
                 $w_type = $op;
             }
@@ -1309,13 +1309,13 @@ class Module_Database_Driver_MySQLI extends Database_Driver
             // Quote the column name
             $column = $this->_quote_identifier($column);
 
-            if ( is_string($value) && array_key_exists($value, $parameters) )
+            if (is_string($value) && array_key_exists($value, $parameters))
             {
                 // Use the parameter value
                 $value = $parameters[$value];
             }
 
-            if ( $w_type )
+            if ($w_type)
             {
                 $set[$column] = $column . ' = ' . $column . ' ' . $w_type . ' ' . $this->quote($value);
             }
@@ -1332,21 +1332,21 @@ class Module_Database_Driver_MySQLI extends Database_Driver
     /**
      * 初始化所有的as_table
      */
-    protected function _init_as_table( $builder )
+    protected function _init_as_table($builder)
     {
         $this->_as_table = array();
 
-        if ( $builder['from'] )
+        if ($builder['from'])
         {
-            foreach ( $builder['from'] as $item )
+            foreach ($builder['from'] as $item)
             {
                 $this->_do_init_as_table($item);
             }
         }
 
-        if ( $builder['join'] )
+        if ($builder['join'])
         {
-            foreach ( $builder['join'] as $item )
+            foreach ($builder['join'] as $item)
             {
                 $this->_do_init_as_table($item['table']);
             }
@@ -1355,17 +1355,17 @@ class Module_Database_Driver_MySQLI extends Database_Driver
 
     protected function _do_init_as_table($value)
     {
-        if ( is_array($value) )
+        if (is_array($value))
         {
-            list ( $value, $alias ) = $value;
+            list ($value, $alias) = $value;
         }
-        elseif ( is_object($value) )
+        elseif (is_object($value))
         {
-            if ( $value instanceof Database )
+            if ($value instanceof Database)
             {
                 $value = $value->compile();
             }
-            elseif ( $value instanceof Database_Expression )
+            elseif ($value instanceof Database_Expression)
             {
                 $value = $value->value();
             }
@@ -1376,11 +1376,11 @@ class Module_Database_Driver_MySQLI extends Database_Driver
         }
         $value = trim($value);
 
-        if ( preg_match('#^(.*) AS ([a-z0-9`_]+)$#i', $value , $m) )
+        if (preg_match('#^(.*) AS ([a-z0-9`_]+)$#i', $value , $m))
         {
             $alias = $m[2];
         }
-        elseif ( $this->config['table_prefix'] && strpos($value, '.') === false )
+        elseif ($this->config['table_prefix'] && strpos($value, '.') === false)
         {
             $alias = $value;
         }
@@ -1394,9 +1394,9 @@ class Module_Database_Driver_MySQLI extends Database_Driver
     /**
      * 格式化高级查询参数到select里
      */
-    protected function format_select_adv( &$builder )
+    protected function format_select_adv(&$builder)
     {
-        if ( empty($builder['select_adv']) )
+        if (empty($builder['select_adv']))
         {
             return;
         }
@@ -1410,7 +1410,7 @@ class Module_Database_Driver_MySQLI extends Database_Driver
                 $column = $item[0][0];
                 $alias  = $item[0][1];
             }
-            else if ( preg_match('#^(.*) AS (.*)$#i', $item[0] , $m) )
+            else if (preg_match('#^(.*) AS (.*)$#i', $item[0] , $m))
             {
                 $column = $this->_quote_identifier($m[1]);
                 $alias  = $m[2];
@@ -1423,7 +1423,7 @@ class Module_Database_Driver_MySQLI extends Database_Driver
 
             // 其它参数
             $args_str = '';
-            if ( ($count_item=count($item))>2 )
+            if (($count_item=count($item))>2)
             {
                 for($i=2;$i++;$i<count($count_item))
                 {
@@ -1433,7 +1433,7 @@ class Module_Database_Driver_MySQLI extends Database_Driver
 
             $builder['select'][] = array
             (
-                Database::expr_value(strtoupper($item[1]).'('.$this->_quote_identifier($column.$args_str).')'),
+                Database::expr_value(strtoupper($item[1]) .'('. $this->_quote_identifier($column.$args_str) .')'),
                 $alias,
             );
         }

@@ -1,0 +1,26 @@
+{
+  "name": "myqee/database-sqlite",
+  "description": "MyQEE PostgreSQL Database Driver",
+  "keywords": ["MyQEE", "Driver", "Database", "Driver", "SQLite"],
+  "homepage": "http://www.myqee.com/",
+  "myqee": {
+    "cname": {
+      "en": "Database SQLite Driver",
+      "zh-ch": "数据库 SQLite 驱动",
+      "zh-tw": "數據庫 SQLite 驅動",
+      "zh-hk": "數據庫 SQLite 驅動",
+    },
+  },
+  "type": "myqee-driver",
+  "license": "Apache-2.0",
+  "authors": [
+    {
+      "name": "jonwang",
+      "email": "jonwang@queyang.com",
+      "homepage": "http://www.queyang.com/"
+    }
+  ],
+  "autoload": {
+    "psr-0": {"MyQEE\\Driver\\Database\\SQLite": "_src/"}
+  }
+}

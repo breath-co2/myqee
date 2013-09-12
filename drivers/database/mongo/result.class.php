@@ -3,13 +3,13 @@
  * 数据库MySQL返回对象
  *
  * @author     呼吸二氧化碳 <jonwang@myqee.com>
- * @category   MyQEE
- * @package    Module
- * @subpackage Database
+ * @category   Driver
+ * @package    Database
+ * @subpackage Mongo
  * @copyright  Copyright (c) 2008-2013 myqee.com
  * @license    http://www.myqee.com/license.html
  */
-class Module_Database_Driver_Mongo_Result extends Database_Result
+class Driver_Database_Driver_Mongo_Result extends Database_Result
 {
     protected $_data = array();
 
@@ -38,7 +38,7 @@ class Module_Database_Driver_Mongo_Result extends Database_Result
     {
         if ($this->_result instanceof ArrayIterator)
         {
-            if ( $this->offsetExists($offset) && $this->_result->seet($offset) )
+            if ($this->offsetExists($offset) && $this->_result->seet($offset))
             {
                 return true;
             }
@@ -48,7 +48,7 @@ class Module_Database_Driver_Mongo_Result extends Database_Result
             }
         }
 
-        if ( $this->offsetExists($offset) )
+        if ($this->offsetExists($offset))
         {
             if ($this->_internal_row < $this->_current_row)
             {
@@ -63,7 +63,7 @@ class Module_Database_Driver_Mongo_Result extends Database_Result
                 // 小于当前指针，则回退重新来过，因为目前 MongoCursor 还没有回退的功能
                 $this->_result->rewind();
                 $c = $this->_current_row - $this->_internal_row;
-                for( $i=0;$i<$c;$i++ )
+                for($i=0; $i<$c; $i++)
                 {
                     $this->_result->next();
                 }
@@ -96,7 +96,7 @@ class Module_Database_Driver_Mongo_Result extends Database_Result
         }
 
         $data = $this->_result->getNext();
-        if ( isset($data['_id']) && is_object($data['_id']) && $data['_id'] instanceof MongoId )
+        if (isset($data['_id']) && is_object($data['_id']) && $data['_id'] instanceof MongoId)
         {
             $data['_id'] = (string)$data['_id'];
         }
@@ -104,14 +104,14 @@ class Module_Database_Driver_Mongo_Result extends Database_Result
         if ( isset($this->_query['select_as']) )foreach ($this->_query['select_as'] as $key=>$value)
         {
             // 对查询出的数据做select as转换
-            if ( isset($data[$key]) )
+            if (isset($data[$key]))
             {
                 $data[$value] = $data[$key];
                 unset($data[$key]);
             }
         }
 
-        if ( count($this->_data[$this->_current_row])>1000 )
+        if (count($this->_data[$this->_current_row])>1000)
         {
             // 释放内存
             $this->_data[$this->_current_row] = array();

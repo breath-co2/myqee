@@ -1,0 +1,26 @@
+{
+  "name": "myqee/database-mongo",
+  "description": "MyQEE MongoDB Database Driver",
+  "keywords": ["MyQEE", "Driver", "Database", "Driver", "Mongo", "MongoDB"],
+  "homepage": "http://www.myqee.com/",
+  "myqee": {
+    "cname": {
+      "en": "Database MongoDB Driver",
+      "zh-ch": "数据库 MongoDB 驱动",
+      "zh-tw": "數據庫 MongoDB 驅動",
+      "zh-hk": "數據庫 MongoDB 驅動",
+    },
+  },
+  "type": "myqee-driver",
+  "license": "Apache-2.0",
+  "authors": [
+    {
+      "name": "jonwang",
+      "email": "jonwang@queyang.com",
+      "homepage": "http://www.queyang.com/"
+    }
+  ],
+  "autoload": {
+    "psr-0": {"MyQEE\\Driver\\Database\\Mongo": "_src/"}
+  }
+}
