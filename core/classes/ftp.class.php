@@ -10,7 +10,7 @@
  * @copyright  Copyright (c) 2008-2013 myqee.com
  * @license    http://www.myqee.com/license.html
  */
-class Core_FTP
+class Core_Ftp
 {
     /**
      * 当前FTP host
@@ -61,7 +61,7 @@ class Core_FTP
 	 */
 	public function __construct($ftp_dsn)
 	{
-	    $ftp = FTP::parse_dsn($ftp_dsn);
+	    $ftp = Ftp::parse_dsn($ftp_dsn);
 
 	    foreach($ftp as $k=>$v)
 	    {
@@ -82,7 +82,7 @@ class Core_FTP
 	 */
 	public static function factory($ftp_dsn)
 	{
-	    return new FTP($ftp_dsn);
+	    return new Ftp($ftp_dsn);
 	}
 
 	/**
@@ -104,9 +104,9 @@ class Core_FTP
 	    );
 
 	    // Get the protocol and arguments
-	    list ( $type, $connection ) = explode('://', $dsn, 2);
+	    list ($type, $connection) = explode('://', $dsn, 2);
 
-	    if ( $connection[0] === '/' )
+	    if ($connection[0] === '/')
 	    {
 	        // Strip leading slash
 	        $ftp['dir'] = substr($connection, 1);
@@ -115,26 +115,26 @@ class Core_FTP
 	    {
 	        $connection = parse_url('http://' . $connection);
 
-	        if ( isset($connection['user']) )
+	        if (isset($connection['user']))
 	        {
 	            $ftp['username'] = $connection['user'];
 	        }
 
-	        if ( isset($connection['pass']) )
+	        if (isset($connection['pass']))
 	        {
 	            $ftp['password'] = $connection['pass'];
 	        }
 
-	        if ( isset($connection['port']) )
+	        if (isset($connection['port']))
 	        {
 	            $ftp['port'] = $connection['port'];
 	        }
 
-	        if ( isset($connection['host']) )
+	        if (isset($connection['host']))
 	        {
-	            if ( $connection['host'] === 'unix(' )
+	            if ($connection['host'] === 'unix(')
 	            {
-	                list ( $ftp['passive'], $connection['path'] ) = explode(')', $connection['path'], 2);
+	                list ($ftp['passive'], $connection['path']) = explode(')', $connection['path'], 2);
 	            }
 	            else
 	            {
@@ -142,7 +142,7 @@ class Core_FTP
 	            }
 	        }
 
-	        if ( isset($connection['path']) && $connection['path'] )
+	        if (isset($connection['path']) && $connection['path'])
 	        {
 	            $ftp['path'] = substr($connection['path'], 1);
 	        }
@@ -168,7 +168,7 @@ class Core_FTP
 			return false;
 		}
 
-		if ( !$this->_login())
+		if (!$this->_login())
 		{
 			if (IS_DEBUG)
 			{
@@ -209,7 +209,7 @@ class Core_FTP
 	 */
 	protected function _is_conn()
 	{
-		if ( !is_resource($this->_conn_id) )
+		if (!is_resource($this->_conn_id))
 		{
 			if (IS_DEBUG)
 			{
@@ -239,7 +239,7 @@ class Core_FTP
 
 		$result = @ftp_chdir($this->_conn_id, $path);
 
-		if ($result === false)
+		if (false===$result)
 		{
 			if (IS_DEBUG)
 			{
@@ -278,7 +278,7 @@ class Core_FTP
 		}
 
 		// 设置目录权限
-		if ( !is_null($permissions))
+		if (!is_null($permissions))
 		{
 			$this->chmod($path, (int)$permissions);
 		}
@@ -298,12 +298,12 @@ class Core_FTP
 	 */
 	public function upload($locpath, $rempath, $mode = 'auto', $permissions = null)
 	{
-		if ( !$this->_is_conn() )
+		if (!$this->_is_conn())
 		{
 			return false;
 		}
 
-		if ( !file_exists($locpath) )
+		if (!file_exists($locpath))
 		{
 		    if (IS_DEBUG)
 		    {
@@ -316,7 +316,7 @@ class Core_FTP
 		if ($mode === 'auto')
 		{
 			// 获取上传文件的类型
-			$ext = $this->_getext($locpath);
+			$ext  = $this->_getext($locpath);
 			$mode = $this->_settype($ext);
 		}
 
@@ -353,7 +353,7 @@ class Core_FTP
 	 */
 	public function download($rempath, $locpath, $mode = 'auto')
 	{
-		if ( !$this->_is_conn() )
+		if (!$this->_is_conn())
 		{
 			return false;
 		}
@@ -362,7 +362,7 @@ class Core_FTP
 		if ($mode === 'auto')
 		{
 			// 获取类型
-			$ext = $this->_getext($rempath);
+			$ext  = $this->_getext($rempath);
 			$mode = $this->_settype($ext);
 		}
 
@@ -393,14 +393,14 @@ class Core_FTP
 	 */
 	public function rename($old_file, $new_file, $move = false)
 	{
-		if ( !$this->_is_conn() )
+		if (!$this->_is_conn())
 		{
 			return false;
 		}
 
 		$result = @ftp_rename($this->_conn_id, $old_file, $new_file);
 
-		if ($result === false)
+		if (false===$result)
 		{
 			if (IS_DEBUG)
 			{
@@ -434,14 +434,14 @@ class Core_FTP
 	 */
 	public function delete_file($filepath)
 	{
-		if ( !$this->_is_conn() )
+		if (!$this->_is_conn())
 		{
 			return false;
 		}
 
 		$result = @ftp_delete($this->_conn_id, $filepath);
 
-		if ($result === false)
+		if (false===$result)
 		{
 			if (IS_DEBUG)
 			{
@@ -462,7 +462,7 @@ class Core_FTP
 	 */
 	public function delete_dir($filepath)
 	{
-		if ( !$this->_is_conn() )
+		if (!$this->_is_conn())
 		{
 			return false;
 		}
@@ -471,11 +471,11 @@ class Core_FTP
 
 		$list = $this->list_files($filepath);
 
-		if ($list !== false && count($list) > 0)
+		if (false!==$list && count($list) > 0)
 		{
 			foreach ($list as $item)
 			{
-				if ( !@ftp_delete($this->_conn_id, $item) )
+				if (!@ftp_delete($this->_conn_id, $item))
 				{
 					$this->delete_dir($item);
 				}
@@ -484,7 +484,7 @@ class Core_FTP
 
 		$result = @ftp_rmdir($this->_conn_id, $filepath);
 
-		if ($result === false)
+		if (false===$result)
 		{
 			if (IS_DEBUG)
 			{
@@ -506,14 +506,14 @@ class Core_FTP
 	 */
 	public function chmod($path, $perm)
 	{
-		if ( !$this->_is_conn() )
+		if (!$this->_is_conn())
 		{
 			return false;
 		}
 
 		$result = @ftp_chmod($this->_conn_id, $perm, $path);
 
-		if ($result === false)
+		if (false===$result)
 		{
 			if (IS_DEBUG)
 			{
@@ -533,7 +533,7 @@ class Core_FTP
 	 */
 	public function list_files($path = '.')
 	{
-		if ( !$this->_is_conn() )
+		if (!$this->_is_conn())
 		{
 			return false;
 		}
@@ -551,14 +551,14 @@ class Core_FTP
 	 */
 	public function mirror($locpath, $rempath)
 	{
-		if ( !$this->_is_conn() )
+		if (!$this->_is_conn())
 		{
 			return false;
 		}
 
-		if ($fp = @opendir($locpath))
+		if (true==($fp = @opendir($locpath)))
 		{
-			if ( !$this->changedir($rempath, true) && (!$this->mkdir($rempath) || !$this->changedir($rempath)) )
+			if (!$this->changedir($rempath, true) && (!$this->mkdir($rempath) || !$this->changedir($rempath)))
 			{
 				return false;
 			}
@@ -591,7 +591,7 @@ class Core_FTP
 	 */
 	protected function _getext($filename)
 	{
-		if (false === strpos($filename, '.'))
+		if (false===strpos($filename, '.'))
 		{
 			return 'txt';
 		}
@@ -635,7 +635,7 @@ class Core_FTP
 	 */
 	public function close()
 	{
-		if ( !$this->_is_conn() )
+		if (!$this->_is_conn())
 		{
 			return false;
 		}
