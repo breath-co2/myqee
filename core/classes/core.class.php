@@ -786,8 +786,17 @@ abstract class Core_Core extends Bootstrap
         $found_path = array();
         foreach ($include_path as $ns => $ipath)
         {
-            foreach ($ipath as $path)
+            if($ipath)foreach ($ipath as $lib_ns => $path)
             {
+                if ($ns==='library')
+                {
+                    $tmp_ns = 'library_' . str_replace('.', '_', $lib_ns);
+                }
+                else
+                {
+                    $tmp_ns = $ns;
+                }
+
                 $tmp_str  = $real_path = $real_class = '';
                 $tmp_path = $path . $controller_dir . DS;
                 $ids      = array();
@@ -837,7 +846,7 @@ abstract class Core_Core extends Bootstrap
                     {
                         $found_path[$tmp_str][] = array
                         (
-                            $ns,
+                            $tmp_ns,
                             $tmpdir,
                             ltrim($real_class, '_'),
                             $ids,
@@ -854,7 +863,7 @@ abstract class Core_Core extends Bootstrap
                 {
                     $found_path[''][] = array
                     (
-                        $ns,
+                        $tmp_ns,
                         $tmp_path,
                         '',
                         array(),

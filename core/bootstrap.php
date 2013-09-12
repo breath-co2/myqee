@@ -704,48 +704,47 @@ abstract class Bootstrap
         else if ($class_name_array[0]=='ex')
         {
             # 扩展别名
-            $is_alias = true;
+            $is_alias       = true;
             $new_class_name = $class_name_array[1];
         }
         else if (preg_match('#^library_((?:[a-z0-9]+)_(?:[a-z0-9]+))_([a-z0-9_]+)$#', $class_name, $m))
         {
-            $ns = 'library';
-            $ns_name = str_replace('_', DS, $m[1]);
+            $ns             = 'library';
+            $ns_name        = str_replace('_', DS, $m[1]);
             $new_class_name = $m[2];
         }
         else if (preg_match('#^module_(.*)$#', $class_name, $m))
         {
-            # Module 组件
-            $ns = 'module';
+            # 组件
+            $ns             = 'module';
             list($ns_name)  = explode('_', $m[1], 2);
             $new_class_name = $m[1];
         }
         else if (preg_match('#^driver_([a-z0-9]+)_driver_([a-z0-9_]+)$#', $class_name, $m))
         {
             # 驱动
-            $ns = 'driver';
-            $ns_name = $m[1];
+            $ns             = 'driver';
+            $ns_name        = $m[1];
             $new_class_name = $m[2];
         }
         else
         {
-            $ns = '';
+            $ns             = '';
             $new_class_name = $class_name;
         }
 
         # 获取类的前缀
         $prefix = '';
-        $new_class_arr = explode('_', $new_class_name, 2);
+        $new_class_arr = explode('_', $new_class_name);
 
-        if (2===count($new_class_arr))
+        if (count($new_class_arr)>=2)
         {
-            $prefix = $new_class_arr[0];
+            $prefix = array_shift($new_class_arr);
         }
 
         if ($prefix && isset(self::$dir_setting[$prefix]))
         {
-            $dir_setting     = self::$dir_setting[$prefix];
-            $class_file_name = $new_class_arr[1];
+            $dir_setting = self::$dir_setting[$prefix];
 
             if ($prefix=='controller')
             {
@@ -766,12 +765,17 @@ abstract class Bootstrap
                     $dir_setting[0] .= '-rest';
                 }
             }
+            else if ($prefix=='orm')
+            {
+                array_pop($new_class_arr);
+            }
 
+            $class_file_name = implode(DS, $new_class_arr);
         }
         else
         {
             $dir_setting     = self::$dir_setting['class'];
-            $class_file_name = $new_class_name;
+            $class_file_name = str_replace('_', DS, $new_class_name);
         }
 
         if ($ns)
@@ -801,7 +805,7 @@ abstract class Bootstrap
                     break;
             }
 
-            $file .= str_replace('_', DS, $class_file_name) . $dir_setting[1] . EXT;
+            $file .= $class_file_name . $dir_setting[1] . EXT;
 
             if (is_file($file))
             {
