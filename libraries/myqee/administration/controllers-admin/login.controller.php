@@ -5,7 +5,7 @@
  * @author 呼吸二氧化碳 <jonwang@myqee.com>
  *
  */
-abstract class Library_MyQEE_Administration_Controller_Login extends Controller
+class Library_MyQEE_Administration_Controller_Login extends Controller
 {
     protected $message = '';
 

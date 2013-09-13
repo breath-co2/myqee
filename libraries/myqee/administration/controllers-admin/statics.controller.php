@@ -5,7 +5,7 @@
  * @author 呼吸二氧化碳 <jonwang@myqee.com>
  *
  */
-abstract class Library_MyQEE_Administration_Controller_Statics extends Controller
+class Library_MyQEE_Administration_Controller_Statics extends Controller
 {
 
     protected $allow_suffix = 'js|css|jpg|png|gif|bmp|html|htm|mp4|swf|zip';

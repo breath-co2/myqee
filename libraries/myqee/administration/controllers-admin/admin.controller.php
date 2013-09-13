@@ -6,7 +6,7 @@
  * @author 呼吸二氧化碳 <jonwang@myqee.com>
  *
  */
-abstract class Library_MyQEE_Administration_Controller_Admin extends Controller
+class Library_MyQEE_Administration_Controller_Admin extends Controller
 {
     /**
      * 页面标题

@@ -10,7 +10,7 @@
  * @copyright  Copyright (c) 2008-2013 myqee.com
  * @license    http://www.myqee.com/license.html
  */
-class Library_MyQEE_Administration_Session extends Core_Session
+class Library_MyQEE_Administration_Session extends Module_Session
 {
     /**
      * @var ORM_Admin_Member_Data

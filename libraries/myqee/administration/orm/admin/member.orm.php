@@ -33,20 +33,27 @@ class Library_MyQEE_Administration_ORM_Admin_Member_Finder extends OOP_ORM_Finde
         ->from($this->tablename.' as m')
         ->join($orm_group->ids_tablename().' as ids')
         ->on('m.id', 'ids.admin_id')
-        ->where('ids.group_id',$group_id)
+        ->where('ids.group_id', $group_id)
         ;
         return $this->find();
     }
 
 
-    public function get_by_name($name)
+    /**
+     * 根据账号名称获取账号信息
+     *
+     * @param string $name
+     * @return ORM_Admin_Member_Data
+     */
+    public function get_by_name($nickname)
     {
-        $this->db()->or_where_open();
-        $this->db()->like('channel_ids','%'.Session::instance()->member()->channel_id().'%');
-        $this->db()->or_where('channel_ids','');
-        $this->db()->or_where_close();
-        return $this
-        ->where('nickname',$name)->find()->current();
+        $this->db()
+        ->or_where_open()
+        ->like('channel_ids', '%'.Session::instance()->member()->channel_id().'%')
+        ->or_where('channel_ids', '')
+        ->or_where_close();
+
+        return $this->where('nickname', $nickname)->find()->current();
     }
 }
 

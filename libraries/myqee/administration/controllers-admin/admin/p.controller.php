@@ -5,7 +5,7 @@
  * @author 呼吸二氧化碳 <jonwang@myqee.com>
  *
  */
-abstract class Library_MyQEE_Administration_Controller_Admin_P extends Controller
+class Library_MyQEE_Administration_Controller_Admin_P extends Controller
 {
     /**
      * 项目管理统一进入接口
