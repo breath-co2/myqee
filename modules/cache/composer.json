@@ -3,6 +3,14 @@
   "description": "MyQEE Cache Module",
   "keywords": ["MyQEE", "Module"],
   "homepage": "http://www.myqee.com/",
+  "myqee": {
+    "cname": {
+      "en": "Cache Module",
+      "zh-ch": "缓存模块",
+      "zh-tw": "緩存模塊",
+      "zh-hk": "緩存模塊"
+    },
+  },
   "type": "myqee-module",
   "license": "Apache-2.0",
   "authors": [
