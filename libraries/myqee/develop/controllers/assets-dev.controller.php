@@ -6,12 +6,12 @@
  * @author 呼吸二氧化碳 <jonwang@myqee.com>
  *
  */
-class Library_MyQEE_Develop_Controller_Assets extends Controller
+class Library_MyQEE_Develop_Controller_Assets_Dev extends Controller
 {
     /**
      * assets允许的文件后缀名
      *
-     * 可在config.php中修改$config['asset_allow_suffix']值
+     * 可在config.php中修改 `$config['asset_allow_suffix']` 值
      *
      * @var string
      */
@@ -31,22 +31,10 @@ class Library_MyQEE_Develop_Controller_Assets extends Controller
      */
     protected $type;
 
-    /**
-     * 项目
-     *
-     * @var string
-     */
-    protected $project;
-
     public function before()
     {
         # 只允许本地调试模式下使用
         if (!(IS_DEBUG & 1))Core::show_404(__('Only allows the development mode'));
-
-        if ($this->action!='default')
-        {
-            $this->project = array_shift($this->arguments);
-        }
 
         # 允许的后缀名
         $allow_suffix = Core::config('core.asset_allow_suffix');
@@ -59,15 +47,20 @@ class Library_MyQEE_Develop_Controller_Assets extends Controller
         $f = array_pop($arguments);
         if ($f)
         {
-            $rpos = strrpos($f,'.');
+            $rpos       = strrpos($f, '.');
             $args       = $arguments;
-            $args[]     = substr($f,0,$rpos);
+            $args[]     = substr($f, 0, $rpos);
             $this->file = implode('/', $args);
-            $this->type = substr($f,$rpos+1);
+            $this->type = substr($f, $rpos+1);
+
+            # 移除.min的后缀
+            if (substr($this->file, -4)=='.min')
+            {
+                $this->file = substr($this->file, 0, -4);
+            }
         }
 
         $this->get_assets_md5();
-        exit;
     }
 
     /**
@@ -75,30 +68,27 @@ class Library_MyQEE_Develop_Controller_Assets extends Controller
      *
      * @throws Exception
      */
-    public function action_devmode()
+    public function action_default()
     {
         if (!$this->file)
         {
             Core::show_404();
         }
 
-        if ( !preg_match('#^([a-zA-Z0-9_/\-\.]+)$#', $this->file) )
+        if (!preg_match('#^([a-zA-Z0-9_/\-\.]+)$#', $this->file))
         {
             Core::show_404(__('Special characters of the file exists allowed.'));
         }
 
-        if ( !$this->type || !preg_match('#('.$this->allow_suffix.')$#i', $this->type) )
+        if (!$this->type || !preg_match('#('.$this->allow_suffix.')$#i', $this->type))
         {
-            Core::show_404(__('File suffix %s not allow.',array('%s'=>$this->type)));
+            Core::show_404(__('File suffix %s not allow.', array('%s'=>$this->type)));
         }
-
-        # 设置项目
-        Core::set_project($this->project);
 
         # 小写的后缀
         $low_type = strtolower($this->type);
 
-        if ($low_type=='css'||$low_type=='js')
+        if ($low_type=='css' || $low_type=='js')
         {
             $this->output_css_js_file();
         }
@@ -115,7 +105,7 @@ class Library_MyQEE_Develop_Controller_Assets extends Controller
         Core::close_buffers(false);
 
         # 清理所有已输出的header
-        if ( version_compare(PHP_VERSION,'5.3','>=') )
+        if (version_compare(PHP_VERSION, '5.3', '>='))
         {
             $fun = 'header_remove';
             $fun();
@@ -123,23 +113,23 @@ class Library_MyQEE_Develop_Controller_Assets extends Controller
 
         $low_type = strtolower($this->type);
 
-        if ( $low_type == 'jpg' )
+        if ($low_type == 'jpg')
         {
             header('Content-Type: image/jpeg');
         }
-        elseif ( in_array( $low_type, array('gif','png') ) )
+        elseif (in_array($low_type, array('gif', 'png')))
         {
             header('Content-Type: image/'.$low_type);
         }
-        elseif ( $low_type == 'css' )
+        elseif ($low_type == 'css')
         {
             header('Content-Type: text/css');
         }
-        elseif ( $low_type == 'js' )
+        elseif ($low_type == 'js')
         {
             header('Content-Type: application/x-javascript');
         }
-        elseif ( $low_type == 'swf' )
+        elseif ($low_type == 'swf')
         {
             header('Content-Type: application/swf');
         }
@@ -167,11 +157,11 @@ class Library_MyQEE_Develop_Controller_Assets extends Controller
      */
     protected function output_by_file($file)
     {
-        $rpos = strrpos($file,'.');
-        $type = substr($file,$rpos);
-        if ( !$type || !preg_match('#('.$this->allow_suffix.')$#i', $type) )
+        $rpos = strrpos($file, '.');
+        $type = substr($file, $rpos);
+        if (!$type || !preg_match('#('.$this->allow_suffix.')$#i', $type))
         {
-            Core::show_500(__('File suffix %s not allow.',array('%s'=>$type)));
+            Core::show_500(__('File suffix %s not allow.', array('%s'=>$type)));
         }
 
         $this->send_header();
@@ -179,13 +169,13 @@ class Library_MyQEE_Develop_Controller_Assets extends Controller
         $fun = 'apache_get_modules';
         if (function_exists($fun))
         {
-            if (in_array('mod_xsendfile',$fun()))
+            if (in_array('mod_xsendfile', $fun()))
             {
                 $slen = strlen(DIR_SYSTEM);
-                if (substr($file,0,$slen)==DIR_SYSTEM)
+                if (substr($file, 0, $slen)==DIR_SYSTEM)
                 {
                     # 采用xsendfile发送文件
-                    header('X-Sendfile: '.substr($file,$slen));
+                    header('X-Sendfile: '.substr($file, $slen));
                     exit();
                 }
             }
@@ -235,7 +225,7 @@ class Library_MyQEE_Develop_Controller_Assets extends Controller
 
         $out_file = $out_dir . $this->file .'.'. $this->type;
 
-        if ( is_file($out_file) )
+        if (is_file($out_file))
         {
             $changed = false;
             foreach ($file_paths['file_md5'] as $fullpath => $md5)
@@ -255,7 +245,7 @@ class Library_MyQEE_Develop_Controller_Assets extends Controller
 
         if ($changed)
         {
-            foreach ( $file_paths['main'] as $file=>$fullpath )
+            foreach ($file_paths['main'] as $file=>$fullpath)
             {
                 # 内容
                 if (true===$fullpath)
@@ -291,17 +281,17 @@ class Library_MyQEE_Develop_Controller_Assets extends Controller
 
             if ($this->type=='css')
             {
-                $this->add_css_image_version(&$content);
+                $this->add_css_image_version($content);
 
-                if (isset($file_paths['is_less']) && $file_paths['is_less']===true)
+                if (isset($file_paths['prease_css']) && $file_paths['prease_css'])
                 {
-                    # 处理LESS
-                    $this->prease_less($out_file,$content);
+                    # 处理LESS,和SCSS
+                    $this->prease_css($out_file, $file_paths['prease_css'], $content);
                 }
             }
 
             # 保存文件
-            if ( File::create_file($out_file, $content) )
+            if (File::create_file($out_file, $content))
             {
                 # 写入文件
                 foreach ($file_paths['file_md5'] as $fullpath => $md5)
@@ -318,7 +308,7 @@ class Library_MyQEE_Develop_Controller_Assets extends Controller
                 if (!is_file($cachefile) || md5($old_md5_content)!=md5_file($cachefile))
                 {
                     # 保存MD5列表
-                    File::create_file($cachefile,$old_md5_content);
+                    File::create_file($cachefile, $old_md5_content);
                 }
 
                 $this->output_by_file($out_file);
@@ -341,7 +331,7 @@ class Library_MyQEE_Develop_Controller_Assets extends Controller
      */
     protected function output_other_file()
     {
-        $found_file = Core::find_file('assets', $this->file, '.'.$this->type);
+        $found_file = Core::find_file('assets', $this->file, '.'. $this->type);
 
         if ($found_file)
         {
@@ -349,7 +339,7 @@ class Library_MyQEE_Develop_Controller_Assets extends Controller
         }
         else
         {
-            Core::show_404(__('Assets files : %s not found.',array('%s'=>$this->file.'.'.$this->type)));
+            Core::show_404(__('Assets files : %s not found.', array('%s'=>$this->file .'.'. $this->type)));
         }
     }
 
@@ -372,26 +362,29 @@ class Library_MyQEE_Develop_Controller_Assets extends Controller
         foreach ( $include_path as $path )
         {
             $path_len = strlen($path . 'assets' . DS);
-            $glob_file = $path.'assets'.DS.$this->file.'.*'.($this->type=='css'?'':$this->type);
-            $files = glob( $glob_file, GLOB_NOSORT );
-            if ($files)foreach ($files as $tmpfile)
+            $glob_file = $path .'assets'. DS .$this->file .'.*'. ($this->type=='css'?'':$this->type);
+            $files = glob($glob_file, GLOB_NOSORT);
+
+            if ($files)foreach($files as $tmpfile)
             {
-                $filename = str_replace('\\','/',substr($tmpfile,$path_len));
+                $filename = str_replace('\\', '/', substr($tmpfile,$path_len));
 
                 if ($this->type=='css')
                 {
-                    $tmptype = strtolower(substr($tmpfile,-5));
-                    if (strtolower(substr($tmpfile,-4))!='.css' && $tmptype!='.less')
+                    $tmptype = strtolower(substr($tmpfile, -5));
+                    if (strtolower(substr($tmpfile, -4))!='.css' && $tmptype!='.less' && $tmptype!='.scss' && $tmptype!='.sass')
                     {
                         continue;
                     }
 
                     # 将less后缀转处理为.css
-                    if ($tmptype=='.less')
+                    if ($tmptype=='.less' || $tmptype=='.scss' || $tmptype=='.sass')
                     {
-                        $filename = substr($filename,0,-5).'.css';
-                        $file_paths['is_less'] = true;
+                        $filename = substr($filename, 0, -5).'.css';
+
+                        $file_paths['prease_css'] = $tmptype;
                     }
+
                 }
 
                 $all_files[$filename] = $tmpfile;
@@ -405,10 +398,10 @@ class Library_MyQEE_Develop_Controller_Assets extends Controller
 
         foreach ($all_files as $file=>$fullpath)
         {
-            $path_rpos = strrpos($file,'/');
-            $file_name = substr($file,$path_rpos+1);
-            $rpos      = strrpos($file_name,'.');
-            $suffix    = strtolower(substr($file_name,$rpos+1));
+            $path_rpos = strrpos($file, '/');
+            $file_name = substr($file, $path_rpos+1);
+            $rpos      = strrpos($file_name, '.');
+            $suffix    = strtolower(substr($file_name, $rpos+1));
 
             if ($suffix=='css'||$suffix=='js')
             {
@@ -416,7 +409,7 @@ class Library_MyQEE_Develop_Controller_Assets extends Controller
                 $file_paths['file_md5'][$fullpath] = md5_file($fullpath);
 
                 # 处理CSS，JS文件
-                $file_name_arr       = explode('.',$file_name);
+                $file_name_arr       = explode('.', $file_name);
                 $count_file_name_arr = count($file_name_arr);
 
                 if ($count_file_name_arr>=3)
@@ -440,12 +433,12 @@ class Library_MyQEE_Develop_Controller_Assets extends Controller
                             $file_name_arr = array($file_name_arr[0],$file_name_arr[count($file_name_arr)-1]);
                         }
 
-                        $parent_file_name = implode('.',$file_name_arr);
-                        $parent_file_path = substr($file,0,-strlen($file_name)).$parent_file_name;
+                        $parent_file_name = implode('.', $file_name_arr);
+                        $parent_file_path = substr($file,0, -strlen($file_name)).$parent_file_name;
 
                         if ('mod'==$type)
                         {
-                            $file_paths['modules'][$parent_file_path][substr($file,0,-strlen($file_name)).$file_name] = $fullpath;
+                            $file_paths['modules'][$parent_file_path][substr($file,0, -strlen($file_name)).$file_name] = $fullpath;
                         }
                         else
                         {
@@ -481,7 +474,7 @@ class Library_MyQEE_Develop_Controller_Assets extends Controller
         return ;
 
         # 拿到css里所有背景图片
-        if ( preg_match_all('#url\((?:\'|")?([^\'"]*)(?:\'|")?\)#Uis',$content,$match) )
+        if (preg_match_all('#url\((?:\'|")?([^\'"]*)(?:\'|")?\)#Uis',$content,$match))
         {
             $file_path_arr = explode('/',$this->file);
             array_pop($file_path_arr);    // 移除文件名
@@ -541,10 +534,10 @@ class Library_MyQEE_Develop_Controller_Assets extends Controller
      *
      * @throws Exception
      */
-    protected function prease_less($out_file,&$content)
+    protected function prease_css($out_file, $type, &$content)
     {
         # 通过recess处理less文件
-        $tmpfile = DIR_TEMP . 'tmpless_'.md5($this->file) . '.less';
+        $tmpfile = DIR_TEMP . 'tmpless_'.md5($this->file) . $type;
 
         if (!function_exists('exec'))
         {
@@ -557,31 +550,39 @@ class Library_MyQEE_Develop_Controller_Assets extends Controller
         }
         catch (Exception $e)
         {
-            if (strpos($e->getMessage(),'Permission denied')!==false)
+            if (strpos($e->getMessage(), 'Permission denied')!==false)
             {
-                Core::show_500(__('Permission denied : :file',array(':file'=>Core::debug_path($tmpfile))));
+                Core::show_500(__('Permission denied : :file', array(':file'=>Core::debug_path($tmpfile))));
             }
             throw $e;
         }
 
-        list($node_file,$node_modules_path) = $this->get_node_set();
+        list($node_file, $node_modules_path) = $this->get_node_set();
 
-        $cmd = 'cd '.(escapeshellcmd($node_modules_path)).' && ' . escapeshellcmd($node_file).' '.escapeshellarg('./node_modules/recess/bin/recess').' --compile '.escapeshellarg($tmpfile);
+        if ($type=='.less')
+        {
+            $cmd = 'cd '.(escapeshellcmd($node_modules_path)).' && ' . escapeshellcmd($node_file).' '. escapeshellarg('./node_modules/recess/bin/recess') .' --compile '. escapeshellarg($tmpfile);
+        }
+        else
+        {
+            $cmd = 'sass -t expanded '. escapeshellarg($tmpfile);
+        }
 
-        if (IS_DEBUG)Core::debug()->info($cmd,'exec');
+
+        if (IS_DEBUG)Core::debug()->info($cmd, 'exec');
 
         # 执行
-        exec($cmd,$output,$r);
+        exec($cmd, $output, $r);
 
         # 删除临时文件
-        unlink($tmpfile);
+        @unlink($tmpfile);
 
         if (0===$r)
         {
             if ($output)
             {
                 # 更新content
-                $content = implode("\r\n",$output);
+                $content = implode("\r\n", $output);
             }
         }
         else if (127===$r)
@@ -595,7 +596,7 @@ class Library_MyQEE_Develop_Controller_Assets extends Controller
                 1 => __('Please check no recess module installed or not set node_modules path'),
             );
 
-            throw new Exception(__('Systems perform less handling failed,RsCode:%s',array('%s'=>$r.'.'.(isset($err[$r])?$err[$r]:''))));
+            throw new Exception(__('Systems perform less handling failed,RsCode:%s', array('%s'=>$r.'.'.(isset($err[$r])?$err[$r]:''))));
         }
     }
 
@@ -607,8 +608,20 @@ class Library_MyQEE_Develop_Controller_Assets extends Controller
      */
     protected function get_node_set()
     {
-        # nodejs 配置
-        $node_config = Core::config('core.nodejs');
+        # 读取nodejs配置
+        $node_config_file = DIR_BIN . 'config.ini.php';
+
+        if (is_file($node_config_file))
+        {
+            $config = array();
+            include $node_config_file;
+            $node_config = $config['nodejs'];
+            unset($config);
+        }
+        else
+        {
+            $node_config = null;
+        }
 
         # 执行程序
         if (is_array($node_config) && isset($node_config[0]) && $node_config[0])
@@ -649,11 +662,11 @@ class Library_MyQEE_Develop_Controller_Assets extends Controller
             }
             else
             {
-                throw new Exception(__('the node_modules directory does not exist, modify the config:ext :config configure',array(':ext'=>EXT,':config'=>'$config[\'nodejs\']')));
+                throw new Exception(__('the node_modules directory does not exist, modify the config:ext :config configure', array(':ext'=>EXT, ':config'=>'$config[\'nodejs\']')));
             }
         }
 
-        return array($node_file,$node_modules_path);
+        return array($node_file, $node_modules_path);
     }
 
     /**
@@ -691,7 +704,7 @@ class Library_MyQEE_Develop_Controller_Assets extends Controller
             if (!isset($array))
             {
                 # 记录缓存锁
-                Cache::instance()->set('asset_md5_temp_lock',1,6);
+                Cache::instance()->set('asset_md5_temp_lock', 1, 6);
 
                 # 循环获取所有文件列表
                 $file_paths = array();
@@ -706,11 +719,9 @@ class Library_MyQEE_Develop_Controller_Assets extends Controller
 
                     if (is_dir($dir))
                     {
-                        $this->glob_files($file_paths,$dir,strlen($dir));
+                        $this->glob_files($file_paths, $dir, strlen($dir));
                     }
                 }
-
-                print_r($file_paths);
 
                 # 删除缓存锁
                 Cache::instance()->delete('asset_md5_temp_lock');
@@ -724,18 +735,18 @@ class Library_MyQEE_Develop_Controller_Assets extends Controller
     /**
      * 递归的读取目录下所有文件到$file_paths中
      */
-    function glob_files(&$file_paths,$dir,$dir_len)
+    function glob_files(&$file_paths, $dir, $dir_len)
     {
-        $files = glob( $dir .'*', GLOB_NOSORT );
+        $files = glob($dir .'*', GLOB_NOSORT);
 
         if ($files)foreach ($files as $file)
         {
-            if ($file==='.'||$file==='..'||substr($file,0,1)==='.')continue;
+            if ($file==='.' || $file==='..' || substr($file, 0, 1)==='.')continue;
 
             # 文件夹
             if (is_dir($file))
             {
-                $this->glob_files($file_paths,$file.'/',$dir_len);
+                $this->glob_files($file_paths, $file.'/', $dir_len);
                 continue;
             }
 
@@ -743,22 +754,22 @@ class Library_MyQEE_Develop_Controller_Assets extends Controller
             $file_paths['file_md5'][$file] = md5_file($file);
 
             $file = str_replace('\\', '/', $file);
-            $path_rpos = strrpos($file,'/');
+            $path_rpos = strrpos($file, '/');
 
             # 文件名
-            $file_name = substr($file,$path_rpos+1);
-            $file_path = substr($file,$dir_len,-strlen($file_name)).$file_name;
+            $file_name = substr($file, $path_rpos+1);
+            $file_path = substr($file, $dir_len, -strlen($file_name)) . $file_name;
 
-            $rpos = strrpos($file_name,'.');
+            $rpos = strrpos($file_name, '.');
             if ($rpos>0)
             {
                 # 后缀
-                $suffix = strtolower(substr($file_name,$rpos+1));
+                $suffix = strtolower(substr($file_name, $rpos+1));
 
-                if ($suffix=='css'||$suffix=='less'||$suffix=='js')
+                if ($suffix=='css' || $suffix=='less' || $suffix=='js')
                 {
                     # 处理CSS，JS文件
-                    $file_name_arr = explode('.',$file_name);
+                    $file_name_arr = explode('.', $file_name);
                     $count_file_name_arr = count($file_name_arr);
 
                     if ($count_file_name_arr>=3)
@@ -781,12 +792,12 @@ class Library_MyQEE_Develop_Controller_Assets extends Controller
                             {
                                 $file_name_arr = array($file_name_arr[0],$file_name_arr[count($file_name_arr)-1]);
                             }
-                            $parent_file_name = implode('.',$file_name_arr);
-                            $parent_file_path = substr($file,$dir_len,-strlen($file_name)).$parent_file_name;
+                            $parent_file_name = implode('.', $file_name_arr);
+                            $parent_file_path = substr($file, $dir_len, -strlen($file_name)) . $parent_file_name;
 
                             if ($suffix=='less')
                             {
-                                $parent_file_path = substr($file_path,0,-strlen($type)).'.css';
+                                $parent_file_path = substr($file_path, 0, -strlen($type)).'.css';
                             }
 
                             if ('mod'==$type)
@@ -808,7 +819,7 @@ class Library_MyQEE_Develop_Controller_Assets extends Controller
 
                     $file_paths[$suffix][$file_path] = $file;
                 }
-                elseif (in_array($suffix,explode('|',$this->allow_suffix)))
+                elseif (in_array($suffix, explode('|', $this->allow_suffix)))
                 {
                     $file_paths['other'][$file_path] = $file;
                 }

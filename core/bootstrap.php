@@ -126,6 +126,13 @@ define('DIR_LIBRARY', DIR_SYSTEM.'libraries'.DS);
 define('DIR_MODULE', DIR_SYSTEM.'modules'.DS);
 
 /**
+ * BIN目录
+ *
+ * @var string
+ */
+define('DIR_BIN', DIR_SYSTEM.'bin'.DS);
+
+/**
  * 驱动目录
  *
  * @var string
