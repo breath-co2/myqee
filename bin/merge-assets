@@ -18,7 +18,9 @@
 
 # 不自动执行，这样只初始化Bootstrap和Core类，而不执行Core::run()方法
 $auto_run = false;
-
+$done     = "[\x1b[35m未修改\x1b[39m]";
+$success  = "\x1b[32m✔\x1b[39m";
+$error    = "\x1b[31m✕\x1b[39m";
 
 $argv = $_SERVER['argv'];
 
@@ -36,19 +38,27 @@ function help()
 OPTIONS:
   -r \x1b[32m全部重新生成\x1b[39m
   -a \x1b[32m全部项目\x1b[39m
+  -c \x1b[32m先删除目标目录中所有文件后再重新生成全部assets\x1b[39m
 
 EXAMPLE:
-  生成全部项目assets文件:      \x1b[36mmerge-assets\x1b[39m \x1b[33m-a\x1b[39m
-  全部项目重新生成文件  :      \x1b[36mmerge-assets\x1b[39m \x1b[33m-a -r\x1b[39m
-  生成default项目文件   :      \x1b[36mmerge-assets\x1b[39m \x1b[33mdefault\x1b[39m
+  生成全部项目assets文件:            \x1b[36mmerge-assets\x1b[39m \x1b[33m-a\x1b[39m
+  全部项目重新生成文件  :            \x1b[36mmerge-assets\x1b[39m \x1b[33m-a -r\x1b[39m
+  生成default项目文件   :            \x1b[36mmerge-assets\x1b[39m \x1b[33mdefault\x1b[39m
+  生成default项目文件并清理多余文件: \x1b[36mmerge-assets\x1b[39m \x1b[33mdefault -c\x1b[39m
 
 EOF;
     exit;
 }
 
-if (in_array('-r',$argv))
+# 设置后台模式
+if (in_array('--admin', $argv))
 {
-    $key = array_search('-r',$argv);
+    $admin_mode = true;
+}
+
+if (in_array('-r', $argv))
+{
+    $key = array_search('-r', $argv);
     $recreate = true;
 }
 else
@@ -56,7 +66,7 @@ else
     $recreate = false;
 }
 
-if (in_array('-a',$argv))
+if (in_array('-a', $argv))
 {
     $_ = $_SERVER['_'];
 
@@ -70,7 +80,7 @@ if (in_array('-a',$argv))
     }
 
     # 全部项目
-    $key = array_search('-a',$argv);
+    $key = array_search('-a', $argv);
     unset($argv[$key]);
 
     $config = array();
@@ -80,8 +90,8 @@ if (in_array('-a',$argv))
     {
         $cmd = trim($_ . ' ' . $key . ' ' . implode(' ', $argv));
 
-        echo "\n\n\n\n--------------------------生成{$key}项目assets文件--------------------------\n\n";
-        $handle = popen($cmd,'r');
+        echo "\n\n\n\n-------------------生成{$key}项目assets文件-------------------\n\n";
+        $handle = popen($cmd, 'r');
         while (($read = fread($handle, 128))!==false)
         {
             echo $read;
@@ -103,6 +113,22 @@ $project = $argv[0];
 
 include (dirname(__FILE__).'/../index.php');
 
+# 输出目录
+$out_dir = DIR_ASSETS . $project .'/' . ($admin_mode?'~admin/':'');
+
+# 清理css多余文件
+if (in_array('-c', $argv))
+{
+    if (is_dir($out_dir))
+    {
+        echo "清理多余文件";
+        File::remove_dir($out_dir);
+        echo " {$success}\n";
+    }
+    $recreate = true;
+}
+
+
 echo "待合并目录：\n";
 foreach (Core::include_path() as $path)
 {
@@ -118,11 +144,14 @@ if (!$allow_suffix)
 {
     $allow_suffix = 'js|css|jpg|jpeg|png|gif|bmp|pdf|html|htm|mp4|swf';
 }
-$allow_suffix = explode('|',$allow_suffix);
+$allow_suffix = explode('|', $allow_suffix);
 
 
 # 循环获取所有文件列表
 $file_paths = array();
+
+# assets目录,经过 escapeshellarg 处理，用于sass，less处理时增加包含目录参数
+$assets_path = array();
 
 # 循环include path
 foreach ($include_path as $path)
@@ -131,7 +160,8 @@ foreach ($include_path as $path)
 
     if (is_dir($dir))
     {
-        glob_files($file_paths,$dir,strlen($dir));
+        $assets_path[] = escapeshellarg($dir);
+        glob_files($file_paths, $dir, strlen($dir));
     }
 }
 
@@ -139,11 +169,8 @@ foreach ($include_path as $path)
 
 echo "\n修改数/文件数:\n";
 
-# 输出目录
-$out_dir = DIR_ASSETS . $project .'/';
-
 # md5存放的文件
-$cachefile = DIR_CACHE . 'asset_md5_by_proect_'.$project;
+$cachefile = DIR_CACHE . 'asset_md5_by_proect_'.$project.($admin_mode?'~admin/':'');
 if (is_file($cachefile))
 {
     $old_md5 = (array)unserialize(file_get_contents($cachefile));
@@ -156,7 +183,7 @@ else
 # 修改的文件数
 $changed_files = array();
 # 输出信息
-foreach (array('css'=>'css ','less'=>'less', 'sass'=>'sass', 'scss'=>'scss', 'js'=>'js  ', 'extends'=>'扩展', 'modules'=>'模块', 'other'=>'其它') as $type=>$name)
+foreach (array('css'=>'css ', 'less'=>'less', 'sass'=>'sass', 'scss'=>'scss', 'js'=>'js  ', 'extends'=>'扩展', 'modules'=>'模块', 'other'=>'其它') as $type=>$name)
 {
     if (isset($file_paths[$type]) && $file_paths[$type])
     {
@@ -187,15 +214,67 @@ echo "总修改数 : \x1b[33m".count($changed_files)."\x1b[39m/\x1b[36m".count($
 
 echo "\n开始合并文件:";
 
-$done    = "[\x1b[35m未修改\x1b[39m]";
-$success = "\x1b[32m✔\x1b[39m";
-$error   = "\x1b[31m✕\x1b[39m";
-
 $out_dir_path = Core::debug_path($out_dir, true);
+
+
+function get_ext_contents($file, $type, $parent_file_list)
+{
+    # 避免 A include B，B include A 导致死循环
+    if ($parent_file_list && in_array($file, $parent_file_list))return '';
+
+    if ($parent_file_list)
+    {
+        $str = CRLF . CRLF . ($type=='js'?'//':'/*') . ' file: '. Core::debug_path($file) . ($type=='js'?'':' */') . CRLF;
+    }
+    else
+    {
+        $str = '';
+    }
+
+    if ($type=='js')
+    {
+        $content = file_get_contents($file);
+
+        if (preg_match_all('#//(?:[ ]+)?@(?:codekit|myqee)\-(append|prepend|include) "(.*)";#', $content, $m))
+        {
+            foreach($m[0] as $k=>$v)
+            {
+                $tmpfile = Core::find_file('assets', trim(trim($m[2][$k]), './'), '');
+                if (!$tmpfile)continue;
+
+                $tmp_parent_file_list   = $parent_file_list;
+                $tmp_parent_file_list[] = $file;
+
+                if ($m[1][$k]=='prepend')
+                {
+                    # 加在文件头
+                    $content = get_ext_contents($tmpfile, $type, $tmp_parent_file_list) . CRLF . $content;
+                }
+                else if ($m[1][$k]=='include')
+                {
+                    # 在当前位置插入
+                    $content = str_replace($v, $v. CRLF .'//--include-begin--- '. CRLF . get_ext_contents($tmpfile, $type, $tmp_parent_file_list) . CRLF . '//---include-end--- ', $content);
+                }
+                else
+                {
+                    # 加在文件结尾
+                    $content .= get_ext_contents($tmpfile, $type, $tmp_parent_file_list);
+                }
+            }
+        }
+
+        return $str . $content;
+    }
+    else
+    {
+        return $str . file_get_contents($file);
+    }
+}
+
 
 # 记录需要压缩处理的文件列表
 $todo_min_files = array();
-foreach (array('css','less','js','other') as $type)
+foreach (array('css', 'less', 'scss', 'sass', 'js', 'other') as $type)
 {
     if (!isset($file_paths[$type]) || !$file_paths[$type])
     {
@@ -206,9 +285,9 @@ foreach (array('css','less','js','other') as $type)
     {
         # 输出的文件名
         $out_file = $out_dir . $tmpfile;
-        if (false!==strrpos($tmpfile,'/'))
+        if (false!==strrpos($tmpfile, '/'))
         {
-            $file_dir = substr($tmpfile,0,strrpos($tmpfile,'/')+1);
+            $file_dir = substr($tmpfile, 0, strrpos($tmpfile, '/')+1);
         }
         else
         {
@@ -222,7 +301,7 @@ foreach (array('css','less','js','other') as $type)
         }
         else
         {
-            if ( is_file($out_file) )
+            if (is_file($out_file))
             {
                 if (true!==$fullpath)
                 {
@@ -288,10 +367,12 @@ foreach (array('css','less','js','other') as $type)
         if (true===$fullpath)
         {
             $content = '';
+            $parent_file_list = array();
         }
         else
         {
-            $content = file_get_contents($fullpath);
+            $content = get_ext_contents($fullpath, $type, array());
+            $parent_file_list = array($fullpath);
         }
 
         if ($type=='css'||$type=='less'||$type=='scss'||$type=='sass'||$type=='js')
@@ -299,26 +380,26 @@ foreach (array('css','less','js','other') as $type)
             if (isset($file_paths['extends'][$tmpfile]) && $file_paths['extends'][$tmpfile])
             {
                 # 读取扩展文件进行合并
-                $content .= CRLF . file_get_contents($file_paths['extends'][$tmpfile]);
+                $content .= get_ext_contents($file_paths['extends'][$tmpfile], $type, $parent_file_list);
             }
 
             # JS的模块直接合并即可，CSS利用less处理@import的文件进行合并
-            if ($type=='css'||$type=='js')
+            if ($type=='css' || $type=='js')
             {
                 if (isset($file_paths['modules'][$tmpfile]) && $file_paths['modules'][$tmpfile])foreach($file_paths['modules'][$tmpfile] as $modfile => $tmpmfile)
                 {
                     # 读取JS模块文件进行合并
-                    $content .= CRLF.file_get_contents($tmpmfile);
+                    $content .= get_ext_contents($tmpmfile, $type, $parent_file_list);
 
                     # 扩展
                     if (isset($file_paths['extends'][$modfile]) && $file_paths['extends'][$modfile])
                     {
-                        $content .= CRLF . file_get_contents($file_paths['extends'][$modfile]);
+                        $content .= get_ext_contents($file_paths['extends'][$modfile], $type, $parent_file_list);
                     }
                 }
             }
 
-            if (substr($out_file,-strlen($type)-5)!='.min.'.$type)
+            if (substr($out_file, -strlen($type)-5)!='.min.'.$type)
             {
                 $todo_min_files[$type=='less'||$type=='scss'||$type=='sass'?'css':$type][$tmpfile] = $out_file;
             }
@@ -340,7 +421,7 @@ foreach (array('css','less','js','other') as $type)
             $continue = file_get_contents($tmpmfile);
             if (isset($file_paths['extends'][$modfile]) && $file_paths['extends'][$modfile])
             {
-                $content .= CRLF . file_get_contents($file_paths['extends'][$modfile]);
+                $content .= get_ext_contents($file_paths['extends'][$modfile], $type, array($tmpmfile));
             }
             $rs = File::create_file($outm_file, trim($continue));
             echo "\n     {$out_dir_path}{$modfile} " . ($rs?$success:$error);
@@ -362,7 +443,6 @@ if (null===$node_file)
     list($node_file, $node_modules_path) = get_node_set();
 }
 
-
 echo "\n\n准备压缩JS和CSS:\njs文件数:  \x1b[33m".count($todo_min_files['js'])."\x1b[39m\n";
 # 压缩js
 if (isset($todo_min_files['js']) && $todo_min_files['js'])foreach ($todo_min_files['js'] as $tmpname => $realfile)
@@ -371,16 +451,20 @@ if (isset($todo_min_files['js']) && $todo_min_files['js'])foreach ($todo_min_fil
 
     $cmd = 'cd '.(escapeshellcmd($node_modules_path)).' && ' . escapeshellcmd($node_file).' '.escapeshellarg('./node_modules/uglify-js/bin/uglifyjs').' '.escapeshellarg($realfile).' -nc';
 
-    exec($cmd,$output,$r);
+    exec($cmd, $output, $r);
     if (0===$r)
     {
         # 写入文件
-        File::create_file(substr($realfile,0,-3).'.min.js',implode('',$output));
-        echo "  => ".$out_dir_path.substr($tmpname,0,-3).".min.js " . ($rs?$success:$error)."\n";
+        File::create_file(substr($realfile, 0, -3).'.min.js',implode('', $output));
+        echo "  => ".$out_dir_path.substr($tmpname, 0, -3).".min.js " . ($rs?$success:$error)."\n";
+    }
+    elseif (1===$r)
+    {
+        echo "压缩 {$realfile} 文件失败，请检查js语法是否有误。";
     }
     else
     {
-        echo "系统执行uglifyjs处理失败，请检查执行uglifyjs是否安装或模块路径是否配置正确\nuglifyjs安装方法见 https:#github.com/mishoo/UglifyJS \n执行的命令为：\n";
+        echo "系统执行uglifyjs处理失败，请检查执行uglifyjs是否安装或模块路径是否配置正确\nnpm安装:\n\x1b[31m  npm install uglify-js@1 -g\x1b[39m\nuglifyjs安装详见 https://github.com/mishoo/UglifyJS \n执行的命令为：\n";
         echo $cmd ."\n";
         exit;
     }
@@ -391,7 +475,7 @@ echo "CSS文件数: \x1b[33m".count($todo_min_files['css'])."\x1b[39m\n";
 # 压缩处理less和css
 if (isset($todo_min_files['css']) && $todo_min_files['css'])foreach ($todo_min_files['css'] as $tmpname => $realfile)
 {
-    $type = substr($tmpname,strrpos($tmpname,'.')+1);
+    $type = substr($tmpname, strrpos($tmpname, '.')+1);
     if ($type=='less' || $type=='scss' || $type=='sass')
     {
         $n = 5;
@@ -406,15 +490,18 @@ if (isset($todo_min_files['css']) && $todo_min_files['css'])foreach ($todo_min_f
     if ($type=='less' || $type=='scss' || $type=='sass')
     {
         # 处理LESS转换为CSS
-        $output = '';
+        $output   = '';
+        $path_str = '';
 
         if ($type=='less')
         {
-            $cmd = 'cd '.(escapeshellcmd($node_modules_path)).' && ' . escapeshellcmd($node_file).' '.escapeshellarg('./node_modules/recess/bin/recess').' --compile '.escapeshellarg($realfile);
+            if ($assets_path)$path_str = ' --includePath=' . implode(' --includePath=', $assets_path);
+            $cmd = 'cd '.(escapeshellcmd($node_modules_path)).' && ' . escapeshellcmd($node_file).' '.escapeshellarg('./node_modules/recess/bin/recess').' --compile'.$path_str.' '.escapeshellarg($realfile);
         }
         else
         {
-            $cmd = 'sass -t expanded '.escapeshellarg($realfile);
+            if ($assets_path)$path_str = ' --load-path=' . implode(' --load-path=', $assets_path);
+            $cmd = 'sass -t expanded'.$path_str.' '.escapeshellarg($realfile);
         }
 
         exec($cmd, $output, $r);
@@ -428,45 +515,57 @@ if (isset($todo_min_files['css']) && $todo_min_files['css'])foreach ($todo_min_f
         {
             if ($type=='less')
             {
-                echo "系统执行less处理失败，请检查执行recess是否安装或模块路径是否配置正确\nrecess的安装方法见 https:#github.com/twitter/recess \n执行的命令为：\n";
+                echo "系统执行less处理失败，请检查执行recess是否安装或模块路径是否配置正确\nnpm安装:\n\x1b[31m  npm install recess -g\x1b[39m\n详细见：https://github.com/twitter/recess \n执行的命令为：\n";
             }
             else
             {
-                echo "系统执行{$type}处理失败，请检查sass是否安装或配置正确\nsass的安装方法见 http://sass-lang.com/download.html\n执行的命令为：\n";
+                echo "系统执行{$type}处理失败，请检查sass是否安装或配置正确\ngem安装:\n\x1b[31m  gem install sass\x1b[39m\nsass的安装方法见 http://sass-lang.com/download.html\n执行的命令为：\n";
             }
 
             echo $cmd ."\n";
             exit;
         }
+    }
 
-        # 处理压缩
-        $output = '';
-        if ($type=='less')
-        {
-            $cmd = 'cd '.(escapeshellcmd($node_modules_path)).' && ' . escapeshellcmd($node_file).' '.escapeshellarg('./node_modules/recess/bin/recess').' --compress '.escapeshellarg($realfile);
-        }
-        else
-        {
-            $cmd = 'sass -t compressed '. escapeshellarg($realfile);
-        }
+    # 处理压缩
+    $output   = '';
+    $path_str = '';
 
-        exec($cmd, $output, $r);
+    if ($type=='less' || $type=='css')
+    {
+        if ($assets_path)$path_str = ' --includePath=' . implode(' --includePath=', $assets_path);
+        $cmd = 'cd '.(escapeshellcmd($node_modules_path)).' && ' . escapeshellcmd($node_file).' '.escapeshellarg('./node_modules/recess/bin/recess').' --compress'.$path_str.' '.escapeshellarg($realfile);
+    }
+    else
+    {
+        if ($assets_path)$path_str = ' --load-path=' . implode(' --load-path=', $assets_path);
+        $cmd = 'sass -t compressed'.$path_str.' '. escapeshellarg($realfile);
+    }
 
-        if (0===$r)
+    exec($cmd, $output, $r);
+
+    if (0===$r)
+    {
+        # 写入文件
+        File::create_file(substr($realfile, 0, -$n).'.min.css', implode('', $output));
+        echo "  {$gostr} ".$out_dir_path.substr($tmpname, 0, -$n).".min.css " . ($rs?$success:$error)."\n";
+    }
+    else
+    {
+        if (1===$r)
         {
-            # 写入文件
-            File::create_file(substr($realfile, 0, -$n).'.min.css',implode('', $output));
-            echo "  {$gostr} ".$out_dir_path.substr($tmpname, 0, -$n).".min.css " . ($rs?$success:$error)."\n";
+            echo "\x1b[31m执行{$type}处理失败，请检查相关文件\x1b[39m\n";
+            echo $cmd ."\n";
         }
         else
         {
             if ($type=='less')
             {
-                echo "系统执行less处理失败，请检查执行recess是否安装或模块路径是否配置正确\nrecess的安装方法见 https:#github.com/twitter/recess \n执行的命令为：\n";
+                echo "系统执行less处理失败，请检查执行recess是否安装或模块路径是否配置正确\nnpm安装:\n\x1b[31m  npm install recess -g\x1b[39m\n详细见：https://github.com/twitter/recess \n执行的命令为：\n";
             }
             else
             {
-                echo "系统执行{$type}处理失败，请检查sass是否安装或配置正确\nsass的安装方法见 http://sass-lang.com/download.html\n执行的命令为：\n";
+                echo "系统执行{$type}处理失败，请检查sass是否安装或配置正确\ngem安装:\n\x1b[31m  gem install sass\x1b[39m\nsass的安装方法见 http://sass-lang.com/download.html\n执行的命令为：\n";
             }
             echo $cmd ."\n";
             exit;
@@ -481,12 +580,34 @@ if (isset($file_paths['less']) && $file_paths['less'])
     {
         File::unlink($out_dir.$tmpname);
     }
+    echo " $success\n";
 }
+
+if (isset($file_paths['scss']) && $file_paths['scss'])
+{
+    echo "\n清理scss文件";
+    foreach($file_paths['scss'] as $tmpname=>$tmpfile)
+    {
+        File::unlink($out_dir.$tmpname);
+    }
+    echo " $success\n";
+}
+
+if (isset($file_paths['sass']) && $file_paths['sass'])
+{
+    echo "\n清理sass文件";
+    foreach($file_paths['sass'] as $tmpname=>$tmpfile)
+    {
+        File::unlink($out_dir.$tmpname);
+    }
+    echo " $success\n";
+}
+
 
 if (isset($file_paths['modules']) && $file_paths['modules'])foreach($file_paths['modules'] as $tmpparenname=>$tmpfiles)
 {
-    $type = substr($tmpparenname,strrpos($tmpparenname,'.')+1);
-    if ($type=='less')
+    $type = substr($tmpparenname, strrpos($tmpparenname, '.')+1);
+    if ($type=='less'||$type=='scss'||$type=='sass')
     {
         foreach ($tmpfiles as $tmpname => $tmpfile)
         {
@@ -510,7 +631,38 @@ if (!is_file($cachefile) || md5($content)!=md5_file($cachefile))
     File::create_file($cachefile,$content);
 }
 
-echo "\n\n全部操作完成\n";
+echo "\n\n操作完成\n";
+
+
+
+if (!$admin_mode && Core::config('core.projects.'.$project.'.url_admin'))
+{
+    $_ = $_SERVER['_'];
+
+    if ($_==$argv[0])
+    {
+        unset($argv[0]);
+    }
+    else
+    {
+        $_ .= ' ' . array_shift($argv);
+    }
+
+    $argv[] = '--admin';
+
+    echo "\n\n生成{$project}项目后台assets文件>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n";
+    chdir(dirname(__FILE__));
+    $cmd = trim($_ . ' ' . implode(' ', $argv));
+    var_dump($cmd);
+
+    $handle = popen($cmd, 'r');
+    while (($read = fread($handle, 128))!==false)
+    {
+        echo $read;
+        if (feof($handle))break;
+    }
+    pclose($handle);
+}
 
 exit;
 
@@ -522,7 +674,7 @@ function glob_files(&$file_paths,$dir,$dir_len)
 {
     global $allow_suffix;
 
-    $files = glob( $dir .'*', GLOB_NOSORT );
+    $files = glob($dir .'*', GLOB_NOSORT);
 
     if ($files)foreach ($files as $file)
     {
@@ -531,7 +683,7 @@ function glob_files(&$file_paths,$dir,$dir_len)
         # 文件夹
         if (is_dir($file))
         {
-            glob_files($file_paths,$file.'/',$dir_len);
+            glob_files($file_paths, $file.'/', $dir_len);
             continue;
         }
 
@@ -539,17 +691,17 @@ function glob_files(&$file_paths,$dir,$dir_len)
         $file_paths['file_md5'][$file] = md5_file($file);
 
         $file = str_replace('\\', '/', $file);
-        $path_rpos = strrpos($file,'/');
+        $path_rpos = strrpos($file, '/');
 
         # 文件名
         $file_name = substr($file, $path_rpos+1);
         $file_path = substr($file, $dir_len, -strlen($file_name)).$file_name;
 
-        $rpos = strrpos($file_name,'.');
+        $rpos = strrpos($file_name, '.');
         if ($rpos>0)
         {
             # 后缀
-            $suffix = strtolower(substr($file_name,$rpos+1));
+            $suffix = strtolower(substr($file_name, $rpos+1));
 
             if ($suffix=='css'||$suffix=='less'||$suffix=='sass'||$suffix=='scss'||$suffix=='js')
             {
@@ -587,7 +739,7 @@ function glob_files(&$file_paths,$dir,$dir_len)
 
                         if ('mod'==$type)
                         {
-                            $file_paths['modules'][$parent_file_path][substr($file,$dir_len,-strlen($file_name)).$file_name] = $file;
+                            $file_paths['modules'][$parent_file_path][substr($file, $dir_len, -strlen($file_name)).$file_name] = $file;
                         }
                         else
                         {
@@ -604,7 +756,7 @@ function glob_files(&$file_paths,$dir,$dir_len)
 
                 $file_paths[$suffix][$file_path] = $file;
             }
-            elseif (in_array($suffix,$allow_suffix))
+            elseif (in_array($suffix, $allow_suffix))
             {
                 $file_paths['other'][$file_path] = $file;
             }

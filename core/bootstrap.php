@@ -653,14 +653,14 @@ abstract class Bootstrap
              *
              * @var boolean
              */
-            if (!defined('IS_ADMIN_MODE'))define('IS_ADMIN_MODE', (!IS_CLI && $request_mode=='admin')?true:false);
+            if (!defined('IS_ADMIN_MODE'))define('IS_ADMIN_MODE', ($request_mode=='admin')?true:false);
 
             /**
              * 是否RestFul模式
              *
              * @var boolean
              */
-            if (!defined('IS_REST_MODE'))define('IS_REST_MODE', (!IS_CLI && $request_mode=='rest')?true:false);
+            if (!defined('IS_REST_MODE'))define('IS_REST_MODE', ($request_mode=='rest')?true:false);
 
             /**
              * 静态文件URL地址前缀
@@ -940,8 +940,16 @@ abstract class Bootstrap
     /**
      * 查找文件
      *
-     *   //查找一个视图文件
-     *   Bootstrap::find_file('views','test',EXT);
+     *      // 查找类文件路径
+     *      $file = Bootstrap::find_file('classes', 'Database');
+     *
+     *      // 查找一个视图文件
+     *      $file = Bootstrap::find_file('views', 'test');
+     *
+     *      // 查找一个自定义文件，注意第3个参数设置空表示后缀在文件名中
+     *      $file = Bootstrap::find_file('assets', 'test.css', '');
+     *      // 等价于
+     *      $file = Bootstrap::find_file('assets', 'test', '.css');
      *
      * @param string $dir 目录
      * @param string $file 文件
@@ -998,9 +1006,11 @@ abstract class Bootstrap
                 }
                 break;
             case 'i18n':
-            case 'config':
                 if (null===$ext)$the_ext = '.lang';
                 $only_need_one_file = false;
+                break;
+            case 'config':
+                if (null===$ext)$the_ext = '.config'. EXT;
                 break;
             case 'views':
                 if (null===$ext)$the_ext = '.view' . EXT;
