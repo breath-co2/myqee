@@ -376,7 +376,7 @@ abstract class Bootstrap
      *
      * @var string
      */
-    public static $project_dir;
+    public static $project_dir = 'default';
 
     /**
      * 当前项目的URL
@@ -638,7 +638,7 @@ abstract class Bootstrap
 
             if ( isset(self::$core_config['projects'][self::$project]['isuse']) && !self::$core_config['projects'][self::$project]['isuse'] )
             {
-                self::_show_error(__('the project: :project is not open.', array(':project'=>$project)));
+                self::_show_error(__('the project: :project is not open.', array(':project'=>self::$project)));
             }
 
             /**
@@ -663,7 +663,7 @@ abstract class Bootstrap
             if (!defined('IS_REST_MODE'))define('IS_REST_MODE', ($request_mode=='rest')?true:false);
 
 
-            $project_dir = DIR_PROJECT . self::$project . DS;
+            $project_dir = DIR_PROJECT . self::$project_dir . DS;
 
             if (!is_dir($project_dir))
             {
@@ -1016,9 +1016,14 @@ abstract class Bootstrap
                 $file = strtolower(str_replace('_', '/', $file));
                 break;
             case 'classes':
-            default:
                 $file = strtolower(str_replace('_', '/', $file));
-                if (null===$ext)$the_ext = '.class' . EXT;
+                if (null===$ext)
+                {
+                    $the_ext = '.class' . EXT;
+                }
+                break;
+            default:
+                $the_ext = $ext;
                 break;
         }
 
@@ -1463,6 +1468,14 @@ abstract class Bootstrap
 
             $rest_url  = array();
             $admin_url = array();
+            if (isset($item['dir']) && $item['dir'])
+            {
+                $project_dir = $item['dir'];
+            }
+            else
+            {
+                $project_dir = $project;
+            }
 
             if (isset($item['url_rest']) && $item['url_rest'])
             {
@@ -1472,10 +1485,11 @@ abstract class Bootstrap
                     {
                         if (($url_path_info = self::_get_pathinfo($tmp_url)) !== false)
                         {
-                            self::$project   = $project;
-                            self::$path_info = $url_path_info;
-                            self::$base_url  = $tmp_url;
-                            $request_mode    = 'rest';
+                            self::$project     = $project;
+                            self::$project_dir = $project_dir;
+                            self::$path_info   = $url_path_info;
+                            self::$base_url    = $tmp_url;
+                            $request_mode      = 'rest';
 
                             break 2;
                         }
@@ -1496,10 +1510,11 @@ abstract class Bootstrap
                     {
                         if (($url_path_info = self::_get_pathinfo($tmp_url)) !== false)
                         {
-                            self::$project   = $project;
-                            self::$path_info = $url_path_info;
-                            self::$base_url  = $tmp_url;
-                            $request_mode    = 'admin';
+                            self::$project     = $project;
+                            self::$project_dir = $project_dir;
+                            self::$path_info   = $url_path_info;
+                            self::$base_url    = $tmp_url;
+                            $request_mode      = 'admin';
 
                             break 2;
                         }
@@ -1518,9 +1533,10 @@ abstract class Bootstrap
                 {
                     if (($path_info = self::_get_pathinfo($url)) !== false)
                     {
-                        self::$project   = $project;
-                        self::$path_info = $path_info;
-                        self::$base_url  = $url;
+                        self::$project     = $project;
+                        self::$project_dir = $project_dir;
+                        self::$path_info   = $path_info;
+                        self::$base_url    = $url;
 
                         if ($rest_url)foreach ($rest_url as $tmp_url)
                         {
