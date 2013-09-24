@@ -265,6 +265,16 @@ abstract class Core_Core extends Bootstrap
             {
                 Profiler::setup();
             }
+
+            if (!defined('URL_ASSETS'))
+            {
+                /**
+                 * 静态文件URL地址前缀
+                 *
+                 * @var string
+                 */
+                define('URL_ASSETS', rtrim(Core::config('url.assets', Core::url('/assets/')), '/') . '/');
+            }
         }
 
         if ($auto_execute)
@@ -315,11 +325,11 @@ abstract class Core_Core extends Bootstrap
      * 若不传key，则返回Core_Config对象，可获取动态配置，例如Core::config()->get();
      *
      * @param string $key
-     * @param string $project 跨项目读取配置，若本项目内的不需要传
+     * @param mixed $default 默认值
      * @return Config
      * @return array
      */
-    public static function config($key = null)
+    public static function config($key = null, $default = null)
     {
         if (null===$key)
         {
@@ -340,7 +350,7 @@ abstract class Core_Core extends Bootstrap
 
         if ($c)foreach ($c as $i)
         {
-            if (!isset($v[$i]))return null;
+            if (!isset($v[$i]))return $default;
             $v = $v[$i];
         }
 
@@ -402,14 +412,14 @@ abstract class Core_Core extends Bootstrap
     {
         $url = ltrim($uri, './ ');
 
-        if (IS_DEBUG & 1)
+        if (IS_DEBUG & 1 && 1==2)
         {
             # 本地调试环境
-            $url_asstes = Core::url('/assets/devmode/'.Core::$project.'/');
+            $url_asstes = Core::url('/assets-dev/');
         }
         else
         {
-            $url_asstes = URL_ASSETS;
+            $url_asstes = URL_ASSETS . Core::$project . '/' . (IS_ADMIN_MODE?'~admin/':'');
 
             list($file, $query) = explode('?', $uri.'?', 2);
 

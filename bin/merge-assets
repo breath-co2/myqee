@@ -84,13 +84,28 @@ if (in_array('-a', $argv))
     unset($argv[$key]);
 
     $config = array();
+    $adminmod = in_array('--admin', $argv);
     include (dirname(__FILE__).'/../config.php');
 
     if (isset($config['projects']) && is_array($config['projects']))foreach ($config['projects'] as $key => $project_config)
     {
-        $cmd = trim($_ . ' ' . $key . ' ' . implode(' ', $argv));
+        if (!$adminmod && (($project_config['url_admin'] && $project_config['url_admin']=='/') || (array)$project_config['url']===(array)$project_config['url_admin']))
+        {
+            // 直接调用admin模式
+            $tmp_argv[] = '--admin';
+            $tmpstr = "\n此项目为独立后台项目，无须生成前端assets文件\n直接生成项目后台assets文件>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n";
+        }
+        else
+        {
+            $tmpstr = '';
+            $tmp_argv = $argv;
+        }
+
+        $cmd = trim($_ . ' ' . $key . ' ' . implode(' ', $tmp_argv));
 
         echo "\n\n\n\n-------------------生成{$key}项目assets文件-------------------\n\n";
+        echo $tmpstr;
+
         $handle = popen($cmd, 'r');
         while (($read = fread($handle, 128))!==false)
         {
@@ -632,7 +647,6 @@ if (!is_file($cachefile) || md5($content)!=md5_file($cachefile))
 }
 
 echo "\n\n操作完成\n";
-
 
 
 if (!$admin_mode && Core::config('core.projects.'.$project.'.url_admin'))

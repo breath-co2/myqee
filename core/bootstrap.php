@@ -662,13 +662,6 @@ abstract class Bootstrap
              */
             if (!defined('IS_REST_MODE'))define('IS_REST_MODE', ($request_mode=='rest')?true:false);
 
-            /**
-             * 静态文件URL地址前缀
-             *
-             * @var string
-             */
-            define('URL_ASSETS', isset(self::$core_config['url']['assets']) && self::$core_config['url']['assets']?self::$core_config['url']['assets']:'/assets/' );
-
 
             $project_dir = DIR_PROJECT . self::$project . DS;
 
