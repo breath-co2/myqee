@@ -15,7 +15,7 @@ class Library_MyQEE_Develop_Controller_Assets_Dev extends Controller
      *
      * @var string
      */
-    protected $allow_suffix = 'js|css|jpg|jpeg|png|gif|bmp|pdf|html|htm|mp4|swf';
+    protected $allow_suffix = 'js|css|jpg|jpeg|png|gif|bmp|pdf|html|htm|mp4|swf|eot|svg|ttf|woff';
 
     /**
      * 文件名
@@ -31,6 +31,13 @@ class Library_MyQEE_Develop_Controller_Assets_Dev extends Controller
      */
     protected $type;
 
+    /**
+     * 当前文件是否.min后缀
+     *
+     * @var boolean
+     */
+    protected $is_min = false;
+
     public function before()
     {
         # 只允许本地调试模式下使用
@@ -40,7 +47,7 @@ class Library_MyQEE_Develop_Controller_Assets_Dev extends Controller
         $allow_suffix = Core::config('core.asset_allow_suffix');
         if ($allow_suffix)
         {
-            $this->allow_suffix = $allow_suffix;
+            $this->allow_suffix .= '|' . $allow_suffix;
         }
 
         $arguments = $this->arguments;
@@ -57,6 +64,7 @@ class Library_MyQEE_Develop_Controller_Assets_Dev extends Controller
             if (substr($this->file, -4)=='.min')
             {
                 $this->file = substr($this->file, 0, -4);
+                $this->is_min = true;
             }
         }
 
@@ -209,8 +217,15 @@ class Library_MyQEE_Develop_Controller_Assets_Dev extends Controller
     {
         $file_paths = $this->get_css_or_js_files_array();
 
+        # 输出目录
+        $out_dir = DIR_ASSETS . Core::$project .'/';
+
+        # 输出文件
+        $out_file = $out_dir . $this->file . ($this->is_min?'.min':'') .'.'. $this->type;
+
         # md5存放的文件
-        $cachefile = DIR_DATA . 'all_asset_files_md5';
+        $cachefile = DIR_DATA . 'cache/asset_files_md5_' . str_replace('/', '~', $this->file) . ($this->is_min?'.min':'') . '.'. $this->type . '.serialize';
+
         if (is_file($cachefile))
         {
             $asset_files_md5 = (array)unserialize(file_get_contents($cachefile));
@@ -220,21 +235,28 @@ class Library_MyQEE_Develop_Controller_Assets_Dev extends Controller
             $asset_files_md5 = array();
         }
 
-        # 输出目录
-        $out_dir = DIR_ASSETS . $this->project .'/';
-
-        $out_file = $out_dir . $this->file .'.'. $this->type;
-
         if (is_file($out_file))
         {
             $changed = false;
-            foreach ($file_paths['file_md5'] as $fullpath => $md5)
+
+            if ($asset_files_md5)
             {
-                $debug_path = Core::debug_path($fullpath);
-                if (!isset($asset_files_md5[$debug_path]) || $asset_files_md5[$debug_path]!=$md5)
+                foreach ($file_paths['file_md5'] as $fullpath => $md5)
+                {
+                    $debug_path = Core::debug_path($fullpath);
+
+                    if (!isset($asset_files_md5[$debug_path]) || $asset_files_md5[$debug_path]!=$md5)
+                    {
+                        $changed = true;
+                        break;
+                    }
+                }
+            }
+            else
+            {
+                if (current($file_paths['file_md5'])!=md5_file($out_file))
                 {
                     $changed = true;
-                    break;
                 }
             }
         }
@@ -245,16 +267,19 @@ class Library_MyQEE_Develop_Controller_Assets_Dev extends Controller
 
         if ($changed)
         {
-            foreach ($file_paths['main'] as $file=>$fullpath)
+            $content = '';
+
+            if ($file_paths['file'])foreach ($file_paths['file'] as $file=>$fullpath)
+            {
+                $content .= file_get_contents($fullpath);
+            }
+
+            if ($file_paths['main'])foreach ($file_paths['main'] as $file=>$fullpath)
             {
                 # 内容
-                if (true===$fullpath)
+                if (true!==$fullpath)
                 {
-                    $content = '';
-                }
-                else
-                {
-                    $content = file_get_contents($fullpath);
+                    $content .= file_get_contents($fullpath);
                 }
 
                 # 当前文件的扩展
@@ -289,6 +314,9 @@ class Library_MyQEE_Develop_Controller_Assets_Dev extends Controller
                     $this->prease_css($out_file, $file_paths['prease_css'], $content);
                 }
             }
+
+            # 创建文件夹
+            File::create_dir(dirname($out_file));
 
             # 保存文件
             if (File::create_file($out_file, $content))
@@ -445,10 +473,21 @@ class Library_MyQEE_Develop_Controller_Assets_Dev extends Controller
                             $file_paths['extends'][$parent_file_path] = $fullpath;
                         }
 
-                        if ($count_file_name_arr==3 && !isset($file_paths['main'][$parent_file_path]))
+                        if ($count_file_name_arr==3)
                         {
-                            $file_paths['main'][$parent_file_path] = true;
+                            if (!isset($file_paths['main'][$parent_file_path]))
+                            {
+                                $file_paths['main'][$parent_file_path] = true;
+                            }
                         }
+                        else
+                        {
+                            $file_paths['file'][$parent_file_path] = $fullpath;
+                        }
+                    }
+                    else
+                    {
+                        $file_paths['file'][$file] = $fullpath;
                     }
                 }
                 else
@@ -559,13 +598,45 @@ class Library_MyQEE_Develop_Controller_Assets_Dev extends Controller
 
         list($node_file, $node_modules_path) = $this->get_node_set();
 
-        if ($type=='.less')
+        static $assets_path = null;
+        if (null===$assets_path)
         {
-            $cmd = 'cd '.(escapeshellcmd($node_modules_path)).' && ' . escapeshellcmd($node_file).' '. escapeshellarg('./node_modules/recess/bin/recess') .' --compile '. escapeshellarg($tmpfile);
+
+            $include_path = Core::include_path();
+            $include_path = array_reverse($include_path);
+
+            # assets目录,经过 escapeshellarg 处理，用于sass，less处理时增加包含目录参数
+            $assets_path = array();
+
+            $tmp_dir = dirname($this->file);
+            if ($tmp_dir && $dir!='.')
+            {
+                $tmp_dir .= '/';
+            }
+            else
+            {
+                $tmp_dir = '';
+            }
+            # 循环include path
+            foreach ($include_path as $path)
+            {
+                $dir = $path ."assets/" . $tmp_dir;
+                if (is_dir($dir))
+                {
+                    $assets_path[] = escapeshellarg($dir);
+                }
+            }
+        }
+
+        if ($type=='less')
+        {
+            if ($assets_path)$path_str = ' --includePath=' . implode(' --includePath=', $assets_path);
+            $cmd = 'cd '.(escapeshellcmd($node_modules_path)).' && ' . escapeshellcmd($node_file).' '.escapeshellarg('./node_modules/recess/bin/recess').' --compile'.$path_str.' '.escapeshellarg($tmpfile);
         }
         else
         {
-            $cmd = 'sass -t expanded '. escapeshellarg($tmpfile);
+            if ($assets_path)$path_str = ' --load-path=' . implode(' --load-path=', $assets_path);
+            $cmd = 'sass -t expanded'.$path_str.' '.escapeshellarg($tmpfile);
         }
 
 
@@ -588,6 +659,10 @@ class Library_MyQEE_Develop_Controller_Assets_Dev extends Controller
         else if (127===$r)
         {
             throw new Exception(__('Systems perform less processing failed, please check the implementation of the recess command'));
+        }
+        else if (1===$r)
+        {
+            throw new Exception(__('Systems perform less processing failed, please check the file. cmd: %c, output: %s', array('%c' => $cmd, '%s' => implode("\n", $output))));
         }
         else
         {
