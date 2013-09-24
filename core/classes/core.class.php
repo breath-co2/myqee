@@ -311,7 +311,7 @@ abstract class Core_Core extends Bootstrap
                 }
                 else
                 {
-                    Core::show_500($e->getMessage(), $code);
+                    Core::show_500($e);
                 }
             }
 
@@ -412,7 +412,7 @@ abstract class Core_Core extends Bootstrap
     {
         $url = ltrim($uri, './ ');
 
-        if (IS_DEBUG & 1 && 1==2)
+        if (IS_DEBUG & 1)
         {
             # 本地调试环境
             $url_asstes = Core::url('/assets-dev/');
