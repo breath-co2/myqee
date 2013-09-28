@@ -89,12 +89,12 @@ V2.0 release
 * 修复RC3中已知BUG
 * 修复数据库类库连接、关闭连接等功能
 * 将Request修改为HttpIO常量，并且将部分参数进行调整，具体为：
-  * Request::$is_ajax    => HttpIO::IS_AJAX
-  * Request::$client_ip  => HttpIO::IP
-  * Request::$method     => HttpIO::METHOD
-  * Request::$user_agent => HttpIO::USER_AGENT
-  * Request::$protocol   => HttpIO::PROTOCOL
-  * Request::$referrer   => HttpIO::REFERRER
+  * `Request::$is_ajax`    => `HttpIO::IS_AJAX`
+  * `Request::$client_ip`  => `HttpIO::IP`
+  * `Request::$method`     => `HttpIO::METHOD`
+  * `Request::$user_agent` => `HttpIO::USER_AGENT`
+  * `Request::$protocol`   => `HttpIO::PROTOCOL`
+  * `Request::$referrer`   => `HttpIO::REFERRER`
 * 将HttpGet重命名为HttpClient，并完善HttpClient的Fscok驱动，移除Fscok对Snoopy的依赖
 * 增加HttpCall系统Http请求类库
 * Core::import_library()修改，例如：`Core::import_library('com.myqee.test');` 将加载myqee的test类库
