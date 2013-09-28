@@ -67,8 +67,6 @@ class Library_MyQEE_Develop_Controller_Assets_Dev extends Controller
                 $this->is_min = true;
             }
         }
-
-        $this->get_assets_md5();
     }
 
     /**
@@ -174,6 +172,31 @@ class Library_MyQEE_Develop_Controller_Assets_Dev extends Controller
 
         $this->send_header();
 
+
+        # 输出目录
+        $out_dir = DIR_ASSETS . Core::$project .'/';
+
+        # 输出文件
+        $out_file = $out_dir . $this->file . '.' . $this->type;
+
+        if (is_file($out_file))
+        {
+            if (filemtime($out_file)!=filemtime($file))
+            {
+                copy($file, $out_file);
+                touch($out_file, filemtime($file));
+//                 unlink($out_file);
+//                 symlink($this->relative_path($file, $out_file), $out_file);
+            }
+        }
+        else
+        {
+            File::create_dir(dirname($out_file));
+            copy($file, $out_file);
+            touch($out_file, filemtime($file));
+//             symlink($this->relative_path($file, $out_file), $out_file);
+        }
+
         $fun = 'apache_get_modules';
         if (function_exists($fun))
         {
@@ -196,6 +219,51 @@ class Library_MyQEE_Develop_Controller_Assets_Dev extends Controller
         # 直接读取文件输出
         readfile($file);
     }
+
+    /**
+     * 求相对路径
+     *
+     *      $a = '/a/b/c/a.php';
+     *      $b = '/a/b/e/b.php';
+     *      echo self::relative_path($a, $b, '/');
+     *      // 将输出 ../../c/a.php
+     *
+     * @param string $a 目标路径
+     * @param string $b 相对路径
+     * @return string
+     */
+    protected function relative_path($a, $b)
+    {
+        $str = '';
+        $a = explode('/', ltrim(str_replace('\\', '/', $a), '/'));
+        $b = explode('/', ltrim(str_replace('\\', '/', $b), '/'));
+
+        $intersect = array_intersect_assoc($a, $b);
+
+        if($intersect)
+        {
+            $j   = -1;
+            $num = 0;
+            foreach ($intersect as $k => $v)
+            {
+                if($k-1 != $j)
+                {
+                    break;
+                }
+                else
+                {
+                    $str .= '..'. DS;
+                }
+
+                $j = $k;
+                $num++;
+            }
+            $ret = array_slice($a, $num);
+
+            return $str . implode(DS, $ret);
+        }
+    }
+
 
     /**
      * 直接输出内容
@@ -743,69 +811,6 @@ class Library_MyQEE_Develop_Controller_Assets_Dev extends Controller
 
         return array($node_file, $node_modules_path);
     }
-
-    /**
-     * 获取输出的asset的md5
-     *
-     * @return array
-     */
-    protected function get_assets_md5()
-    {
-        $asset_md5_file = DIR_DATA.'asset_files_md5_by_project_'.$this->project;
-
-        if (is_file($asset_md5_file))
-        {
-            $array = @unserialize(file_get_contents($asset_md5_file));
-        }
-        else
-        {
-            # 读取缓存锁
-            $lock = Cache::instance()->get('asset_md5_temp_lock');
-            if ($lock)
-            {
-                for($i=0;$i<5;$i++)
-                {
-                    # 可能有另外一个进程正在操作，等待一下
-                    sleep(1);
-
-                    if (is_file($asset_md5_file))
-                    {
-                        $array = @unserialize(file_get_contents($asset_md5_file));
-                        break;
-                    }
-                }
-            }
-
-            if (!isset($array))
-            {
-                # 记录缓存锁
-                Cache::instance()->set('asset_md5_temp_lock', 1, 6);
-
-                # 循环获取所有文件列表
-                $file_paths = array();
-
-                $include_path = Core::include_path();
-                $include_path = array_reverse($include_path);
-
-                # 循环include path
-                foreach ($include_path as $path)
-                {
-                    $dir = $path ."assets/";
-
-                    if (is_dir($dir))
-                    {
-                        $this->glob_files($file_paths, $dir, strlen($dir));
-                    }
-                }
-
-                # 删除缓存锁
-                Cache::instance()->delete('asset_md5_temp_lock');
-            }
-        }
-
-        return $array;
-    }
-
 
     /**
      * 递归的读取目录下所有文件到$file_paths中
