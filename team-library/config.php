@@ -20,6 +20,7 @@ $config['database']['default'] = array
     'profiling'    => true,
 );
 
+$config['database']['admin'] = $config['database']['default'];
 
 /**
  * Session名称
@@ -35,5 +36,7 @@ $config['session']['name'] = 'SID';
  * @var string
  */
 $config['session']['check_string'] = '$@de23#$%@.dG2.p4Ad';
+
+
 
 
