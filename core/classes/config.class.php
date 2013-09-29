@@ -52,22 +52,15 @@ class Core_Config
     }
 
     /**
-     * 设置是否启用缓存模式
-     */
-    protected function set_use_cache()
-    {
-        $this->is_use_cache = Core::config('core.file_write_mode') == 'normal' ? true:false;
-    }
-
-    /**
      * 保存一个配置，支持批量设置
      *
      * @param string/array $key 关键字
      * @param fixed $value 值
      * @param string $type 类型,长度32以内
+     * @param boolean $auto_clear_cache 自动清除缓存
      * @return boolean
      */
-    public function set($key, $value, $type = '')
+    public function set($key, $value, $type = '', $auto_clear_cache = true)
     {
         $db = new Database($this->database);
         $type = (string)$type;
@@ -81,14 +74,12 @@ class Core_Config
                 try
                 {
                     # 先尝试删除旧数据
-                    $db->where('type', $type)
-                    ->and_where_open();
+                    $db->where('type', $type)->and_where_open();
                     foreach ($key as $k)
                     {
                         $db->or_where('key_md5', md5($k));
                     }
-                    $db->and_where_close()
-                    ->delete($this->tablename);
+                    $db->and_where_close()->delete($this->tablename);
 
                     # 设置数据
                     foreach ($key as $i=>$k)
@@ -98,7 +89,7 @@ class Core_Config
                             'type'     => $type,
                             'key_md5'  => md5($k),
                             'key_name' => $k,
-                            'value'    => gzcompress(serialize($value[$i]), 9),
+                            'value'    => $this->data_format($value[$i]),
                         );
                         $db->values($data);
                     }
@@ -116,7 +107,11 @@ class Core_Config
 
                     $tr->commit();
 
-                    $this->clear_cache();
+                    if ($auto_clear_cache)
+                    {
+                        $this->clear_cache($type);
+                    }
+
                     return true;
                 }
                 catch (Exception $e)
@@ -132,18 +127,25 @@ class Core_Config
                     'type'     => $type,
                     'key_md5'  => md5($key),
                     'key_name' => $key,
-                    'value'    => gzcompress(serialize($value), 9),
+                    'value'    => $this->data_format($value),
                 );
                 $status = $db->replace($this->tablename, $data);
                 $status = $status[1];
             }
+
+
             if ($status)
             {
                 if (is_array($this->config))
                 {
                     $this->config[$key] = $value;
                 }
-                $this->clear_cache();
+
+                if ($auto_clear_cache)
+                {
+                    $this->clear_cache($type);
+                }
+
                 return true;
             }
             else
@@ -154,6 +156,7 @@ class Core_Config
         catch (Exception $e)
         {
             if (IS_DEBUG)throw $e;
+
             return false;
         }
     }
@@ -161,14 +164,29 @@ class Core_Config
     /**
      * 获取制定key的配置
      *
-     * @param string $key
+     * @param string $key KEY
+     * @param string $type 类型
+     * @param boolean $no_cache 是否允许使用缓存 设置true将直接从数据库中查询
      * @return fixed
      */
-    public function get($key, $type='')
+    public function get($key, $type='', $no_cache = false)
     {
-        if (null===$this->config)$this->reload(false);
-
         $type = (string)$type;
+
+        if ($no_cache)
+        {
+            # 没有缓存数据，则直接在数据库里获取
+            $db = new Database($this->database);
+            $config = $db->from($this->tablename)->select('value')->where('type', $type)->where('key_md5', md5($key))->limit(1)->get(false, true)->get('value');
+
+            if ($config)
+            {
+                return $this->data_unformat($config);
+            }
+        }
+
+        if (!isset($this->config[$type]))$this->reload(false, $type);
+
         if (isset($this->config[$type][$key]))return $this->config[$type][$key];
 
         return null;
@@ -180,9 +198,9 @@ class Core_Config
      * @param string $type
      * @return array
      */
-    public function get_by_type($type='')
+    public function get_by_type($type = '')
     {
-        if (null===$this->config)$this->reload(false);
+        if (null===$this->config)$this->reload(false, $type);
 
         $type = (string)$type;
 
@@ -267,38 +285,42 @@ class Core_Config
      * 重新加载配置
      *
      * @param boolean $from_db 是否强制从数据库中读取，默认true
+     * @param string $type 类型
      * @return Core_Config
      */
-    public function reload($from_db=true)
+    public function reload($from_db=true, $type = '')
     {
-        $tmpfile = DIR_DATA .'extends_config_'. Core::$project .'.txt';
+        $tmpfile = $this->get_config_cache_file(Core::$project, $type);
 
         if ($this->is_use_cache && !$from_db && is_file($tmpfile))
         {
             # 在data目录中直接读取
-            $this->config = @unserialize(file_get_contents($tmpfile));
-            if (!is_array($this->config))
+            $this->config[$type] = @unserialize(file_get_contents($tmpfile));
+            if (!is_array($this->config[$type]))
             {
-                $this->config = array();
+                $this->config[$type] = array();
             }
         }
         else
         {
             # 没有缓存数据，则直接在数据库里获取
             $db = new Database($this->database);
-            $config = $db->from($this->tablename)->get(false, true)->as_array();
+            $config = $db->from($this->tablename)->where('type', $type)->get(false, true)->as_array();
 
             if ($config)
             {
                 $this->config = array();
                 foreach ($config as $item)
                 {
-                    $this->config[$item['type']][$item['key_name']] = @unserialize(gzuncompress($item['value']));
+                    $this->config[$item['type']][$item['key_name']] = $this->data_unformat($item['value']);
                 }
             }
             else
             {
-                $this->config = array();
+                $this->config = array
+                (
+                    $type => array(),
+                );
             }
 
             if ($this->is_use_cache)
@@ -316,7 +338,7 @@ class Core_Config
      *
      * @return boolean
      */
-    public function clear_cache()
+    public function clear_cache($type = '')
     {
         if (!$this->is_use_cache)
         {
@@ -328,7 +350,7 @@ class Core_Config
         if ($projects)foreach ($projects as $project)
         {
             # 所有项目的配置文件
-            $tmpfile[] = DIR_DATA .'extends_config'. $project .'.txt';
+            $tmpfile[] = $this->get_config_cache_file($project, $type);
         }
 
         $rs = File::unlink($tmpfile);
@@ -336,5 +358,46 @@ class Core_Config
         if (IS_DEBUG)Core::debug()->log('clear extends config cache '. ($rs?'success':'fail') .'.');
 
         return $rs;
+    }
+
+    /**
+     * 设置是否启用缓存模式
+     */
+    protected function set_use_cache()
+    {
+        $this->is_use_cache = Core::config('core.file_write_mode') == 'normal' ? true:false;
+    }
+
+    /**
+     * 获取配置文件路径
+     *
+     * @param string $project
+     * @param string $type
+     * @return string
+     */
+    protected function get_config_cache_file($project, $type = '')
+    {
+        return DIR_DATA .'extends_config'. $project. ($type?'.'.$type:'') .'.txt';
+    }
+
+    /**
+     * 格式化数据方式
+     *
+     * @param fixed $data
+     * @return string
+     */
+    protected function data_format($data)
+    {
+        return gzcompress(serialize($data), 9);
+    }
+
+    /**
+     * 反解数据
+     *
+     * @param string $data
+     */
+    protected function data_unformat($data)
+    {
+        return @unserialize(gzuncompress($data));
     }
 }
