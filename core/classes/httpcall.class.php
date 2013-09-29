@@ -21,6 +21,13 @@ class Core_HttpCall
      */
     protected static $connecttimeout_ms = 10000;
 
+    /**
+     * 最后返回的内容
+     *
+     * @var array
+     */
+    protected static $last_result = array();
+
     public function __construct($group=null)
     {
         if (!$group)$group = 'default';
@@ -58,13 +65,13 @@ class Core_HttpCall
      * @param mixed $arg1
      * @param mixed $arg2
      */
-    public function sync_exec($uri,$arg1=null,$arg2=null)
+    public function sync_exec($uri, $arg1=null, $arg2=null)
     {
         # 参数
         $param_arr = func_get_args();
         array_shift($param_arr);
 
-        return $this->exec($uri,$this->hosts,$param_arr);
+        return $this->exec($uri, $this->hosts, $param_arr);
     }
 
     /**
@@ -83,7 +90,7 @@ class Core_HttpCall
         $param_arr = func_get_args();
         array_shift($param_arr);
 
-        return $this->exec($uri,current($this->hosts),$param_arr);
+        return $this->exec($uri, current($this->hosts), $param_arr);
     }
 
     /**
@@ -100,7 +107,7 @@ class Core_HttpCall
      * @param array $param_arr
      * @return array
      */
-    public static function exec( $uri, $hosts , array $param_arr = array() )
+    public static function exec($uri, $hosts , array $param_arr = array())
     {
         $one = false;
 
@@ -116,79 +123,84 @@ class Core_HttpCall
 
         if (IS_CLI)
         {
-            $project_config = Core::config('core.projects'.Core::$project);
-            $script = $project_config['url'];
-            if (is_array($script))$script = current($script);
-
-            if (isset($project_config['url_admin']))
+            $url_site = Core::config('core.url.site');
+            if (!$url_site)
             {
-                $script .= ltrim($project_config['url_admin'],'/');
+                throw new Exception(__('your core config $config[\'url\'][\'site\'] is not defined.check config:ext', array(':ext'=>EXT)));
             }
 
-            if (false===strpos($uri, '://'))
-            {
-                $url_site = Core::config('core.url.site');
-                if ( !$url_site )
-                {
-                    throw new Exception(__('your core config $config[\'url\'][\'site\'] is not defined.check config:ext',array(':ext'=>EXT)));
-                }
-
-                $script = $url_site . ltrim($script, '/');
-            }
+            $script = $url_site . ltrim($script, '/');
         }
         else
         {
             $script = $_SERVER["SCRIPT_URI"];
         }
 
-        $uri = Core::url($uri);
-        if (false===strpos($uri, '://'))
+        $url = Core::url($uri);
+        if (false===strpos($url, '://'))
         {
             preg_match('#^(http(?:s)?\://[^/]+/)#', $script , $m);
-            $uri = $m[1].ltrim($uri,'/');
+            $url = $m[1].ltrim($url, '/');
         }
 
         # http://host/uri
-        $uri_arr = explode('/',$uri);
-        $scr_arr = explode('/',$script);
+        $uri_arr = explode('/', $url, 3);
+        $scr_arr = explode('/', $script, 3);
 
-        $uri_arr[0] = $scr_arr[0];
-        $uri_arr[2] = $scr_arr[2];
-        $uri = implode('/', $uri_arr);
+        $uri_arr[0] = $scr_arr[0];       // 替换 http://
+        $uri_arr[2] = $scr_arr[2];       // 替换 域名部分
+        $url = implode('/', $uri_arr);
+
+        # 加入系统参数
+        $data = array
+        (
+            'data' => serialize($param_arr),
+        );
 
         $time = microtime(1);
         if ($curl_supper)
         {
             # 调用CURL请求
-            $result = HttpCall::exec_by_curl($hosts,$uri,array('data'=>serialize($param_arr)));
+            HttpCall::$last_result = HttpCall::exec_by_curl($hosts, $url, '/'.ltrim($uri, '/'), $data);
         }
         else
         {
             # 调用socket进行连接
-            $result = HttpCall::exec_by_socket($hosts,$uri,array('data'=>serialize($param_arr)));
+            HttpCall::$last_result = HttpCall::exec_by_socket($hosts, $url, '/'.ltrim($uri, '/'), $data);
         }
 
         # 单条记录
-        if ($one)$result = current($result);
+        if ($one)$result = current(HttpCall::$last_result);
 
         if (IS_DEBUG)
         {
             Core::debug()->log('system exec time:'.(microtime(1)-$time));
-            Core::debug()->info($result,'system exec result');
+            Core::debug()->info($result, 'system exec result');
         }
 
         return $result;
     }
 
     /**
-     * 通过CURL执行
+     * 返回最后请求返回的内容
      *
-     * @param array $hosts
-     * @param string $url
-     * @param array $param_arr
      * @return array
      */
-    protected static function exec_by_curl($hosts,$url,array $param_arr = null)
+    public static function last_result()
+    {
+        return HttpCall::$last_result;
+    }
+
+    /**
+     * 通过CURL执行
+     *
+     * @param array $hosts 请求的所有服务器列表
+     * @param string $url 请求的URL
+     * @param string $path_info 待请求的 path_info 参数
+     * @param array $param_arr 请求的参数
+     * @return array
+     */
+    protected static function exec_by_curl($hosts, $url, $path_info, array $param_arr = null)
     {
         $mh = curl_multi_init();
 
@@ -198,7 +210,7 @@ class Core_HttpCall
         $vars = http_build_query($param_arr);
 
         # 创建列队
-        foreach ( $hosts as $h )
+        foreach ($hosts as $h)
         {
             # 排除重复HOST
             if (isset($listener_list[$h]))continue;
@@ -216,11 +228,8 @@ class Core_HttpCall
             # 生成一个随机字符串
             $rstr = Text::random();
 
-            # 生成一个HASH
-            $hash = self::get_hash($vars,$rstr,$mictime);
-
             # 创建一个curl对象
-            $current = HttpCall::_create_curl($host, $port, $url, 10, $hash, $vars, $mictime, $rstr);
+            $current = HttpCall::_create_curl($host, $port, $url, $path_info, 10, $vars, $mictime, $rstr);
 
             # 列队数控制
             curl_multi_add_handle($mh, $current);
@@ -241,14 +250,14 @@ class Core_HttpCall
 
         do
         {
-            while ( ($execrun = curl_multi_exec($mh, $running)) == CURLM_CALL_MULTI_PERFORM );
-            if ( $execrun!=CURLM_OK ) break;
+            while (($execrun = curl_multi_exec($mh, $running)) == CURLM_CALL_MULTI_PERFORM);
+            if ($execrun!=CURLM_OK)break;
 
-            while ( true==($done = curl_multi_info_read($mh)) )
+            while (true==($done = curl_multi_info_read($mh)))
             {
-                foreach ( $listener_list as $done_host=>$listener )
+                foreach ($listener_list as $done_host=>$listener)
                 {
-                    if ( $listener === $done['handle'] )
+                    if ($listener === $done['handle'])
                     {
                         # 获取内容
                         $result[$done_host] = curl_multi_getcontent($done['handle']);
@@ -270,7 +279,7 @@ class Core_HttpCall
 
                         curl_multi_remove_handle($mh, $done['handle']);
 
-                        unset($listener_list[$done_host],$listener);
+                        unset($listener_list[$done_host], $listener);
 
                         $done_num++;
 
@@ -302,11 +311,11 @@ class Core_HttpCall
      * @param int $timeout 超时时间
      * @return curl_init()
      */
-    protected static function _create_curl($host, $port, $url, $timeout , $hash ,$vars,$mictime,$rstr)
+    protected static function _create_curl($host, $port, $url, $path_info, $timeout, $vars, $mictime, $rstr)
     {
-        if (preg_match('#^(http(?:s)?)\://([^/\:]+)(\:[0-9]+)?/#', $url.'/',$m))
+        if (preg_match('#^(http(?:s)?)\://([^/\:]+)(\:[0-9]+)?/#', $url.'/', $m))
         {
-            $url = $m[1].'://'.$host.$m[3].'/'.substr($url,strlen($m[0]));
+            $url = $m[1].'://'.$host.$m[3].'/'.substr($url, strlen($m[0]));
         }
 
         $ch = curl_init();
@@ -331,9 +340,26 @@ class Core_HttpCall
             if (!$port)$port = 80;
         }
 
+        # 生成一个HASH
+        $hash = self::get_hash($vars, $rstr, $mictime, $path_info .'_'. (IS_ADMIN_MODE?1:0) .'_'. (IS_REST_MODE?1:0));
+
+        $header = array
+        (
+            'Expect:',
+            'Host: '.$m[2],
+            'X-Myqee-System-Hash: '.$hash,
+            'X-Myqee-System-Time: '.$mictime,
+            'X-Myqee-System-Rstr: '.$rstr,
+            'X-Myqee-System-Pathinfo: '.$path_info,
+            'X-Myqee-System-Project: '.Core::$project,
+            'X-Myqee-System-Isadmin: '.(IS_ADMIN_MODE?1:0),
+            'X-Myqee-System-Isrest: '.(IS_REST_MODE?1:0),
+            'X-Myqee-System-Debug: '.(IS_DEBUG?1:0),
+        );
+
         curl_setopt($ch, CURLOPT_PORT, $port);
         curl_setopt($ch, CURLOPT_USERAGENT, 'MyQEE System Call');
-        curl_setopt($ch, CURLOPT_HTTPHEADER, array('Expect:','Host: '.$m[2],'X-Myqee-System-Hash: '.$hash,'X-Myqee-System-Time: '.$mictime,'X-Myqee-System-Rstr: '.$rstr,'X-Myqee-System-Debug: '.(IS_DEBUG?1:0)));
+        curl_setopt($ch, CURLOPT_HTTPHEADER, $header);
 
         return $ch;
     }
@@ -341,12 +367,13 @@ class Core_HttpCall
     /**
      * 通过Socket执行
      *
-     * @param array $hosts
-     * @param string $url
-     * @param array $param_arr
+     * @param array $hosts 请求的所有服务器列表
+     * @param string $url 请求的URL
+     * @param string $path_info 待请求的 path_info 参数
+     * @param array $param_arr 请求的参数
      * @return array
      */
-    protected static function exec_by_socket($hosts, $url, array $param_arr = null)
+    protected static function exec_by_socket($hosts, $url, $path_info, array $param_arr = null)
     {
         $vars = http_build_query($param_arr);
 
@@ -360,7 +387,7 @@ class Core_HttpCall
 
         foreach ($hosts as $host)
         {
-            list($hostname, $port) = explode(':', $host,2);
+            list($hostname, $port) = explode(':', $host, 2);
             if (!$port)
             {
                 $port = $_SERVER["SERVER_PORT"];
@@ -375,7 +402,7 @@ class Core_HttpCall
             $rstr = Text::random();
 
             # 生成一个HASH
-            $hash = self::get_hash($vars,$rstr,$mictime);
+            $hash = self::get_hash($vars, $rstr, $mictime, $path_info .'_'. (IS_ADMIN_MODE?1:0) .'_'. (IS_REST_MODE?1:0));
 
             # 使用HTTP协议请求数据
             $str = 'POST ' . $uri . ' HTTP/1.0' . CRLF
@@ -386,6 +413,10 @@ class Core_HttpCall
             . 'X-Myqee-System-Hash: ' . $hash . CRLF
             . 'X-Myqee-System-Time: ' . $mictime . CRLF
             . 'X-Myqee-System-Rstr: ' . $rstr . CRLF
+            . 'X-Myqee-System-Pathinfo: '.$path_info . CRLF
+            . 'X-Myqee-System-Project: '.Core::$project . CRLF
+            . 'X-Myqee-System-Isadmin: '.(IS_ADMIN_MODE?1:0) . CRLF
+            . 'X-Myqee-System-Isrest: '.(IS_REST_MODE?1:0) . CRLF
             . 'X-Myqee-System-Debug: ' . (IS_DEBUG?1:0) . CRLF
             . 'Content-Length: ' . strlen($vars) . CRLF
             . 'Content-Type: application/x-www-form-urlencoded' . CRLF
@@ -397,7 +428,7 @@ class Core_HttpCall
                 if (isset($fs[$host]))break;
 
                 # 尝试连接服务器
-                $ns = fsockopen($hostname,$port,$errno[$host],$errstr[$host],1);
+                $ns = fsockopen($hostname, $port, $errno[$host], $errstr[$host], 1);
                 if ($ns)
                 {
                     $fs[$host] = $ns;
@@ -419,7 +450,7 @@ class Core_HttpCall
                 for($i=0;$i<3;$i++)
                 {
                     # 写入HTTP协议内容
-                    if ( strlen($str) === fwrite($fs[$host],$str) )
+                    if (strlen($str) === fwrite($fs[$host], $str))
                     {
                         # 成功
                         break;
@@ -448,7 +479,7 @@ class Core_HttpCall
             }
             fclose($f);
 
-            list($header,$body) = explode("\r\n\r\n",$str,2);
+            list($header,$body) = explode("\r\n\r\n", $str, 2);
 
             $rs[$host] = $body;
         }
@@ -464,20 +495,40 @@ class Core_HttpCall
      * @param int $port
      * @return string
      */
-    private static function get_hash($vars,$rstr,$mictime)
+    private static function get_hash($vars, $rstr, $mictime, $other)
     {
         # 系统调用密钥
         $system_exec_pass = Core::config('system_exec_key');
 
-        if ( $system_exec_pass && strlen($system_exec_pass) >= 10 )
+        $key = Core::config()->get('system_exec_key', 'system', true);
+
+        // 每天更好动态密码
+        if (!$key || abs(TIME - $key['time'])> 86400)
+        {
+            $key = array
+            (
+                'str'  => Text::random(null, 32),
+                'time' => TIME,
+            );
+
+            // 直接保存但不更新缓存，避免造成File操作死循环
+            if (!Core::config()->set('system_exec_key', $key, 'system', false))
+            {
+                throw new Exception(__('Updated dynamic password fails, check the server database and configuration'));
+            }
+        }
+
+        $other .= $key['str'];
+
+        if ($system_exec_pass && strlen($system_exec_pass) >= 10)
         {
             # 如果有则使用系统调用密钥
-            $hash = sha1($vars.$mictime.$system_exec_pass.$rstr);
+            $hash = sha1($vars.$mictime.$system_exec_pass.$rstr.'_'.$other);
         }
         else
         {
             # 没有，则用系统配置和数据库加密
-            $hash = sha1($vars.$mictime.serialize(Core::config('core')).serialize(Core::config('database')).$rstr);
+            $hash = sha1($vars.$mictime.serialize(Core::config('core')).serialize(Core::config('database')).$rstr.'_'.$other);
         }
 
         return $hash;

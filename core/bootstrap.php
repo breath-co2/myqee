@@ -240,9 +240,10 @@ function __($string, array $values = null)
 
 /**
  * 是否对传入参数转义，建议系统关闭自动转义功能
+ *
  * @var boolean
  */
-define('MAGIC_QUOTES_GPC', get_magic_quotes_gpc());
+define('MAGIC_QUOTES_GPC', function_exists('get_magic_quotes_gpc')?get_magic_quotes_gpc():false);
 
 if (!IS_CLI && MAGIC_QUOTES_GPC)
 {
@@ -578,8 +579,42 @@ abstract class Bootstrap
             }
 
 
-            //获取全局$project变量
-            global $project, $admin_mode;
+            // 获取全局$project变量
+            global $project, $admin_mode, $rest_mode;
+
+            // 系统内部调用
+            if (IS_SYSTEM_MODE)
+            {
+                if (isset($_SERVER['HTTP_X_MYQEE_SYSTEM_PROJECT']))
+                {
+                    $project = $_SERVER['HTTP_X_MYQEE_SYSTEM_PROJECT'];
+                }
+
+                if (isset($_SERVER['HTTP_X_MYQEE_SYSTEM_PATHINFO']))
+                {
+                    self::$path_info = $_SERVER['HTTP_X_MYQEE_SYSTEM_PATHINFO'];
+                }
+
+                if (isset($_SERVER['HTTP_X_MYQEE_SYSTEM_ISADMIN']) && $_SERVER['HTTP_X_MYQEE_SYSTEM_ISADMIN'])
+                {
+                    $request_mode = 'admin';
+                }
+                elseif (isset($_SERVER['HTTP_X_MYQEE_SYSTEM_ISREST']) && $_SERVER['HTTP_X_MYQEE_SYSTEM_ISREST'])
+                {
+                    $request_mode = 'rest';
+                }
+            }
+
+            if (isset($admin_mode) && $admin_mode)
+            {
+                // 管理员模式
+                $request_mode = 'admin';
+            }
+            elseif (isset($rest_mode) && $rest_mode)
+            {
+                // RestFul模式
+                $request_mode = 'rest';
+            }
 
             if (isset($project) && $project)
             {
@@ -592,12 +627,6 @@ abstract class Bootstrap
 
                 // 如果有设置项目
                 self::$project = $project;
-
-                // 管理员模式
-                if (isset($admin_mode) && true===$admin_mode)
-                {
-                    $request_mode = 'admin';
-                }
             }
             else
             {
@@ -606,12 +635,6 @@ abstract class Bootstrap
                     if (!isset($_SERVER["argv"]))
                     {
                         exit('Err Argv');
-                    }
-
-                    if (isset($_SERVER['OS']) && $_SERVER['OS']=='Windows_NT')
-                    {
-                        # 切换到UTF-8编码显示状态
-                        exec('chcp 65001');
                     }
 
                     $argv = $_SERVER["argv"];
@@ -631,12 +654,17 @@ abstract class Bootstrap
                 }
                 else
                 {
-                    $request_mode = '';
-                    self::setup_by_url($request_mode);
+                    $temp_mode = '';
+                    self::setup_by_url($temp_mode);
+
+                    if (!$request_mode)
+                    {
+                        $request_mode = $temp_mode;
+                    }
                 }
             }
 
-            if ( isset(self::$core_config['projects'][self::$project]['isuse']) && !self::$core_config['projects'][self::$project]['isuse'] )
+            if (isset(self::$core_config['projects'][self::$project]['isuse']) && !self::$core_config['projects'][self::$project]['isuse'])
             {
                 self::_show_error(__('the project: :project is not open.', array(':project'=>self::$project)));
             }

@@ -254,7 +254,7 @@ abstract class Core_Core extends Bootstrap
 
             if (true===IS_SYSTEM_MODE)
             {
-                if (false===Core::check_system_request_allow() )
+                if (false===Core::check_system_request_allow())
                 {
                     # 内部请求验证不通过
                     Core::show_500('system request hash error');
@@ -2131,10 +2131,14 @@ abstract class Core_Core extends Bootstrap
      */
     protected static function check_system_request_allow()
     {
-        $hash = $_SERVER['HTTP_X_MYQEE_SYSTEM_HASH']; // 请求验证HASH
-        $time = $_SERVER['HTTP_X_MYQEE_SYSTEM_TIME']; // 请求验证时间
-        $rstr = $_SERVER['HTTP_X_MYQEE_SYSTEM_RSTR']; // 请求随机字符串
-        if (!$hash || !$time || !$rstr) return false;
+        $hash      = $_SERVER['HTTP_X_MYQEE_SYSTEM_HASH'];      // 请求验证HASH
+        $time      = $_SERVER['HTTP_X_MYQEE_SYSTEM_TIME'];      // 请求验证时间
+        $rstr      = $_SERVER['HTTP_X_MYQEE_SYSTEM_RSTR'];      // 请求随机字符串
+        $project   = $_SERVER['HTTP_X_MYQEE_SYSTEM_PROJECT'];   // 请求的项目
+        $path_info = $_SERVER['HTTP_X_MYQEE_SYSTEM_PATHINFO'];  // 请求的path_info
+        $isadmin   = $_SERVER['HTTP_X_MYQEE_SYSTEM_ISADMIN'];   // 是否ADMIN
+        $isrest    = $_SERVER['HTTP_X_MYQEE_SYSTEM_ISREST'];    // 是否RESTFul请求
+        if (!$hash || !$time || !$rstr || !$project || !$path_info) return false;
 
         // 请求时效检查
         if (microtime(1) - $time > 600)
@@ -2183,15 +2187,24 @@ abstract class Core_Core extends Bootstrap
         // 系统调用密钥
         $system_exec_pass = Core::config('system_exec_key');
 
+        $key = Core::config()->get('system_exec_key', 'system', true);
+
+        if (!$key || abs(TIME-$key['time'])>86400*10)
+        {
+            return false;
+        }
+
+        $other = $path_info .'_'. ($isadmin?1:0) .'_'. ($isrest?1:0) . $key['str'];
+
         if ($system_exec_pass && strlen($system_exec_pass) >= 10)
         {
             // 如果有则使用系统调用密钥
-            $newhash = sha1($body . $time . $system_exec_pass . $rstr);
+            $newhash = sha1($body . $time . $system_exec_pass . $rstr .'_'. $other);
         }
         else
         {
             // 没有，则用系统配置和数据库加密
-            $newhash = sha1($body . $time . serialize(Core::config('core')) . serialize(Core::config('database')) . $rstr);
+            $newhash = sha1($body . $time . serialize(Core::config('core')) . serialize(Core::config('database')) . $rstr .'_'. $other);
         }
 
         if ($newhash==$hash)
