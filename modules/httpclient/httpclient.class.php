@@ -55,19 +55,11 @@ class Module_HttpClient
     protected static $agent = '';
 
     /**
-     * @param string $type 指定驱动类型
+     * 初始化
      */
-    function __construct($type = null)
+    function __construct()
     {
-        if ($type)
-        {
-            $this->type = $type;
-        }
-        elseif (HttpClient::$default_type)
-        {
-            $this->type = HttpClient::$default_type;
-        }
-        elseif ( HttpClient::is_support_curl() )
+        if (HttpClient::is_support_curl())
         {
             $this->type = HttpClient::TYPE_CURL;
         }
@@ -80,12 +72,11 @@ class Module_HttpClient
     /**
      * 获取实例化对象
      *
-     * @param string $type
      * @return HttpClient
      */
-    public static function factory($type = null)
+    public static function factory()
     {
-        return new HttpClient($type);
+        return new HttpClient();
     }
 
     /**
@@ -309,7 +300,7 @@ class Module_HttpClient
      */
     public function driver()
     {
-        if ( null === $this->driver )
+        if (null === $this->driver)
         {
             $f = 'HttpClient_Driver_' . $this->type;
             $this->driver = new $f();

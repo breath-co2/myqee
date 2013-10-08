@@ -92,6 +92,13 @@ class Module_Cache
     const TYPE_ADV_HIT = 'renew_hit';
 
     /**
+     * 默认cache配置名
+     *
+     * @var string
+     */
+    const DEFAULT_CONFIG_NAME = 'default';
+
+    /**
      * 实例化对象
      * @var array
      */
@@ -133,10 +140,18 @@ class Module_Cache
     protected $session_mode = false;
 
     /**
+     * 返回实例化对象
+     *
+     * @param string $name 默认值为 Cache::DEFAULT_CONFIG_NAME
      * @return Cache
      */
-    public static function instance($name = 'default')
+    public static function instance($name = null)
     {
+        if (null===$name)
+        {
+            $name = Cache::DEFAULT_CONFIG_NAME;
+        }
+
         if (is_array($name))
         {
             $config_name = '_tmp_' . md5(serialize($name));
@@ -145,6 +160,7 @@ class Module_Cache
         {
             $config_name = $name;
         }
+
         if (!isset(Cache::$instances[$config_name]))
         {
             Cache::$instances[$config_name] = new Cache($name);
@@ -153,7 +169,7 @@ class Module_Cache
         return Cache::$instances[$config_name];
     }
 
-    public function __construct($name = 'default')
+    public function __construct($name = null)
     {
         $this->load_config($name);
 
@@ -192,7 +208,8 @@ class Module_Cache
     public function get($key)
     {
         static $is_no_cache = null;
-        if ( null===$is_no_cache )
+
+        if (null===$is_no_cache)
         {
             $is_no_cache = true === Core::debug()->profiler('nocached')->is_open();
         }
@@ -241,6 +258,20 @@ class Module_Cache
         }
     }
 
+
+    /**
+     * 获取数据后立即删除
+     *
+     * @param string $key
+     */
+    public function get_and_delete($key)
+    {
+        $rs = $this->get($key);
+        $this->delete($key);
+
+        return $rs;
+    }
+
     /**
      * 设置指定key的缓存数据
      *
@@ -282,6 +313,7 @@ class Module_Cache
         {
             $this->last_error_msg = $e->getMessage();
             $this->last_error_no  = $e->getCode();
+
             return false;
         }
     }
@@ -333,6 +365,7 @@ class Module_Cache
         {
             $this->last_error_msg = $e->getMessage();
             $this->last_error_no  = $e->getCode();
+
             return false;
         }
     }
@@ -351,6 +384,7 @@ class Module_Cache
         {
             $this->last_error_msg = $e->getMessage();
             $this->last_error_no  = $e->getCode();
+
             return false;
         }
     }
@@ -577,6 +611,11 @@ class Module_Cache
      */
     protected function load_config($name)
     {
+        if (null===$name)
+        {
+            $name = Cache::DEFAULT_CONFIG_NAME;
+        }
+
         if (is_array($name))
         {
             $this->config = $name;
@@ -600,6 +639,11 @@ class Module_Cache
      */
     protected function check_file_config($name)
     {
+        if (null===$name)
+        {
+            $name = Cache::DEFAULT_CONFIG_NAME;
+        }
+
         # 缓存类型为文件缓存
         $write_mode = Core::config('core.file_write_mode');
 
