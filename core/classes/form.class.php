@@ -12,9 +12,12 @@
  */
 class Core_Form
 {
-
     /**
-     * Generates an opening HTML form tag.
+     * 创建一个表单
+     *
+     * $add_token 参数为是否创建一个token验证隐藏表单，用于预防 CSRF 攻击
+     *
+     * !!! $add_token 功能适用于动态页面，而不能应用于有可能被缓存或HTML静态化的页面
      *
      *     // Form will submit back to the current page using POST
      *     echo Form::open();
@@ -27,21 +30,28 @@ class Core_Form
      *
      * @param   string  form action, defaults to the current request URI
      * @param   array   html attributes
+     * @param   boolean $add_token 是否添加token验证功能
      * @return  string
-     * @uses	HttpIO::instance
-     * @uses	URL::site
+     * @uses	Core::url
      * @uses	HTML::attributes
+     * @uses    Text::random
+     * @uses    Cache::set
+     * @uses    Text::rc4_encrypt
+     * @uses    Form::hidden
      */
-    public static function open($action = null, array $attributes = null)
+    public static function open($action = null, array $attributes = null, $add_token = true)
     {
-        if (strpos($action, '://') === false)
+        if (null!==$action)
         {
-            // Make the URI absolute
-            $action = Core::url($action);
-        }
+            if (false===strpos($action, '://'))
+            {
+                // Make the URI absolute
+                $action = Core::url($action);
+            }
 
-        // Add the form action to the attributes
-        $attributes['action'] = (string)$action;
+            // Add the form action to the attributes
+            $attributes['action'] = (string)$action;
+        }
 
         // Only accept the default character set
         $attributes['accept-charset'] = Core::$charset;
@@ -52,7 +62,17 @@ class Core_Form
             $attributes['method'] = 'post';
         }
 
-        return '<form' . HTML::attributes($attributes) . '>';
+        $str_token = '';
+
+        if ($add_token)
+        {
+            foreach (Form::get_token() as $key => $value)
+            {
+                $str_token .= Form::hidden($key, $value);
+            }
+        }
+
+        return '<form' . HTML::attributes($attributes) . '>' . $str_token;
     }
 
     /**
@@ -421,5 +441,125 @@ class Core_Form
         return '<label' . HTML::attributes($attributes) . '>' . $text . '</label>';
     }
 
+    /**
+     * 获取一个token的数据数组
+     *
+     * @return array
+     */
+    public static function get_token()
+    {
+        $key   = '_form_token/' . date('Ymd') .'/'. Text::random('distinct', 16);
+        $value = Text::random(null, 32);
 
+        $cache_time = (int)Core::config('form_token_cache_time', 0);
+
+        $token = array();
+        if (!$cache_time>0)
+        {
+            # 将value加密后传入表单
+            $token['value'] = Text::rc4_encrypt($value, null, $cache_time);
+        }
+        else
+        {
+            # 将value存在缓存中
+            Cache::instance(Core::config('form_token_cache_name'))->set($key, $value, $cache_time);
+        }
+
+        $token['key']  = Text::rc4_encrypt($key);
+        $token['hash'] = Form::get_token_hash($value, $key);
+
+        return $token;
+    }
+
+    /**
+     * 校验表单token
+     *
+     * 当使用 `Form::open()` 方法开启 token 后，可试用此方法在接受页面中校验token是否正确
+     *
+     * @return bool
+     */
+    public static function check_token()
+    {
+        if (HttpIO::METHOD=='GET')
+        {
+            if (!isset($_GET['__form_token__']))
+            {
+                return false;
+            }
+        }
+        else
+        {
+            if (!isset($_POST['__form_token__']))
+            {
+                return false;
+            }
+        }
+
+        if (!$_POST['__form_token__'] || !is_array($_POST['__form_token__']) || !isset($_POST['__form_token__']['key']) || !isset($_POST['__form_token__']['hash']))return false;
+
+        $cache_time = (int)Core::config('form_token_cache_time', 0);
+
+        $key = Text::rc4_decryption($_POST['__form_token__']['key']);
+        if (!$key || substr($key, 0, 12)!='_form_token/')
+        {
+            return false;
+        }
+
+        if (!$cache_time>0)
+        {
+            if (!isset($_POST['__form_token__']['value']))return false;
+
+            # 从表单中解密数据
+            $value = Text::rc4_decryption($_POST['__form_token__']['value']);
+        }
+        else
+        {
+            # 从缓存中获取
+            $value = Cache::instance(Core::config('form_token_cache_name'))->get($key);
+        }
+
+        if (!$value)return false;
+
+        if (Form::get_token_hash($value, $key)!=$_POST['__form_token__']['hash'])return false;
+
+        return true;
+    }
+
+
+    /**
+     * 删除相关token，避免被重复利用
+     *
+     * @return null
+     */
+    public static function delete_token()
+    {
+        $cache_time = (int)Core::config('form_token_cache_time', 0);
+        if (!$cache_time>0)
+        {
+            return null;
+        }
+
+        if (!isset($_POST['__form_token__']['key']))return null;
+
+        $key = Text::rc4_decryption($_POST['__form_token__']['key']);
+        if (!$key || substr($key, 0, 12)!='_form_token/')
+        {
+            return null;
+        }
+
+        # 从缓存中获取
+        Cache::instance(Core::config('form_token_cache_name'))->delete($key);
+    }
+
+
+    /**
+     * 根据一个字符串生成一个token hash
+     *
+     * @param string $str
+     * @return string
+     */
+    protected static function get_token_hash($str, $key)
+    {
+        return sha1('s$(2'. $str .'_'. $key .'$#&@dft24kwq' . Core::config('form_token_hash_key'));
+    }
 }

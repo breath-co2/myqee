@@ -343,9 +343,13 @@ abstract class Core_Core extends Bootstrap
         {
             $v = Core::$core_config;
         }
-        else
+        elseif (isset(Core::$config[$cname]))
         {
             $v = Core::$config[$cname];
+        }
+        else
+        {
+            return $default;
         }
 
         if ($c)foreach ($c as $i)
@@ -618,6 +622,17 @@ abstract class Core_Core extends Bootstrap
                     throw new Exception(__('Request Method Not Allowed.'), 405);
                 }
                 unset($ispublicmethod);
+
+                # POST 方式，自动CSRF判断
+                if (HttpIO::METHOD=='POST')
+                {
+                    $auto_check_post_method_referer = isset($controller->auto_check_post_method_referer)?$controller->auto_check_post_method_referer:Core::config('auto_check_post_method_referer', true);
+
+                    if ($auto_check_post_method_referer && !HttpIO::csrf_check())
+                    {
+                        throw new Exception(__('Not Acceptable.'), 406);
+                    }
+                }
 
                 if (isset($found['route']))
                 {

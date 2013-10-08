@@ -308,7 +308,7 @@ $config['asset_allow_suffix'] = 'js|css|jpg|jpeg|png|gif|bmp|pdf|html|htm|mp4|sw
  * HTML5自动跨越请求支持
  *
  * 开启后，如果遇到AJAX跨越请求，则会自动加上 Access-Control-Allow-Origin 的支持
- * 注意，只有支持HTML5的此协议的浏览器有用，IE6,7等浏览器这个
+ * 注意，只有支持HTML5的此协议的浏览器有用，IE6,7等浏览器不支持这个
  *
  *      header("Access-Control-Allow-Origin: http://.../');
  *
@@ -341,6 +341,76 @@ $config['hide_x_powered_by_header'] = false;
 
 
 
+
+
+
+
+//---------------------------------------------------------- CSRF 相关
+
+/**
+ * POST请求模式下自动检查引用页，如果是同主域名下的请求，将被通过，否则返回406错误
+ *
+ * 开启后将屏蔽所有非本域下URL的POST请求，建议开启，可有效避免 CSRF 攻击
+ *
+ * 自行检查的方法: `HttpIO::csrf_check()`, 若返回 `true` 则表示检查通过
+ *
+ * 若需要某个控制器关闭自动检查，在控制器里设置变量 `public $auto_check_post_method_referer = false` 即可，反之亦然，例如：
+ *
+ *      class Controller_Test extends Controller
+ *      {
+ *          // 设置不自动验证
+ *          public $auto_check_post_method_referer = false;
+ *
+ *          public function action_default()
+ *          {
+ *              echo 'hi';
+ *          }
+ *      }
+ *
+ * @see http://baike.baidu.com/view/1609487.htm
+ * @see http://www.nxadmin.com/web/924.html
+ * @return boolean
+ */
+$config['auto_check_post_method_referer'] = true;
+
+
+/**
+ * 在表单使用token时创建校验数据存放在服务器缓存中的时间，单位秒
+ *
+ * 设置成0表示禁用缓存保存校验数据，此时数据将随表单一起输出，为了提高安全请设置 `$config['form_token_hash_key']` 值
+ * 设置成0将不会对服务器造成缓存数据压力，但相对于把验证数据存在服务器安全性会差些，此时所以的校验将依赖 `$config['form_token_hash_key']`，并且存在在有效期内被重复利用的可能
+ *
+ * @var string
+ */
+$config['form_token_cache_time'] = 86400;
+
+
+/**
+ * 表单使用token时存放随机key的缓存配置名，默认null即 `Cache::DEFAULT_CONFIG_NAME` 的值
+ *
+ * 在 `Form::open('uri', array(), true)` 和 `Form::check_token()` 时使用到
+ *
+ * @var string
+ */
+$config['form_token_cache_name'] = null;
+
+
+/**
+ * 在表单使用token时创建hash值时用到的key
+ *
+ * @var string
+ */
+$config['form_token_hash_key'] = '';
+
+
+
+
+
+
+
+
+
+// ----------------------------------------------------------- 服务器同步
 
 /**
  * 文件保存同步模式
