@@ -738,4 +738,93 @@ abstract class Core_Text
         }
     }
 
-} // End text
+    /**
+     * 使用rc4优化版加密字符串
+     *
+     * @param string $string
+     * @param string $key 不传或null则用默认值
+     * @param int $expiry 设置有效期
+     */
+    public static function rc4_encrypt($string, $key = null, $expiry = 0)
+    {
+        return Text::rc4($string, null, $key);
+    }
+
+
+    /**
+     * 解密使用rc4优化版加密的字符串
+     *
+     * @param string $string
+     */
+    public static function rc4_decryption($string, $key = null)
+    {
+        return Text::rc4($string, true, $key);
+    }
+
+    /**
+     * 优化版rc4加密解密
+     *
+     * @param string $string
+     * @param string $is_decode
+     * @param string $key
+     * @param number $expiry
+     * @return string
+     */
+    protected static function rc4($string, $is_decode = true, $key = null, $expiry = 0)
+    {
+        $ckey_length = 4;
+        $key  = md5($key?$key:serialize(Core::config('database')).serialize(Core::config('cache')));
+        $keya = md5(substr($key, 0, 16));
+        $keyb = md5(substr($key, 16, 16));
+        $keyc = $ckey_length ? ($is_decode == true ? substr($string, 0, $ckey_length): substr(md5(microtime()), -$ckey_length)) : '';
+
+        $cryptkey = $keya.md5($keya.$keyc);
+        $key_length = strlen($cryptkey);
+
+        $string = $is_decode == true ? base64_decode(substr($string, $ckey_length)) : sprintf('%010d', $expiry ? $expiry + time() : 0) . substr(md5($string.$keyb), 0, 16) . $string;
+        $string_length = strlen($string);
+
+        $result = '';
+        $box = range(0, 255);
+
+        $rndkey = array();
+        for($i = 0; $i <= 255; $i++)
+        {
+            $rndkey[$i] = ord($cryptkey[$i % $key_length]);
+        }
+
+        for($j = $i = 0; $i < 256; $i++)
+        {
+            $j       = ($j + $box[$i] + $rndkey[$i]) % 256;
+            $tmp     = $box[$i];
+            $box[$i] = $box[$j];
+            $box[$j] = $tmp;
+        }
+
+        for($a = $j = $i = 0; $i < $string_length; $i++)
+        {
+            $a = ($a + 1) % 256;
+            $j = ($j + $box[$a]) % 256;
+            $tmp = $box[$a];
+            $box[$a] = $box[$j];
+            $box[$j] = $tmp;
+            $result .= chr(ord($string[$i]) ^ ($box[($box[$a] + $box[$j]) % 256]));
+        }
+
+        if($is_decode == true)
+        {
+            if((substr($result, 0, 10) == 0 || substr($result, 0, 10) - time() > 0) && substr($result, 10, 16) == substr(md5(substr($result, 26).$keyb), 0, 16))
+            {
+                return substr($result, 26);
+            }
+            else
+            {
+                return '';
+            }
+        }
+        else
+        {
+            return $keyc . str_replace('=', '', base64_encode($result));
+        }
+    }
+}
