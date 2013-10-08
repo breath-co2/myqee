@@ -40,6 +40,13 @@ class Module_Storage
      */
     const DRIVER_DATABASE = 'Database';
 
+    /**
+     * 默认配置名
+     *
+     * @var string
+     */
+    const DEFAULT_CONFIG_NAME = 'default';
+
 
     protected static $instances = array();
 
@@ -60,13 +67,16 @@ class Module_Storage
     /**
      * 返回数据库实例化对象
      *
-     * 支持 `Database::instance('mysqli://root:123456@127.0.0.1/myqee/');` 的方式
-     *
-     * @param string $config_name
+     * @param string $config_name 默认值为 Database::DEFAULT_CONFIG_NAME
      * @return Database
      */
-    public static function instance($config_name = 'default')
+    public static function instance($config_name = null)
     {
+        if (null===$config_name)
+        {
+            $config_name = Storage::DEFAULT_CONFIG_NAME;
+        }
+
         if (is_string($config_name))
         {
             $i_name = $config_name;
@@ -84,8 +94,13 @@ class Module_Storage
         return Storage::$instances[$i_name];
     }
 
-    public function __construct($config_name = 'default')
+    public function __construct($config_name = null)
     {
+        if (null===$config_name)
+        {
+            $config_name = Storage::DEFAULT_CONFIG_NAME;
+        }
+
         if (is_array($config_name))
         {
             $this->config = $config_name;
