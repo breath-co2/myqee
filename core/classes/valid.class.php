@@ -20,7 +20,7 @@ class Core_Valid
      */
     public static function not_empty($value)
     {
-        if ( is_object($value) && $value instanceof ArrayObject )
+        if (is_object($value) && $value instanceof ArrayObject)
         {
             // Get the array from the ArrayObject
             $value = $value->getArrayCopy();
@@ -102,7 +102,7 @@ class Core_Valid
      */
     public static function email($email, $strict = false)
     {
-        if ($strict === TRUE)
+        if ($strict === true)
         {
             $qtext = '[^\\x0d\\x22\\x5c\\x80-\\xff]';
             $dtext = '[^\\x0d\\x5b-\\x5d\\x80-\\xff]';
@@ -189,7 +189,7 @@ class Core_Valid
 
         // Check maximum length of the whole hostname
         // http://en.wikipedia.org/wiki/Domain_name#cite_note-0
-        if ( strlen($matches[1]) > 253 ) return false;
+        if (strlen($matches[1]) > 253) return false;
 
         // An extra check for the top level domain
         // It must start with a letter
@@ -205,7 +205,7 @@ class Core_Valid
      * @param   boolean  allow private IP networks
      * @return  boolean
      */
-    public static function ip($ip, $allow_private = TRUE)
+    public static function ip($ip, $allow_private = true)
     {
         // Do not allow reserved addresses
         $flags = FILTER_FLAG_NO_RES_RANGE;
@@ -227,22 +227,22 @@ class Core_Valid
      * @return  boolean
      * @uses    Validate::luhn
      */
-    public static function credit_card($number, $type = NULL)
+    public static function credit_card($number, $type = null)
     {
         // Remove all non-digit characters from the number
         if ( ($number = preg_replace('/\D+/', '', $number)) === '' ) return false;
 
-        if ( $type == NULL )
+        if ($type == null)
         {
             // Use the default type
             $type = 'default';
         }
-        elseif ( is_array($type) )
+        elseif (is_array($type))
         {
-            foreach ( $type as $t )
+            foreach ($type as $t)
             {
                 // Test each type for validity
-                if ( Valid::credit_card($number, $t) ) return TRUE;
+                if (Valid::credit_card($number, $t)) return true;
             }
 
             return false;
@@ -253,19 +253,19 @@ class Core_Valid
         // Check card type
         $type = strtolower($type);
 
-        if ( !isset($cards[$type]) ) return false;
+        if (!isset($cards[$type])) return false;
 
         // Check card number length
         $length = strlen($number);
 
         // Validate the card length by the card type
-        if ( !in_array($length, preg_split('/\D+/', $cards[$type]['length'])) ) return false;
+        if (!in_array($length, preg_split('/\D+/', $cards[$type]['length']))) return false;
 
         // Check card number prefix
-        if ( !preg_match('/^' . $cards[$type]['prefix'] . '/', $number) ) return false;
+        if (!preg_match('/^' . $cards[$type]['prefix'] . '/', $number)) return false;
 
         // No Luhn check required
-        if ( $cards[$type]['luhn'] == false ) return TRUE;
+        if ($cards[$type]['luhn'] == false) return true;
 
         return Valid::luhn($number);
     }
@@ -283,7 +283,7 @@ class Core_Valid
         // Converting to an integer may pass PHP_INT_MAX and result in an error!
         $number = (string)$number;
 
-        if ( !ctype_digit($number) )
+        if (!ctype_digit($number))
         {
             // Luhn can only be used on numbers!
             return false;
@@ -295,13 +295,13 @@ class Core_Valid
         // Checksum of the card number
         $checksum = 0;
 
-        for( $i = $length - 1; $i >= 0; $i -= 2 )
+        for($i = $length - 1; $i >= 0; $i -= 2)
         {
             // Add up every 2nd digit, starting from the right
             $checksum += substr($number, $i, 1);
         }
 
-        for( $i = $length - 2; $i >= 0; $i -= 2 )
+        for($i = $length - 2; $i >= 0; $i -= 2)
         {
             // Add up every 2nd digit doubled, starting from the right
             $double = substr($number, $i, 1) * 2;
@@ -336,7 +336,7 @@ class Core_Valid
     {
         $str = (string)$str;
 
-        if ( $utf8 === TRUE )
+        if ($utf8 === true)
         {
             return (bool)preg_match('/^\pL++$/uD', $str);
         }
@@ -355,7 +355,7 @@ class Core_Valid
      */
     public static function alpha_numeric($str, $utf8 = false)
     {
-        if ( $utf8 === TRUE )
+        if ($utf8 === true)
         {
             return (bool)preg_match('/^[\pL\pN]++$/uD', $str);
         }
@@ -374,7 +374,7 @@ class Core_Valid
      */
     public static function alpha_dash($str, $utf8 = false)
     {
-        if ( $utf8 === TRUE )
+        if ($utf8 === true)
         {
             $regex = '/^[-\pL\pN_]++$/uD';
         }
@@ -395,13 +395,13 @@ class Core_Valid
      */
     public static function digit($str, $utf8 = false)
     {
-        if ( $utf8 === TRUE )
+        if ($utf8 === true)
         {
             return (bool)preg_match('/^\pN++$/uD', $str);
         }
         else
         {
-            return (is_int($str) and $str >= 0) or ctype_digit($str);
+            return (is_int($str) && $str >= 0) || ctype_digit($str);
         }
     }
 
@@ -417,7 +417,7 @@ class Core_Valid
     public static function numeric($str)
     {
         // Get the decimal point for the current locale
-        list ( $decimal ) = array_values(localeconv());
+        list ($decimal) = array_values(localeconv());
 
         // A lookahead is used to make sure the string contains at least one digit (before or after the decimal point)
         return (bool)preg_match('/^-?+(?=.*[0-9])[0-9]*+' . preg_quote($decimal) . '?+[0-9]*+$/D', (string)$str);
@@ -433,7 +433,7 @@ class Core_Valid
      */
     public static function range($number, $min, $max)
     {
-        return ($number >= $min and $number <= $max);
+        return ($number >= $min && $number <= $max);
     }
 
     /**
@@ -447,7 +447,7 @@ class Core_Valid
      */
     public static function decimal($str, $places = 2, $digits = NULL)
     {
-        if ( $digits > 0 )
+        if ($digits > 0)
         {
             // Specific number of digits
             $digits = '{' . ((int)$digits) . '}';
