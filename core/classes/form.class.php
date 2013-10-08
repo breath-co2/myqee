@@ -68,7 +68,7 @@ class Core_Form
         {
             foreach (Form::get_token() as $key => $value)
             {
-                $str_token .= Form::hidden($key, $value);
+                $str_token .= Form::hidden('__form_token__['.$key.']', $value);
             }
         }
 
