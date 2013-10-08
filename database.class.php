@@ -47,6 +47,13 @@ class Module_Database extends Database_QueryBuilder
     const TYPE_POSTGRE  = 'Postgre';
 
     /**
+     * 默认配置名
+     *
+     * @var string
+     */
+    const DEFAULT_CONFIG_NAME = 'default';
+
+    /**
      * @var array Database instances
      */
     protected static $instances = array();
@@ -82,11 +89,11 @@ class Module_Database extends Database_QueryBuilder
     /**
      * 记录慢查询
      *
-     *   array
-     *   (
-     *       //    执行时的时间    耗时(单位毫秒)   查询语句
-     *       array(1351691389,   1200          ,'select * from test;'),
-     *   )
+     *     array
+     *     (
+     *         //    执行时的时间    耗时(单位毫秒)   查询语句
+     *         array(1351691389,   1200          ,'select * from test;'),
+     *     )
      *
      * @var array
      */
@@ -97,12 +104,17 @@ class Module_Database extends Database_QueryBuilder
      *
      * 支持 `Database::instance('mysqli://root:123456@127.0.0.1/myqee/');` 的方式
      *
-     * @param string $config_name
+     * @param string $config_name 默认值为 Database::DEFAULT_CONFIG_NAME
      * @return Database
      */
-    public static function instance($config_name = 'default')
+    public static function instance($config_name = null)
     {
-        if ( is_string($config_name) )
+        if (null===$config_name)
+        {
+            $config_name = Database::DEFAULT_CONFIG_NAME;
+        }
+
+        if (is_string($config_name))
         {
             $i_name = $config_name;
         }
@@ -115,6 +127,7 @@ class Module_Database extends Database_QueryBuilder
         {
             Database::$instances[$i_name] = new Database($config_name);
         }
+
         return Database::$instances[$i_name];
     }
 
@@ -123,12 +136,17 @@ class Module_Database extends Database_QueryBuilder
      *
      * 支持 `new Database('mysqli://root:123456@127.0.0.1/myqee/');` 的方式
      *
-     * @param   array  column list
+     * @param string $config_name 默认值为 Database::DEFAULT_CONFIG_NAME
      * @return  void
      */
-    public function __construct($config_name = 'default')
+    public function __construct($config_name = null)
     {
-        if ( is_array($config_name) )
+        if (null===$config_name)
+        {
+            $config_name = Database::DEFAULT_CONFIG_NAME;
+        }
+
+        if (is_array($config_name))
         {
             $this->config = $config_name;
         }
@@ -152,7 +170,8 @@ class Module_Database extends Database_QueryBuilder
         }
 
         $this->config['charset'] = strtoupper($this->config['charset']);
-        if ( !isset($this->config['auto_change_charset']) )
+
+        if (!isset($this->config['auto_change_charset']))
         {
             $this->config['auto_change_charset'] = false;
         }
@@ -169,12 +188,13 @@ class Module_Database extends Database_QueryBuilder
         }
 
         $driver = $this->config['type'];
-        if ( !$driver )
+        if (!$driver)
         {
             $driver = 'MySQL';
         }
         $driver = 'Database_Driver_' . $driver;
-        if ( !class_exists($driver, true) )
+
+        if (!class_exists($driver, true))
         {
             throw new Exception('Database Driver:' . $driver . ' not found.');
         }
@@ -184,7 +204,7 @@ class Module_Database extends Database_QueryBuilder
             throw new Exception('Database connection not set.');
         }
 
-        if ( is_string($this->config['connection']) )
+        if (is_string($this->config['connection']))
         {
             $this->config['connection'] = Database::parse_dsn($this->config['connection']);
         }
