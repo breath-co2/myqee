@@ -801,6 +801,38 @@ abstract class Core_HttpIO
 
 
     /**
+     * CSRF 检测
+     *
+     * 同一个主域名下的请求将返回 `true` 否则返回 `false`
+     *
+     * @return boolean
+     */
+    public static function csrf_check()
+    {
+        if (!$_SERVER['HTTP_REFERER'])
+        {
+            return false;
+        }
+
+        $info = @parse_url($_SERVER['HTTP_REFERER']);
+        if (!$info)return false;
+
+        $host = $info['host'];
+
+        if ($_SERVER['HTTP_HOST']==$host)return true;
+
+        if (HttpIO::get_primary_domain($_SERVER['HTTP_HOST']) == HttpIO::get_primary_domain($host))
+        {
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
+
+
+    /**
      * 根据控制器设置参数
      *
      * @param Controller $controller
