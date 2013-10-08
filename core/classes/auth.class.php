@@ -27,6 +27,14 @@ class Core_Auth
     const DRIVER_FILE = 'File';
 
     /**
+     * 默认配置名
+     *
+     * @var string
+     */
+    const DEFAULT_CONFIG_NAME = 'default';
+
+
+    /**
      * 当前配置
      *
      * @var array
@@ -36,29 +44,48 @@ class Core_Auth
     protected $config_name;
 
     /**
-     * @var Auth
+     * @var array
      */
-    protected static $instance;
+    protected static $instances = array();
 
     protected static $user_info = array();
 
     /**
      * @return Auth
      */
-    public static function instance($config_name='default')
+    public static function instance($config_name=null)
     {
-        if (null===Auth::$instance)
+        if (null===$config_name)
         {
-            // Create a new instance
-            Auth::$instance = new Auth($config_name);
+            $config_name = Auth::DEFAULT_CONFIG_NAME;
         }
-        return Auth::$instance;
+
+        if (is_string($config_name))
+        {
+            $i_name = $config_name;
+        }
+        else
+        {
+            $i_name = '.config_'.md5(serialize($config_name));
+        }
+
+        if (!isset(Auth::$instances[$i_name]))
+        {
+            Auth::$instances[$i_name] = new Auth($config_name);
+        }
+
+        return Auth::$instances[$i_name];
     }
 
-    public function __construct($config_name='default')
+    public function __construct($config_name=null)
     {
+        if (null===$config_name)
+        {
+            $config_name = Auth::DEFAULT_CONFIG_NAME;
+        }
+
         $this->config_name = $config_name;
-        $this->config = Core::config('auth.'.$config_name);
+        $this->config      = Core::config('auth.'.$config_name);
     }
 
     /**
@@ -78,7 +105,7 @@ class Core_Auth
             throw new Exception(__('The user does not exist'));
         }
 
-        if ( $member->check_password($password) )
+        if ($member->check_password($password))
         {
             return $member;
         }
@@ -98,22 +125,33 @@ class Core_Auth
     {
         if (!isset(Auth::$user_info[$this->config_name][$username]))
         {
-            if ( $this->config['driver']==Auth::DRIVER_DATABASE )
+            if ($this->config['driver']==Auth::DRIVER_DATABASE)
             {
                 # 数据库类型
-                $tables = $this->config['tablename'];
-                $user_field = $this->config['username_field'];
-                $password_field = $this->config['password_field'];
-                $data = Database::instance($this->config['database'])
-                ->from($tables)
-                ->where($user_field,$username)
-                ->limit(1)
-                ->get()
-                ->current();
+                $tables         = $this->config['tablename'];
+                $user_field     = $this->config['username_field']?$this->config['username_field']:'username';
+                $password_field = $this->config['password_field']?$this->config['password_field']:'password';
+                $data           = Database::instance($this->config['database'])->from($tables)->where($user_field, $username)->limit(1)->get()->current();
             }
-            elseif ( $this->config['driver']==Auth::DRIVER_FILE )
+            elseif ($this->config['driver']==Auth::DRIVER_FILE)
             {
-                //TODO 文件格式
+                $file = DIR_DATA . 'auth-data-of-project-' . Core::$project . '.json';
+                if (is_file($file))
+                {
+                    $data = @json_decode(file_get_contents($file), true);
+                    if ($data && isset($data[$username]))
+                    {
+                        $data = $data[$username];
+                    }
+                    else
+                    {
+                        $data = array();
+                    }
+                }
+                else
+                {
+                    $data = array();
+                }
             }
 
             if ($data)
@@ -123,7 +161,7 @@ class Core_Auth
             }
             else
             {
-                Auth::$user_info[$this->config_name][$username] = False;
+                Auth::$user_info[$this->config_name][$username] = false;
             }
         }
 
