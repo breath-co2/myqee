@@ -1,3 +1,26 @@
+### 2013-10-08
+
+* 表单完善，增加token的输出和校验功能，Core支持自动csrf攻击防御，默认配置完善 - [Link](https://github.com/breath-co2/myqee/commit/53230505cc783af28d32fee8b6fc07fc44611d91) [Link](https://github.com/breath-co2/myqee/commit/70e556590f364e05aca20506ab0422b29c583bb0)
+* 增加 `HttpIO::csrf_check()` 方法 - [Link](https://github.com/breath-co2/myqee/commit/cc686516e8fad2f8b3a4188f3d4d85a77d64ce66)
+* 完善对默认配置名称的设置，可以直接通过扩展对象的常量来达到修改default的目的 - [Link](https://github.com/breath-co2/myqee/commit/410dcbcbb51e0659ff625f3ec285ef15bffbc436)
+* 增加 rc4 的加密和解密方法 - [Link](https://github.com/breath-co2/myqee/commit/560014566e473c11c1ff8224e0c5943dd964aa9e)
+* `Auth` 完善文件格式和对象的读取 - [Link](https://github.com/breath-co2/myqee/commit/f7c4c5a26030b800dc7a12f7d104d2a64f458133)
+
+
+### 2013-09-29
+
+* 系统内部请求完善，避免某些代理环境下读取失败的问题，内部请求验证完善，除固定key外增加内部调用动态key，每24小时重新生成，保证系统完全可靠 - [Link](https://github.com/breath-co2/myqee/commit/529a1659bbcbddbbfcab3ad66305407ac729ad8b)
+* `HttpCall` 内部调用的配置移到根目录的配置中 - [Link](https://github.com/breath-co2/myqee/commit/c37517226f5feb2112e7e3096c3df477f0c2f206) [Link](https://github.com/breath-co2/myqee/commit/722c1365a978a173e94fe2b5ad5c95269f449f7a)
+* 动态配置 `Core::config()` 对象完善，将不同type的数据分开读取，分开缓存，这样可以避免日积月累配置多了导致程序读取慢的问题，可以自由规划好type - [Link](https://github.com/breath-co2/myqee/commit/70c50a3ca8306584b01e0532bacaf3b74f90bc72)
+
+
+### 2013-09-24
+
+* 完善assets-dev控制器对其它文件的操作，可直接复制到目标目录 - [Link](https://github.com/breath-co2/myqee/commit/3f3805e20ed186eb0f6267f5f38c0dd8f506bbe1)
+* 完善 `Core::find_file()` 获取自定义目录文件夹 - [Link](https://github.com/breath-co2/myqee/commit/04791671b2d56b1bc9cbd4bd2642da5ee9138c50)
+* 完善assets-dev控制器对其它文件的操作，可直接复制到目标目录 - [Link](https://github.com/breath-co2/myqee/commit/3f3805e20ed186eb0f6267f5f38c0dd8f506bbe1)
+
+
 ### 2013-09-24
 
 * 开发版assets实时输出控制器完善 - [Link](https://github.com/breath-co2/myqee/commit/9144c95e20de03e309e172dee22f862a41fcceb9)
