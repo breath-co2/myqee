@@ -183,9 +183,10 @@ class Module_Storage_Driver_Swift extends Storage_Driver
      *              'host'              => 'localhost',     // 服务器IP或域名
      *              'user'              => 'username',      // 用户名
      *              'pass'              => 'password',      // 密码(key)
+     *              'warehouses'        => 'mytest',        // 储存仓库，类似数据库的库，可不设置，默认为 default
+     *              // 一下是token接口为v2.0的时候必须
      *              'tenant_name'       => 'default',       // Tenant 名称
      *              'region'            => 'test',          // Region
-     *              'warehouses'        => 'mytest',        // 储存仓库，类似数据库的库，可不设置，默认为 default
      *              // 以下为可选参数
      *              'https'             => true,            // true || false , 默认 false
      *              'token_api_version' => 'v2.0',          // 版本，不设置则默认 v2.0
