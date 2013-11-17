@@ -25,9 +25,10 @@ $dir_type   = $args[2];
 $file       = $args[3];
 
 
-if ($type=='core')
+
+if ($type=='core' || $type=='module')
 {
-    # 核心类库，不用特别处理，已经加载
+    # 不用特别处理，已经加载
 }
 else if (substr($type, 0, 8)=='project:')
 {

@@ -29,6 +29,12 @@ function __($str, $lang=null)
         $lang = $current_lang;
     }
 
+    if (is_array($str))
+    {
+        if (isset($str[$lang]))return $str[$lang];
+        return current($str[$lang]);
+    }
+
     if (isset($config_i18n[$lang][$str]))return $config_i18n[$lang][$str];
 
     return $str;
@@ -52,23 +58,8 @@ function get_base_class_name($class_name, $tolower = true)
     {
         $class_name = strtolower($class_name);
     }
-    $class_name_array = explode('_', $class_name, 2);
 
-    if (strtolower($class_name_array[0])=='core' && count($class_name_array)>1)
-    {
-        # 系统类库
-        $base_class_name = $class_name_array[1];
-    }
-    else if (preg_match('#^library_((?:[a-z0-9]+)_(?:[a-z0-9]+))_([a-z0-9_]+)$#i', $class_name, $m))
-    {
-        $base_class_name = $m[2];
-    }
-    else
-    {
-        $base_class_name = $class_name;
-    }
-
-    return $base_class_name;
+    return preg_replace('#^(core_|module_|library_[a-z0-9]+_[a-z0-9]+)#i', '', $class_name);
 }
 
 
@@ -702,6 +693,8 @@ class Manual
 
     private $projects = array();
 
+    private $modules = array();
+
     /**
      * 全部文件列表
      *
@@ -764,42 +757,42 @@ class Manual
     {
         $this->groups = array
         (
-            'manual' => array
-            (
-                'type'          => 'manual',
-                'out_dir'       => '',
-                'dir'           => DIR_MANUAL,
-                'base_href'     => '',
-                'title'         => 'Manual',
-                'top_menu_text' => 'Welecome',
-                'class_ns'      => '',
-                'class_ns_len'  => 0,
-                'key'           => 'manual',
-            ),
-            'core' => array
-            (
-                'type'          => 'core',
-                'out_dir'       => 'core/',
-                'dir'           => DIR_SYSTEM.'core/',
-                'base_href'     => '../',
-                'title'         => 'Core manual',
-                'top_menu_text' => 'Core manual',
-                'class_ns'      => 'Core_',
-                'class_ns_len'  => 5,
-                'key'           => 'core',
-            ),
-            'team' => array
-            (
-                'type'          => 'team',
-                'out_dir'       => 'team/',
-                'dir'           => DIR_SYSTEM.'team-library/',
-                'base_href'     => '../',
-                'title'         => 'Team library manual',
-                'top_menu_text' => 'Team library manual',
-                'class_ns'      => '',
-                'class_ns_len'  => 0,
-                'key'           => 'team',
-            ),
+            // 'manual' => array
+            // (
+            //     'type'          => 'manual',
+            //     'out_dir'       => '',
+            //     'dir'           => DIR_MANUAL,
+            //     'base_href'     => '',
+            //     'title'         => 'Manual',
+            //     'top_menu_text' => 'Welecome',
+            //     'class_ns'      => '',
+            //     'class_ns_len'  => 0,
+            //     'key'           => 'manual',
+            // ),
+            // 'core' => array
+            // (
+            //     'type'          => 'core',
+            //     'out_dir'       => 'core/',
+            //     'dir'           => DIR_SYSTEM.'core/',
+            //     'base_href'     => '../',
+            //     'title'         => 'Core manual',
+            //     'top_menu_text' => 'Core manual',
+            //     'class_ns'      => 'Core_',
+            //     'class_ns_len'  => 5,
+            //     'key'           => 'core',
+            // ),
+            // 'team' => array
+            // (
+            //     'type'          => 'team',
+            //     'out_dir'       => 'team/',
+            //     'dir'           => DIR_SYSTEM.'team-library/',
+            //     'base_href'     => '../',
+            //     'title'         => 'Team library manual',
+            //     'top_menu_text' => 'Team library manual',
+            //     'class_ns'      => '',
+            //     'class_ns_len'  => 0,
+            //     'key'           => 'team',
+            // ),
         );
 
 
@@ -837,6 +830,17 @@ class Manual
                 'file_suffix'  => '.orm.php',
                 'api_file'     => 'api_orm',
                 'title'        => 'ORM List',
+            ),
+            'module' => array
+            (
+                'dir_name'     => 'Modules',
+                'dir'          => '',
+                'type'         => 'module',
+                'class_prefix' => 'Module_',
+                'out_prefix'   => 'module.',
+                'file_suffix'  => '.class.php',
+                'api_file'     => 'api_modules',
+                'title'        => 'Modules API List',
             ),
             'controller' => array
             (
@@ -884,97 +888,128 @@ class Manual
             ),
         );
 
-        # 读取项目配置
-        if (is_file(DIR_SYSTEM.'config.php'))
-        {
-            $site_config = array();
-            include_config_file($site_config, DIR_SYSTEM.'config.php');
-
-            $projects_config = $site_config['projects'];
-            if (is_array($projects_config))
-            {
-                $tmp = array();
-                foreach ($projects_config as $value)
-                {
-                    $tmp[$value['dir']] = $value['name'];
-                }
-                $projects_config = $tmp;
-                unset($tmp);
-            }
-            else
-            {
-                $projects_config = array();
-            }
-        }
-        else
-        {
-            $projects_config = array();
-        }
 
 
-        $project_dir = realpath(DIR_SYSTEM.'projects/');
-        if ($project_dir)foreach (glob($project_dir.'/*') as $value)
+        $module_dir = realpath(DIR_SYSTEM.'modules/');
+        if ($module_dir)foreach (glob($module_dir.'/*') as $value)
         {
             if ($value=='.'||$value=='..')continue;
             if (is_dir($value))
             {
+                if (!is_file($value.'/composer.json'))continue;
+                $config   = @json_decode(file_get_contents($value.'/composer.json'), true);
                 $basename = basename($value);
-                $this->projects[$basename] = isset($projects_config[$basename])?$projects_config[$basename]:$basename;
+                $title    = $config['myqee']['name'] ? $config['myqee']['name'] : 'Module '. ucfirst($basename);
 
-                $this->groups['project.'.$basename] = array
+                $this->modules[$basename] = $title;
+
+                $this->groups['module.'.$basename] = array
                 (
-                    'type'          => 'project',
-                    'project'       => $basename,
-                    'out_dir'       => 'project/'.$basename.'/',
+                    'type'          => 'module',
+                    'module'        => $basename,
+                    'out_dir'       => 'module/'.$basename.'/',
                     'dir'           => $value.'/',
                     'base_href'     => '../../',
-                    'title'         => 'Project: ' .$basename,
-                    'top_menu_text' => 'Project manual',
-                    'class_ns'      => '',
-                    'class_ns_len'  => 0,
-                    'key'           => 'project.'.$basename,
+                    'title'         => $title,
+                    'top_menu_text' => 'Module manual',
+                    'class_ns'      => 'Module_' . $basename .'_',
+                    'class_ns_len'  => strlen('Module_' . $basename),
+                    'key'           => 'module.'.$basename,
                 );
             }
         }
 
 
-        $lib_dir = realpath(DIR_SYSTEM.'libraries/');
-        if ($lib_dir)foreach (glob($lib_dir.'/*') as $value)
-        {
-            if ($value=='.'||$value=='..')continue;
-            if (is_dir($value))
-            {
-                $dir1 = basename($value);
-                $this->libraries[$dir1] = array();
+        // # 读取项目配置
+        // if (is_file(DIR_SYSTEM.'config.php'))
+        // {
+        //     $site_config = array();
+        //     include_config_file($site_config, DIR_SYSTEM.'config.php');
 
-                foreach (glob($value.'/*') as $dir2)
-                {
-                    if ($dir2=='.'||$dir2=='..')continue;
-                    if (is_dir($dir2))
-                    {
-                        if (!is_file($dir2.'/.myqeelibrary'))continue;
+        //     $projects_config = $site_config['projects'];
+        //     if (is_array($projects_config))
+        //     {
+        //         $tmp = array();
+        //         foreach ($projects_config as $value)
+        //         {
+        //             $tmp[$value['dir']] = $value['name'];
+        //         }
+        //         $projects_config = $tmp;
+        //         unset($tmp);
+        //     }
+        //     else
+        //     {
+        //         $projects_config = array();
+        //     }
+        // }
+        // else
+        // {
+        //     $projects_config = array();
+        // }
+        // $project_dir = realpath(DIR_SYSTEM.'projects/');
+        // if ($project_dir)foreach (glob($project_dir.'/*') as $value)
+        // {
+        //     if ($value=='.'||$value=='..')continue;
+        //     if (is_dir($value))
+        //     {
+        //         $basename = basename($value);
+        //         $title = $this->projects[$basename] = isset($projects_config[$basename])?$projects_config[$basename]:$basename;
 
-                        $dir2 = basename($dir2);
-                        $this->libraries[$dir1][] = $dir2;
+        //         $this->groups['project.'.$basename] = array
+        //         (
+        //             'type'          => 'project',
+        //             'project'       => $basename,
+        //             'out_dir'       => 'project/'.$basename.'/',
+        //             'dir'           => $value.'/',
+        //             'base_href'     => '../../',
+        //             'title'         => $title,
+        //             'top_menu_text' => 'Project manual',
+        //             'class_ns'      => '',
+        //             'class_ns_len'  => 0,
+        //             'key'           => 'project.'.$basename,
+        //         );
+        //     }
+        // }
 
-                        $this->groups['library.'.$dir1.'.'.$dir2] = array
-                        (
-                            'type'          => 'library',
-                            'library'       => $dir1.'.'.$dir2,
-                            'out_dir'       => 'library/'.$dir1.'/'.$dir2.'/',
-                            'base_href'     => '../../../',
-                            'dir'           => $dir2.'/',
-                            'title'         => 'library.'.$dir1.'.'.$dir2,
-                            'top_menu_text' => 'Libray manual',
-                            'class_ns'      => 'library_'.$dir1.'_'.$dir2.'_',
-                            'class_ns_len'  => strlen('library_'.$dir1.'_'.$dir2.'_'),
-                            'key'           => 'library.'.$dir1.'.'.$dir2,
-                        );
-                    }
-                }
-            }
-        }
 
+        // $lib_dir = realpath(DIR_SYSTEM.'libraries/');
+        // if ($lib_dir)foreach (glob($lib_dir.'/*') as $value)
+        // {
+        //     if ($value=='.'||$value=='..')continue;
+        //     if (is_dir($value))
+        //     {
+        //         $dir1 = basename($value);
+        //         $this->libraries[$dir1] = array();
+
+        //         foreach (glob($value.'/*') as $dir2)
+        //         {
+        //             if ($dir2=='.'||$dir2=='..')continue;
+        //             if (is_dir($dir2))
+        //             {
+        //                 if (!is_file($dir2.'/composer.json'))continue;
+        //                 $config = @json_decode(file_get_contents($dir2.'/composer.json'), true);
+        //                 if (!$config)continue;
+        //                 $dir2 = basename($dir2);
+        //                 $title = $config['myqee']['name'] ? $config['myqee']['name'] : 'Libray ' . $dir2;
+
+        //                 $this->libraries[$dir1][] = $dir2;
+        //                 $this->groups['library.'.$dir1.'.'.$dir2] = array
+        //                 (
+        //                     'type'          => 'library',
+        //                     'library'       => $dir1.'.'.$dir2,
+        //                     'out_dir'       => 'library/'.$dir1.'/'.$dir2.'/',
+        //                     'base_href'     => '../../../',
+        //                     'dir'           => $dir2.'/',
+        //                     'title'         => $title,
+        //                     'top_menu_text' => 'Libray manual',
+        //                     'class_ns'      => 'library_'.$dir1.'_'.$dir2.'_',
+        //                     'class_ns_len'  => strlen('library_'.$dir1.'_'.$dir2.'_'),
+        //                     'key'           => 'library.'.$dir1.'.'.$dir2,
+        //                 );
+        //             }
+        //         }
+        //     }
+        // }
 
         $current_lang = '';
         $config = @parse_ini_file(dirname(__FILE__).'/config.ini' , true);
@@ -1319,17 +1354,6 @@ EOF;
             # 菜单文件忽略
             if ($filename=='menu')continue;
 
-            if ($filename=='index')
-            {
-                $have_index = true;
-                $tmp_index_html = '';
-            }
-            if (!$have_index)
-            {
-                # 首页索引临时文件内容
-                $tmp_index_html .= " * [{$group['out_dir']}{$dir}{$filename}.html]({$filename}.html)\n";
-            }
-
             $content       = file_get_contents($file);
             $title         = $this->get_title($content);
             $tmp_file      = $out_dir.$filename.'.md';
@@ -1350,8 +1374,60 @@ EOF;
                 'out_dir'       => $out_dir,
                 'file_type'     => 'file',
             );
+
+            if ($filename=='index')
+            {
+                $have_index = true;
+                $tmp_index_html = '';
+            }
+            if (!$have_index)
+            {
+                # 首页索引临时文件内容
+                $tmp_index_html .= " * [{$group['out_dir']}{$dir}{$filename}.html]({$filename}.html) - {$title}\n";
+            }
         }
 
+        if (!$have_index)
+        {
+            // 处理类库、模块README.md文件
+            if ($dir=='' && preg_match('#^(core|team|module|library\.([a-z0-9]+))\.([a-z0-9]+)$#', $group_key, $m))
+            {
+                // 模块，读取模块的 README.md
+                $doc_file = DIR_SYSTEM . ($m[1]=='core'?'core':($m[1]=='team'?'team-library':($m[1]=='module'?'modules':'libraries'.DS.$m[2]))) . DS . $m[3] . DS . 'README.md';
+
+                if (is_file($doc_file))
+                {
+                    // $this->files[$group['out_dir'].$dir.'index.md'][$lang] = array
+                    // (
+                    //     'filename'      => 'index',
+                    //     'type'          => $group['type'],
+                    //     'group_key'     => $group_key,
+                    //     'title'         => 'Module ' . substr($group_key, 7),
+                    //     'mtime'         => filemtime($doc_file),
+                    //     'file'          => $doc_file,
+                    //     'dir'           => $dir,
+                    //     'out_dir'       => $out_dir,
+                    // );
+
+                    $content = file_get_contents($doc_file);
+
+                    $this->files[$group['out_dir'].$dir.'index.md'][$lang] = array
+                    (
+                        'filename'      => 'index',
+                        'type'          => $group['type'],
+                        'group_key'     => $group_key,
+                        'title'         => $this->get_title($content),
+                        'mtime'         => 0,
+                        'dir'           => $dir,
+                        'out_dir'       => $out_dir,
+                        'file_type'     => 'content',
+                        'content'       => $content,
+                    );
+
+                    $have_index = true;
+                }
+            }
+        }
 
         if (!$have_index)
         {
@@ -1397,8 +1473,21 @@ EOF;
         # 手册目录没有API
         if ($group['type']=='manual')return;
 
+        if ($group['type']=='module')
+        {
+            $all_class_dir_setting = array
+            (
+                'module' => $this->all_class_dir_setting['module'],
+            );
+        }
+        else
+        {
+            $all_class_dir_setting = $this->all_class_dir_setting;
+            unset($all_class_dir_setting['module']);
+        }
+
         $all_api_file = array();
-        foreach ($this->all_class_dir_setting as $no => $dir_setting)
+        foreach ($all_class_dir_setting as $no => $dir_setting)
         {
             if (!$all_api_file[$dir_setting['api_file']][$no])$all_api_file[$dir_setting['api_file']][$no] = array();
             $api_list_file = $group['type'].'/'.$dir_setting['api_file'].'.md';
@@ -1502,13 +1591,12 @@ EOF;
         # 文件名后缀
         $ext    = $dir_setting['file_suffix'];
 
-        $full_dir = $group['dir'] .$dir_setting['dir'].'/'. $dir;
+        $full_dir = rtrim($group['dir'] .$dir_setting['dir'], '/').'/'. $dir;
 
         if (!is_dir($full_dir))
         {
             return;
         }
-
 
         $ext_len = strlen($ext);
         $api_sub_menu_list = array();
@@ -1574,7 +1662,7 @@ EOF;
                 // bootstrap
                 $filename = strtolower(basename($file, '.php'));
             }
-            elseif (substr($file, -$ext_len)!=$ext)
+            elseif (substr($file, -$ext_len)!=$ext || substr(basename($file), 0, 1)=='_')
             {
                 continue;
             }
@@ -1582,6 +1670,15 @@ EOF;
             {
                 # 文件名
                 $filename = strtolower(basename($file, $ext));
+
+                if ($dir_setting['type']=='module')
+                {
+                    $current_module = substr($group_key, 7);
+                    if ($dir=='' && $filename!=$current_module)
+                    {
+                        $dir = $current_module . '/';
+                    }
+                }
             }
 
             # 处理ORM
@@ -1686,7 +1783,7 @@ EOF;
 
         $tmp_file = $group['type'] .'/'. $tmp_dir . $tmp_name .'.md';
 
-        if ($group['type']=='project' || $filename=='bootstrap')
+        if (in_array($group['type'], array('project', 'module')) || $filename=='bootstrap')
         {
             $class_name = strtolower($title);
         }
@@ -2010,6 +2107,7 @@ EOF;
 
             $exec = (DS==='\\'?'php.exe':'php') .' '. DIR_MANUAL .'bin/lib/api_get_info.php '. $group_type .' '. $base_class_name .' '. $dir_type . ($file?' '.escapeshellarg($file):'');
 
+            echo $exec."\n";
             $data = shell_exec($exec);
 
             $this->api_data[$group_type][$class_name] = array();
@@ -2574,12 +2672,14 @@ EOF;
 
         # 导出变量名，给header.html和footer.html用
         $config       = $this->config;
+        $modules      = $this->modules;
         $projects     = $this->projects;
         $libraries    = $this->libraries;
         $parent_menu  = $this->parent_menu;
         $type         = $group['type'];
         $library      = $group['library'];
         $project      = $group['project'];
+        $module       = $group['module'];
         $menu_html    = $this->get_menu_html($lang, $group, $file_data['dir']);
 
         # 头文件
@@ -2644,6 +2744,13 @@ EOF;
                 $api_menu = '';
 
                 $group_key = $group['key'];
+
+                if ($group['type']=='module')
+                {
+                    // 增加Module的主类库菜单
+                    $api_menu .= "* [Module_".ucfirst(substr($group_key, 7))."]({$group_key}/api.html)\n";
+                }
+
                 if ($this->api_count[$group_key])foreach($this->api_count[$group_key] as $type => $num)
                 {
                     if (!$num>0)continue;

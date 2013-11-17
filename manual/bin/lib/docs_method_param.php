@@ -83,7 +83,8 @@ class _Docs_Method_Param extends _Docs
 
         if ($this->data['default'])
         {
-            $display .= '= ' . var_export($this->param->getDefaultValue(), true);
+            $v = $this->param->getDefaultValue();
+            $display .= '= ' . (null===$v?'null':var_export($v, true));
         }
 
         return $display;

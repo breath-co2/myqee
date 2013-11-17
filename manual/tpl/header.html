@@ -51,12 +51,34 @@ seajs.use('bootstrap/js/bootstrap.min.js');
             <ul class="nav">
                 <li<?php if ($type=='manual')echo ' class="active"';?>><a href="<?php echo $base_href;?>index.html"><?php echo __('Manual index');?></a></li>
                 <li<?php if ($type=='core')echo ' class="active"';?>><a href="<?php echo $base_href;?>core/index.html"><?php echo __('Core manual');?></a></li>
+                <?php
+                if ($modules)
+                {
+                ?>
+                <li class="dropdown<?php if ($type=='modules')echo ' active';?>">
+                    <a href="#" class="dropdown-toggle" data-toggle="dropdown"><?php echo __('Module manual');?> <b class="caret"></b></a>
+                    <ul class="dropdown-menu">
+                    <?php
+                    foreach ($modules as $key => $value)
+                    {
+                        echo '<li'.($module==$value?'  class="active"':'').'><a href="'.$base_href.'module/'.$key.'/index.html">'.(is_array($value)?($value[$lang]?$value[$lang]:current($value)):$value).'</a></li>';
+                    }
+                    ?>
+                    </ul>
+                </li>
+                <?php
+                }
+
+                if ($libraries)
+                {
+                ?>
                 <li class="dropdown<?php if ($type=='library')echo ' active';?>">
                     <a href="javascript:" class="dropdown-toggle" data-toggle="dropdown"><?php echo __('Libray manual');?> <b class="caret"></b></a>
                     <ul class="dropdown-menu">
                     <?php
-                    if ($libraries)foreach ($libraries as $lib => $libdir)
+                    foreach ($libraries as $lib => $libdir)
                     {
+                        if (!$libdir)continue;
                         $current_lib = current($libdir);
                         echo '<li class="dropdown-submenu" tabindex="-1"><a href="'.$base_href.'library/'.$lib.'/'.$current_lib.'/index.html">'.$lib.'</a>';
                         echo '<ul class="dropdown-menu">';
@@ -70,6 +92,7 @@ seajs.use('bootstrap/js/bootstrap.min.js');
                     </ul>
                 </li>
                 <?php
+                }
                 if ($projects)
                 {
                 ?>
@@ -79,7 +102,7 @@ seajs.use('bootstrap/js/bootstrap.min.js');
                     <?php
                     foreach ($projects as $key => $value)
                     {
-                        echo '<li'.($project==$value?'  class="active"':'').'><a href="'.$base_href.'project/'.$key.'/index.html">'.$value.'</a></li>';
+                        echo '<li'.($project==$value?'  class="active"':'').'><a href="'.$base_href.'project/'.$key.'/index.html">'.(is_array($value)?($value[$lang]?$value[$lang]:current($value)):$value).'</a></li>';
                     }
                     ?>
                     </ul>
