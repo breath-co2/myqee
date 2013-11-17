@@ -12,6 +12,14 @@
       "homepage": "http://www.queyang.com/"
     }
   ],
+  "myqee": {
+    "name": {
+      "en": "Module OOP&ORM",
+      "zh-cn": "OOP、ORM模块",
+      "zh-tw": "OOP、ORM模塊",
+      "zh-hk": "OOP、ORM模塊"
+    }
+  },
   "autoload": {
     "psr-0": {"MyQEE\\Module\\OOP": "src/"}
   }
