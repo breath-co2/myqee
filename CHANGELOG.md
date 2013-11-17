@@ -1,4 +1,16 @@
-V3.0
+V3.0 RC2
+--------------------------
+* Swift Storage 驱动完善，token验证支持v1和v2版本，优化参数传送方式，支持url方式的配置
+* 完善文档生成脚本
+* 完善模块化的拆分
+* 后台类库
+  * 后台类库使用全新界面，视图使用bootstrap界面框架 详见 [http://getbootstrap.com/](http://getbootstrap.com/)
+  * CSS采用less方式定义，方便修改
+  * JS改为模块化，更方便二次开发
+  * 支持手机版本
+
+
+V3.0 RC1
 --------------------------
 
 * **核心部分改动及优化**
@@ -37,11 +49,6 @@ V3.0
   * 将shell目录改名bin目录，增加 `merge-assets`、`view-error500-log` 等开发及部署工具
   * 优化Debug功能，支持Chrome浏览器下FirePHP功能
   * statics 控制器改为 assets/devmode/ 控制器，支持开发版本实时优化处理输出css(包括less)和js
-* **Administration类库**
-  * 后台类库使用全新界面，视图使用bootstrap界面框架 详见 [http://getbootstrap.com/](http://getbootstrap.com/)
-  * CSS采用less方式定义，方便修改
-  * JS改为模块化，更方便二次开发
-  * 支持手机版本
 * 其它
   * 语言包完善
   * 各种细节优化
@@ -83,7 +90,7 @@ V2.0.1
 
 
 
-V2.0 release
+V2.0 Stable
 --------------------------
 
 * 修复RC3中已知BUG

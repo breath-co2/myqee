@@ -7,9 +7,6 @@
 * [程序设置说明](config.md)
 * [对类进行扩展](extends.md)
 * [认识 MyQEE 的 HMVC](hmvc.md)
-    * [<i class="icon-double-angle-right"></i> 控制器](core/class.controller/index.md)
-    * [<i class="icon-double-angle-right"></i> 模块](core/class.model/index.md)
-    * [<i class="icon-double-angle-right"></i> 视图](core/class.view/index.md) 
 * [常用类库、方法](common.md)
 
 -----
@@ -17,6 +14,7 @@
 * 深度历练
 * [命令行工具说明](bin_readme.md)
 * [使用 Composer 开源软件包](composer.md)
+* [核心类库相关文档](core/index.html)
 
 -----
 

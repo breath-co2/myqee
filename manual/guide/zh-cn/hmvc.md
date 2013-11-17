@@ -5,6 +5,12 @@ HMVC模式即 `Hierarchical-Model-View-Controller` 模式，也可以叫做 `Lay
 
 以上内容来自百度百科 [http://baike.baidu.com/view/3256424.htm](http://baike.baidu.com/view/3256424.htm) 
 
+## MVC 相关文档
+
+* [<i class="icon-double-angle-right"></i> 控制器](core/class.controller/index.md)
+* [<i class="icon-double-angle-right"></i> 模块](core/class.model/index.md)
+* [<i class="icon-double-angle-right"></i> 视图](core/class.view/index.md) 
+
 ## MyQEE HMVC 的工作原理
 
 MyQEE的HMVC的原理和文章中描述并不完全相同但是原理是差不多的，那么我们用一张图来解释下MyQEE的HMVC的原理：
