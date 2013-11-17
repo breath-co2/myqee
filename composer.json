@@ -12,6 +12,14 @@
       "homepage": "http://www.queyang.com/"
     }
   ],
+  "myqee": {
+    "name": {
+      "en": "Module Database",
+      "zh-cn": "数据库模块",
+      "zh-tw": "數據庫模塊",
+      "zh-hk": "數據庫模塊"
+    }
+  },
   "autoload": {
     "psr-0": {"MyQEE\\Module\\Database": "src/"}
   }
