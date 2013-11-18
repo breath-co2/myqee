@@ -273,19 +273,28 @@ function get_class_info(&$class_name)
         # 系统类库
         $ns = 'core/';
         $base_class_name = $class_name_array[1];
+        $type = 'core';
     }
     else if (preg_match('#^library_((?:[a-z0-9]+)_(?:[a-z0-9]+))_([a-z0-9_]+)$#', $class_name, $m))
     {
         $ns = 'library/' . str_replace('_', '/', $m[1]).'/';
         $base_class_name = $m[2];
+        $type = 'library';
+    }
+    else if (preg_match('#^module_([a-z0-9]+)(_[a-z0-9_]+)?$#', $class_name, $m))
+    {
+        $ns = 'module/'.$m[1].'/';
+        $base_class_name = $m[1].$m[2];
+        $type = 'module';
     }
     else
     {
         $ns = '';
         $base_class_name = $class_name;
+        $type = '';
     }
 
-    return array($ns, $base_class_name);
+    return array($ns, $base_class_name, $type);
 }
 
 /**
@@ -298,7 +307,7 @@ function get_url($class_name, $method_or_property = '', $base_href = '')
     $class_name         = strtolower(trim($class_name, '\\ '));
     $method_or_property = strtolower($method_or_property);
 
-    list($ns, $base_class_name) = get_class_info($class_name);
+    list($ns, $base_class_name, $type) = get_class_info($class_name);
 
     if ($method_or_property)
     {
@@ -323,6 +332,10 @@ function get_url($class_name, $method_or_property = '', $base_href = '')
             }
 
             list($big_name, $sub_name) = explode('_', $sub_name, 2);
+        }
+        else if ($type=='module')
+        {
+            $class_type = 'module';
         }
         else
         {
@@ -358,6 +371,12 @@ function get_url($class_name, $method_or_property = '', $base_href = '')
     }
     else
     {
+        if ($class_name=='module_database_querybuilder')
+        {
+            var_dump($str);
+            print_r($manual->is_php_class_list);
+            var_dump($class_name);exit;
+        }
         # 直接连接到PHP网站上搜索跳转
         $url_str = $manual->config['php_search_base_url'].$class_name.($method_or_property?'.'.trim($method_or_property, '$'):'');
     }
@@ -1177,14 +1196,14 @@ EOF;
 
                 # 生成文件
                 // echo $out_dir.$file_data['filename'].'.html'."\n";
-                //echo $out_dir.$file_data['filename'].'.html';
+                echo $out_dir.$file_data['filename'].'.html';
                 if (false!==file_put_contents($out_dir.$file_data['filename'].'.html', $html))
                 {
-                    //echo "  {$success}\n";
+                    echo "  {$success}\n";
                 }
                 else
                 {
-                    //echo "  {$error}\n";
+                    echo "  {$error}\n";
                 }
             }
         }
@@ -1205,8 +1224,6 @@ EOF;
         $this->files = array();
         foreach ($this->groups as $group_key => $group)
         {
-            if(!is_dir($group['dir'].'guide/'))continue;
-
             foreach($this->config['lang'] as $lang=>$lang_name)
             {
                 echo "*** 获取 “{$lang_name}” 文档文件";
@@ -3224,3 +3241,4 @@ EOF;
 $manual = new Manual();
 $manual->create();
 
+echo "All done.\n\n";
