@@ -283,7 +283,7 @@ function get_class_info(&$class_name)
     }
     else if (preg_match('#^module_([a-z0-9]+)(_[a-z0-9_]+)?$#', $class_name, $m))
     {
-        $ns = 'module/'.$m[1].'/';
+        $ns = 'module/';
         $base_class_name = $m[1].$m[2];
         $type = 'module';
     }
@@ -333,10 +333,6 @@ function get_url($class_name, $method_or_property = '', $base_href = '')
 
             list($big_name, $sub_name) = explode('_', $sub_name, 2);
         }
-        else if ($type=='module')
-        {
-            $class_type = 'module';
-        }
         else
         {
             $class_type = 'class';
@@ -371,12 +367,6 @@ function get_url($class_name, $method_or_property = '', $base_href = '')
     }
     else
     {
-        if ($class_name=='module_database_querybuilder')
-        {
-            var_dump($str);
-            print_r($manual->is_php_class_list);
-            var_dump($class_name);exit;
-        }
         # 直接连接到PHP网站上搜索跳转
         $url_str = $manual->config['php_search_base_url'].$class_name.($method_or_property?'.'.trim($method_or_property, '$'):'');
     }
@@ -776,42 +766,42 @@ class Manual
     {
         $this->groups = array
         (
-            // 'manual' => array
-            // (
-            //     'type'          => 'manual',
-            //     'out_dir'       => '',
-            //     'dir'           => DIR_MANUAL,
-            //     'base_href'     => '',
-            //     'title'         => 'Manual',
-            //     'top_menu_text' => 'Welecome',
-            //     'class_ns'      => '',
-            //     'class_ns_len'  => 0,
-            //     'key'           => 'manual',
-            // ),
-            // 'core' => array
-            // (
-            //     'type'          => 'core',
-            //     'out_dir'       => 'core/',
-            //     'dir'           => DIR_SYSTEM.'core/',
-            //     'base_href'     => '../',
-            //     'title'         => 'Core manual',
-            //     'top_menu_text' => 'Core manual',
-            //     'class_ns'      => 'Core_',
-            //     'class_ns_len'  => 5,
-            //     'key'           => 'core',
-            // ),
-            // 'team' => array
-            // (
-            //     'type'          => 'team',
-            //     'out_dir'       => 'team/',
-            //     'dir'           => DIR_SYSTEM.'team-library/',
-            //     'base_href'     => '../',
-            //     'title'         => 'Team library manual',
-            //     'top_menu_text' => 'Team library manual',
-            //     'class_ns'      => '',
-            //     'class_ns_len'  => 0,
-            //     'key'           => 'team',
-            // ),
+            'manual' => array
+            (
+                'type'          => 'manual',
+                'out_dir'       => '',
+                'dir'           => DIR_MANUAL,
+                'base_href'     => '',
+                'title'         => 'Manual',
+                'top_menu_text' => 'Welecome',
+                'class_ns'      => '',
+                'class_ns_len'  => 0,
+                'key'           => 'manual',
+            ),
+            'core' => array
+            (
+                'type'          => 'core',
+                'out_dir'       => 'core/',
+                'dir'           => DIR_SYSTEM.'core/',
+                'base_href'     => '../',
+                'title'         => 'Core manual',
+                'top_menu_text' => 'Core manual',
+                'class_ns'      => 'Core_',
+                'class_ns_len'  => 5,
+                'key'           => 'core',
+            ),
+            'team' => array
+            (
+                'type'          => 'team',
+                'out_dir'       => 'team/',
+                'dir'           => DIR_SYSTEM.'team-library/',
+                'base_href'     => '../',
+                'title'         => 'Team library manual',
+                'top_menu_text' => 'Team library manual',
+                'class_ns'      => '',
+                'class_ns_len'  => 0,
+                'key'           => 'team',
+            ),
         );
 
 
@@ -856,7 +846,7 @@ class Manual
                 'dir'          => '',
                 'type'         => 'module',
                 'class_prefix' => 'Module_',
-                'out_prefix'   => 'module.',
+                'out_prefix'   => 'class.',
                 'file_suffix'  => '.class.php',
                 'api_file'     => 'api_modules',
                 'title'        => 'Modules API List',
@@ -926,9 +916,9 @@ class Manual
                 (
                     'type'          => 'module',
                     'module'        => $basename,
-                    'out_dir'       => 'module/'.$basename.'/',
+                    'out_dir'       => 'module/',
                     'dir'           => $value.'/',
-                    'base_href'     => '../../',
+                    'base_href'     => '../',
                     'title'         => $title,
                     'top_menu_text' => 'Module manual',
                     'class_ns'      => 'Module_' . $basename .'_',
@@ -939,96 +929,96 @@ class Manual
         }
 
 
-        // # 读取项目配置
-        // if (is_file(DIR_SYSTEM.'config.php'))
-        // {
-        //     $site_config = array();
-        //     include_config_file($site_config, DIR_SYSTEM.'config.php');
+        # 读取项目配置
+        if (is_file(DIR_SYSTEM.'config.php'))
+        {
+            $site_config = array();
+            include_config_file($site_config, DIR_SYSTEM.'config.php');
 
-        //     $projects_config = $site_config['projects'];
-        //     if (is_array($projects_config))
-        //     {
-        //         $tmp = array();
-        //         foreach ($projects_config as $value)
-        //         {
-        //             $tmp[$value['dir']] = $value['name'];
-        //         }
-        //         $projects_config = $tmp;
-        //         unset($tmp);
-        //     }
-        //     else
-        //     {
-        //         $projects_config = array();
-        //     }
-        // }
-        // else
-        // {
-        //     $projects_config = array();
-        // }
-        // $project_dir = realpath(DIR_SYSTEM.'projects/');
-        // if ($project_dir)foreach (glob($project_dir.'/*') as $value)
-        // {
-        //     if ($value=='.'||$value=='..')continue;
-        //     if (is_dir($value))
-        //     {
-        //         $basename = basename($value);
-        //         $title = $this->projects[$basename] = isset($projects_config[$basename])?$projects_config[$basename]:$basename;
+            $projects_config = $site_config['projects'];
+            if (is_array($projects_config))
+            {
+                $tmp = array();
+                foreach ($projects_config as $value)
+                {
+                    $tmp[$value['dir']] = $value['name'];
+                }
+                $projects_config = $tmp;
+                unset($tmp);
+            }
+            else
+            {
+                $projects_config = array();
+            }
+        }
+        else
+        {
+            $projects_config = array();
+        }
+        $project_dir = realpath(DIR_SYSTEM.'projects/');
+        if ($project_dir)foreach (glob($project_dir.'/*') as $value)
+        {
+            if ($value=='.'||$value=='..')continue;
+            if (is_dir($value))
+            {
+                $basename = basename($value);
+                $title = $this->projects[$basename] = isset($projects_config[$basename])?$projects_config[$basename]:$basename;
 
-        //         $this->groups['project.'.$basename] = array
-        //         (
-        //             'type'          => 'project',
-        //             'project'       => $basename,
-        //             'out_dir'       => 'project/'.$basename.'/',
-        //             'dir'           => $value.'/',
-        //             'base_href'     => '../../',
-        //             'title'         => $title,
-        //             'top_menu_text' => 'Project manual',
-        //             'class_ns'      => '',
-        //             'class_ns_len'  => 0,
-        //             'key'           => 'project.'.$basename,
-        //         );
-        //     }
-        // }
+                $this->groups['project.'.$basename] = array
+                (
+                    'type'          => 'project',
+                    'project'       => $basename,
+                    'out_dir'       => 'project/'.$basename.'/',
+                    'dir'           => $value.'/',
+                    'base_href'     => '../../',
+                    'title'         => $title,
+                    'top_menu_text' => 'Project manual',
+                    'class_ns'      => '',
+                    'class_ns_len'  => 0,
+                    'key'           => 'project.'.$basename,
+                );
+            }
+        }
 
 
-        // $lib_dir = realpath(DIR_SYSTEM.'libraries/');
-        // if ($lib_dir)foreach (glob($lib_dir.'/*') as $value)
-        // {
-        //     if ($value=='.'||$value=='..')continue;
-        //     if (is_dir($value))
-        //     {
-        //         $dir1 = basename($value);
-        //         $this->libraries[$dir1] = array();
+        $lib_dir = realpath(DIR_SYSTEM.'libraries/');
+        if ($lib_dir)foreach (glob($lib_dir.'/*') as $value)
+        {
+            if ($value=='.'||$value=='..')continue;
+            if (is_dir($value))
+            {
+                $dir1 = basename($value);
+                $this->libraries[$dir1] = array();
 
-        //         foreach (glob($value.'/*') as $dir2)
-        //         {
-        //             if ($dir2=='.'||$dir2=='..')continue;
-        //             if (is_dir($dir2))
-        //             {
-        //                 if (!is_file($dir2.'/composer.json'))continue;
-        //                 $config = @json_decode(file_get_contents($dir2.'/composer.json'), true);
-        //                 if (!$config)continue;
-        //                 $dir2 = basename($dir2);
-        //                 $title = $config['myqee']['name'] ? $config['myqee']['name'] : 'Libray ' . $dir2;
+                foreach (glob($value.'/*') as $dir2)
+                {
+                    if ($dir2=='.'||$dir2=='..')continue;
+                    if (is_dir($dir2))
+                    {
+                        if (!is_file($dir2.'/composer.json'))continue;
+                        $config = @json_decode(file_get_contents($dir2.'/composer.json'), true);
+                        if (!$config)continue;
+                        $dir2 = basename($dir2);
+                        $title = $config['myqee']['name'] ? $config['myqee']['name'] : 'Libray ' . $dir2;
 
-        //                 $this->libraries[$dir1][] = $dir2;
-        //                 $this->groups['library.'.$dir1.'.'.$dir2] = array
-        //                 (
-        //                     'type'          => 'library',
-        //                     'library'       => $dir1.'.'.$dir2,
-        //                     'out_dir'       => 'library/'.$dir1.'/'.$dir2.'/',
-        //                     'base_href'     => '../../../',
-        //                     'dir'           => $dir2.'/',
-        //                     'title'         => $title,
-        //                     'top_menu_text' => 'Libray manual',
-        //                     'class_ns'      => 'library_'.$dir1.'_'.$dir2.'_',
-        //                     'class_ns_len'  => strlen('library_'.$dir1.'_'.$dir2.'_'),
-        //                     'key'           => 'library.'.$dir1.'.'.$dir2,
-        //                 );
-        //             }
-        //         }
-        //     }
-        // }
+                        $this->libraries[$dir1][] = $dir2;
+                        $this->groups['library.'.$dir1.'.'.$dir2] = array
+                        (
+                            'type'          => 'library',
+                            'library'       => $dir1.'.'.$dir2,
+                            'out_dir'       => 'library/'.$dir1.'/'.$dir2.'/',
+                            'base_href'     => '../../../',
+                            'dir'           => $dir2.'/',
+                            'title'         => $title,
+                            'top_menu_text' => 'Libray manual',
+                            'class_ns'      => 'library_'.$dir1.'_'.$dir2.'_',
+                            'class_ns_len'  => strlen('library_'.$dir1.'_'.$dir2.'_'),
+                            'key'           => 'library.'.$dir1.'.'.$dir2,
+                        );
+                    }
+                }
+            }
+        }
 
         $current_lang = '';
         $config = @parse_ini_file(dirname(__FILE__).'/config.ini' , true);
@@ -1196,14 +1186,14 @@ EOF;
 
                 # 生成文件
                 // echo $out_dir.$file_data['filename'].'.html'."\n";
-                echo $out_dir.$file_data['filename'].'.html';
+                // echo $out_dir.$file_data['filename'].'.html';
                 if (false!==file_put_contents($out_dir.$file_data['filename'].'.html', $html))
                 {
-                    echo "  {$success}\n";
+                    // echo "  {$success}\n";
                 }
                 else
                 {
-                    echo "  {$error}\n";
+                    // echo "  {$error}\n";
                 }
             }
         }
@@ -1414,6 +1404,12 @@ EOF;
 
                 if (is_file($doc_file))
                 {
+                    if ($m[1]=='module')
+                    {
+                        $dir      = 'class.'.$m[3].'/';
+                        $out_dir .= $dir;
+                    }
+
                     // $this->files[$group['out_dir'].$dir.'index.md'][$lang] = array
                     // (
                     //     'filename'      => 'index',
@@ -1466,6 +1462,12 @@ EOF;
             }
             else
             {
+                if (preg_match('#^module.([a-z0-9]+)$#', $group_key, $m))
+                {
+                    $dir      = 'class.'.$m[1].'/';
+                    $out_dir .= $dir;
+                }
+
                 $this->files[$group['out_dir'].$dir.'index.md'][$lang] = array
                 (
                     'filename'      => 'index',
@@ -1771,6 +1773,14 @@ EOF;
             # 处理TODO内容
             $this->get_todo_info($file);
         }
+
+        # 处理模块菜单
+        // if ($group['type']=='module' && $dir=='database/')
+        // {
+        //     $this->menus[$group['type'] .'/'. $temp_data['dir']][$lang] .= "aaaaaaa\n";
+        //     print_r($this->menus);
+        //     echo 'aaaaaaaaaaaaaa';exit;
+        // }
     }
 
     private function paste_class($group_key, $lang, $dir_setting, $dir, $file, $filename, $base_href, $orm_type = null)

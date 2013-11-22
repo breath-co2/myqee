@@ -61,7 +61,7 @@ seajs.use('bootstrap/js/bootstrap.min.js');
                     <?php
                     foreach ($modules as $key => $value)
                     {
-                        echo '<li'.($module==$value?'  class="active"':'').'><a href="'.$base_href.'module/'.$key.'/index.html">'.(is_array($value)?($value[$lang]?$value[$lang]:current($value)):$value).'</a></li>';
+                        echo '<li'.($module==$value?'  class="active"':'').'><a href="'.$base_href.'module/class.'.$key.'/index.html">'.(is_array($value)?($value[$lang]?$value[$lang]:current($value)):$value).'</a></li>';
                     }
                     ?>
                     </ul>
