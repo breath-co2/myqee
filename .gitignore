@@ -3,6 +3,8 @@ Icon?
 .svn
 *.debug.config.php
 *~
+/.idea
+/.idea/*
 /.settings
 /.buildpath
 /.project
