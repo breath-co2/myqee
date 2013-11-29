@@ -1516,7 +1516,7 @@ EOF;
             $this->get_class_files($group_key, $lang, $dir_setting, $all_api_file[$dir_setting['api_file']][$no], '');
         }
 
-        foreach($all_api_file as $api_file => $api_list)
+        if ($group['type']!='module')foreach($all_api_file as $api_file => $api_list)
         {
             $this->create_api_list_file($group_key, $lang, $api_file, $api_list);
         }
@@ -1641,6 +1641,8 @@ EOF;
                     continue;
                 }
 
+
+
                 if (is_file($file.$ext))
                 {
                     $api_sub_menu_list[$file.$ext] = array();
@@ -1689,15 +1691,6 @@ EOF;
             {
                 # 文件名
                 $filename = strtolower(basename($file, $ext));
-
-                if ($dir_setting['type']=='module')
-                {
-                    $current_module = substr($group_key, 7);
-                    if ($dir=='' && $filename!=$current_module)
-                    {
-                        $dir = $current_module . '/';
-                    }
-                }
             }
 
             # 处理ORM
@@ -1753,7 +1746,14 @@ EOF;
             }
             else
             {
-                $temp_data = $this->paste_class($group_key, $lang, $dir_setting, $dir, $file, $filename, $base_href);
+                if ($group['type']=='module' && preg_match('#^module.([a-z0-9]+)$#', $group_key, $m) && $m[1]!=$filename)
+                {
+                    $temp_data = $this->paste_class($group_key, $lang, $dir_setting, $m[1].'/'.$dir, $file, $filename, $base_href.'../');
+                }
+                else
+                {
+                    $temp_data = $this->paste_class($group_key, $lang, $dir_setting, $dir, $file, $filename, $base_href);
+                }
 
                 # 处理API列表
                 $api_list[] = $temp_data;
@@ -1775,12 +1775,20 @@ EOF;
         }
 
         # 处理模块菜单
-        // if ($group['type']=='module' && $dir=='database/')
-        // {
-        //     $this->menus[$group['type'] .'/'. $temp_data['dir']][$lang] .= "aaaaaaa\n";
-        //     print_r($this->menus);
-        //     echo 'aaaaaaaaaaaaaa';exit;
-        // }
+        if ($group['type']=='module' && count(explode('/', $dir))==2)
+        {
+            //$this->api_add_menu_data($group, $group['out_dir'].$temp_data['dir'], $lang, $api_sub_menu_list[$file], $dir_setting['type'], $temp_data);
+
+//            # 模块根目录
+//            $api = $this->api_data[$group['type']]['module_'.$current_module];
+//            print_r(array_keys($api));
+//            if ($api)foreach($api as $item)
+//            {
+//                $this->menus[$group['type'] .'/'. $temp_data['dir']][$lang] .= $item['class_name']."\n";
+//            }
+//            print_r($this->menus);
+//            echo 'aaaaaaaaaaaaaa';exit;
+        }
     }
 
     private function paste_class($group_key, $lang, $dir_setting, $dir, $file, $filename, $base_href, $orm_type = null)
@@ -1876,7 +1884,7 @@ EOF;
             {
                 unset($this->files[$tmp_file][$lang]);
             }
-            return;
+            return array();
         }
 
         $temp_data = array
@@ -2102,7 +2110,7 @@ EOF;
         if ($st['orm_type'])
         {
             # ORM
-            $name = implode(’.‘, array_splice(explode('_', $short_class_name), 2, -1));
+            $name = implode('.', array_splice(explode('_', $short_class_name), 2, -1));
             if ($name)$name = '.'.$name;
             $this->parent_menu[$group['type'] .'/'. $the_dir . $the_name.'/'][$lang]['../orm'.$name.'.html'] = preg_replace('#_(data|finder|reset)#i', '', $short_class_name) .' '. __('Overview', $lang);
         }
@@ -2289,7 +2297,14 @@ EOF;
     {
         if (!isset($this->all_class_dir_setting[$dir_type]))$dir_type = 'class';
 
-        $this->parent_menu[$tmp_dir][$lang]['../'.$this->all_class_dir_setting[$dir_type]['api_file'].'.html'] = __($this->all_class_dir_setting[$dir_type]['title'], $lang);
+        if ($dir_type=='module' && count(explode('/', $tmp_dir))==3)
+        {
+
+        }
+        else
+        {
+            $this->parent_menu[$tmp_dir][$lang]['../'.$this->all_class_dir_setting[$dir_type]['api_file'].'.html'] = __($this->all_class_dir_setting[$dir_type]['title'], $lang);
+        }
 
         if ($first_data)
         {
