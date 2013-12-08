@@ -1620,8 +1620,9 @@ EOF;
         $ext_len = strlen($ext);
         $api_sub_menu_list = array();
 
-        $full_dir = preg_quote($full_dir);
-        $files = glob($full_dir.'*');
+        $full_dir     = preg_quote($full_dir);
+        $files        = glob($full_dir.'*');
+        $module_delay = false;
 
         # 核心类库中加入Bootstrap
         if ($dir==='' && $group_key=='core' && $dir_setting['type']=='class')
@@ -1640,7 +1641,6 @@ EOF;
                     echo "*** 忽略特殊目录:{$file}\n";
                     continue;
                 }
-
 
 
                 if (is_file($file.$ext))
@@ -1744,23 +1744,41 @@ EOF;
                     $this->api_add_menu_data($group, $group['out_dir'].$orm_data['dir'], $lang, $api_sub_menu_list[$file]['sub_menu'], $dir_setting['type'], $orm_data);
                 }
             }
-            else
+            elseif ($group['type']=='module')
             {
-                if ($group['type']=='module' && preg_match('#^module.([a-z0-9]+)$#', $group_key, $m) && $m[1]!=$filename)
+                preg_match('#^module.([a-z0-9]+)$#', $group_key, $m);
+
+                if ($m[1]==$filename)
                 {
-                    $temp_data = $this->paste_class($group_key, $lang, $dir_setting, $m[1].'/'.$dir, $file, $filename, $base_href.'../');
+                    $module_delay    = true;
+                    $module_file     = $file;
+                    $module_filename = $filename;
+                    continue;
                 }
                 else
                 {
-                    $temp_data = $this->paste_class($group_key, $lang, $dir_setting, $dir, $file, $filename, $base_href);
-                }
+                    # 处理模块
+                    $temp_data = $this->paste_class($group_key, $lang, $dir_setting, $m[1].'/'.$dir, $file, $filename, $base_href.'../');
 
-                # 处理API列表
-                $api_list[] = $temp_data;
+                    $api_list[] = $temp_data;
+
+                    # 合并子类
+                    if (isset($api_sub_menu_list[$file]) && $api_sub_menu_list[$file])
+                    {
+                        $api_list = array_merge($api_list, $api_sub_menu_list[$file]);
+                    }
+                }
+            }
+            else
+            {
+                $temp_data = $this->paste_class($group_key, $lang, $dir_setting, $dir, $file, $filename, $base_href);
+
+                # 合并子类
                 if (isset($api_sub_menu_list[$file]) && $api_sub_menu_list[$file])
                 {
                     $api_list = array_merge($api_list, $api_sub_menu_list[$file]);
                 }
+                $api_list[] = $temp_data;
 
                 if (!$dir)
                 {
@@ -1769,25 +1787,19 @@ EOF;
                 }
             }
 
-
             # 处理TODO内容
             $this->get_todo_info($file);
         }
 
         # 处理模块菜单
-        if ($group['type']=='module' && count(explode('/', $dir))==2)
+        if ($module_delay)
         {
-            //$this->api_add_menu_data($group, $group['out_dir'].$temp_data['dir'], $lang, $api_sub_menu_list[$file], $dir_setting['type'], $temp_data);
+            # 处理模块主文件
+            $temp_data = $this->paste_class($group_key, $lang, $dir_setting, '', $module_file, $module_filename, $base_href);
+            $temp_data['short_class_name'] = preg_replace('#^Module_#', '', $temp_data['short_class_name']);
 
-//            # 模块根目录
-//            $api = $this->api_data[$group['type']]['module_'.$current_module];
-//            print_r(array_keys($api));
-//            if ($api)foreach($api as $item)
-//            {
-//                $this->menus[$group['type'] .'/'. $temp_data['dir']][$lang] .= $item['class_name']."\n";
-//            }
-//            print_r($this->menus);
-//            echo 'aaaaaaaaaaaaaa';exit;
+
+            $this->api_add_menu_data($group, $group['out_dir'].$temp_data['dir'], $lang, $api_list, $dir_setting['type'], $temp_data, "\n\n--------\n\n* ".__('Modules API List', $lang));
         }
     }
 
@@ -1929,7 +1941,7 @@ EOF;
         # 把Core或Library_***_***_移除，获取短名称
         if ($group['class_ns_len']>0 && stripos($class_name, $group['class_ns'])===0)
         {
-            $short_class_name = substr($class_name, $group['class_ns_len']);
+            $short_class_name = get_base_class_name($class_name, false);
         }
         else
         {
@@ -2142,7 +2154,6 @@ EOF;
 
             $exec = (DS==='\\'?'php.exe':'php') .' '. DIR_MANUAL .'bin/lib/api_get_info.php '. $group_type .' '. $base_class_name .' '. $dir_type . ($file?' '.escapeshellarg($file):'');
 
-            echo $exec."\n";
             $data = shell_exec($exec);
 
             $this->api_data[$group_type][$class_name] = array();
@@ -2293,7 +2304,7 @@ EOF;
     /**
      * 处理增加API菜单
      */
-    private function api_add_menu_data($group, $tmp_dir, $lang, $api_list, $dir_type, $first_data = array())
+    private function api_add_menu_data($group, $tmp_dir, $lang, $api_list, $dir_type, $first_data = array(), $menu_str = '')
     {
         if (!isset($this->all_class_dir_setting[$dir_type]))$dir_type = 'class';
 
@@ -2306,13 +2317,18 @@ EOF;
             $this->parent_menu[$tmp_dir][$lang]['../'.$this->all_class_dir_setting[$dir_type]['api_file'].'.html'] = __($this->all_class_dir_setting[$dir_type]['title'], $lang);
         }
 
-        if ($first_data)
+        if ($menu_str)
         {
-            $menu_content = "* [{$first_data['short_class_name']}](../{$first_data['href']})\n";
+            $menu_content = $menu_str ."\n";
         }
         else
         {
             $menu_content = '';
+        }
+
+        if ($first_data)
+        {
+            $menu_content .= "* [{$first_data['short_class_name']}](../{$first_data['href']})\n";
         }
 
         if ($api_list)foreach ($api_list as $item)
