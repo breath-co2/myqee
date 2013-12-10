@@ -453,15 +453,15 @@ code {
 .right-div > ul.toc > li,
 .api-class-div ul.toc li{font-size: 14px;line-height:1.8em;list-style-type: none;}
 .api-class-div .public,
-.api-class-div .public{display:inline-block;width:14px;height:22px;vertical-align:middle;background:url(../images/toc.gif) no-repeat 0 -161px;}
-.api-class-div .private{display:inline-block;width:14px;height:22px;vertical-align:middle;background:url(../images/toc.gif) no-repeat 0 -127px;}
-.api-class-div .protected{display:inline-block;width:14px;height:22px;vertical-align:middle;background:url(../images/toc.gif) no-repeat 0 -95px;}
-.api-class-div .tocfield .public{display:inline-block;width:14px;height:22px;vertical-align:middle;background:url(../images/toc.gif) no-repeat 0 -60px;}
-.api-class-div .tocfield .private{display:inline-block;width:14px;height:22px;vertical-align:middle;background:url(../images/toc.gif) no-repeat 0 -28px;}
-.api-class-div .tocfield .protected{display:inline-block;width:14px;height:22px;vertical-align:middle;background:url(../images/toc.gif) no-repeat 0 3px;}
-.api-class-div .abstract{display:inline-block;width:14px;height:22px;vertical-align:middle;background:url(../images/toc.gif) no-repeat 0 -250px;}
-.api-class-div .toc_f{display:inline-block;width:14px;height:22px;vertical-align:middle;background:url(../images/toc.gif) no-repeat -1px -194px;}
-.api-class-div .toc_s,.api-class-div .static{display:inline-block;width:14px;height:22px;vertical-align:middle;background:url(../images/toc.gif) no-repeat -1px -224px;}
+.api-class-div .public{display:inline-block;width:14px;height:22px;vertical-align:middle;background:url(../images/toc.gif) no-repeat 0 -161px;background-size:15px 300px;}
+.api-class-div .private{display:inline-block;width:14px;height:22px;vertical-align:middle;background:url(../images/toc.gif) no-repeat 0 -127px;background-size:15px 300px;}
+.api-class-div .protected{display:inline-block;width:14px;height:22px;vertical-align:middle;background:url(../images/toc.gif) no-repeat 0 -95px;background-size:15px 300px;}
+.api-class-div .tocfield .public{display:inline-block;width:14px;height:22px;vertical-align:middle;background:url(../images/toc.gif) no-repeat 0 -60px;background-size:15px 300px;}
+.api-class-div .tocfield .private{display:inline-block;width:14px;height:22px;vertical-align:middle;background:url(../images/toc.gif) no-repeat 0 -28px;background-size:15px 300px;}
+.api-class-div .tocfield .protected{display:inline-block;width:14px;height:22px;vertical-align:middle;background:url(../images/toc.gif) no-repeat 0 3px;background-size:15px 300px;}
+.api-class-div .abstract{display:inline-block;width:14px;height:22px;vertical-align:middle;background:url(../images/toc.gif) no-repeat 0 -250px;background-size:15px 300px;}
+.api-class-div .toc_f{display:inline-block;width:14px;height:22px;vertical-align:middle;background:url(../images/toc.gif) no-repeat -1px -194px;background-size:15px 300px;}
+.api-class-div .toc_s,.api-class-div .static{display:inline-block;width:14px;height:22px;vertical-align:middle;background:url(../images/toc.gif) no-repeat -1px -224px;background-size:15px 300px;}
 .api-class-div .toc_n{display:inline-block;width:14px;height:22px;vertical-align:middle;}
 .api-class-div .toc .label {font-weight: normal;-webkit-transform: scale(0.6);-moz-transform: scale(0.6);}
 
