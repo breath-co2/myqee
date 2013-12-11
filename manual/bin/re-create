@@ -1462,7 +1462,7 @@ EOF;
             }
             else
             {
-                if (preg_match('#^module.([a-z0-9]+)$#', $group_key, $m))
+                if (preg_match('#^module.([a-z0-9]+)$#i', $group_key, $m))
                 {
                     $dir      = 'class.'.$m[1].'/';
                     $out_dir .= $dir;
@@ -1746,9 +1746,7 @@ EOF;
             }
             elseif ($group['type']=='module')
             {
-                preg_match('#^module.([a-z0-9]+)$#', $group_key, $m);
-
-                if ($m[1]==$filename)
+                if ($group['module']==$filename)
                 {
                     $module_delay    = true;
                     $module_file     = $file;
@@ -1758,7 +1756,7 @@ EOF;
                 else
                 {
                     # 处理模块
-                    $temp_data = $this->paste_class($group_key, $lang, $dir_setting, $m[1].'/'.$dir, $file, $filename, $base_href.'../');
+                    $temp_data = $this->paste_class($group_key, $lang, $dir_setting, $group['module'].'/'.$dir, $file, $filename, $base_href.'../');
 
                     $api_list[] = $temp_data;
 
@@ -1792,14 +1790,26 @@ EOF;
         }
 
         # 处理模块菜单
-        if ($module_delay)
+        if ($group['type']=='module')
         {
-            # 处理模块主文件
-            $temp_data = $this->paste_class($group_key, $lang, $dir_setting, '', $module_file, $module_filename, $base_href);
-            $temp_data['short_class_name'] = preg_replace('#^Module_#', '', $temp_data['short_class_name']);
+            if ($module_delay)
+            {
+                # 处理模块主文件
+                $temp_data = $this->paste_class($group_key, $lang, $dir_setting, '', $module_file, $module_filename, $base_href);
+                $temp_data['short_class_name'] = preg_replace('#^Module_#', '', $temp_data['short_class_name']);
 
+                $this->api_add_menu_data($group, $group['out_dir'].$temp_data['dir'], $lang, $api_list, $dir_setting['type'], $temp_data, "\n\n--------\n\n* ".__('Modules API List', $lang));
+            }
+            elseif ($dir=='' && $api_list)
+            {
+                $this->api_add_menu_data($group, $group['out_dir'].'class.'.$group['module'].'/', $lang, $api_list, $dir_setting['type'], array(), "\n\n--------\n\n* ".__('Modules API List', $lang));
+            }
 
-            $this->api_add_menu_data($group, $group['out_dir'].$temp_data['dir'], $lang, $api_list, $dir_setting['type'], $temp_data, "\n\n--------\n\n* ".__('Modules API List', $lang));
+            if ($dir=='')
+            {
+                $tmp_dir = $group['out_dir'];
+                $this->menus[$tmp_dir][$lang] .= "\n\n--------\n\n* " . __('Driver API List', $lang);
+            }
         }
     }
 
@@ -1884,7 +1894,6 @@ EOF;
             'dir_type'      => $dir_setting['type'],
             'orm_type'      => $orm_type,
         );
-
 
         # 处理当前文件的函数、变量等
         $class_data = $this->paste_class_data($st, $group_key, $lang, $dir, $base_href);
