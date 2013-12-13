@@ -916,9 +916,9 @@ class Manual
                 (
                     'type'          => 'module',
                     'module'        => $basename,
-                    'out_dir'       => 'module/',
+                    'out_dir'       => 'module/class.'. $basename .'/',
                     'dir'           => $value.'/',
-                    'base_href'     => '../',
+                    'base_href'     => '../../',
                     'title'         => $title,
                     'top_menu_text' => 'Module manual',
                     'class_ns'      => 'Module_' . $basename .'_',
@@ -1333,19 +1333,14 @@ EOF;
             $this->menus[$group['out_dir'].$dir][$lang] = $menu_content;
         }
 
-        # 输出的目录
-        $out_dir = $group['out_dir'].$dir;
+        $out_dir = $group['out_dir'] . $dir;
 
         $have_index = false;
-        $tmp_index_html = "##".__('Overview', $lang)."\n";
+        $tmp_index_html = "##" . __('Overview', $lang) . "\n";
 
         foreach(glob($full_dir.'*') as $file)
         {
-            if ($file=='.'||$file=='..')
-            {
-                continue;
-            }
-            elseif (is_dir($file))
+            if (is_dir($file))
             {
                 $this->get_dir_files($group_key, $lang, $dir.basename($file).'/');
                 continue;
@@ -1363,11 +1358,13 @@ EOF;
 
             $content       = file_get_contents($file);
             $title         = $this->get_title($content);
-            $tmp_file      = $out_dir.$filename.'.md';
+            $tmp_file      = $out_dir . $filename . '.md';
             if (!$title && isset($tmp_menu[$tmp_file]))
             {
                 $title = $tmp_menu[$tmp_file];
             }
+
+
 
             $this->files[$tmp_file][$lang] = array
             (
@@ -1404,12 +1401,6 @@ EOF;
 
                 if (is_file($doc_file))
                 {
-                    if ($m[1]=='module')
-                    {
-                        $dir      = 'class.'.$m[3].'/';
-                        $out_dir .= $dir;
-                    }
-
                     // $this->files[$group['out_dir'].$dir.'index.md'][$lang] = array
                     // (
                     //     'filename'      => 'index',
@@ -1460,14 +1451,9 @@ EOF;
                     'file_type'     => 'file',
                 );
             }
-            else
+            elseif ($group['type']!='module')
             {
-                if (preg_match('#^module.([a-z0-9]+)$#i', $group_key, $m))
-                {
-                    $dir      = 'class.'.$m[1].'/';
-                    $out_dir .= $dir;
-                }
-
+                # 输出首页概览页面
                 $this->files[$group['out_dir'].$dir.'index.md'][$lang] = array
                 (
                     'filename'      => 'index',
@@ -1509,7 +1495,7 @@ EOF;
         foreach ($all_class_dir_setting as $no => $dir_setting)
         {
             if (!$all_api_file[$dir_setting['api_file']][$no])$all_api_file[$dir_setting['api_file']][$no] = array();
-            $api_list_file = $group['type'].'/'.$dir_setting['api_file'].'.md';
+            $api_list_file = $group['out_dir'] . $dir_setting['api_file'].'.md';
 
             $this->files[$api_list_file] = array();
 
@@ -1571,7 +1557,7 @@ EOF;
             $api_index_content = __('No content', $lang);
         }
 
-        $api_list_file = $group['type'].'/'.$api_file.'.md';
+        $api_list_file = $group['out_dir'] . $api_file . '.md';
 
         $this->files[$api_list_file][$lang] = array
         (
@@ -1756,7 +1742,7 @@ EOF;
                 else
                 {
                     # 处理模块
-                    $temp_data = $this->paste_class($group_key, $lang, $dir_setting, $group['module'].'/'.$dir, $file, $filename, $base_href.'../');
+                    $temp_data = $this->paste_class($group_key, $lang, $dir_setting, $dir, $file, $filename, $base_href);
 
                     $api_list[] = $temp_data;
 
@@ -1798,18 +1784,19 @@ EOF;
                 $temp_data = $this->paste_class($group_key, $lang, $dir_setting, '', $module_file, $module_filename, $base_href);
                 $temp_data['short_class_name'] = preg_replace('#^Module_#', '', $temp_data['short_class_name']);
 
-                $this->api_add_menu_data($group, $group['out_dir'].$temp_data['dir'], $lang, $api_list, $dir_setting['type'], $temp_data, "\n\n--------\n\n* ".__('Modules API List', $lang));
+                $this->api_add_menu_data($group, $group['out_dir'], $lang, $api_list, $dir_setting['type'], $temp_data, "\n\n--------\n\n* ".__('Modules API List', $lang));
             }
             elseif ($dir=='' && $api_list)
             {
-                $this->api_add_menu_data($group, $group['out_dir'].'class.'.$group['module'].'/', $lang, $api_list, $dir_setting['type'], array(), "\n\n--------\n\n* ".__('Modules API List', $lang));
+                $this->api_add_menu_data($group, $group['out_dir'], $lang, $api_list, $dir_setting['type'], array(), "\n\n--------\n\n* ".__('Modules API List', $lang));
             }
 
-            if ($dir=='')
-            {
-                $tmp_dir = $group['out_dir'];
-                $this->menus[$tmp_dir][$lang] .= "\n\n--------\n\n* " . __('Driver API List', $lang);
-            }
+            //////////////////////// TODO 加 Driver API List
+//            if ($dir=='')
+//            {
+//                $tmp_dir = $group['out_dir'];
+//                $this->menus[$tmp_dir][$lang] .= "\n\n--------\n\n* " . __('Driver API List', $lang);
+//            }
         }
     }
 
@@ -1822,7 +1809,24 @@ EOF;
         # 输出目录前缀
         $prefix     = $dir_setting['out_prefix'];
 
-        if ($dir)
+        if ($group['type']=='module')
+        {
+            $tmp_dir = '';
+            if (!$dir && $filename==$group['module'])
+            {
+                $tmp_name = 'api';
+            }
+        else
+            {
+                $tmp_name = 'api.' . str_replace(array('/', '_'), '.', $dir.$filename);
+            }
+
+            if ($filename!=$group['module'])
+            {
+                $dir_setting['class_prefix'] = 'Module_' . ucfirst($group['module']) .'_';
+            }
+        }
+        elseif ($dir)
         {
             $dir_arr  = explode('/', trim($dir, '/'));
             $dirfirst = array_shift($dir_arr);
@@ -1835,10 +1839,10 @@ EOF;
             $tmp_dir  = $prefix . $filename .'/';
         }
 
+
         $title = $dir_setting['class_prefix'] . str_replace('/', '_', $dir) . $filename;
 
-
-        $tmp_file = $group['type'] .'/'. $tmp_dir . $tmp_name .'.md';
+        $tmp_file = $group['out_dir'] . $tmp_dir . $tmp_name .'.md';
 
         if (in_array($group['type'], array('project', 'module')) || $filename=='bootstrap')
         {
@@ -1908,6 +1912,10 @@ EOF;
             return array();
         }
 
+        if ($group['type']=='module')
+        {
+            $tmp_dir = 'class.'.$group['module'].'/';
+        }
         $temp_data = array
         (
             'modifiers'        => $class_data['modifiers']?$class_data['modifiers']:'public',
@@ -1993,7 +2001,7 @@ EOF;
         {
             $title    = $class_name.'::$'.$property['name'];
             $low_name = strtolower($property['name']);
-            $tmp_file = $group['type'] . '/' . $the_dir . $the_name . '/property.' . $low_name . '.md';
+            $tmp_file = $group['out_dir'] . $the_dir . $the_name . '/property.' . $low_name . '.md';
 
             $tmp_data = array
             (
@@ -2052,7 +2060,7 @@ EOF;
         {
             $title    = $class_name.'::'.$method['name'];
             $low_name = strtolower($method['name']);
-            $tmp_file = $group['type'] . '/' . $the_dir . $the_name . '/method.' . $low_name . '.md';
+            $tmp_file = $group['out_dir'] . $the_dir . $the_name . '/method.' . $low_name . '.md';
 
             $tmp_data = array
             (
@@ -2123,17 +2131,17 @@ EOF;
         }
 
         # 设置菜单
-        $this->menus[$group['type'] .'/'. $the_dir . $the_name.'/'][$lang] = $menu_content;
+        $this->menus[$group['out_dir'] . $the_dir . $the_name.'/'][$lang] = $menu_content;
 
         # 设置上级菜单
-        $this->parent_menu[$group['type'] .'/'. $the_dir . $the_name.'/'][$lang]['../'.$the_name.'.html'] = $short_class_name;
+        $this->parent_menu[$group['out_dir'] . $the_dir . $the_name.'/'][$lang]['../'.$the_name.'.html'] = $short_class_name;
 
         if ($st['orm_type'])
         {
             # ORM
             $name = implode('.', array_splice(explode('_', $short_class_name), 2, -1));
             if ($name)$name = '.'.$name;
-            $this->parent_menu[$group['type'] .'/'. $the_dir . $the_name.'/'][$lang]['../orm'.$name.'.html'] = preg_replace('#_(data|finder|reset)#i', '', $short_class_name) .' '. __('Overview', $lang);
+            $this->parent_menu[$group['out_dir'] . $the_dir . $the_name.'/'][$lang]['../orm'.$name.'.html'] = preg_replace('#_(data|finder|reset)#i', '', $short_class_name) .' '. __('Overview', $lang);
         }
 
         return $data;
@@ -2812,12 +2820,6 @@ EOF;
 
                 $group_key = $group['key'];
 
-                if ($group['type']=='module')
-                {
-                    // 增加Module的主类库菜单
-                    $api_menu .= "* [Module_".ucfirst(substr($group_key, 7))."]({$group_key}/api.html)\n";
-                }
-
                 if ($this->api_count[$group_key])foreach($this->api_count[$group_key] as $type => $num)
                 {
                     if (!$num>0)continue;
@@ -3125,7 +3127,7 @@ EOF;
         $class_name    = strtolower($file_data['class_name']);
         $property_name = $file_data['property_name'];
 
-        $setting     = $this->api_data[$group['type']][$class_name]['properties'][$property_name];
+        $setting       = $this->api_data[$group['type']][$class_name]['properties'][$property_name];
 
         if (in_array($setting['dir_type'], array('controller-admin', 'controller-shell', 'controller-system')))
         {
@@ -3179,6 +3181,11 @@ EOF;
     {
         foreach ($this->groups as $group_key => $group)
         {
+            if ($group['type']=='module')
+            {
+                $group['out_dir'] = 'module/class.'. $group['module'] .'/';
+            }
+
             if (!isset($this->files[$group['out_dir'].'index.md'][$lang]))
             {
                 $st = array
@@ -3195,6 +3202,7 @@ EOF;
 
                 $this->create_empty_file($group_key, 'index', $st, $lang);
             }
+
         }
     }
 
@@ -3202,6 +3210,11 @@ EOF;
     private function create_empty_file($group_key, $file, $st, $lang)
     {
         $group = $this->groups[$group_key];
+
+        if ($group['type']=='module')
+        {
+            $group['out_dir'] = 'module/class.'. $group['module'] .'/';
+        }
 
         $this->files[$group['out_dir'].$st['dir'].$file.'.md'][$lang] = array
         (
