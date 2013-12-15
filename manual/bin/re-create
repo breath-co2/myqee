@@ -59,7 +59,7 @@ function get_base_class_name($class_name, $tolower = true)
         $class_name = strtolower($class_name);
     }
 
-    return preg_replace('#^(core_|module_|library_[a-z0-9]+_[a-z0-9]+)#i', '', $class_name);
+    return preg_replace('#^(core_|module_|driver_|library_[a-z0-9]+_[a-z0-9]+)#i', '', $class_name);
 }
 
 
@@ -90,6 +90,14 @@ function get_html_by_class($group_type, $class_name, $type, $alias_name)
                 $dir_type = 'model';
                 break;
 
+            case 'module':
+                $dir_type = 'module';
+                break;
+
+            case 'driver':
+                $dir_type = 'driver';
+                break;
+
             case 'orm':
                 $dir_type = 'orm';
                 $orm_type = 1;
@@ -105,7 +113,7 @@ function get_html_by_class($group_type, $class_name, $type, $alias_name)
         $dir_type = 'class';
     }
 
-    $data = $manual->get_class_data($group_type, $class_name, $file, $dir_type, $orm_type);
+    $data = $manual->get_class_data($group_type, $class_name, null, $dir_type, $orm_type);
 
     if (!$data)
     {
@@ -287,6 +295,12 @@ function get_class_info(&$class_name)
         $base_class_name = $m[1].$m[2];
         $type = 'module';
     }
+    else if (preg_match('#^driver_([a-z0-9_]+)?$#', $class_name, $m))
+    {
+        $ns = 'driver/';
+        $base_class_name = $m[1];
+        $type = 'driver';
+    }
     else
     {
         $ns = '';
@@ -336,6 +350,12 @@ function get_url($class_name, $method_or_property = '', $base_href = '')
         else
         {
             $class_type = 'class';
+        }
+
+        # 驱动类
+        if ($type=='driver')
+        {
+            $sub_name = preg_replace('#^driver_#', '', $sub_name);
         }
 
         if ($sub_name)
@@ -704,6 +724,8 @@ class Manual
 
     private $modules = array();
 
+    private $drivers = array();
+
     /**
      * 全部文件列表
      *
@@ -773,7 +795,7 @@ class Manual
                 'dir'           => DIR_MANUAL,
                 'base_href'     => '',
                 'title'         => 'Manual',
-                'top_menu_text' => 'Welecome',
+                'top_menu_text' => 'Welcome',
                 'class_ns'      => '',
                 'class_ns_len'  => 0,
                 'key'           => 'manual',
@@ -851,6 +873,17 @@ class Manual
                 'api_file'     => 'api_modules',
                 'title'        => 'Modules API List',
             ),
+            'driver' => array
+            (
+                'dir_name'     => 'Drivers',
+                'dir'          => '',
+                'type'         => 'driver',
+                'class_prefix' => 'Driver_',
+                'out_prefix'   => 'class.',
+                'file_suffix'  => '.class.php',
+                'api_file'     => 'api_drivers',
+                'title'        => 'Drivers API List',
+            ),
             'controller' => array
             (
                 'dir_name'     => 'Default Controllers',
@@ -898,17 +931,15 @@ class Manual
         );
 
 
-
         $module_dir = realpath(DIR_SYSTEM.'modules/');
         if ($module_dir)foreach (glob($module_dir.'/*') as $value)
         {
-            if ($value=='.'||$value=='..')continue;
             if (is_dir($value))
             {
                 if (!is_file($value.'/composer.json'))continue;
                 $config   = @json_decode(file_get_contents($value.'/composer.json'), true);
                 $basename = basename($value);
-                $title    = $config['myqee']['name'] ? $config['myqee']['name'] : 'Module '. ucfirst($basename);
+                $title    = $config['myqee']['name'] ? $config['myqee']['name'] : ucfirst($basename) . ' Module';
 
                 $this->modules[$basename] = $title;
 
@@ -922,7 +953,7 @@ class Manual
                     'title'         => $title,
                     'top_menu_text' => 'Module manual',
                     'class_ns'      => 'Module_' . $basename .'_',
-                    'class_ns_len'  => strlen('Module_' . $basename),
+                    'class_ns_len'  => strlen('Module_' . $basename .'_'),
                     'key'           => 'module.'.$basename,
                 );
             }
@@ -955,6 +986,7 @@ class Manual
         {
             $projects_config = array();
         }
+
         $project_dir = realpath(DIR_SYSTEM.'projects/');
         if ($project_dir)foreach (glob($project_dir.'/*') as $value)
         {
@@ -984,7 +1016,6 @@ class Manual
         $lib_dir = realpath(DIR_SYSTEM.'libraries/');
         if ($lib_dir)foreach (glob($lib_dir.'/*') as $value)
         {
-            if ($value=='.'||$value=='..')continue;
             if (is_dir($value))
             {
                 $dir1 = basename($value);
@@ -992,7 +1023,6 @@ class Manual
 
                 foreach (glob($value.'/*') as $dir2)
                 {
-                    if ($dir2=='.'||$dir2=='..')continue;
                     if (is_dir($dir2))
                     {
                         if (!is_file($dir2.'/composer.json'))continue;
@@ -1019,6 +1049,50 @@ class Manual
                 }
             }
         }
+
+
+
+
+        $driver_dir = realpath(DIR_SYSTEM.'drivers/');
+        if ($driver_dir)foreach (glob($driver_dir.'/*') as $value)
+        {
+            if (is_dir($value))
+            {
+                $basename = basename($value);
+                $title    = ucfirst($basename) .' Driver';
+                $tmp_data = array
+                (
+                    'driver'        => $basename,
+                    'title'         => $title,
+                    'type'          => 'driver',
+                    'dir'           => $value.'/',
+                    'out_dir'       => 'driver/class.'. $basename .'/',
+                    'base_href'     => '../../',
+                    'class_ns'      => 'Driver_' . $basename .'_',
+                    'class_ns_len'  => strlen('Driver_' . $basename .'_'),
+                    'key'           => 'driver.'.$basename,
+                    'list'          => array(),
+                );
+
+                foreach (glob($value.'/*') as $value)
+                {
+                    if (is_dir($value))
+                    {
+                        if (!is_file($value.'/composer.json'))continue;
+                        $config    = @json_decode(file_get_contents($value.'/composer.json'), true);
+                        $basename2 = basename($value);
+                        $tmp_data['list'][$basename2]['title'] = $config['myqee']['name'];
+                    }
+                }
+
+                # 增加驱动配置
+                if ($tmp_data['list'])
+                {
+                    $this->groups['driver.'.$basename] = $tmp_data;
+                }
+            }
+        }
+
 
         $current_lang = '';
         $config = @parse_ini_file(dirname(__FILE__).'/config.ini' , true);
@@ -1220,12 +1294,23 @@ EOF;
                 # 获取所有文档文件
                 $this->get_dir_files($group_key, $lang, '');
                 echo " $success\n";
-                echo "*** 开始分析 “{$lang_name}” API信息，可能需要一点时间，请稍等...\n";
+                echo "*** 开始分析 “". __($group['title'], $lang) ."” {$lang_name}API信息，可能需要一点时间，请稍等...\n";
 
 
                 # 获取所有API文件
-                $this->get_api_files($group_key, $lang);
-                echo "*** 分析API完毕 $success\n";
+                if ($group['type']=='module')
+                {
+                    $this->get_module_files($group_key, $lang);
+                }
+                elseif ($group['type']=='driver')
+                {
+                    $this->get_driver_files($group_key, $lang);
+                }
+                elseif ($group['type']!='manual')
+                {
+                    $this->get_api_files($group_key, $lang);
+                }
+                echo "*** 分析API完毕 $success\n\n";
 
 
                 # 处理上级目录菜单
@@ -1301,9 +1386,9 @@ EOF;
         # 处理菜单，得到上下文关系
         $menu_file = $full_dir.'menu.md';
 
-        # index.md 文件优先
         if (!isset($this->files[$group['out_dir'].$dir.'index.md']))
         {
+            # index.md 文件优先
             $this->files[$group['out_dir'].$dir.'index.md'] = array();
         }
 
@@ -1391,6 +1476,11 @@ EOF;
             }
         }
 
+        if ($group['type']=='driver')
+        {
+            return;
+        }
+
         if (!$have_index)
         {
             // 处理类库、模块README.md文件
@@ -1475,21 +1565,8 @@ EOF;
     {
         $group = $this->groups[$group_key];
 
-        # 手册目录没有API
-        if ($group['type']=='manual')return;
-
-        if ($group['type']=='module')
-        {
-            $all_class_dir_setting = array
-            (
-                'module' => $this->all_class_dir_setting['module'],
-            );
-        }
-        else
-        {
-            $all_class_dir_setting = $this->all_class_dir_setting;
-            unset($all_class_dir_setting['module']);
-        }
+        $all_class_dir_setting = $this->all_class_dir_setting;
+        unset($all_class_dir_setting['module'], $all_class_dir_setting['driver']);
 
         $all_api_file = array();
         foreach ($all_class_dir_setting as $no => $dir_setting)
@@ -1502,10 +1579,26 @@ EOF;
             $this->get_class_files($group_key, $lang, $dir_setting, $all_api_file[$dir_setting['api_file']][$no], '');
         }
 
-        if ($group['type']!='module')foreach($all_api_file as $api_file => $api_list)
+        foreach($all_api_file as $api_file => $api_list)
         {
             $this->create_api_list_file($group_key, $lang, $api_file, $api_list);
         }
+    }
+
+    // 获取Module文件列表
+    private function get_module_files($group_key, $lang)
+    {
+        $api_file      = array();
+        $dir_setting   = $this->all_class_dir_setting['module'];
+        $this->get_class_files($group_key, $lang, $dir_setting, $api_file, '');
+    }
+
+    // 获取Driver文件列表
+    private function get_driver_files($group_key, $lang)
+    {
+        $api_file      = array();
+        $dir_setting   = $this->all_class_dir_setting['driver'];
+        $this->get_class_files($group_key, $lang, $dir_setting, $api_file, '');
     }
 
     /**
@@ -1596,7 +1689,7 @@ EOF;
         # 文件名后缀
         $ext    = $dir_setting['file_suffix'];
 
-        $full_dir = rtrim($group['dir'] .$dir_setting['dir'], '/').'/'. $dir;
+        $full_dir = rtrim($group['dir'] .$dir_setting['dir'], '/') .'/'. $dir;
 
         if (!is_dir($full_dir))
         {
@@ -1614,6 +1707,11 @@ EOF;
         if ($dir==='' && $group_key=='core' && $dir_setting['type']=='class')
         {
             array_unshift($files, $group['dir'] . 'bootstrap.php');
+        }
+
+        if ($group['type']=='driver')
+        {
+            $old_dir = '';
         }
 
         foreach($files as $k=>$file)
@@ -1755,6 +1853,22 @@ EOF;
             }
             else
             {
+                if ($group['type']=='driver' && $dir && $old_dir!=$dir)
+                {
+                    $old_dir = $dir;
+                    $d_st    = $group['list'][trim($dir, '/')];
+                    if ($d_st['title'][$lang])
+                    {
+                        $title = $d_st['title'][$lang];
+                    }
+                    else
+                    {
+                        $title = ucfirst(trim($dir, '/')) .' '. ucfirst($group['driver']) .' Driver';
+                    }
+                    $api_list[] = "\n\n--------\n\n* ". $title ."\n";
+                    $this->drivers[$group['driver']][trim($dir, '/')] = $title;
+                }
+
                 $temp_data = $this->paste_class($group_key, $lang, $dir_setting, $dir, $file, $filename, $base_href);
 
                 # 合并子类
@@ -1790,13 +1904,42 @@ EOF;
             {
                 $this->api_add_menu_data($group, $group['out_dir'], $lang, $api_list, $dir_setting['type'], array(), "\n\n--------\n\n* ".__('Modules API List', $lang));
             }
-
-            //////////////////////// TODO 加 Driver API List
-//            if ($dir=='')
+//
+//            if ($dir=='' && $this->drivers[$group['module']])
 //            {
 //                $tmp_dir = $group['out_dir'];
-//                $this->menus[$tmp_dir][$lang] .= "\n\n--------\n\n* " . __('Driver API List', $lang);
+//                $this->menus[$tmp_dir][$lang] .= "\n\n--------\n\n* " . __('Driver List', $lang);
+//
+//                foreach($this->drivers[$group['module']] as $key=>$value)
+//                {
+//                    $this->menus[$tmp_dir][$lang] .= "\n* [{$value}](../../driver/class.{$group['module']}/api.{$key}.html)";
+//                }
+//
+//                $driver_group = $this->groups['driver.'.$group['module']];
+//                if ($driver_group)
+//                {
+//                    $this->parent_menu[$driver_group['out_dir']][$lang]['../'.$group['out_dir'].'index.html'] = $group['title'][$lang];
+//                }
 //            }
+        }
+        else if ($group['type']=='driver' && $dir=='')
+        {
+            if ($api_list)
+            {
+                $this->api_add_menu_data($group, $group['out_dir'], $lang, $api_list, $dir_setting['type'], array());
+            }
+
+            $module_group = $this->groups['module.'.$group['driver']];
+            if ($module_group)
+            {
+                $this->menus[$module_group['out_dir']][$lang] .= "\n\n--------\n\n* " . __('Driver List', $lang);
+                foreach($group['list'] as $key=>$item)
+                {
+                    $this->menus[$module_group['out_dir']][$lang] .= "\n* [{$item['title'][$lang]}](../../driver/class.{$group['driver']}/api.{$key}.html)";
+                }
+
+                $this->parent_menu[$group['out_dir']][$lang]['../../'.$module_group['out_dir'].'index.html'] = $module_group['title'][$lang];
+            }
         }
     }
 
@@ -1816,7 +1959,7 @@ EOF;
             {
                 $tmp_name = 'api';
             }
-        else
+            else
             {
                 $tmp_name = 'api.' . str_replace(array('/', '_'), '.', $dir.$filename);
             }
@@ -1826,12 +1969,24 @@ EOF;
                 $dir_setting['class_prefix'] = 'Module_' . ucfirst($group['module']) .'_';
             }
         }
+        elseif ($group['type']=='driver')
+        {
+            $tmp_dir  = '';
+            $dir_setting['class_prefix'] = 'Driver_' . ucfirst($group['driver']) .'_Driver_';
+
+            $tmp_name = 'api.' . str_replace(array('/', '_'), '.', $dir.$filename);
+            if ($filename.'/'==$dir)
+            {
+                $tmp_name = 'api.'.$filename;
+                $dir = '';
+            }
+        }
         elseif ($dir)
         {
             $dir_arr  = explode('/', trim($dir, '/'));
-            $dirfirst = array_shift($dir_arr);
+            $dir_first= array_shift($dir_arr);
             $tmp_name = (true===$orm_type?'orm.':'api.') . str_replace('_', '.', ltrim(implode('.', $dir_arr).'.'.$filename, '.'));
-            $tmp_dir  = $prefix . $dirfirst .'/';
+            $tmp_dir  = $prefix . $dir_first .'/';
         }
         else
         {
@@ -1839,12 +1994,11 @@ EOF;
             $tmp_dir  = $prefix . $filename .'/';
         }
 
-
         $title = $dir_setting['class_prefix'] . str_replace('/', '_', $dir) . $filename;
 
         $tmp_file = $group['out_dir'] . $tmp_dir . $tmp_name .'.md';
 
-        if (in_array($group['type'], array('project', 'module')) || $filename=='bootstrap')
+        if (in_array($group['type'], array('project', 'module', 'driver')) || $filename=='bootstrap')
         {
             $class_name = strtolower($title);
         }
@@ -1916,6 +2070,11 @@ EOF;
         {
             $tmp_dir = 'class.'.$group['module'].'/';
         }
+        else if ($group['type']=='driver')
+        {
+            $tmp_dir = 'class.'.$group['driver'].'/';
+        }
+
         $temp_data = array
         (
             'modifiers'        => $class_data['modifiers']?$class_data['modifiers']:'public',
@@ -2153,7 +2312,6 @@ EOF;
      */
     public function get_class_data($group_type, $class_name, $file, $dir_type, $orm_type)
     {
-        // print_r(func_get_args());
         if (isset($this->api_data[$group_type][$class_name]))
         {
             $data = $this->api_data[$group_type][$class_name];
@@ -2171,6 +2329,7 @@ EOF;
 
             $exec = (DS==='\\'?'php.exe':'php') .' '. DIR_MANUAL .'bin/lib/api_get_info.php '. $group_type .' '. $base_class_name .' '. $dir_type . ($file?' '.escapeshellarg($file):'');
 
+//            echo $exec."\n";
             $data = shell_exec($exec);
 
             $this->api_data[$group_type][$class_name] = array();
@@ -2325,9 +2484,13 @@ EOF;
     {
         if (!isset($this->all_class_dir_setting[$dir_type]))$dir_type = 'class';
 
-        if ($dir_type=='module' && count(explode('/', $tmp_dir))==3)
+        if ($group['type']=='driver')
         {
-
+            # 空
+        }
+        else if ($group['type']=='module' && count(explode('/', $tmp_dir))==3)
+        {
+            # 空
         }
         else
         {
@@ -2350,7 +2513,14 @@ EOF;
 
         if ($api_list)foreach ($api_list as $item)
         {
-            $menu_content .= "* [{$item['short_class_name']}](../{$item['href']})\n";
+            if (is_array($item))
+            {
+                $menu_content .= "* [{$item['short_class_name']}](../{$item['href']})\n";
+            }
+            else
+            {
+                $menu_content .= $item;
+            }
         }
 
         if (isset($this->menus[$tmp_dir][$lang]) && $this->menus[$tmp_dir][$lang])
@@ -2814,7 +2984,7 @@ EOF;
         {
             $title = $this->files[$index_file][$lang]['title'];
 
-            if ($group['type']!='manual' && !$dir)
+            if ($group['type']!='manual' && $group['type']!='driver' && !$dir)
             {
                 $api_menu = '';
 
@@ -2851,7 +3021,7 @@ EOF;
         $menu = MarkdownExtra::defaultTransform($menu_content);
 
 
-        if ($dir)
+        if ($dir || $group['type']=='driver')
         {
             $tmp_dir_str  = $dir;
             $tmp_menu_str = '';
@@ -2882,7 +3052,7 @@ EOF;
                 }
                 $link_str .= '../';
 
-                if ($break)break;
+                if ($break || !$dir)break;
 
                 $rpos = strrpos($tmp_dir_str, '/' , -2);
                 if (false===$rpos)
@@ -3184,6 +3354,11 @@ EOF;
             if ($group['type']=='module')
             {
                 $group['out_dir'] = 'module/class.'. $group['module'] .'/';
+            }
+            elseif ($group['type']=='driver')
+            {
+                # 驱动
+                continue;
             }
 
             if (!isset($this->files[$group['out_dir'].'index.md'][$lang]))
