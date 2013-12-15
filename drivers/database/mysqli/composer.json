@@ -4,12 +4,12 @@
   "keywords": ["MyQEE", "Driver", "Database", "Driver", "MySQLI"],
   "homepage": "http://www.myqee.com/",
   "myqee": {
-    "cname": {
-      "en": "Database MySQLI Driver",
-      "zh-ch": "数据库 MySQLI 驱动",
-      "zh-tw": "數據庫 MySQLI 驅動",
-      "zh-hk": "數據庫 MySQLI 驅動",
-    },
+    "name": {
+      "en": "MySQLI Database Driver",
+      "zh-cn": "MySQLI 数据库驱动",
+      "zh-tw": "MySQLI 數據庫驅動",
+      "zh-hk": "MySQLI 數據庫驅動"
+    }
   },
   "type": "myqee-driver",
   "license": "Apache-2.0",

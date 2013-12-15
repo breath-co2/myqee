@@ -4,12 +4,12 @@
   "keywords": ["MyQEE", "Driver", "Database", "Driver", "SQLite"],
   "homepage": "http://www.myqee.com/",
   "myqee": {
-    "cname": {
-      "en": "Database SQLite Driver",
-      "zh-ch": "数据库 SQLite 驱动",
-      "zh-tw": "數據庫 SQLite 驅動",
-      "zh-hk": "數據庫 SQLite 驅動",
-    },
+    "name": {
+      "en": "SQLite Database Driver",
+      "zh-cn": "SQLite 数据库驱动",
+      "zh-tw": "SQLite 數據庫驅動",
+      "zh-hk": "SQLite 數據庫驅動"
+    }
   },
   "type": "myqee-driver",
   "license": "Apache-2.0",

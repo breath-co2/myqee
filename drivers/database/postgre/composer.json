@@ -4,12 +4,12 @@
   "keywords": ["MyQEE", "Driver", "Database", "Driver", "Postgre", "PostgreSQL"],
   "homepage": "http://www.myqee.com/",
   "myqee": {
-    "cname": {
-      "en": "Database PostgreSQL Driver",
-      "zh-ch": "数据库 PostgreSQL 驱动",
-      "zh-tw": "數據庫 PostgreSQL 驅動",
-      "zh-hk": "數據庫 PostgreSQL 驅動",
-    },
+    "name": {
+      "en": "PostgreSQL Database Driver",
+      "zh-cn": "PostgreSQL 数据库驱动",
+      "zh-tw": "PostgreSQL 數據庫驅動",
+      "zh-hk": "PostgreSQL 數據庫驅動"
+    }
   },
   "type": "myqee-driver",
   "license": "Apache-2.0",
