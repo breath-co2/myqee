@@ -9,7 +9,7 @@
  * @copyright  Copyright (c) 2008-2013 myqee.com
  * @license	   http://www.myqee.com/license.html
  */
-class Module_Cache_Driver_Memcache extends Cache_Driver
+class Driver_Cache_Driver_Memcache extends Cache_Driver
 {
 
     /**

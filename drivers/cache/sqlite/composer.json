@@ -1,0 +1,26 @@
+{
+  "name": "myqee/cache-sqlite",
+  "description": "MyQEE SQLite Cache Driver",
+  "keywords": ["MyQEE", "Cache", "Driver", "SQLite"],
+  "homepage": "http://www.myqee.com/",
+  "myqee": {
+    "name": {
+      "en": "SQLite Cache Driver",
+      "zh-cn": "SQLite 缓存驱动",
+      "zh-tw": "SQLite 緩存驅動",
+      "zh-hk": "SQLite 緩存驅動"
+    }
+  },
+  "type": "myqee-driver",
+  "license": "Apache-2.0",
+  "authors": [
+    {
+      "name": "jonwang",
+      "email": "jonwang@queyang.com",
+      "homepage": "http://www.queyang.com/"
+    }
+  ],
+  "autoload": {
+    "psr-0": {"MyQEE\\Driver\\Cache\\SQLite": "_src/"}
+  }
+}

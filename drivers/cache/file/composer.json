@@ -1,0 +1,26 @@
+{
+  "name": "myqee/cache-file",
+  "description": "MyQEE File Cache Driver",
+  "keywords": ["MyQEE", "Cache", "Driver", "File"],
+  "homepage": "http://www.myqee.com/",
+  "myqee": {
+    "name": {
+      "en": "Apc Cache Driver",
+      "zh-cn": "文件缓存驱动",
+      "zh-tw": "文件緩存驅動",
+      "zh-hk": "文件緩存驅動"
+    }
+  },
+  "type": "myqee-driver",
+  "license": "Apache-2.0",
+  "authors": [
+    {
+      "name": "jonwang",
+      "email": "jonwang@queyang.com",
+      "homepage": "http://www.queyang.com/"
+    }
+  ],
+  "autoload": {
+    "psr-0": {"MyQEE\\Driver\\Cache\\File": "_src/"}
+  }
+}
