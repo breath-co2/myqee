@@ -61,7 +61,7 @@ MyQEE是一个开源、快速、优雅的轻量级PHP框架，支持HMVC模式�
 	ServerName www.myqee.com
 	
 	# DocumentRoot一定要/结尾
-	DocumentRoot "D:/php/myqee_v2/"
+	DocumentRoot "D:/php/myqee_v2/wwwroot/"
 	
     # 以下内容无需修改
     
@@ -69,12 +69,10 @@ MyQEE是一个开源、快速、优雅的轻量级PHP框架，支持HMVC模式�
 	RewriteEngine On
 	RewriteRule .*/\..* - [F,L]
 	
-    RewriteCond %{DOCUMENT_ROOT}wwwroot/%{REQUEST_FILENAME} -f [OR]
-    RewriteCond %{DOCUMENT_ROOT}wwwroot/%{REQUEST_FILENAME} -d
-    RewriteRule ^/(.*)$ /wwwroot/$1 [PT,L]
-
+    RewriteCond %{DOCUMENT_ROOT}%{REQUEST_FILENAME} !-f [AND]
+    RewriteCond %{DOCUMENT_ROOT}%{REQUEST_FILENAME} !-d
     RewriteRule ^/.* /index.php [PT,L]
-    
+
     # 以下是一些文件的缓存设置，可修改或去掉
     <IfModule expires_module>
     	ExpiresActive On
@@ -89,25 +87,18 @@ MyQEE是一个开源、快速、优雅的轻量级PHP框架，支持HMVC模式�
  
 !!! 注意，请去掉中文注释 
 
-若无Apache的管理权限或怕麻烦，可在系统目录example.htaccess文件重命名为".htaccess"文件开启rewrite
-（window下可以直接双击根目录的 “将example.htaccess修改为.htaccess文件” 文件修改后缀）
-
 
 **Nginx配置样例：**
 
 ``` Nginx
 server {
-    set         $www /home/www/myqee;
+    set         $www /home/www/myqee/wwwroot/;
     root        $www;
-    index       index.html index.php;
+    index       index.html index.htm index.php;
     listen      80;
     charset     utf-8;
     server_name www.myqee.com;
     server_name myqee.com;
-    
-    if ( $host != 'www.myqee.com') {
-        rewrite ^/(.*)$ http://www.myqee.com/$1 redirect;
-    }
 
     location ~* .(css|js)$ {
         if (-f $request_filename) {
@@ -115,30 +106,35 @@ server {
             break;
         }
     }
-    location ~* .(jpg|gif|png)$ {
+    location ~* .(jpg|gif|png|jpeg|bmp)$ {
         if (-f $request_filename) {
             expires 15d;
             break;
         }
     }
-    location ~* .(swf|zip|rar)$ {
+    location ~* .(swf|zip|rar|gz|7z)$ {
         if (-f $request_filename) {
             expires 1m;
             break;
         }
     }
 
-    rewrite ^/~([a-zA-Z0-9\-_]+)~(.*)$ /projects/$1/wwwroot/$2 last;
-    rewrite ^/((?!(?:wwwroot/)).*)$ /wwwroot/$1;
-
+    # rewrite
     if (!-e $request_filename) {
-        rewrite ^/wwwroot/.* /index.php last;
+        rewrite ^/.* /index.php last;
     }
 
-    include fastcgi_php;
+    location ~ \.php$ {
+        fastcgi_split_path_info ^(.+\.php)(/.+)$;
+        # With php5-fpm:
+        fastcgi_pass unix:/var/run/php5-fpm.sock;
+        fastcgi_index index.php;
+        include fastcgi_params;
+    }
 }
-```	
+```
 
+!!! 其中 `fastcgi_params` 指 `/etc/nginx/fastcgi_params` 文件，某些系统可指定为 `/etc/nginx/fastcgi_php` 可设置 `include fastcgi_php;`
 
 
 

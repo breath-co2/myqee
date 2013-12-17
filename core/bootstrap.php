@@ -940,7 +940,7 @@ abstract class Bootstrap
     /**
      * 获取包含目录，返回一个一维的数组
      *
-     * ! 注意 Bootstrap::$include_path 为一个2维数组
+     * !!! 注意 `Bootstrap::$include_path` 为一个二维数组
      *
      * @return array
      */
@@ -1151,7 +1151,7 @@ abstract class Bootstrap
      * 导入指定类库
      * 支持多个，当一次导入多个时，从数组最后一个开始导入
      *
-     * 导入的格式必须是类似 com.a.b 的形式，否则会抛出异常，例如: com.myqee.test
+     * 导入的格式必须是类似 com.a.b 的形式，否则会抛出异常，例如: `com.myqee.test`
      *
      *      Bootstrap::import_library('com.myqee.test');
      *      Bootstrap::import_library(array('com.myqee.test','com.myqee.cms'));
@@ -1206,7 +1206,7 @@ abstract class Bootstrap
      *
      * @param string $lib
      * @throws Exception
-     * @return array($ns, $dir, $is_already_loaded)
+     * @return array `array($ns, $dir, $is_already_loaded)`
      */
     protected static function _add_include_path_lib($lib)
     {
@@ -1256,7 +1256,7 @@ abstract class Bootstrap
      *
      * 当在命令行里执行，则返回null
      *
-     * @return string null|http://|https://
+     * @return string `null` | `http://` | `https://`
      */
     public static function protocol()
     {

@@ -199,28 +199,30 @@ persistent   | 是否长连接， `true` | `false`
 
 缓存配置中，驱动类型支持包括:
 
-参数        |  说明
------------|--------
-Memcache   | Memcahe 缓存
-File       | 文件缓存
-Redis      | Redis，需要安装Redis扩展， [PhpRedis](https://github.com/nicolasff/phpredis) 或 [Pecl](http://pecl.php.net/package/redis)
-Apc        | Apc缓存
-Database   | 数据库，使用数据库缓存请按下面的DDL建立一个表
-SQLite     | SQLite数据库，同上，需要初始化一个SQLite的表
-WinCache   |
+参数          |  说明
+-------------|--------
+`Memcache`   | Memcahe 缓存
+`File`       | 文件缓存
+`Redis`      | Redis，需要安装Redis扩展， [PhpRedis](https://github.com/nicolasff/phpredis) 或 [Pecl](http://pecl.php.net/package/redis)
+`Apc`        | Apc缓存
+`Database`   | 数据库，使用数据库缓存请按下面的DDL建立一个表
+`SQLite`     | SQLite数据库，同上，需要初始化一个SQLite的表
+`WinCache`   |
 
 数据库，SQLite 类型的DDL：
 
-	CREATE TABLE `cache` (
-	  `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
-	  `key` varchar(32) NOT NULL,
-	  `key_str` varchar(255) NOT NULL,
-	  `value` longtext,
-	  `expire_time` int(10) unsigned NOT NULL,
-	  PRIMARY KEY (`id`),
-	  UNIQUE KEY `key` (`key`),
-	  KEY `expire_time` (`expire_time`)
-	) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+``` mysql
+CREATE TABLE `cache` (
+  `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
+  `key` varchar(32) NOT NULL,
+  `key_str` varchar(255) NOT NULL,
+  `value` longtext,
+  `expire_time` int(10) unsigned NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `key` (`key`),
+  KEY `expire_time` (`expire_time`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+```
 
 数据库你的数据库不是MySQL等，可参考创建相同的字段即可
 
@@ -315,17 +317,17 @@ WinCache   |
 
 其中format表示日志格式参数模板，可用参数包括：
 
-参数      | 说明
----------|---------
-:time    | 当前时间
-:url     | 请求的URL
-:msg     | 日志信息
-:type    | 日志类型
-:host    | 服务器
-:port    | 端口
-:ip      | 请求的IP
-:agent   | 客户端信息
-:referer | 来源页面
+参数        | 说明
+-----------|---------
+`:time`    | 当前时间
+`:url`     | 请求的URL
+`:msg`     | 日志信息
+`:type`    | 日志类型
+`:host`    | 服务器
+`:port`    | 端口
+`:ip`      | 请求的IP
+`:agent`   | 客户端信息
+`:referer` | 来源页面
 
 
 ## 文件保存同步

@@ -7,5 +7,5 @@
 
 * HMVC
 * [<i class="icon-double-angle-right"></i> 控制器](class.controller/index.md)
-* [<i class="icon-double-angle-right"></i> 模块](class.model/index.md)
+* [<i class="icon-double-angle-right"></i> 模型](class.model/index.md)
 * [<i class="icon-double-angle-right"></i> 视图](class.view/index.md) 

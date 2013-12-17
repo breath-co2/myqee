@@ -28,7 +28,7 @@ MyQEE PHP Framework可以支持Windows/Unix服务器环境，可运行于包括A
         ServerName www.myqee.com
      
         # DocumentRoot一定要/结尾
-        DocumentRoot "D:/php/myqee_v2/"
+        DocumentRoot "D:/php/myqee_v2/wwwroot/"
      
         # 以下内容无需修改
      
@@ -36,10 +36,8 @@ MyQEE PHP Framework可以支持Windows/Unix服务器环境，可运行于包括A
         RewriteEngine On
         RewriteRule .*/\..* - [F,L]
      
-        RewriteCond %{DOCUMENT_ROOT}wwwroot/%{REQUEST_FILENAME} -f [OR]
-        RewriteCond %{DOCUMENT_ROOT}wwwroot/%{REQUEST_FILENAME} -d
-        RewriteRule ^/(.*)$ /wwwroot/$1 [PT,L]
-     
+        RewriteCond %{DOCUMENT_ROOT}%{REQUEST_FILENAME} !-f
+        RewriteCond %{DOCUMENT_ROOT}%{REQUEST_FILENAME} !-d
         RewriteRule ^/.* /index.php [PT,L]
      
         # 以下是一些文件的缓存设置，可修改或去掉
@@ -56,65 +54,63 @@ MyQEE PHP Framework可以支持Windows/Unix服务器环境，可运行于包括A
 !!! 注意在写入配置文件时把中文注释删除或保存为UTF-8编码
 
 
-若您无法修改Apache的配置，可在系统目录下加入".htaccess"文件开启rewrite，内容如下：
+若您无法修改Apache的配置，可在系统wwwroot目录下加入".htaccess"文件开启rewrite，内容如下：
 
 	RewriteEngine On
-	
-	RewriteRule ^(?!(?:wwwroot/|index\.php|projects/[a-zA-Z0-9\-_]+/wwwroot/)).+$ wwwroot/$0 [PT,NS]	
 	 
 	RewriteCond %{REQUEST_FILENAME} !-f
 	RewriteCond %{REQUEST_FILENAME} !-d
-	RewriteRule wwwroot/.* index.php [PT,L]
+	RewriteRule .* index.php [PT,L]
 
 
 ## Nginx + PHP-FPM 配置样例
 
-	server {
-	    set         $www /home/www/myqee/;
-	    root        $www;
-	    index       index.html index.htm index.php;
-	    listen      80;
-	    charset     utf-8;
-	    server_name www.myqee.com;
-	    server_name myqee.com;
 
-	    location ~* .(css|js)$ {
-	        if (-f $request_filename) {
-	            expires 3d;
-	            break;
-	        }
-	    }
-	    location ~* .(jpg|gif|png)$ {
-	        if (-f $request_filename) {
-	            expires 15d;
-	            break;
-	        }
-	    }
-	    location ~* .(swf|zip|rar)$ {
-	        if (-f $request_filename) {
-	            expires 1m;
-	            break;
-	        }
-	    }
-	 
-	    rewrite ^/~([a-zA-Z0-9\-_]+)~(.*)$ /projects/$1/wwwroot/$2 last;
-	    rewrite ^/((?!(?:wwwroot/)).*)$ /wwwroot/$1;
-	 
-	    if (!-e $request_filename) {
-	        rewrite ^/wwwroot/.* /index.php last;
-	    }
+``` Nginx
+server {
+    set         $www /home/www/myqee/wwwroot/;
+    root        $www;
+    index       index.html index.htm index.php;
+    listen      80;
+    charset     utf-8;
+    server_name www.myqee.com;
+    server_name myqee.com;
 
-		location ~ \.php$ {
-			fastcgi_split_path_info ^(.+\.php)(/.+)$;
-			# With php5-fpm:
-			fastcgi_pass unix:/var/run/php5-fpm.sock;
-			fastcgi_index index.php;
-			include fastcgi_params;
-		}
-	    include fastcgi_params;
-	}
+    location ~* .(css|js)$ {
+        if (-f $request_filename) {
+            expires 3d;
+            break;
+        }
+    }
+    location ~* .(jpg|gif|png|jpeg|bmp)$ {
+        if (-f $request_filename) {
+            expires 15d;
+            break;
+        }
+    }
+    location ~* .(swf|zip|rar|gz|7z)$ {
+        if (-f $request_filename) {
+            expires 1m;
+            break;
+        }
+    }
 
-!!! 其中fastcgi_php指 `/etc/nginx/fastcgi_params` 文件，某些系统可指定为 `/etc/nginx/fastcgi_php` 可设置 `include fastcgi_php;` 网上类似php+nginx配置说明很多，可参考后加入rewrite部分就可以了
+    # rewrite
+    if (!-e $request_filename) {
+        rewrite ^/.* /index.php last;
+    }
+
+    location ~ \.php$ {
+        fastcgi_split_path_info ^(.+\.php)(/.+)$;
+        # With php5-fpm:
+        fastcgi_pass unix:/var/run/php5-fpm.sock;
+        fastcgi_index index.php;
+        include fastcgi_params;
+    }
+}
+```
+
+!!! 其中 `fastcgi_params` 指 `/etc/nginx/fastcgi_params` 文件，某些系统可指定为 `/etc/nginx/fastcgi_php` 可设置 `include fastcgi_php;` 网上类似php+nginx配置说明很多，可参考后加入rewrite部分就可以了
 
 
 ## 新浪SAE配置

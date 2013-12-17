@@ -12,55 +12,6 @@
 class Module_Cache
 {
     /**
-     * 驱动类型为APC
-     *
-     * @var string
-     */
-    const DRIVER_APC = 'Apc';
-
-    /**
-     * 驱动类型为Database
-     *
-     * @var string
-     */
-    const DRIVER_DATABASE = 'Database';
-
-    /**
-     * 驱动类型为文件
-     *
-     * @var string
-     */
-    const DRIVER_FILE = 'File';
-
-    /**
-     * 驱动类型为memcache
-     *
-     * @var string
-     */
-    const DRIVER_MEMCACHE = 'Memcache';
-
-    /**
-     * 驱动类型为Redis
-     *
-     * @var string
-     */
-    const DRIVER_REDIS = 'Redis';
-
-    /**
-     * 驱动类型为SQLite
-     *
-     * @var string
-     */
-    const DRIVER_SQLITE = 'SQLite';
-
-    /**
-     * 驱动类型为WinCache
-     *
-     * @var string
-     */
-    const DRIVER_WINCACHE = 'WinCache';
-
-    /**
      * 最大时效类型
      *
      * @var string

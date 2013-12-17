@@ -4,14 +4,17 @@
 -----
 
 * 开始学习使用
+* [相关规范约定](specifications.md)
 * [程序设置说明](config.md)
 * [对类进行扩展](extends.md)
 * [认识 MyQEE 的 HMVC](hmvc.md)
 * [常用类库、方法](common.md)
+* [常见问题](question.md)
 
 -----
 
 * 深度历练
+* [使用多项目](project.md)
 * [命令行工具说明](bin_readme.md)
 * [使用 Composer 开源软件包](composer.md)
 * [核心类库相关文档](core/index.html)
