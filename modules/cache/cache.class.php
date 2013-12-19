@@ -124,7 +124,7 @@ class Module_Cache
     {
         $this->load_config($name);
 
-        if ($this->config['driver']==Cache::DRIVER_FILE)
+        if ($this->config['driver']=='file')
         {
             $this->check_file_config($name);
         }
@@ -535,14 +535,14 @@ class Module_Cache
                 {
                     # 命中，则清除数据，让程序可主动更新
                     $value = null;
-                    return;
+                    return null;
                 }
             }
             elseif ($exp > $match_exp[1])
             {
                 # 强制认为没有获取数据
                 $value = null;
-                return;
+                return null;
             }
 
             if ($match['type'] == Cache::TYPE_ADV_HIT || $match['type'] == Cache::TYPE_MAX_HIT)
@@ -578,7 +578,7 @@ class Module_Cache
 
         if (!isset($this->config['driver']))
         {
-            $this->config['driver'] = Cache::DRIVER_FILE;
+            $this->config['driver'] = 'File';
         }
     }
 
@@ -604,11 +604,11 @@ class Module_Cache
 
             if ($m[1]=='db')
             {
-                $driver = Cache::DRIVER_DATABASE;
+                $this->config['driver'] = 'database';
 
                 $this->load_config($new_config);
             }
-            elseif ($driver=='cache')
+            elseif ($m[1]=='cache')
             {
                 # 仍旧是缓存配置
                 if ($name===$new_config)
@@ -619,12 +619,14 @@ class Module_Cache
                 {
                     $this->load_config($new_config);
 
-                    if ($this->config['driver']==Cache::DRIVER_FILE)
+                    if ($this->config['driver']=='file')
                     {
                         # 读取的配置仍旧是文件缓存
                         throw new Exception(__('core config file_write_mode error.'));
                     }
                 }
+
+                $this->config['driver'] = 'cache';
             }
 
             $this->config['prefix'] = $m[3];

@@ -236,13 +236,13 @@ class Module_Session
      *
      *     Session::instance()->set(array('key'=>'value','k2'=>'v2'));
      *
-     * @param   string|array  key, or array of values
-     * @param   mixed value (if keys is not an array)
+     * @param   string | array $val  key, or array of values
+     * @param   mixed $val value (if keys is not an array)
      * @return  void
      */
     public function set($keys, $val = false)
     {
-        if (empty($keys)) return false;
+        if (empty($keys))return false;
 
         if (!is_array($keys))
         {
@@ -261,8 +261,8 @@ class Module_Session
     /**
      * 设置一个闪存SESSION数据，在下次请求的时候会获取后自动销毁
      *
-     * @param   string|array  key, or array of values
-     * @param   mixed		 value (if keys is not an array)
+     * @param   string | array $keys key, or array of values
+     * @param   mixed        $val value (if keys is not an array)
      * @return  void
      */
     public function set_flash($keys, $val = false)

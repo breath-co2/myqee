@@ -18,14 +18,18 @@ class Module_Session_Driver_Default
         if (null===$run)
         {
             $run = true;
-            @ini_set('session.gc_probability', (int)Session::$config['gc_probability']);
-            @ini_set('session.gc_divisor', 100);
-            @ini_set('session.gc_maxlifetime', (Session::$config['expiration'] == 0) ? 2592000 : Session::$config['expiration']);
 
-            // session保存接口
-            if (isset(Session::$config['save_handler']) && Session::$config['save_handler'])
+            if (function_exists('ini_set'))
             {
-                @ini_set('session.save_handler',Session::$config['save_handler']);
+                @ini_set('session.gc_probability', (int)Session::$config['gc_probability']);
+                @ini_set('session.gc_divisor', 100);
+                @ini_set('session.gc_maxlifetime', (Session::$config['expiration'] == 0)?2592000:Session::$config['expiration']);
+
+                // session保存接口
+                if (isset(Session::$config['save_handler']) && Session::$config['save_handler'])
+                {
+                    @ini_set('session.save_handler', Session::$config['save_handler']);
+                }
             }
 
             // session 保存目录
