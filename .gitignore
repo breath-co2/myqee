@@ -14,4 +14,5 @@ Icon?
 /manual/html/zh-cn/*
 /libraries/autoload.php
 /libraries/composer/*
+/wwwroot/assets/*
 /composer.lock
