@@ -16,7 +16,7 @@ V2.0 TO V3
      例如原来是这样扩展
      
         <?php
-        class Database extend MyQEE_Database
+        class Database extends MyQEE_Database
         {
           //...
         }
@@ -25,7 +25,7 @@ V2.0 TO V3
      请修改成
      
         <?php
-        class Database extend EX_Database
+        class Database extends EX_Database
         {
           //...
         }
