@@ -3,6 +3,29 @@
 /**
  * EMAIL核心类
  *
+ * 使用示例
+ *
+ *        $email = new Email();
+ *        // $email->set_protocol('smtp');                      // 默认为 smtp，支持 smtp, sendmail, mail
+ *        $email->from('test@myqee.com', '发送者名称');          // 邮件发送人，通常和账号一致
+ *        $email->smtp_user   = 'test@myqee.com';               // 账号
+ *        $email->smtp_pass   = '123456';                       // 密码
+ *        $email->smtp_host   = 'smtp.myqee.com';               // smtp 服务器
+ *        $email->smtp_crypto = 'tls';                          // 使用tls加密，也支持ssl，不设置则不加密
+ *        $email->to('to@myqee.com');                           // 收件者邮件地址
+ *        $email->message('邮件标题');
+ *        $email->subject('邮件内容内容');
+ *        // $email->attach($file, '', 'test.txt');             // 附件，其中 $file 为文件的路径
+ *        if ($email->send())
+ *        {
+ *            echo 'success';
+ *        }
+ *        else
+ *        {
+ *            echo 'fail';
+ *            if (IS_DEBUB)echo $email->print_debugger();       // 输出 debug 信息
+ *        }
+ *
  * @author     呼吸二氧化碳 <jonwang@myqee.com>
  * @category   MyQEE
  * @package    System
@@ -14,7 +37,7 @@ class Core_Email
 {
     public $useragent    = 'MyQEE';
     public $mailpath     = '/usr/sbin/sendmail';    // Sendmail path
-    public $protocol     = 'mail';                  // mail|sendmail|smtp
+    public $protocol     = 'smtp';                  // mail|sendmail|smtp
     public $smtp_host    = '';                      // SMTP Server. Example: mail.earthlink.net
     public $smtp_user    = '';                      // SMTP Username
     public $smtp_pass    = '';                      // SMTP Password
@@ -58,6 +81,7 @@ class Core_Email
     protected $_attach_name   = array();
     protected $_attach_type   = array();
     protected $_attach_disp   = array();
+    protected $_attach_content= array();
     protected $_protocols     = array('mail', 'sendmail', 'smtp');
     protected $_base_charsets = array('us-ascii', 'iso-2022-');    // 7-bit charsets (excluding language suffix)
     protected $_bit_depths    = array('7bit', '8bit');
@@ -78,8 +102,8 @@ class Core_Email
         }
         else
         {
-            $this->_smtp_auth = ! ($this->smtp_user === '' && $this->smtp_pass === '');
-            $this->_safe_mode = (bool) @ini_get('safe_mode');
+            $this->_smtp_auth = !($this->smtp_user === '' && $this->smtp_pass === '');
+            $this->_safe_mode = (bool)@ini_get('safe_mode');
         }
     }
 
@@ -91,16 +115,105 @@ class Core_Email
 	 */
 	public static function factory($config = array())
 	{
-	    return new Email($config = array());
+	    return new Email($config);
 	}
 
+
+    /**
+     * Send Email
+     *
+     * @return bool
+     */
+    public function send()
+    {
+        $this->_smtp_auth = !($this->smtp_user === '' && $this->smtp_pass === '');
+
+        if ($this->_replyto_flag === false)
+        {
+            $this->reply_to($this->_headers['From']);
+        }
+
+        if (!isset($this->_recipients) && !isset($this->_headers['To']) && !isset($this->_bcc_array) && !isset($this->_headers['Bcc']) && !isset($this->_headers['Cc']))
+        {
+            $this->_set_error_message('lang:email_no_recipients');
+            return false;
+        }
+
+        $this->_build_headers();
+
+        if ($this->bcc_batch_mode && count($this->_bcc_array) > $this->bcc_batch_size)
+        {
+            return $this->batch_bcc_send();
+        }
+        else
+        {
+            $this->_build_message();
+            return $this->_spool_email();
+        }
+    }
+
+
+    /**
+     * Batch Bcc Send. Sends groups of BCCs in batches
+     *
+     * @return boolean
+     */
+    public function batch_bcc_send()
+    {
+        $this->_smtp_auth = !($this->smtp_user === '' && $this->smtp_pass === '');
+
+        $float = $this->bcc_batch_size - 1;
+        $set = '';
+        $chunk = array();
+
+        for ($i = 0, $c = count($this->_bcc_array); $i < $c; $i++)
+        {
+            if (isset($this->_bcc_array[$i]))
+            {
+                $set .= ', '.$this->_bcc_array[$i];
+            }
+
+            if ($i === $float)
+            {
+                $chunk[] = substr($set, 1);
+                $float += $this->bcc_batch_size;
+                $set = '';
+            }
+
+            if ($i === $c-1)
+            {
+                $chunk[] = substr($set, 1);
+            }
+        }
+
+        for ($i = 0, $c = count($chunk); $i < $c; $i++)
+        {
+            unset($this->_headers['Bcc']);
+
+            $bcc = $this->clean_email($this->_str_to_array($chunk[$i]));
+
+            if ($this->protocol !== 'smtp')
+            {
+                $this->set_header('Bcc', implode(', ', $bcc));
+            }
+            else
+            {
+                $this->_bcc_array = $bcc;
+            }
+
+            $this->_build_message();
+            $this->_spool_email();
+        }
+
+        return true;
+    }
 
 
     /**
      * Initialize preferences
      *
-     * @param    array
-     * @return    void
+     * @param  array
+     * @return Email
      */
     public function initialize($config = array())
     {
@@ -110,7 +223,7 @@ class Core_Email
             {
                 $method = 'set_'.$key;
 
-                if ( method_exists($this, $method) )
+                if (method_exists($this, $method))
                 {
                     $this->$method($val);
                 }
@@ -122,7 +235,7 @@ class Core_Email
         }
         $this->clear();
 
-        $this->_smtp_auth = ! ($this->smtp_user === '' && $this->smtp_pass === '');
+        $this->_smtp_auth = !($this->smtp_user === '' && $this->smtp_pass === '');
         $this->_safe_mode = (bool)@ini_get('safe_mode');
 
         return $this;
@@ -138,25 +251,26 @@ class Core_Email
      */
     public function clear($clear_attachments = false)
     {
-        $this->_subject        = '';
-        $this->_body           = '';
-        $this->_finalbody      = '';
-        $this->_header_str     = '';
-        $this->_replyto_flag   = false;
-        $this->_recipients     = array();
-        $this->_cc_array       = array();
-        $this->_bcc_array      = array();
-        $this->_headers        = array();
-        $this->_debug_msg      = array();
+        $this->_subject      = '';
+        $this->_body         = '';
+        $this->_finalbody    = '';
+        $this->_header_str   = '';
+        $this->_replyto_flag = false;
+        $this->_recipients   = array();
+        $this->_cc_array     = array();
+        $this->_bcc_array    = array();
+        $this->_headers      = array();
+        $this->_debug_msg    = array();
 
         $this->set_header('User-Agent', $this->useragent);
         $this->set_header('Date', $this->_set_date());
 
-        if ($clear_attachments !== false)
+        if ($clear_attachments!==false)
         {
-            $this->_attach_name = array();
-            $this->_attach_type = array();
-            $this->_attach_disp = array();
+            $this->_attach_name    = array();
+            $this->_attach_type    = array();
+            $this->_attach_disp    = array();
+            $this->_attach_content = array();
         }
 
         return $this;
@@ -187,7 +301,7 @@ class Core_Email
         if ($name !== '')
         {
             // only use Q encoding if there are characters that would require it
-            if ( ! preg_match('/[\200-\377]/', $name))
+            if (!preg_match('/[\200-\377]/', $name))
             {
                 // add slashes for non-printing characters, slashes, and double quotes, and surround it in double quotes
                 $name = '"'.addcslashes($name, "\0..\37\177'\"\\").'"';
@@ -385,14 +499,34 @@ class Core_Email
 
 
     /**
-     * Assign file attachments
+     * 添加一个附件
      *
-     * @param    string
+     *     // 添加一个文件路径
+     *     $email->attach('test.txt', '', 'hello.txt');
+     *
+     *     // 添加一个内容为附件
+     *     $email->attach('@' . file_get_contents('test.txt'));
+     *
+     *
+     * @param $filename 文件路径，如果是@开头，则是文件内容
+     * @param string $disposition   attachment | inline
+     * @param null $newname         邮件内显示的文件名
+     * @param string $mime
      * @return Email
      */
     public function attach($filename, $disposition = '', $newname = null, $mime = '')
     {
-        $this->_attach_name[] = array($filename, $newname);
+        if (substr($filename, 0, 1)=='@')
+        {
+            $this->_attach_name[]    = array('', $newname);
+            $this->_attach_content[] = substr($filename, 1);
+        }
+        else
+        {
+            $this->_attach_name[]    = array($filename, $newname);
+            $this->_attach_content[] = '';
+        }
+
         $this->_attach_disp[] = empty($disposition) ? 'attachment' : $disposition; // Can also be 'inline'  Not sure if it matters
         $this->_attach_type[] = $mime;
         return $this;
@@ -663,7 +797,7 @@ class Core_Email
      */
     public function validate_email($email)
     {
-        if ( ! is_array($email))
+        if (!is_array($email))
         {
             $this->_set_error_message('lang:email_must_be_array');
             return false;
@@ -671,7 +805,7 @@ class Core_Email
 
         foreach ($email as $val)
         {
-            if ( ! $this->valid_email($val))
+            if (!$this->valid_email($val))
             {
                 $this->_set_error_message('lang:email_invalid_address', $val);
                 return false;
@@ -704,7 +838,7 @@ class Core_Email
      */
     public function clean_email($email)
     {
-        if ( ! is_array($email))
+        if (!is_array($email))
         {
             return preg_match('/\<(.*)\>/', $email, $match) ? $match[1] : $email;
         }
@@ -1021,14 +1155,24 @@ class Core_Email
         $attachment = array();
         for ($i = 0, $c = count($this->_attach_name), $z = 0; $i < $c; $i++)
         {
-            $filename = $this->_attach_name[$i][0];
-            $basename = is_null($this->_attach_name[$i][1]) ? basename($filename) : $this->_attach_name[$i][1];
-            $ctype = $this->_attach_type[$i];
+            $filename     = $this->_attach_name[$i][0];
+            $basename     = is_null($this->_attach_name[$i][1]) ? basename($filename) : $this->_attach_name[$i][1];
+            $basename     = $this->_prep_q_encoding($basename);
+            $ctype        = $this->_attach_type[$i];
             $file_content = '';
 
-            if ($this->_attach_type[$i] === '')
+            if ($this->_attach_content)
             {
-                if ( ! file_exists($filename))
+                $file_content =& $this->_attach_content[$i];
+
+                if ($this->_attach_type[$i] === '')
+                {
+                    $ctype = 'application/x-unknown-content-type';
+                }
+            }
+            elseif ($this->_attach_type[$i] === '')
+            {
+                if (!file_exists($filename))
                 {
                     $this->_set_error_message('lang:email_attachment_missing', $filename);
                     return false;
@@ -1036,7 +1180,7 @@ class Core_Email
 
                 $file = filesize($filename) +1;
 
-                if ( ! $fp = fopen($filename, FOPEN_READ))
+                if (!$fp = fopen($filename, 'r'))
                 {
                     $this->_set_error_message('lang:email_attachment_unreadable', $filename);
                     return false;
@@ -1046,10 +1190,6 @@ class Core_Email
                 $file_content = fread($fp, $file);
                 fclose($fp);
             }
-            else
-            {
-                $file_content =& $this->_attach_content[$i];
-            }
 
             $attachment[$z++] = '--'.$this->_atc_boundary.$this->newline
                 .'Content-type: '.$ctype.'; '
@@ -1058,6 +1198,8 @@ class Core_Email
                 .'Content-Transfer-Encoding: base64'.$this->newline;
 
             $attachment[$z++] = chunk_split(base64_encode($file_content));
+
+            unset($file_content);
         }
 
         $body .= implode($this->newline, $attachment).$this->newline.'--'.$this->_atc_boundary.'--';
@@ -1155,149 +1297,19 @@ class Core_Email
      * Performs "Q Encoding" on a string for use in email headers.  It's related
      * but not identical to quoted-printable, so it has its own method
      *
-     * @param    string
-     * @param    bool    set to true for processing From: headers
-     * @return    string
+     * @param   string
+     * @param   bool    set to true for processing From: headers
+     * @return  string
      */
     protected function _prep_q_encoding($str, $from = false)
     {
-        $str = str_replace(array("\r", "\n"), array('', ''), $str);
+        $str = str_replace(array("\r", "\n"), '', $str);
 
-        // Line length must not exceed 76 characters, so we adjust for
-        // a space, 7 extra characters =??Q??=, and the charset that we will add to each line
-        $limit = 75 - 7 - strlen($this->charset);
-
-        // these special characters must be converted too
-        $convert = array('_', '=', '?');
-
-        if ($from === true)
-        {
-            $convert[] = ',';
-            $convert[] = ';';
-        }
-
-        $output = '';
-        $temp = '';
-
-        for ($i = 0, $length = strlen($str); $i < $length; $i++)
-        {
-            // Grab the next character
-            $char = $str[$i];
-            $ascii = ord($char);
-
-            // convert ALL non-printable ASCII characters and our specials
-            if ($ascii < 32 || $ascii > 126 || in_array($char, $convert))
-            {
-                $char = '='.dechex($ascii);
-            }
-
-            // handle regular spaces a bit more compactly than =20
-            if ($ascii === 32)
-            {
-                $char = '_';
-            }
-
-            // If we're at the character limit, add the line to the output,
-            // reset our temp variable, and keep on chuggin'
-            if ((strlen($temp) + strlen($char)) >= $limit)
-            {
-                $output .= $temp.$this->crlf;
-                $temp = '';
-            }
-
-            // Add the character to our temporary line
-            $temp .= $char;
-        }
+        return '=?'. $this->charset .'?B?'. base64_encode($str) .'?=';
 
         // wrap each line with the shebang, charset, and transfer encoding
         // the preceding space on successive lines is required for header "folding"
-        return trim(preg_replace('/^(.*)$/m', ' =?'.$this->charset.'?Q?$1?=', $output.$temp));
-    }
-
-
-
-    /**
-     * Send Email
-     *
-     * @return    bool
-     */
-    public function send()
-    {
-        if ($this->_replyto_flag === false)
-        {
-            $this->reply_to($this->_headers['From']);
-        }
-
-        if ( ! isset($this->_recipients) && ! isset($this->_headers['To'])
-            && ! isset($this->_bcc_array) && ! isset($this->_headers['Bcc'])
-            && ! isset($this->_headers['Cc']))
-        {
-            $this->_set_error_message('lang:email_no_recipients');
-            return false;
-        }
-
-        $this->_build_headers();
-
-        if ($this->bcc_batch_mode && count($this->_bcc_array) > $this->bcc_batch_size)
-        {
-            return $this->batch_bcc_send();
-        }
-
-        $this->_build_message();
-        return $this->_spool_email();
-    }
-
-
-
-    /**
-     * Batch Bcc Send. Sends groups of BCCs in batches
-     *
-     * @return    void
-     */
-    public function batch_bcc_send()
-    {
-        $float = $this->bcc_batch_size - 1;
-        $set = '';
-        $chunk = array();
-
-        for ($i = 0, $c = count($this->_bcc_array); $i < $c; $i++)
-        {
-            if (isset($this->_bcc_array[$i]))
-            {
-                $set .= ', '.$this->_bcc_array[$i];
-            }
-
-            if ($i === $float)
-            {
-                $chunk[] = substr($set, 1);
-                $float += $this->bcc_batch_size;
-                $set = '';
-            }
-
-            if ($i === $c-1)
-            {
-                $chunk[] = substr($set, 1);
-            }
-        }
-
-        for ($i = 0, $c = count($chunk); $i < $c; $i++)
-        {
-            unset($this->_headers['Bcc']);
-
-            $bcc = $this->clean_email($this->_str_to_array($chunk[$i]));
-
-            if ($this->protocol !== 'smtp')
-            {
-                $this->set_header('Bcc', implode(', ', $bcc));
-            }
-            else
-            {
-                $this->_bcc_array = $bcc;
-            }
-
-            $this->_build_message();
-            $this->_spool_email();
-        }
+//        return trim(preg_replace('/^(.*)$/m', ' =?'.$this->charset.'?Q?$1?=', $output.$temp));
     }
 
 
@@ -1341,7 +1353,7 @@ class Core_Email
         $this->_unwrap_specials();
 
         $method = '_send_with_'.$this->_get_protocol();
-        if ( ! $this->$method())
+        if (!$this->$method())
         {
             $this->_set_error_message('lang:email_send_failure_'.($this->_get_protocol() === 'mail' ? 'phpmail' : $this->_get_protocol()));
             return false;
@@ -1419,7 +1431,7 @@ class Core_Email
             return false;
         }
 
-        if ( ! $this->_smtp_connect() || ! $this->_smtp_authenticate())
+        if (!$this->_smtp_connect() || !$this->_smtp_authenticate())
         {
             return false;
         }
@@ -1492,7 +1504,7 @@ class Core_Email
                             $errstr,
                             $this->smtp_timeout);
 
-        if ( ! is_resource($this->_smtp_connect))
+        if (!is_resource($this->_smtp_connect))
         {
             $this->_set_error_message('lang:email_smtp_error', $errno.' '.$errstr);
             return false;
@@ -1604,7 +1616,7 @@ class Core_Email
      */
     protected function _smtp_authenticate()
     {
-        if ( ! $this->_smtp_auth)
+        if (!$this->_smtp_auth)
         {
             return true;
         }
@@ -1657,7 +1669,7 @@ class Core_Email
      */
     protected function _send_data($data)
     {
-        if ( ! fwrite($this->_smtp_connect, $data . $this->newline))
+        if (!fwrite($this->_smtp_connect, $data . $this->newline))
         {
             $this->_set_error_message('lang:email_smtp_data_failure', $data);
             return false;
@@ -1716,13 +1728,13 @@ class Core_Email
             return $this->_IP;
         }
 
-        $cip = ( ! empty($_SERVER['HTTP_CLIENT_IP'])) ? $_SERVER['HTTP_CLIENT_IP'] : false;
-        $rip = ( ! empty($_SERVER['REMOTE_ADDR'])) ? $_SERVER['REMOTE_ADDR'] : false;
+        $cip = (!empty($_SERVER['HTTP_CLIENT_IP'])) ? $_SERVER['HTTP_CLIENT_IP'] : false;
+        $rip = (!empty($_SERVER['REMOTE_ADDR'])) ? $_SERVER['REMOTE_ADDR'] : false;
         if ($cip) $this->_IP = $cip;
         elseif ($rip) $this->_IP = $rip;
         else
         {
-            $fip = ( ! empty($_SERVER['HTTP_X_FORWARDED_FOR'])) ? $_SERVER['HTTP_X_FORWARDED_FOR'] : false;
+            $fip = (!empty($_SERVER['HTTP_X_FORWARDED_FOR'])) ? $_SERVER['HTTP_X_FORWARDED_FOR'] : false;
             if ($fip)
             {
                 $this->_IP = $fip;
@@ -1735,7 +1747,7 @@ class Core_Email
             $this->_IP = end($x);
         }
 
-        if ( ! preg_match('/^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$/', $this->_IP))
+        if (!preg_match('/^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$/', $this->_IP))
         {
             $this->_IP = '0.0.0.0';
         }
@@ -1792,7 +1804,7 @@ class Core_Email
 
         $ext = strtolower($ext);
 
-        if ( !is_array($mimes) )
+        if (!is_array($mimes))
         {
             $mimes = File::mime_by_ext($ext);
 
