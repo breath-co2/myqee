@@ -178,11 +178,16 @@ abstract class Core_I18n
         $lang_config = Core::config('core.lang');
 
         # 匹配语言设置
-        if ($accept_language && preg_match_all('#,([a-z]+-[a-z]+);#i', $accept_language, $matches))
+        # zh-CN,zh;q=0.8,zh-TW;q=0.6
+        if ($accept_language && preg_match_all('#([a-z]+\-[a-z]+),|([a-z]+\-[a-z]+);#i', $accept_language, $matches))
         {
-            $accept_language = $matches[1];
-            $accept_language =  array_slice($accept_language, 0, 2);    //只取前2个语言设置
-            array_map('strtolower', $accept_language);
+            $accept_language    = $matches[0];
+            $accept_language    = array_values(array_slice($accept_language, 0, 2));    //只取前2个语言设置
+            $accept_language[0] = strtolower(rtrim($accept_language[0], ';,'));
+            if (isset($accept_language[1]))
+            {
+                $accept_language[1] = strtolower(rtrim($accept_language[1], ';,'));
+            }
 
             if ($lang_config && !in_array($lang_config, $accept_language))
             {
