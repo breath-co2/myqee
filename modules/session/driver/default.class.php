@@ -23,7 +23,7 @@ class Module_Session_Driver_Default
             {
                 @ini_set('session.gc_probability', (int)Session::$config['gc_probability']);
                 @ini_set('session.gc_divisor', 100);
-                @ini_set('session.gc_maxlifetime', (Session::$config['expiration'] == 0)?2592000:Session::$config['expiration']);
+                @ini_set('session.gc_maxlifetime', (Session::$config['expiration']==0)?2592000:Session::$config['expiration']);
 
                 // session保存接口
                 if (isset(Session::$config['save_handler']) && Session::$config['save_handler'])
@@ -49,40 +49,54 @@ class Module_Session_Driver_Default
      */
     public function create()
     {
-        if ( preg_match('#^(?=.*[a-z])[a-z0-9_]++$#iD', Session::$config['name']) )
-        {
-            session_name(Session::$config['name']);
-        }
+        session_name(Session::$config['name']);
+
         $this->destroy();
 
-        $cookieconfig = Core::config('cookie');
+        $cookie_config = Core::config('cookie');
 
         # 这里对IP+非80端口的需要特殊处理下，经试验，当这种情况下，设置session id的cookie的话会失败
-        if (preg_match('#^([0-9]+.[0-9]+.[0-9]+.[0-9]+):[0-9]+$#',$cookieconfig['domain'],$m))
+        if (preg_match('#^([0-9]+.[0-9]+.[0-9]+.[0-9]+):[0-9]+$#', $cookie_config['domain'],$m))
         {
             # IP:PORT 方式
-            $cookieconfig['domain'] = $m[1];
+            $cookie_config['domain'] = $m[1];
         }
 
-        $sname = session_name();
-        if (isset($_COOKIE[$sname]) && $_COOKIE[$sname])
+        $s_name = session_name();
+        if (Session::$config['type']=='url')
         {
-            $old_sid = $_COOKIE[$sname];
+            $old_sid = HttpIO::COOKIE($s_name);
+        }
+        else
+        {
+            $old_sid = HttpIO::COOKIE($s_name);
+        }
 
+        if ($old_sid)
+        {
             # 校验Session ID
             if (!Session::check_session_id($old_sid))
             {
                 # 如果检验的Session ID不合法，则重新生成一个
-                session_id( Session::create_session_id() );
+                session_id(Session::create_session_id());
             }
         }
         else
         {
             # 设置Session ID
-            session_id( Session::create_session_id() );
+            session_id(Session::create_session_id());
         }
 
-        session_set_cookie_params(Session::$config['expiration'], $cookieconfig['path'], $cookieconfig['domain'], $cookieconfig['secure'], $cookieconfig['httponly']);
+        # Session ID 通过uri传递
+        if (Session::$config['type']=='url')
+        {
+            @ini_set('session.use_cookies', 0);
+            @ini_set('session.use_only_cookies', 0);
+        }
+        else
+        {
+            session_set_cookie_params($cookie_config['httponly']?0:Session::$config['expiration'], $cookie_config['path'], $cookie_config['domain'], $cookie_config['secure'], $cookie_config['httponly']);
+        }
 
         session_start();
     }
@@ -102,7 +116,7 @@ class Module_Session_Driver_Default
      */
     public function destroy()
     {
-        if ( session_id() !== '' )
+        if (session_id() !== '')
         {
             $name = session_name();
 

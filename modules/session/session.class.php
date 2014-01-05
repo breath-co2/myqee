@@ -96,6 +96,11 @@ class Module_Session
                 $this->driver = new Session_Driver_Default();
             }
 
+            if (!isset(Session::$config['type']) || Session::$config['type']!='url')
+            {
+                Session::$config['type'] = 'cookie';
+            }
+
             if (IS_DEBUG)
             {
                 if ($is_debug)

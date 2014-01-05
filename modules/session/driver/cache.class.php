@@ -53,29 +53,48 @@ class Module_Session_Driver_Cache
     /**
      * Create a new session.
      *
-     * @param   array  variables to set after creation
      * @return  void
      */
-    public function create($vars = null)
+    public function create()
     {
-        $cookieconfig = Core::config('cookie');
+        $cookie_config = Core::config('cookie');
 
         $_SESSION = array();
-        $sid = Core::cookie()->get($this->session_name);
 
-        if ( !$sid || !Session::check_session_id($sid) )
+        if (Session::$config['type']=='url')
+        {
+            $sid = HttpIO::GET($this->session_name);
+        }
+        else
+        {
+            $sid = HttpIO::COOKIE($this->session_name);
+        }
+
+        if (!$sid || !Session::check_session_id($sid))
         {
             $sid = Session::create_session_id();
 
-            # 将session存入cookie
-            Core::cookie()->set($this->session_name, $sid, null, $cookieconfig['path'], $cookieconfig['domain'], $cookieconfig['secure'], $cookieconfig['httponly']);
+            if (Session::$config['type']=='cookie')
+            {
+                # 将session存入cookie
+                Core::cookie()->set($this->session_name, $sid, null, $cookie_config['path'], $cookie_config['domain'], $cookie_config['secure'], $cookie_config['httponly']);
+            }
         }
 
-        $this->driver()->session_mode(true);
-        $_SESSION = $this->driver()->get($sid);
-        $this->driver()->session_mode(false);
+        # 添加URL处理自动追加SESSION ID参数
+        if (Session::$config['type']=='url')
+        {
+            Core::add_url_args(Session::$config['name'], $sid);
+        }
 
-        if ( !is_array($_SESSION) )
+        # 调试模式设置Session模式，避免开启缓存模式时获取不到Session
+        if (IS_DEBUG)$this->driver()->session_mode(true);
+
+        $_SESSION = $this->driver()->get($sid);
+
+        if (IS_DEBUG)$this->driver()->session_mode(false);
+
+        if (!is_array($_SESSION))
         {
             $_SESSION = array();
         }
