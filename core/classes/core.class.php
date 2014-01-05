@@ -161,6 +161,13 @@ abstract class Core_Core extends Bootstrap
     protected static $change_project_callback = array();
 
     /**
+     * 使用 Core::url() 会附带的参数列表
+     *
+     * @var array
+     */
+    protected static $_url_auto_args = array();
+
+    /**
      * 系统启动
      *
      * @param boolean $auto_execute 是否直接运行
@@ -398,10 +405,29 @@ abstract class Core_Core extends Bootstrap
 
         $url = Core::$base_url. ltrim($url, '/') . ($url!='' && substr($url,-1)!='/' && false===strpos($url, '.') && Core::$config['url_suffix']?Core::$config['url_suffix']:'') . ($query?'?'.$query:'');
 
-        // 返回完整URL
-        if ( true===$isfullurl_or_project && !preg_match('#^http(s)?://#i', $url) )
+        # 返回完整URL
+        if (true===$isfullurl_or_project && !preg_match('#^http(s)?://#i', $url))
         {
             $url = HttpIO::PROTOCOL . $_SERVER["HTTP_HOST"] . $url;
+        }
+
+        # 添加自动追加的参数
+        if (Core::$_url_auto_args)
+        {
+            list($url, $hash) = explode('#', $url, 2);
+            list($u, $q)      = explode('?', $url, 2);
+            if (!$q)
+            {
+                $q = '';
+                parse_str($q, $q);
+                $q += Core::$_url_auto_args;
+            }
+            else
+            {
+                $q = Core::$_url_auto_args;
+            }
+
+            $url = $u .'?'. http_build_query($q, '', '&') . ($hash?'#'.$hash:'');
         }
 
         return $url;
@@ -431,6 +457,33 @@ abstract class Core_Core extends Bootstrap
         }
 
         return $url_asstes . $url;
+    }
+
+    /**
+     * 增加URL默认参数
+     *
+     * 比如用在URL跟踪访客统计上，不支持Session的时候通过URL传送的SessionID等
+     *
+     * 增加的参数在所有使用 `Core::url()` 返回的内容里都会附带这个参数
+     *
+     *      Core::add_url_args('debug', 'test');
+     *
+     *      Core::add_url_args(array('debug'=>'test', 't2'=>'v'2));
+     *
+     * @param $key   参数名称
+     * @param $value 参数值
+     * @since v3.0
+     */
+    public static function add_url_args($key, $value)
+    {
+        if (is_array($key))
+        {
+            Core::$_url_auto_args += $key;
+        }
+        else
+        {
+            Core::$_url_auto_args[$key] = $value;
+        }
     }
 
     /**
@@ -1472,12 +1525,13 @@ abstract class Core_Core extends Bootstrap
         {
             if ($msg instanceof Exception)
             {
-                $error = $msg->getMessage();
+                print_r($msg);exit;
+                $error     = $msg->getMessage();
                 $trace_obj = $msg;
             }
             else
             {
-                $error = $msg;
+                $error     = $msg;
                 $trace_obj = new Exception($msg);
             }
 
@@ -1594,7 +1648,7 @@ abstract class Core_Core extends Bootstrap
             CRLF . '<title>Internal Server Error</title>' .
             CRLF . '</head>' .
             CRLF . '<body>' .
-            CRLF . '<h1>'.__('Internal Server Error').'</h1>' .
+            CRLF . '<h1>Internal Server Error</h1>' .
             CRLF . '<p>The requested URL ' . $REQUEST_URI . ' was error on this server.</p>' .
             CRLF . '<hr />' .
             CRLF . $_SERVER['SERVER_SIGNATURE'] .
