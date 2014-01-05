@@ -130,10 +130,11 @@ class Core_Email
 
         if ($this->_replyto_flag === false)
         {
-            $this->reply_to($this->_headers['From']);
+            $this->set_header('Reply-To', $this->_headers['From']);
+            $this->_replyto_flag = true;
         }
 
-        if (!isset($this->_recipients) && !isset($this->_headers['To']) && !isset($this->_bcc_array) && !isset($this->_headers['Bcc']) && !isset($this->_headers['Cc']))
+        if (!$this->_recipients && !isset($this->_headers['To']) && !isset($this->_bcc_array) && !isset($this->_headers['Bcc']) && !isset($this->_headers['Cc']))
         {
             $this->_set_error_message('lang:email_no_recipients');
             return false;
@@ -143,13 +144,16 @@ class Core_Email
 
         if ($this->bcc_batch_mode && count($this->_bcc_array) > $this->bcc_batch_size)
         {
-            return $this->batch_bcc_send();
+            $rs = $this->batch_bcc_send();
         }
         else
         {
             $this->_build_message();
-            return $this->_spool_email();
+            $rs = $this->_spool_email();
         }
+
+        $this->clear(true);
+        return $rs;
     }
 
 
@@ -185,12 +189,11 @@ class Core_Email
                 $chunk[] = substr($set, 1);
             }
         }
-
         for ($i = 0, $c = count($chunk); $i < $c; $i++)
         {
             unset($this->_headers['Bcc']);
 
-            $bcc = $this->clean_email($this->_str_to_array($chunk[$i]));
+            $bcc = $this->_format_email_adds($this->_str_to_array($chunk[$i]));
 
             if ($this->protocol !== 'smtp')
             {
@@ -281,39 +284,40 @@ class Core_Email
     /**
      * Set FROM
      *
+     *      $email->form('test@abc.com');
+     *
+     *      $email->form('name <test@abc.com>');
+     *
+     *      $email->from('test@abc.com', 'name')
+     *
      * @param    string
      * @param    string
      * @return Email
      */
     public function from($from, $name = '')
     {
-        if (preg_match('/\<(.*)\>/', $from, $match))
+        if (preg_match('/^(.*)\<(.*)\>/', $from, $match))
         {
-            $from = $match[1];
+            $from = $match[2];
+            if (!$name)
+            {
+                $name = trim($match[1]);
+            }
         }
 
         if ($this->validate)
         {
-            $this->validate_email($this->_str_to_array($from));
+            $this->valid_email($from);
         }
 
         // prepare the display name
-        if ($name !== '')
+        if ($name!=='')
         {
-            // only use Q encoding if there are characters that would require it
-            if (!preg_match('/[\200-\377]/', $name))
-            {
-                // add slashes for non-printing characters, slashes, and double quotes, and surround it in double quotes
-                $name = '"'.addcslashes($name, "\0..\37\177'\"\\").'"';
-            }
-            else
-            {
-                $name = $this->_prep_q_encoding($name, true);
-            }
+            $name = $this->_format_name($name) .' ';
         }
 
-        $this->set_header('From', $name.' <'.$from.'>');
-        $this->set_header('Return-Path', '<'.$from.'>');
+        $this->set_header('From', $name .'<'. $from .'>');
+        $this->set_header('Return-Path', '<'. $from .'>');
 
         return $this;
     }
@@ -329,27 +333,27 @@ class Core_Email
      */
     public function reply_to($replyto, $name = '')
     {
-        if (preg_match('/\<(.*)\>/', $replyto, $match))
+        if (preg_match('/^(.*)\<(.*)\>/', $replyto, $match))
         {
-            $replyto = $match[1];
+            $replyto = $match[2];
+            if (!$name)
+            {
+                $name = trim($match[1]);
+            }
         }
 
         if ($this->validate)
         {
-            $this->validate_email($this->_str_to_array($replyto));
+            $this->valid_email($replyto);
         }
 
-        if ($name === '')
+        // prepare the display name
+        if ($name!=='')
         {
-            $name = $replyto;
+            $name = $this->_format_name($name) .' ';
         }
 
-        if (strpos($name, '"') !== 0)
-        {
-            $name = '"'.$name.'"';
-        }
-
-        $this->set_header('Reply-To', $name.' <'.$replyto.'>');
+        $this->set_header('Reply-To', $name.'<'.$replyto.'>');
         $this->_replyto_flag = true;
 
         return $this;
@@ -365,29 +369,10 @@ class Core_Email
      */
     public function to($to)
     {
-        $to = $this->_str_to_array($to);
-        $to = $this->clean_email($to);
+        $to = $this->_format_email_adds($this->_str_to_array($to));
 
-        if ($this->validate)
-        {
-            $this->validate_email($to);
-        }
-
-        if ($this->_get_protocol() !== 'mail')
-        {
-            $this->set_header('To', implode(', ', $to));
-        }
-
-        switch ($this->_get_protocol())
-        {
-            case 'smtp':
-                $this->_recipients = $to;
-            break;
-            case 'sendmail':
-            case 'mail':
-                $this->_recipients = implode(', ', $to);
-            break;
-        }
+        $this->set_header('To', implode(', ', $to));
+        $this->_recipients = array_merge($this->_recipients, $to);
 
         return $this;
     }
@@ -402,19 +387,10 @@ class Core_Email
      */
     public function cc($cc)
     {
-        $cc = $this->clean_email($this->_str_to_array($cc));
-
-        if ($this->validate)
-        {
-            $this->validate_email($cc);
-        }
+        $cc = $this->_format_email_adds($this->_str_to_array($cc));
 
         $this->set_header('Cc', implode(', ', $cc));
-
-        if ($this->_get_protocol() === 'smtp')
-        {
-            $this->_cc_array = $cc;
-        }
+        $this->_cc_array = array_merge($this->_cc_array, $cc);
 
         return $this;
     }
@@ -436,25 +412,69 @@ class Core_Email
             $this->bcc_batch_size = $limit;
         }
 
-        $bcc = $this->clean_email($this->_str_to_array($bcc));
+        $bcc = $this->_format_email_adds($this->_str_to_array($bcc));
 
-        if ($this->validate)
-        {
-            $this->validate_email($bcc);
-        }
-
-        if ($this->_get_protocol() === 'smtp' || ($this->bcc_batch_mode && count($bcc) > $this->bcc_batch_size))
-        {
-            $this->_bcc_array = $bcc;
-        }
-        else
-        {
-            $this->set_header('Bcc', implode(', ', $bcc));
-        }
+        $this->_bcc_array = array_merge($this->_bcc_array, $bcc);
 
         return $this;
     }
 
+
+    protected function _format_name($name)
+    {
+        // only use Q encoding if there are characters that would require it
+        if (!preg_match('/[\200-\377]/', $name))
+        {
+            // add slashes for non-printing characters, slashes, and double quotes, and surround it in double quotes
+            $name = '"'.addcslashes($name, "\0..\37\177'\"\\").'"';
+        }
+        else
+        {
+            $name = $this->_prep_q_encoding($name);
+        }
+
+        return $name;
+    }
+
+
+    /**
+     * 格式化邮件收件人
+     *
+     * @param $adds
+     * @return array
+     */
+    protected function _format_email_adds($adds)
+    {
+        $format_email = array();
+
+        foreach((array)$adds as $addy)
+        {
+            if (preg_match('/^(.*)\<(.*)\>/', $addy, $match))
+            {
+                $name  = trim($match[1]);
+                $email = $match[2];
+            }
+            else
+            {
+                $name  = null;
+                $email = $addy;
+            }
+
+            if ($this->validate)
+            {
+                if ($this->valid_email($email))
+                {
+                    $format_email[] = $name ? $this->_format_name($name) .' <'. $email .'>' : $email;
+                }
+            }
+            else
+            {
+                $format_email[] = $name ? $this->_format_name($name) .' <'. $email .'>' : $email;
+            }
+        }
+
+        return $format_email;
+    }
 
 
     /**
@@ -465,8 +485,7 @@ class Core_Email
      */
     public function subject($subject)
     {
-        $subject = $this->_prep_q_encoding($subject);
-        $this->set_header('Subject', $subject);
+        $this->set_header('Subject', $this->_prep_q_encoding($subject));
         return $this;
     }
 
@@ -537,13 +556,29 @@ class Core_Email
     /**
      * Add a Header Item
      *
-     * @param    string
-     * @param    string
-     * @return    void
+     * @param  string
+     * @param  string
+     * @return $this
      */
     public function set_header($header, $value)
     {
-        $this->_headers[$header] = $value;
+        if (isset($this->_headers[$header]) && $this->_headers[$header])
+        {
+            if (is_array($this->_headers[$header]))
+            {
+                $this->_headers[$header] = array_merge($this->_headers[$header], $value);
+            }
+        else
+            {
+                $this->_headers[$header] .= ', ' . $value;
+            }
+        }
+        else
+        {
+            $this->_headers[$header] = $value;
+        }
+
+        return $this;
     }
 
 
@@ -558,6 +593,7 @@ class Core_Email
     {
         if (!is_array($email))
         {
+            $email = preg_replace('#[\s]+<#', '<', $email);
             return (strpos($email, ',') !== false)
                 ? preg_split('/[\s,]/', $email, -1, PREG_SPLIT_NO_EMPTY)
                 : (array) trim($email);
@@ -585,7 +621,7 @@ class Core_Email
     /**
      * Set Mailtype
      *
-     * @param    string
+     * @param string `test` | `html`
      * @return Email
      */
     public function set_mailtype($type = 'text')
@@ -604,7 +640,7 @@ class Core_Email
      */
     public function set_wordwrap($wordwrap = true)
     {
-        $this->wordwrap = (bool) $wordwrap;
+        $this->wordwrap = (bool)$wordwrap;
         return $this;
     }
 
@@ -840,14 +876,14 @@ class Core_Email
     {
         if (!is_array($email))
         {
-            return preg_match('/\<(.*)\>/', $email, $match) ? $match[1] : $email;
+            return preg_match('/\<(.*)\>/', $email, $match) ? trim($match[1]) : $email;
         }
 
         $clean_email = array();
 
         foreach ($email as $addy)
         {
-            $clean_email[] = preg_match('/\<(.*)\>/', $addy, $match) ? $match[1] : $addy;
+            $clean_email[] = preg_match('/\<(.*)\>/', $addy, $match) ? trim($match[1]) : $addy;
         }
 
         return $clean_email;
@@ -1000,16 +1036,18 @@ class Core_Email
      */
     protected function _write_headers()
     {
-        if ($this->protocol === 'mail')
+        $headers = $this->_headers;
+        if ($this->protocol==='mail')
         {
-            $this->_subject = $this->_headers['Subject'];
-            unset($this->_headers['Subject']);
+            $this->_subject = $headers['Subject'];
+            unset($headers['Subject']);
+            unset($headers['To']);
         }
 
-        reset($this->_headers);
+        reset($headers);
         $this->_header_str = '';
 
-        foreach ($this->_headers as $key => $val)
+        foreach ($headers as $key => $val)
         {
             $val = trim($val);
 
@@ -1019,7 +1057,7 @@ class Core_Email
             }
         }
 
-        if ($this->_get_protocol() === 'mail')
+        if ($this->_get_protocol()==='mail')
         {
             $this->_header_str = rtrim($this->_header_str);
         }
@@ -1301,15 +1339,11 @@ class Core_Email
      * @param   bool    set to true for processing From: headers
      * @return  string
      */
-    protected function _prep_q_encoding($str, $from = false)
+    protected function _prep_q_encoding($str)
     {
         $str = str_replace(array("\r", "\n"), '', $str);
 
         return '=?'. $this->charset .'?B?'. base64_encode($str) .'?=';
-
-        // wrap each line with the shebang, charset, and transfer encoding
-        // the preceding space on successive lines is required for header "folding"
-//        return trim(preg_replace('/^(.*)$/m', ' =?'.$this->charset.'?Q?$1?=', $output.$temp));
     }
 
 
@@ -1374,13 +1408,13 @@ class Core_Email
     {
         if ($this->_safe_mode === true)
         {
-            return mail($this->_recipients, $this->_subject, $this->_finalbody, $this->_header_str);
+            return mail(implode(', ', $this->_recipients), $this->_subject, $this->_finalbody, $this->_header_str);
         }
         else
         {
             // most documentation of sendmail using the "-f" flag lacks a space after it, however
             // we've encountered servers that seem to require it to be in place.
-            return mail($this->_recipients, $this->_subject, $this->_finalbody, $this->_header_str, '-f '.$this->clean_email($this->_headers['From']));
+            return mail(implode(', ', $this->_recipients), $this->_subject, $this->_finalbody, $this->_header_str, '-f '.$this->clean_email($this->_headers['From']));
         }
     }
 
@@ -1436,7 +1470,7 @@ class Core_Email
             return false;
         }
 
-        $this->_send_command('from', $this->clean_email($this->_headers['From']));
+        $this->_send_command('from', $this->_headers['From']);
 
         foreach ($this->_recipients as $val)
         {
@@ -1449,7 +1483,7 @@ class Core_Email
             {
                 if ($val !== '')
                 {
-                    $this->_send_command('to', $val);
+                    $this->_send_command('cc', $val);
                 }
             }
         }
@@ -1476,7 +1510,7 @@ class Core_Email
 
         $this->_set_error_message($reply);
 
-        if (strpos($reply, '250') !== 0)
+        if (strpos($reply, '250')!==0)
         {
             $this->_set_error_message('lang:email_smtp_error', $reply);
             return false;
@@ -1498,11 +1532,7 @@ class Core_Email
     {
         $ssl = ($this->smtp_crypto === 'ssl') ? 'ssl://' : null;
 
-        $this->_smtp_connect = fsockopen($ssl.$this->smtp_host,
-                            $this->smtp_port,
-                            $errno,
-                            $errstr,
-                            $this->smtp_timeout);
+        $this->_smtp_connect = fsockopen($ssl.$this->smtp_host, $this->smtp_port, $errno, $errstr, $this->smtp_timeout);
 
         if (!is_resource($this->_smtp_connect))
         {
@@ -1543,7 +1573,7 @@ class Core_Email
         switch ($cmd)
         {
             case 'hello' :
-                if ($this->_smtp_auth || $this->_get_encoding() === '8bit')
+                if ($this->_smtp_auth || $this->_get_encoding()==='8bit')
                 {
                     $this->_send_data('EHLO '.$this->_get_hostname());
                 }
@@ -1561,18 +1591,20 @@ class Core_Email
             break;
             case 'from' :
 
-                $this->_send_data('MAIL FROM:<'.$data.'>');
+                $this->_send_data('MAIL FROM:<'. $this->clean_email($data).'>');
                 $resp = 250;
             break;
+            case 'cc' :
             case 'to' :
 
+                $email = $this->clean_email($data);
                 if ($this->dsn)
                 {
-                    $this->_send_data('RCPT TO:<'.$data.'> NOTIFY=SUCCESS,DELAY,FAILURE ORCPT=rfc822;'.$data);
+                    $this->_send_data('RCPT TO:<'. $email .'> NOTIFY=SUCCESS,DELAY,FAILURE ORCPT=rfc822;'. $email);
                 }
                 else
                 {
-                    $this->_send_data('RCPT TO:<'.$data.'>');
+                    $this->_send_data('RCPT TO:<'.$email.'>');
                 }
 
                 $resp = 250;
@@ -1593,7 +1625,7 @@ class Core_Email
 
         $this->_debug_msg[] = '<pre>'.$cmd.': '.$reply.'</pre>';
 
-        if ( (int) substr($reply, 0, 3) !== $resp)
+        if ((int)substr($reply, 0, 3) !== $resp)
         {
             $this->_set_error_message('lang:email_smtp_error', $reply);
             return false;
