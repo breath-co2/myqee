@@ -15,7 +15,7 @@ class Library_MyQEE_Develop_Controller_Assets_Dev extends Controller
      *
      * @var string
      */
-    protected $allow_suffix = 'js|css|jpg|jpeg|png|gif|bmp|pdf|html|htm|mp4|swf|eot|svg|ttf|woff';
+    protected $allow_suffix = 'js|css|jpg|jpeg|png|gif|bmp|pdf|html|htm|mp4|swf|eot|svg|ttf|woff|map';
 
     /**
      * 文件名
@@ -63,7 +63,7 @@ class Library_MyQEE_Develop_Controller_Assets_Dev extends Controller
             # 移除.min的后缀
             if (substr($this->file, -4)=='.min')
             {
-                $this->file = substr($this->file, 0, -4);
+                $this->file   = substr($this->file, 0, -4);
                 $this->is_min = true;
             }
         }
@@ -177,7 +177,7 @@ class Library_MyQEE_Develop_Controller_Assets_Dev extends Controller
         $out_dir = DIR_ASSETS . Core::$project .'/';
 
         # 输出文件
-        $out_file = $out_dir . $this->file . '.' . $this->type;
+        $out_file = $out_dir . $this->file . ($this->is_min?'.min':'') . '.' . $this->type;
 
         if (is_file($out_file))
         {
@@ -191,10 +191,11 @@ class Library_MyQEE_Develop_Controller_Assets_Dev extends Controller
         }
         else
         {
-            File::create_dir(dirname($out_file));
-            copy($file, $out_file);
-            touch($out_file, filemtime($file));
-//             symlink($this->relative_path($file, $out_file), $out_file);
+            if (File::create_dir(dirname($out_file)))
+            {
+                copy($file, $out_file);
+                touch($out_file, filemtime($file));
+            }
         }
 
         $fun = 'apache_get_modules';
@@ -202,11 +203,18 @@ class Library_MyQEE_Develop_Controller_Assets_Dev extends Controller
         {
             if (in_array('mod_xsendfile', $fun()))
             {
-                $slen = strlen(DIR_SYSTEM);
-                if (substr($file, 0, $slen)==DIR_SYSTEM)
+                $root_dir = $_SERVER["DOCUMENT_ROOT"];
+                $root_len = strlen($root_dir);
+
+                if (IS_WIN)
+                {
+                    $root_dir = str_replace('\\', '/', $root_dir);
+                    $file     = str_replace('\\', '/', $file);
+                }
+                if (substr($file, 0, $root_len)==$root_dir)
                 {
                     # 采用xsendfile发送文件
-                    header('X-Sendfile: '.substr($file, $slen));
+                    header('X-Sendfile: '.substr($file, $root_len));
                     exit();
                 }
             }
@@ -427,7 +435,8 @@ class Library_MyQEE_Develop_Controller_Assets_Dev extends Controller
      */
     protected function output_other_file()
     {
-        $found_file = Core::find_file('assets', $this->file, '.'. $this->type);
+        $file_name  = $this->file . ($this->is_min?'.min':'');
+        $found_file = Core::find_file('assets', $file_name, '.'. $this->type);
 
         if ($found_file)
         {
@@ -435,7 +444,7 @@ class Library_MyQEE_Develop_Controller_Assets_Dev extends Controller
         }
         else
         {
-            Core::show_404(__('Assets files : %s not found.', array('%s'=>$this->file .'.'. $this->type)));
+            Core::show_404(__('Assets files : %s not found.', array('%s'=>$file_name .'.'. $this->type)));
         }
     }
 
@@ -677,7 +686,7 @@ class Library_MyQEE_Develop_Controller_Assets_Dev extends Controller
             $assets_path = array();
 
             $tmp_dir = dirname($this->file);
-            if ($tmp_dir && $dir!='.')
+            if ($tmp_dir && $tmp_dir!='.')
             {
                 $tmp_dir .= '/';
             }
@@ -685,6 +694,7 @@ class Library_MyQEE_Develop_Controller_Assets_Dev extends Controller
             {
                 $tmp_dir = '';
             }
+
             # 循环include path
             foreach ($include_path as $path)
             {
