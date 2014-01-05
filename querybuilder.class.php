@@ -573,7 +573,7 @@ class Module_Database_QueryBuilder
     /**
      * 重设数据
      *
-     * @param $key 不传则全部清除，可选参数 select,select_adv,from,join,where,group_by,having,parameters,set,columns,values,where,index,order_by,distinct,limit,offset,table,last_join,join,on
+     * @param $key 不传则全部清除，可选参数 select,select_adv,from,join,where,group_by,having,set,columns,values,where,index,order_by,distinct,limit,offset,table,last_join,join,on
      * @return Database
      */
     public function reset($key = null)
@@ -618,7 +618,6 @@ class Module_Database_QueryBuilder
             $this->_builder['where']      =
             $this->_builder['group_by']   =
             $this->_builder['having']     =
-            $this->_builder['parameters'] =
             $this->_builder['set']        =
             $this->_builder['columns']    =
             $this->_builder['values']     =
