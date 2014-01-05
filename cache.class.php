@@ -578,8 +578,10 @@ class Module_Cache
 
         if (!isset($this->config['driver']))
         {
-            $this->config['driver'] = 'File';
+            $this->config['driver'] = 'file';
         }
+
+        $this->config['driver'] = strtolower($this->config['driver']);
     }
 
     /**
