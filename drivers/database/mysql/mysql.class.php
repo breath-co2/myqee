@@ -165,7 +165,7 @@ class Driver_Database_Driver_MySQL extends Database_Driver
             {
                 Core::debug()->error($error_host, 'error_host');
 
-                if ($last_error)throw $last_error;
+                if ($last_error && $last_error instanceof Exception)throw $last_error;
                 throw new Exception('connect mysql server error.');
             }
 
@@ -909,7 +909,7 @@ class Driver_Database_Driver_MySQL extends Database_Driver
         if (!empty($builder['where']))
         {
             // Add selection conditions
-            $query .= ' WHERE ' . $this->_compile_conditions($builder['where'], $builder['parameters']);
+            $query .= ' WHERE ' . $this->_compile_conditions($builder['where']);
         }
 
         if (!empty($builder['group_by']))
@@ -921,7 +921,7 @@ class Driver_Database_Driver_MySQL extends Database_Driver
         if (!empty($builder['having']))
         {
             // Add filtering conditions
-            $query .= ' HAVING ' . $this->_compile_conditions($builder['having'], $builder['parameters']);
+            $query .= ' HAVING ' . $this->_compile_conditions($builder['having']);
         }
 
         if (!empty($builder['order_by']))
@@ -991,15 +991,6 @@ class Driver_Database_Driver_MySQL extends Database_Driver
             $groups = array();
             foreach ($builder['values'] as $group)
             {
-                foreach ($group as $i => $value)
-                {
-                    if (is_string($value) && isset($builder['parameters'][$value]))
-                    {
-                        // Use the parameter value
-                        $group[$i] = $builder['parameters'][$value];
-                    }
-                }
-
                 $groups[] = '(' . implode(', ', array_map($quote, $group)) . ')';
             }
 
@@ -1018,7 +1009,7 @@ class Driver_Database_Driver_MySQL extends Database_Driver
             if (!empty($builder['where']))
             {
                 // Add selection conditions
-                $query .= ' WHERE ' . $this->_compile_conditions($builder['where'], $builder['parameters']);
+                $query .= ' WHERE ' . $this->_compile_conditions($builder['where']);
             }
         }
 
@@ -1031,12 +1022,12 @@ class Driver_Database_Driver_MySQL extends Database_Driver
         $query = 'UPDATE ' . $this->quote_table($builder['table'],false);
 
         // Add the columns to update
-        $query .= ' SET ' . $this->_compile_set($builder['set'], $builder['parameters']);
+        $query .= ' SET ' . $this->_compile_set($builder['set']);
 
         if (!empty($builder['where']))
         {
             // Add selection conditions
-            $query .= ' WHERE ' . $this->_compile_conditions($builder['where'], $builder['parameters']);
+            $query .= ' WHERE ' . $this->_compile_conditions($builder['where']);
         }
 
         if (!empty($builder['order_by']))
@@ -1063,14 +1054,14 @@ class Driver_Database_Driver_MySQL extends Database_Driver
     protected function _compile_delete($builder)
     {
         // Start an update query
-        $query = 'DELETE FROM' . $this->quote_table($builder['table'],false);
+        $query = 'DELETE FROM' . $this->quote_table($builder['table'], false);
 
         if (!empty($builder['where']))
         {
             $this->_init_as_table($builder);
 
             // Add selection conditions
-            $query .= ' WHERE ' . $this->_compile_conditions($builder['where'], $builder['parameters']);
+            $query .= ' WHERE ' . $this->_compile_conditions($builder['where']);
         }
 
         return $query;
@@ -1079,7 +1070,6 @@ class Driver_Database_Driver_MySQL extends Database_Driver
     /**
      * Compiles an array of ORDER BY statements into an SQL partial.
      *
-     * @param   object  Database instance
      * @param   array   sorting columns
      * @return  string
      */
@@ -1106,11 +1096,10 @@ class Driver_Database_Driver_MySQL extends Database_Driver
      * Compiles an array of conditions into an SQL partial. Used for WHERE
      * and HAVING.
      *
-     * @param   object  Database instance
      * @param   array   condition statements
      * @return  string
      */
-    protected function _compile_conditions(array $conditions, $parameters)
+    protected function _compile_conditions(array $conditions)
     {
         $last_condition = null;
 
@@ -1182,18 +1171,6 @@ class Driver_Database_Driver_MySQL extends Database_Driver
                         // BETWEEN always has exactly two arguments
                         list ($min, $max) = $value;
 
-                        if (is_string($min) && array_key_exists($min, $parameters))
-                        {
-                            // Set the parameter as the minimum
-                            $min = $parameters[$min];
-                        }
-
-                        if (is_string($max) && array_key_exists($max, $parameters))
-                        {
-                            // Set the parameter as the maximum
-                            $max = $parameters[$max];
-                        }
-
                         // Quote the min and max value
                         $value = $this->quote($min) . ' AND ' . $this->quote($max);
                     }
@@ -1203,12 +1180,6 @@ class Driver_Database_Driver_MySQL extends Database_Driver
                     }
                     else
                     {
-                        if (is_string($value) && array_key_exists($value, $parameters))
-                        {
-                            // Set the parameter as the value
-                            $value = $parameters[$value];
-                        }
-
                         // Quote the entire value normally
                         $value = $this->quote($value);
                     }
@@ -1227,7 +1198,6 @@ class Driver_Database_Driver_MySQL extends Database_Driver
     /**
      * Compiles an array of JOIN statements into an SQL partial.
      *
-     * @param   object  Database instance
      * @param   array   join statements
      * @return  string
      */
@@ -1282,11 +1252,10 @@ class Driver_Database_Driver_MySQL extends Database_Driver
     /**
      * Compiles an array of set values into an SQL partial. Used for UPDATE.
      *
-     * @param   object  Database instance
      * @param   array   updated values
      * @return  string
      */
-    protected function _compile_set(array $values, $parameters)
+    protected function _compile_set(array $values)
     {
         $set = array();
         foreach ($values as $group)
@@ -1305,12 +1274,6 @@ class Driver_Database_Driver_MySQL extends Database_Driver
 
             // Quote the column name
             $column = $this->_quote_identifier($column);
-
-            if (is_string($value) && array_key_exists($value, $parameters))
-            {
-                // Use the parameter value
-                $value = $parameters[$value];
-            }
 
             if ($w_type)
             {

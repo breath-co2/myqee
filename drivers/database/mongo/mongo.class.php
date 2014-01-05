@@ -181,7 +181,7 @@ class Driver_Database_Driver_Mongo extends Database_Driver
             {
                 Core::debug()->error($error_host,'error_host');
 
-                if ($last_error)throw $last_error;
+                if ($last_error && $last_error instanceof Exception)throw $last_error;
                 throw new Exception('connect mongodb server error.');
             }
 
@@ -360,7 +360,7 @@ class Driver_Database_Driver_Mongo extends Database_Driver
         $where = array();
         if (! empty($builder['where']))
         {
-            $where = $this->_compile_conditions($builder['where'], $builder['parameters']);
+            $where = $this->_compile_conditions($builder['where']);
         }
 
         if ($type=='insert')
@@ -1045,7 +1045,7 @@ class Driver_Database_Driver_Mongo extends Database_Driver
         return $rs;
     }
 
-    protected static function _compile_set_data($op, $value , $parameters)
+    protected static function _compile_set_data($op, $value)
     {
         $op = strtolower($op);
         $op_arr = array
@@ -1062,16 +1062,8 @@ class Driver_Database_Driver_Mongo extends Database_Driver
         {
             list ($min, $max) = $value;
 
-            if (is_string($min) && array_key_exists($min, $parameters))
-            {
-                $min = $parameters[$min];
-            }
             $option['$gte'] = $min;
 
-            if (is_string($max) && array_key_exists($max, $parameters))
-            {
-                $max = $parameters[$max];
-            }
             $option['$lte'] = $max;
         }
         elseif ($op==='=')
@@ -1272,11 +1264,10 @@ class Driver_Database_Driver_Mongo extends Database_Driver
      * Compiles an array of conditions into an SQL partial. Used for WHERE
      * and HAVING.
      *
-     * @param   object  Database instance
      * @param   array   condition statements
      * @return  string
      */
-    protected function _compile_conditions(array $conditions, $parameters)
+    protected function _compile_conditions(array $conditions)
     {
         $last_logic = '$and';
         $tmp_query_list = array();
@@ -1324,7 +1315,7 @@ class Driver_Database_Driver_Mongo extends Database_Driver
                 else
                 {
                     list ($column, $op, $value) = $condition;
-                    $tmp_option = Database_Driver_Mongo::_compile_set_data($op, $value , $parameters);
+                    $tmp_option = Database_Driver_Mongo::_compile_set_data($op, $value);
                     Database_Driver_Mongo::_compile_paste_data($tmp_query, $tmp_option , $last_logic , $logic ,$column);
 
                     $last_logic = $logic;
