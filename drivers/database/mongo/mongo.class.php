@@ -147,29 +147,6 @@ class Driver_Database_Driver_Mongo extends Database_Driver
 
         }
 
-        // 获取所有的主数据库
-        if (is_array($this->config['connection']['hostname']))
-        {
-            if (is_array($this->config['connection']['hostname']['master']))
-            {
-                $all_master_hosts = $this->config['connection']['hostname']['master'];
-            }
-            else
-            {
-                $all_master_hosts = array
-                (
-                    $this->config['connection']['hostname']['master']
-                );
-            }
-        }
-        else
-        {
-            $all_master_hosts = array
-            (
-                $this->config['connection']['hostname']
-            );
-        }
-
         # 错误服务器
         static $error_host = array();
 
@@ -194,12 +171,6 @@ class Driver_Database_Driver_Mongo extends Database_Driver
 
                 $options = array();
 
-                // 所有非主数据库都加上replicaSet参数
-                if (!in_array($hostname, $all_master_hosts))
-                {
-                    $options['replicaSet'] = true;
-                }
-
                 // 长连接设计
                 if ($persistent)
                 {
@@ -213,7 +184,6 @@ class Driver_Database_Driver_Mongo extends Database_Driver
                 }
 
                 $error_code = 0;
-                $error_msg  = '';
                 try
                 {
                     if ($username)
@@ -227,7 +197,6 @@ class Driver_Database_Driver_Mongo extends Database_Driver
                 }
                 catch (Exception $e)
                 {
-                    $error_msg  = $e->getMessage();
                     $error_code = $e->getCode();
                     $tmplink    = false;
                 }
@@ -285,9 +254,6 @@ class Driver_Database_Driver_Mongo extends Database_Driver
      */
     public function close_connect()
     {
-        //TODO 关闭连接有bug
-
-        return ;
         if ($this->_connection_ids)foreach ($this->_connection_ids as $key=>$connection_id)
         {
             if ($connection_id && Database_Driver_Mongo::$_connection_instance[$connection_id])
@@ -342,6 +308,12 @@ class Driver_Database_Driver_Mongo extends Database_Driver
             }
             else
             {
+                # 保证从数据库s可以查询，避免出现 Cannot run command count(): not master 的错误
+                if ($this->_connection_type=='slaver')
+                {
+                    $connection->setSlaveOkay(true);
+                }
+
                 Database_Driver_Mongo::$_connection_instance_db[$connection_id] = $connection;
             }
 
@@ -358,7 +330,7 @@ class Driver_Database_Driver_Mongo extends Database_Driver
     public function compile($builder, $type = 'selete')
     {
         $where = array();
-        if (! empty($builder['where']))
+        if (!empty($builder['where']))
         {
             $where = $this->_compile_conditions($builder['where']);
         }
@@ -1269,12 +1241,10 @@ class Driver_Database_Driver_Mongo extends Database_Driver
      */
     protected function _compile_conditions(array $conditions)
     {
-        $last_logic = '$and';
+        $last_logic     = '$and';
         $tmp_query_list = array();
-        $query = array();
-        $tmp_query = & $query;
-        $condition_num = 0;
-        $multikey_mod = false;    //同字段多条件模式，适用于$or和$and条件
+        $query          = array();
+        $tmp_query      =& $query;
 
         foreach ($conditions as $group)
         {
