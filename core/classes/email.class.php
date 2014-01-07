@@ -543,7 +543,7 @@ class Core_Email
         else
         {
             $this->_attach_name[]    = array($filename, $newname);
-            $this->_attach_content[] = '';
+            $this->_attach_content[] = null;
         }
 
         $this->_attach_disp[] = empty($disposition) ? 'attachment' : $disposition; // Can also be 'inline'  Not sure if it matters
@@ -1199,7 +1199,7 @@ class Core_Email
             $ctype        = $this->_attach_type[$i];
             $file_content = '';
 
-            if ($this->_attach_content)
+            if (null!==$this->_attach_content[$i])
             {
                 $file_content =& $this->_attach_content[$i];
 
