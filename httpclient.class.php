@@ -65,7 +65,7 @@ class Module_HttpClient
         }
         else
         {
-            $this->type = HttpClient::TYPE_Fsock;
+            $this->type = HttpClient::TYPE_FSOCK;
         }
     }
 
@@ -194,7 +194,7 @@ class Module_HttpClient
     public function get($url, $timeout = 10)
     {
         $this->driver()->get($url, $timeout);
-        $data = $this->driver()->get_resut_data();
+        $data = $this->driver()->get_result_data();
 
         if ( is_array($url) )
         {
@@ -226,7 +226,7 @@ class Module_HttpClient
         $time = microtime(true);
         $this->driver()->post($url, $data, $timeout);
         $time = microtime(true) - $time;
-        $data = $this->driver()->get_resut_data();
+        $data = $this->driver()->get_result_data();
         $data['total_time'] = $time;
 
         return new HttpClient_Result($data);
@@ -245,7 +245,7 @@ class Module_HttpClient
         $time = microtime(true);
         $this->driver()->put($url, $data, $timeout);
         $time = microtime(true) - $time;
-        $data = $this->driver()->get_resut_data();
+        $data = $this->driver()->get_result_data();
         $data['total_time'] = $time;
 
         return new HttpClient_Result($data);
@@ -264,6 +264,41 @@ class Module_HttpClient
         $this->driver()->method('DELETE');
 
         return $this->get($url, $timeout);
+    }
+
+    /**
+     * 上传文件
+     *
+     * 注意，使用 `add_file()` 上传文件时，必须使用post方式提交
+     *
+     *      HttpClient::factory()->upload('http://localhost/upload', '/tmp/test.jpg');
+     *
+     * @param $url
+     * @param $name string 上传的文件的key，默认为 `file`
+     * @param $file_name string
+     * @param null $post
+     * @param int $timeout
+     * @return HttpClient_Result
+     */
+    public function upload($url, $file_name, $name = 'upload', $post = null, $timeout = 30)
+    {
+        return $this->add_file($file_name, $name)->post($url, $post, $timeout);
+    }
+
+    /**
+     * 添加上传文件
+     *
+     *      HttpClient::factory()->add_file('/tmp/test.jpg', 'img');
+     *
+     * @param $file_name string 文件路径
+     * @param $name string 名称
+     * @return $this
+     */
+    public function add_file($file_name, $name = 'upload')
+    {
+        $this->driver()->add_file($file_name, $name?$name:'upload');
+
+        return $this;
     }
 
     public function __call($method, $params)

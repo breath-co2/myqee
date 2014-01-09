@@ -24,6 +24,8 @@ class Module_HttpClient_Driver_Curl
 
     protected $header = array();
 
+    protected $files = array();
+
     protected $_option = array();
 
     protected $_post_data = array();
@@ -148,6 +150,19 @@ class Module_HttpClient_Driver_Curl
     }
 
     /**
+     * 添加上次文件
+     *
+     * @param $file_name string 文件路径
+     * @param $name string 文件名
+     * @return $this
+     */
+    public function add_file($file_name, $name)
+    {
+        $this->files[$name] = '@'.$file_name;
+        return $this;
+    }
+
+    /**
      * 设置，获取REST的类型
      *
      * @param string $method GET|POST|DELETE|PUT 等，不传则返回当前method
@@ -191,33 +206,50 @@ class Module_HttpClient_Driver_Curl
         # POST模式
 
         $this->method('POST');
-        $this->set_option( CURLOPT_HTTPHEADER, array('Expect:') );
+        $this->set_option(CURLOPT_HTTPHEADER, array('Expect:'));
 
-        if (is_array($url))
+        if (is_string($url))
         {
-            $myvars = array();
-            foreach ($url as $k=>$url)
+            $vars = array
+            (
+                $vars
+            );
+        }
+        $my_vars = array();
+        foreach ((array)$url as $k=>$u)
+        {
+            if (isset($vars[$k]))
             {
-                if (isset($vars[$k]))
+                if (is_array($vars[$k]))
                 {
-                    if (is_array($vars[$k]))
+                    if ($this->files)
                     {
-                        $myvars[$url] = http_build_query($vars[$k]);
+                        $my_vars[$u] = $vars[$k] + $this->files;
                     }
                     else
                     {
-                        $myvars[$url] = $vars[$k];
+                        $my_vars[$u] = http_build_query($vars[$k]);
+                    }
+                }
+                else
+                {
+                    if ($this->files)
+                    {
+                        # 把字符串解析成数组
+                        parse_str($vars[$k], $tmp);
+                        $my_vars[$u] = $tmp + $this->files;
+                    }
+                    else
+                    {
+                        $my_vars[$u] = $vars[$k];
                     }
                 }
             }
         }
-        else
-        {
-            $myvars = array($url=>$vars);
-        }
-        $this->_post_data = $myvars;
 
-        return $this->get($url,$timeout);
+        $this->_post_data = $my_vars;
+
+        return $this->get($url, $timeout);
     }
 
     /**
@@ -231,13 +263,13 @@ class Module_HttpClient_Driver_Curl
     {
         if ( is_array($url) )
         {
-            $getone = false;
-            $urls = $url;
+            $get_one = false;
+            $urls    = $url;
         }
         else
         {
-            $getone = true;
-            $urls = array($url);
+            $get_one = true;
+            $urls    = array($url);
         }
 
         if ($this->method=='GET')
@@ -261,7 +293,7 @@ class Module_HttpClient_Driver_Curl
 
         $this->clear_set();
 
-        if ( $getone )
+        if ($get_one)
         {
             $this->http_data = $this->http_data[$url];
             return $data[$url];
@@ -283,31 +315,34 @@ class Module_HttpClient_Driver_Curl
     public function put($url, $vars, $timeout = 10)
     {
         $this->method('PUT');
-        $this->set_option( CURLOPT_HTTPHEADER, array('Expect:') );
+        $this->set_option(CURLOPT_HTTPHEADER, array('Expect:'));
 
         if (is_array($url))
         {
-            $myvars = array();
-            foreach ($url as $k=>$url)
+            $my_vars = array();
+            foreach ($url as $k=>$u)
             {
                 if (isset($vars[$k]))
                 {
                     if (is_array($vars[$k]))
                     {
-                        $myvars[$url] = http_build_query($vars[$k]);
+                        $my_vars[$u] = http_build_query($vars[$k]);
                     }
                     else
                     {
-                        $myvars[$url] = $vars[$k];
+                        $my_vars[$u] = $vars[$k];
                     }
                 }
             }
         }
         else
         {
-            $myvars = array($url=>$vars);
+            $my_vars = array
+            (
+                $url => $vars
+            );
         }
-        $this->_post_data = $myvars;
+        $this->_post_data = $my_vars;
 
         return $this->get($url, $timeout);
     }
@@ -333,11 +368,11 @@ class Module_HttpClient_Driver_Curl
      *
      * @param string $url URL地址
      * @param int $timeout 超时时间
-     * @return curl_init()
+     * @return resource a cURL handle on success, false on errors.
      */
     protected function _create($url,$timeout)
     {
-        if ( false===strpos($url, '://') )
+        if (false===strpos($url, '://'))
         {
             preg_match('#^(http(?:s)?\://[^/]+/)#', $_SERVER["SCRIPT_URI"] , $m);
             $the_url = $m[1].ltrim($url,'/');
@@ -350,10 +385,10 @@ class Module_HttpClient_Driver_Curl
         if ($this->ip)
         {
             # 如果设置了IP，则把URL替换，然后设置Host的头即可
-            if (preg_match('#^(http(?:s)?)\://([^/\:]+)(\:[0-9]+)?/#', $the_url.'/',$m))
+            if (preg_match('#^(http(?:s)?)\://([^/\:]+)(\:[0-9]+)?/#', $the_url.'/', $m))
             {
                 $this->header[] = 'Host: '.$m[2];
-                $the_url = $m[1].'://'.$this->ip.$m[3].'/'.substr($the_url,strlen($m[0]));
+                $the_url = $m[1].'://'.$this->ip.$m[3].'/'.substr($the_url, strlen($m[0]));
             }
         }
 
@@ -365,7 +400,7 @@ class Module_HttpClient_Driver_Curl
         curl_setopt($ch, CURLOPT_TIMEOUT, $timeout);
         curl_setopt($ch, CURLOPT_CONNECTTIMEOUT_MS, HttpClient_Driver_Curl::$connecttimeout_ms);
 
-        if ( preg_match('#^https://#i', $the_url) )
+        if (preg_match('#^https://#i', $the_url))
         {
             curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
             curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
@@ -402,7 +437,7 @@ class Module_HttpClient_Driver_Curl
             curl_setopt($ch, $k, $v);
         }
 
-        if ( $this->header )
+        if ($this->header)
         {
             $header = array();
             foreach ($this->header as $item)
@@ -419,7 +454,7 @@ class Module_HttpClient_Driver_Curl
         # 设置POST数据
         if (isset($this->_post_data[$url]))
         {
-            curl_setopt($ch , CURLOPT_POSTFIELDS , $this->_post_data[$url]);
+            curl_setopt($ch, CURLOPT_POSTFIELDS, $this->_post_data[$url]);
         }
 
         return $ch;
@@ -453,12 +488,12 @@ class Module_HttpClient_Driver_Curl
 
         # 排队列表
         $multi_list = array();
-        foreach ( $urls as $url )
+        foreach ($urls as $url)
         {
             # 创建一个curl对象
             $current = $this->_create($url, $timeout);
 
-            if ( $this->multi_exec_num>0 && $list_num>=$this->multi_exec_num )
+            if ($this->multi_exec_num>0 && $list_num>=$this->multi_exec_num)
             {
                 # 加入排队列表
                 $multi_list[] = $url;
@@ -483,19 +518,19 @@ class Module_HttpClient_Driver_Curl
 
         do
         {
-            while ( ($execrun = curl_multi_exec($mh, $running)) == CURLM_CALL_MULTI_PERFORM );
-            if ( $execrun != CURLM_OK ) break;
+            while (($exec_run = curl_multi_exec($mh, $running)) == CURLM_CALL_MULTI_PERFORM);
+            if ($exec_run != CURLM_OK)break;
 
-            while ( true==($done = curl_multi_info_read($mh)) )
+            while (true==($done = curl_multi_info_read($mh)))
             {
-                foreach ( $listener_list as $done_url=>$listener )
+                foreach ($listener_list as $done_url=>$listener)
                 {
-                    if ( $listener === $done['handle'] )
+                    if ($listener === $done['handle'])
                     {
                         # 获取内容
                         $this->http_data[$done_url] = $this->get_data(curl_multi_getcontent($done['handle']), $done['handle']);
 
-                        if ( $this->http_data[$done_url]['code'] != 200 )
+                        if ($this->http_data[$done_url]['code'] != 200)
                         {
                             Core::debug()->error('URL:'.$done_url.' ERROR,TIME:' . $this->http_data[$done_url]['time'] . ',CODE:' . $this->http_data[$done_url]['code'] );
                             $result[$done_url] = false;
@@ -512,11 +547,11 @@ class Module_HttpClient_Driver_Curl
                         curl_multi_remove_handle($mh, $done['handle']);
 
                         # 把监听列表里移除
-                        unset($listener_list[$done_url],$listener);
+                        unset($listener_list[$done_url], $listener);
                         $done_num++;
 
                         # 如果还有排队列表，则继续加入
-                        if ( $multi_list )
+                        if ($multi_list)
                         {
                             # 获取列队中的一条URL
                             $current_url = array_shift($multi_list);
@@ -542,7 +577,8 @@ class Module_HttpClient_Driver_Curl
 
             if ($done_num>=$list_num)break;
 
-        } while (true);
+        }
+        while(true);
 
         # 关闭列队
         curl_multi_close($mh);
@@ -550,7 +586,7 @@ class Module_HttpClient_Driver_Curl
         return $result;
     }
 
-    public function get_resut_data()
+    public function get_result_data()
     {
         return $this->http_data;
     }
@@ -571,12 +607,13 @@ class Module_HttpClient_Driver_Curl
      */
     protected function clear_set()
     {
-        $this->_option = array();
-        $this->header = array();
-        $this->ip = null;
-        $this->cookies = null;
-        $this->referer = null;
-        $this->method     = 'GET';
+        $this->_option    = array();
+        $this->header     = array();
         $this->_post_data = array();
+        $this->files      = array();
+        $this->ip         = null;
+        $this->cookies    = null;
+        $this->referer    = null;
+        $this->method     = 'GET';
     }
 }
