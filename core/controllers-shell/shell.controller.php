@@ -11,57 +11,57 @@ abstract class Core_Controller_Shell extends Controller
 
     public function action_default()
     {
-        $examples = array_diff( get_class_methods( $this ), get_class_methods( __CLASS__ ) );
+        $examples = array_diff(get_class_methods($this), get_class_methods(__CLASS__));
 
         # 获取方法的字符串最大长度
         $methods = array();
         $name_max_len = 0;
-        foreach ( $examples as $method )
+        foreach ($examples as $method)
         {
-            if ( $method == __FUNCTION__ ) continue;
-            if ( strtolower( substr( $method, 0, 7 ) ) == 'action_' )
+            if ($method ==__FUNCTION__) continue;
+            if (strtolower(substr($method, 0, 7)) == 'action_')
             {
-                $m = substr( $method, 7 );
-                $methods[$m] = $m;
-                $name_max_len = max( strlen( $m ), $name_max_len );
+                $m = substr($method, 7);
+                $methods[$m]  = $m;
+                $name_max_len = max(strlen($m), $name_max_len);
             }
         }
 
         $str = '';
         $str_usage = 'Usage: ';
-        foreach ( $methods as $method )
+        foreach ($methods as $method)
         {
             $ref_method = new ReflectionMethod( $this, 'action_' . $method );
 
             $parameters = $ref_method->getParameters();
 
-            $str_usage .= str_pad( $method, $name_max_len, ' ', STR_PAD_RIGHT );
-            $comment = self::_parse_doc_comment( $ref_method->getDocComment() );
+            $str_usage .= str_pad($method, $name_max_len, ' ', STR_PAD_RIGHT);
+            $comment = self::_parse_doc_comment( $ref_method->getDocComment());
             $str .= CRLF . CRLF . '   ' . $method . CRLF . '       comment   : ' . $comment['title'][0] . CRLF . '       parameters: ';
 
-            if ( $parameters )
+            if ($parameters)
             {
                 $tmpstr = array();
                 $tmpparameter = array();
                 $i = 0;
                 $hava_l = 0;
-                foreach ( $parameters as $k => $parameter )
+                foreach ($parameters as $k => $parameter)
                 {
                     $tmpstr[] = '                   $' . $parameter->name . ' ' . $comment['param'][$i];
                     $tmpparameter[$k] = '$' . $parameter->getName();
-                    if ( $parameter->isDefaultValueAvailable() )
+                    if ($parameter->isDefaultValueAvailable())
                     {
                         $hava_l ++;
                         $tmpparameter[$k] = '[' . $tmpparameter[$k] . ' = ' . $parameter->getDefaultValue();
                     }
                     $i ++;
                 }
-                $str .= trim( implode( CRLF, $tmpstr ) );
-                $str_usage .= ' [options] ' . '[' . implode( ', ', $tmpparameter ) . ']';
+                $str .= trim(implode(CRLF, $tmpstr));
+                $str_usage .= ' [options] ' . '[' . implode(', ', $tmpparameter) . ']';
 
-                if ( $hava_l )
+                if ($hava_l)
                 {
-                    for( $i = 0; $i < $hava_l; $i ++ )
+                    for($i = 0; $i < $hava_l; $i ++)
                     {
                         $str_usage .= ' ]';
                     }
@@ -74,36 +74,36 @@ abstract class Core_Controller_Shell extends Controller
             $str_usage .= CRLF . '           ';
 
         }
-        $str_usage = trim( $str_usage ) . CRLF;
+        $str_usage = trim($str_usage) . CRLF;
 
-        echo $str_usage, $str;
+        echo $str_usage, $str, CRLF;
     }
 
-    protected static function _parse_doc_comment( $comment )
+    protected static function _parse_doc_comment($comment)
     {
         // Normalize all new lines to \n
-        $comment = str_replace( array( "\r\n", "\n" ), "\n", $comment );
+        $comment = str_replace(array("\r\n", "\n"), "\n", $comment);
 
         // Remove the phpdoc open/close tags and split
-        $comment = array_slice( explode( "\n", $comment ), 1, - 1 );
+        $comment = array_slice(explode("\n", $comment), 1, -1);
 
         // Tag content
         $param = array();
 
-        foreach ( $comment as $i => $line )
+        foreach ($comment as $i => $line)
         {
             // Remove all leading whitespace
-            $line = preg_replace( '/^\s*\* ?/m', '', $line );
+            $line = preg_replace('/^\s*\* ?/m', '', $line);
 
             // Search this line for a tag
-            if ( preg_match( '/^@(\S+)(?:\s*(.+))?$/', $line, $matches ) )
+            if (preg_match('/^@(\S+)(?:\s*(.+))?$/', $line, $matches))
             {
                 // This is a tag line
-                unset( $comment[$i] );
+                unset($comment[$i]);
 
                 $name = $matches[1];
-                $text = isset( $matches[2] ) ? $matches[2] : '';
-                if ( $text && $name == 'param' )
+                $text = isset($matches[2]) ? $matches[2] : '';
+                if ($text && $name == 'param')
                 {
                     // Add the tag
                     $param[] = $text;
@@ -116,11 +116,11 @@ abstract class Core_Controller_Shell extends Controller
             else
             {
                 // Overwrite the comment line
-                $comment[$i] = ( string ) $line;
+                $comment[$i] = (string)$line;
             }
         }
 
-        return array( 'title' => $comment, 'param' => $param );
+        return array('title' => $comment, 'param' => $param);
     }
 
 
