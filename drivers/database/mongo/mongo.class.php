@@ -625,37 +625,9 @@ class Driver_Database_Driver_Mongo extends Database_Driver
             {
                 case 'SELECT':
 
-                    if ($options['distinct'])
+                    if ($options['group_by'])
                     {
-                        # 查询唯一值
-                        $result = $connection->command(
-                            array
-                            (
-                                'distinct' => $tablename,
-                                'key'      => $options['distinct'] ,
-                                'query'    => $options['where']
-                           )
-                        );
-
-                        $last_query = 'db.'.$tablename.'.distinct('.$options['distinct'].', '.json_encode($options['where']).')';
-
-                        if(IS_DEBUG && $is_sql_debug)
-                        {
-                            $count = count($result['values']);
-                        }
-
-                        if ($result && $result['ok']==1)
-                        {
-                            $rs = new Database_Driver_Mongo_Result(new ArrayIterator($result['values']), $options, $as_object ,$this->config);
-                        }
-                        else
-                        {
-                            throw new Exception($result['errmsg']);
-                        }
-                    }
-                    elseif ($options['group_by'])
-                    {
-                        $have_dot = false;
+                        $alias_key = array();
 
                         $select = $options['select'];
                         # group by
@@ -673,8 +645,9 @@ class Driver_Database_Driver_Mongo extends Database_Driver
                             {
                             	if (false!==strpos($item, '.'))
                             	{
-                            		$have_dot = true;
-                            		$group_opt['_id'][str_replace('.', '->', $item)] = '$'.$item;
+                                    $key      = str_replace('.', '->', $item);
+                            		$group_opt['_id'][$key] = '$'.$item;
+                                    $alias_key[$key] = $item;
                             	}
                             	else
                             	{
@@ -689,7 +662,7 @@ class Driver_Database_Driver_Mongo extends Database_Driver
                         $ops = array();
                         if ($options['where'])
                         {
-                            $last_query .= '{$match: '.json_encode($options['where']).'}, ';
+                            $last_query .= '{$match:'.json_encode($options['where']).'}';
                             $ops[] = array
                             (
                                 '$match' => $options['where']
@@ -701,12 +674,13 @@ class Driver_Database_Driver_Mongo extends Database_Driver
                         {
                             foreach ($select as $k=>$v)
                             {
-                                if (1===$v)
+                                if (1===$v || true===$v)
                                 {
-                                    if (false!==strpos($k,'.'))
+                                    if (false!==strpos($k, '.'))
                                     {
-                                        $have_dot = true;
-                                        $group_opt[str_replace('.','->',$k)] = array('$first'=>'$'.$k);
+                                        $key             = str_replace('.', '->', $k);
+                                        $group_opt[$key] = array('$first'=>'$'.$k);
+                                        $alias_key[$key] = $k;
                                     }
                                     else
                                     {
@@ -715,10 +689,11 @@ class Driver_Database_Driver_Mongo extends Database_Driver
                                 }
                                 else
                                 {
-                                    if (false!==strpos($v,'.'))
+                                    if (false!==strpos($v, '.'))
                                     {
-                                        $have_dot = true;
-                                        $group_opt[str_replace('.','->',$v)] = array('$first'=>'$'.$k);
+                                        $key             = str_replace('.', '->', $k);
+                                        $group_opt[$key] = array('$first'=>'$'.$k);
+                                        $alias_key[$key] = $k;
                                     }
                                     else
                                     {
@@ -742,10 +717,14 @@ class Driver_Database_Driver_Mongo extends Database_Driver
                             {
                                 $column = $alias = $item[0];
                             }
-                            $alias = str_replace('.','->',$alias);
-                            if (false===$have_dot && false!==strpos($alias,'.'))
+
+                            if (false!==strpos($alias, '.'))
                             {
-                                $have_dot = true;
+                                $arr               = explode('.', $alias);
+                                $k                 = $arr[count($arr)-1];
+                                $alias             = implode('->', $arr);
+                                $alias_key[$alias] = implode('.', $arr);;
+                                unset($arr);
                             }
 
                             switch ($item[1])
@@ -776,42 +755,97 @@ class Driver_Database_Driver_Mongo extends Database_Driver
                             }
                         }
 
-                        $ops[] = array
-                        (
-                            '$group' => $group_opt,
-                        );
-                        $last_query .= '{$group:'.json_encode($group_opt);
+                        if ($options['distinct'])
+                        {
+                            # 唯一值
+
+                            # 需要先把相应的数据$addToSet到一起
+                            $group_opt['_distinct_'.$options['distinct']] = array
+                            (
+                                '$addToSet' => '$' . $options['distinct'],
+                            );
+
+                            $ops[] = array
+                            (
+                                '$group' => $group_opt,
+                            );
+
+                            $last_query .= ', {$group:'.json_encode($group_opt).'}';
+
+
+                            $ops[] = array
+                            (
+                                '$unwind' => '$_distinct_'.$options['distinct']
+                            );
+                            $last_query .= ', {$unwind:"$_distinct_'.$options['distinct'].'"}';
+
+                            $group_distinct = array();
+
+                            # 将原来的group的数据重新加进来
+                            foreach($group_opt as $k=>$v)
+                            {
+                                # 临时统计的忽略
+                                if ($k=='_distinct_'.$options['distinct'])continue;
+
+                                if ($k=='_id')
+                                {
+                                    $group_distinct[$k] = '$'.$k;
+                                }
+                                else
+                                {
+                                    $group_distinct[$k] = array('$first'=>'$'.$k);
+                                }
+                            }
+                            $group_distinct[$options['distinct']] = array
+                            (
+                                '$sum' => 1
+                            );
+
+                            $ops[] = array
+                            (
+                                '$group' => $group_distinct
+                            );
+                            $last_query .= ', {$group:'. json_encode($group_distinct) .'}';
+                        }
+                        else
+                        {
+                            $ops[] = array
+                            (
+                                '$group' => $group_opt,
+                            );
+
+                            $last_query .= ', {$group:'.json_encode($group_opt).'}';
+                        }
 
                         if (isset($options['sort']) && $options['sort'])
                         {
                             $ops[]['$sort'] = $options['sort'];
-                            $last_query .= ',$sort:'.json_encode($options['sort']);
+                            $last_query .= ', {$sort:'.json_encode($options['sort']).'}';
                         }
 
                         if (isset($options['skip']) && $options['skip']>0)
                         {
                             $ops[]['$skip'] = $options['skip'];
-                            $last_query .= ',$skip:'.$options['skip'];
+                            $last_query .= ', {$skip:'.$options['skip'].'}';
                         }
 
                         if (isset($options['limit']) && $options['limit']>0)
                         {
                             $ops[]['$limit'] = $options['limit'];
-                            $last_query .= ',$limit:'.$options['limit'];
+                            $last_query .= ', {$limit:'.$options['limit'].'}';
                         }
 
-                        $last_query .= '}';
                         $last_query .= ')';
 
                         $result = $connection->selectCollection($tablename)->aggregate($ops);
 
                         // 兼容不同版本的aggregate返回
-                        if ($result && ($result['ok']==1||!isset($result['errmsg'])))
+                        if ($result && ($result['ok']==1 || !isset($result['errmsg'])))
                         {
                             if ($result['ok']==1 && is_array($result['result']))$result = $result['result'];
-                            if ($have_dot)foreach ($result as &$item)
-                            {
 
+                            if ($alias_key)foreach ($result as &$item)
+                            {
                             	// 处理 _ID 字段
                             	if (is_array($item['_id']))foreach ($item['_id'] as $k=>$v)
                             	{
@@ -823,15 +857,13 @@ class Driver_Database_Driver_Mongo extends Database_Driver
                             	}
 
                             	// 处理 select 的字段
-                                foreach ($item as $k=>$v)
+                                foreach($alias_key as $k => $v)
                                 {
-                                    if (false!==strpos($k,'->'))
-                                    {
-                                        $item[str_replace('->','.',$k)] = $v;
-                                        unset($item[$k]);
-                                    }
+                                    $item[$v] = $item[$k];
+                                    unset($item[$k]);
                                 }
                             }
+
                             if ($options['total_count'])
                             {
                                 foreach ($result as &$item)
@@ -841,26 +873,54 @@ class Driver_Database_Driver_Mongo extends Database_Driver
                             }
                             $count = count($result);
 
-                            $rs = new Database_Driver_Mongo_Result(new ArrayIterator($result), $options, $as_object ,$this->config);
+                            $rs = new Database_Driver_Mongo_Result(new ArrayIterator($result), $options, $as_object, $this->config);
                         }
                         else
                         {
-                            throw new Exception($result['errmsg'].'.query:'.$last_query);
+                            throw new Exception($result['errmsg'].'.query: '.$last_query);
+                        }
+                    }
+                    else if ($options['distinct'])
+                    {
+                        # 查询唯一值
+                        $result = $connection->command(
+                            array
+                            (
+                            'distinct' => $tablename,
+                            'key'      => $options['distinct'] ,
+                            'query'    => $options['where']
+                            )
+                        );
+
+                        $last_query = 'db.'.$tablename.'.distinct('.$options['distinct'].', '.json_encode($options['where']).')';
+
+                        if(IS_DEBUG && $is_sql_debug)
+                        {
+                            $count = count($result['values']);
+                        }
+
+                        if ($result && $result['ok']==1)
+                        {
+                            $rs = new Database_Driver_Mongo_Result(new ArrayIterator($result['values']), $options, $as_object ,$this->config);
+                        }
+                        else
+                        {
+                            throw new Exception($result['errmsg']);
                         }
                     }
                     else
                     {
                         $last_query = 'db.'.$tablename.'.find(';
                         $last_query .= $options['where']?json_encode($options['where']):'{}';
-                        $last_query .= $options['select']?','.json_encode($options['select']):'';
+                        $last_query .= $options['select']?', '.json_encode($options['select']):'';
                         $last_query .= ')';
 
-                        $result = $connection->selectCollection($tablename)->find($options['where'],(array)$options['select']);
+                        $result = $connection->selectCollection($tablename)->find($options['where'], (array)$options['select']);
 
                         if(IS_DEBUG && $is_sql_debug)
                         {
                             $explain = $result->explain();
-                            $count = $result->count();
+                            $count   = $result->count();
                         }
 
                         if ($options['total_count'])
