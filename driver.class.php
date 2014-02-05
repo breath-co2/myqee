@@ -92,7 +92,7 @@ abstract class Module_Database_Driver
     /**
      * 构建SQL语句
      */
-    abstract public function compile($builder, $type = 'selete');
+    abstract public function compile($builder, $type = 'select');
 
     /**
      * 查询
