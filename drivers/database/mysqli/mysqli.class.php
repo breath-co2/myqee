@@ -368,11 +368,11 @@ class Driver_Database_Driver_MySQLI extends Database_Driver
     /**
      * 构建SQL语句
      */
-    public function compile($builder, $type = 'selete')
+    public function compile($builder, $type = 'select')
     {
-        if ($type == 'selete')
+        if ($type == 'select')
         {
-            return $this->_compile_selete($builder);
+            return $this->_compile_select($builder);
         }
         else if ($type == 'insert')
         {
@@ -392,7 +392,7 @@ class Driver_Database_Driver_MySQLI extends Database_Driver
         }
         else
         {
-            return $this->_compile_selete($builder);
+            return $this->_compile_select($builder);
         }
     }
 
@@ -852,7 +852,7 @@ class Driver_Database_Driver_MySQLI extends Database_Driver
 		return $column;
     }
 
-    protected function _compile_selete($builder)
+    protected function _compile_select($builder)
     {
         $quote_ident = array($this, '_quote_identifier');
 

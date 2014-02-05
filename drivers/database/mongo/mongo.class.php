@@ -327,7 +327,7 @@ class Driver_Database_Driver_Mongo extends Database_Driver
         }
     }
 
-    public function compile($builder, $type = 'selete')
+    public function compile($builder, $type = 'select')
     {
         $where = array();
         if (!empty($builder['where']))
