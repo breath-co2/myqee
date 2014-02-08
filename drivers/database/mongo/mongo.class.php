@@ -430,6 +430,7 @@ class Driver_Database_Driver_Mongo extends Database_Driver
             // 查询
             if ($builder['select'])
             {
+                $s = array();
                 foreach ($builder['select'] as $item)
                 {
                     if (is_string($item))
@@ -449,7 +450,7 @@ class Driver_Database_Driver_Mongo extends Database_Driver
                     {
                         if ($item instanceof Database_Expression)
                         {
-                            $v = $item->value();
+                            $v = $item->value($this);
                             if ($v==='COUNT(1) AS `total_row_count`')
                             {
                                 $sql['total_count'] = true;
@@ -488,6 +489,17 @@ class Driver_Database_Driver_Mongo extends Database_Driver
             if ($builder['select_adv'])
             {
                 $sql['select_adv'] = $builder['select_adv'];
+
+                // 分组统计
+                if (!$builder['group_by'])
+                {
+                    $sql['group_by'] = array('0');
+                }
+            }
+
+            if ($builder['group_concat'])
+            {
+                $sql['group_concat'] = $builder['group_concat'];
 
                 // 分组统计
                 if (!$builder['group_by'])
@@ -548,20 +560,6 @@ class Driver_Database_Driver_Mongo extends Database_Driver
         }
 
         $type = strtoupper($options['type']);
-
-        $typeArr = array
-        (
-            'SELECT',
-            'SHOW',     //显示表
-            'EXPLAIN',  //分析
-            'DESCRIBE', //显示结结构
-            'INSERT',
-            'BATCHINSERT',
-            'REPLACE',
-            'SAVE',
-            'UPDATE',
-            'REMOVE',
-        );
 
         $slaverType = array
         (
@@ -708,7 +706,12 @@ class Driver_Database_Driver_Mongo extends Database_Driver
                         {
                             if (!is_array($item))continue;
 
-                            if (preg_match('#^(.*) AS (.*)$#i', $item[0] , $m))
+                            if (is_array($item[0]))
+                            {
+                                $column = $item[0][0];
+                                $alias  = $item[0][1];
+                            }
+                            else if (preg_match('#^(.*) AS (.*)$#i', $item[0] , $m))
                             {
                                 $column = $m[1];
                                 $alias  = $m[2];
@@ -721,9 +724,8 @@ class Driver_Database_Driver_Mongo extends Database_Driver
                             if (false!==strpos($alias, '.'))
                             {
                                 $arr               = explode('.', $alias);
-                                $k                 = $arr[count($arr)-1];
                                 $alias             = implode('->', $arr);
-                                $alias_key[$alias] = implode('.', $arr);;
+                                $alias_key[$alias] = implode('.', $arr);
                                 unset($arr);
                             }
 
@@ -752,6 +754,57 @@ class Driver_Database_Driver_Mongo extends Database_Driver
                                         '$sum' => isset($item[2])?$item[2]:'$'.$column,
                                     );
                                     break;
+                            }
+                        }
+
+                        if ($options['group_concat'])foreach($options['group_concat'] as $item)
+                        {
+                            if (is_array($item[0]))
+                            {
+                                $column = $item[0][0];
+                                $alias  = $item[0][1];
+                            }
+                            else if (preg_match('#^(.*) AS (.*)$#i', $item[0] , $m))
+                            {
+                                $column = $m[1];
+                                $alias  = $m[2];
+                            }
+                            else
+                            {
+                                $column = $alias = $item[0];
+                            }
+
+                            if (false!==strpos($alias, '.'))
+                            {
+                                $arr               = explode('.', $alias);
+                                $alias             = implode('->', $arr);
+                                $alias_key[$alias] = implode('.', $arr);
+                                unset($arr);
+                            }
+
+                            if (isset($item[3]) && $item[3])
+                            {
+                                $fun = '$addToSet';
+                            }
+                            else
+                            {
+                                $fun = '$push';
+                            }
+
+                            $group_opt[$alias] = array
+                            (
+                                $fun => '$' . $column,
+                            );
+
+                            if (isset($item[1]) && $item[1])
+                            {
+                                $group_opt[$alias] = array
+                                (
+                                    '$sort' => array
+                                    (
+                                        $column => strtoupper($item[1])=='DESC'?-1:1,
+                                    )
+                                );
                             }
                         }
 
@@ -1077,7 +1130,7 @@ class Driver_Database_Driver_Mongo extends Database_Driver
         return $rs;
     }
 
-    protected static function _compile_set_data($op, $value)
+    protected function _compile_set_data($op, $value)
     {
         $op = strtolower($op);
         $op_arr = array
@@ -1108,7 +1161,7 @@ class Driver_Database_Driver_Mongo extends Database_Driver
                 }
                 elseif ($value instanceof Database_Expression)
                 {
-                    $option = $value->value();
+                    $option = $value->value($this);
                 }
                 else
                 {
@@ -1194,7 +1247,7 @@ class Driver_Database_Driver_Mongo extends Database_Driver
         return $option;
     }
 
-    protected static function _compile_paste_data(&$tmp_query , $tmp_option , $last_logic , $now_logic , $column=null)
+    protected function _compile_paste_data(&$tmp_query , $tmp_option , $last_logic , $now_logic , $column=null)
     {
         if ($last_logic!= $now_logic)
         {
@@ -1338,15 +1391,15 @@ class Driver_Database_Driver_Mongo extends Database_Driver
                     {
                         $tmp_query =& $query;
                     }
-                    Database_Driver_Mongo::_compile_paste_data($tmp_query , $tmp_query2 , $last_logic , $logic);
+                    $this->_compile_paste_data($tmp_query , $tmp_query2 , $last_logic , $logic);
 
                     unset($tmp_query2,$c);
                 }
                 else
                 {
                     list ($column, $op, $value) = $condition;
-                    $tmp_option = Database_Driver_Mongo::_compile_set_data($op, $value);
-                    Database_Driver_Mongo::_compile_paste_data($tmp_query, $tmp_option , $last_logic , $logic ,$column);
+                    $tmp_option = $this->_compile_set_data($op, $value);
+                    $this->_compile_paste_data($tmp_query, $tmp_option , $last_logic , $logic ,$column);
 
                     $last_logic = $logic;
                 }

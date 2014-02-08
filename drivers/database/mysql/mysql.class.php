@@ -191,9 +191,9 @@ class Driver_Database_Driver_MySQL extends Database_Driver
                 }
                 catch (Exception $e)
                 {
-                    $error_msg   = $e->getMessage();
-                    $error_code  = $e->getCode();
-                    $tmplink     = false;
+                    $error_msg  = $e->getMessage();
+                    $error_code = $e->getCode();
+                    $tmplink    = false;
                 }
 
                 if (false===$tmplink)
@@ -396,7 +396,7 @@ class Driver_Database_Driver_MySQL extends Database_Driver
      * 设置编码
      *
      * @param string $charset
-     * @throws \Exception
+     * @throws Exception
      * @return void|boolean
      */
     public function set_charset($charset)
@@ -474,7 +474,7 @@ class Driver_Database_Driver_MySQL extends Database_Driver
     {
         $sql = trim($sql);
 
-        if (preg_match('#^([a-z]+)(:? |\n|\r)#i',$sql,$m))
+        if (preg_match('#^([a-z]+)(:? |\n|\r)#i', $sql, $m))
         {
             $type = strtoupper($m[1]);
         }
@@ -502,7 +502,7 @@ class Driver_Database_Driver_MySQL extends Database_Driver
             }
             else if (is_string($use_connection_type))
             {
-                if (!preg_match('#^[a-z0-9_]+$#i',$use_connection_type))$use_connection_type = 'master';
+                if (!preg_match('#^[a-z0-9_]+$#i', $use_connection_type))$use_connection_type = 'master';
             }
             else
             {
@@ -523,7 +523,7 @@ class Driver_Database_Driver_MySQL extends Database_Driver
         # 记录调试
         if(IS_DEBUG)
         {
-            Core::debug()->info($sql,'MySQL');
+            Core::debug()->info($sql, 'MySQL');
 
             static $is_sql_debug = null;
 
@@ -588,7 +588,7 @@ class Driver_Database_Driver_MySQL extends Database_Driver
                 {
                     $re = mysql_query('EXPLAIN ' . $sql, $connection);
                     $i = 0;
-                    while (true == ($row = mysql_fetch_array($re , MYSQL_NUM)))
+                    while (true == ($row = mysql_fetch_array($re, MYSQL_NUM)))
                     {
                         $data[$i]['select_type']      = (string)$row[1];
                         $data[$i]['table']            = (string)$row[2];
@@ -697,7 +697,7 @@ class Driver_Database_Driver_MySQL extends Database_Driver
      * @uses    Database::_quote_identifier
      * @uses    Database::table_prefix
      */
-    public function quote_table($value,$auto_as_table=false)
+    public function quote_table($value, $auto_as_table=false)
     {
         // Assign the table by reference from the value
         if (is_array($value))
@@ -720,7 +720,6 @@ class Driver_Database_Driver_MySQL extends Database_Driver
                 $table = $this->config['table_prefix'] . $table . ($auto_as_table?' AS '.$table:'');
             }
         }
-
 
         return $this->_quote_identifier($value);
     }
@@ -787,7 +786,7 @@ class Driver_Database_Driver_MySQL extends Database_Driver
         }
         else
         {
-			# 转换为字符串
+            # 转换为字符串
             $column = trim((string)$column);
 
             if (preg_match('#^(.*) AS (.*)$#i', $column, $m))
@@ -826,8 +825,8 @@ class Driver_Database_Driver_MySQL extends Database_Driver
                     if ($part !== '*')
                     {
                         // Quote each of the parts
-					    $this->_change_charset($part);
-						$part = $this->_identifier . str_replace($this->_identifier, '', $part) . $this->_identifier;
+                        $this->_change_charset($part);
+                        $part = $this->_identifier . str_replace($this->_identifier, '', $part) . $this->_identifier;
                     }
                 }
 
@@ -835,15 +834,15 @@ class Driver_Database_Driver_MySQL extends Database_Driver
             }
             else
             {
-			    $this->_change_charset($column);
-				$column = $this->_identifier . str_replace($this->_identifier, '', $column) . $this->_identifier;
+                $this->_change_charset($column);
+                $column = $this->_identifier . str_replace($this->_identifier, '', $column) . $this->_identifier;
             }
         }
 
         if (isset($alias))
         {
-		    $this->_change_charset($alias);
-			$column .= ' AS ' . $this->_identifier . str_replace($this->_identifier, '', $alias) . $this->_identifier;
+            $this->_change_charset($alias);
+            $column .= ' AS ' . $this->_identifier . str_replace($this->_identifier, '', $alias) . $this->_identifier;
         }
 
         return $column;
@@ -876,6 +875,7 @@ class Driver_Database_Driver_MySQL extends Database_Driver
         $this->_init_as_table($builder);
 
         $this->format_select_adv($builder);
+        $this->format_group_concat($builder);
 
         if (empty($builder['select']))
         {
@@ -896,7 +896,7 @@ class Driver_Database_Driver_MySQL extends Database_Driver
         {
             foreach ($builder['index'] as $item)
             {
-                $query .= ' '.strtoupper($item[1]).' INDEX('.$this->_quote_identifier($item[0]).')';
+                $query .= ' '. strtoupper($item[1]) .' INDEX('.$this->_quote_identifier($item[0]) .')';
             }
         }
 
@@ -1019,7 +1019,7 @@ class Driver_Database_Driver_MySQL extends Database_Driver
     protected function _compile_update($builder)
     {
         // Start an update query
-        $query = 'UPDATE ' . $this->quote_table($builder['table'],false);
+        $query = 'UPDATE ' . $this->quote_table($builder['table'], false);
 
         // Add the columns to update
         $query .= ' SET ' . $this->_compile_set($builder['set']);
@@ -1356,12 +1356,7 @@ class Driver_Database_Driver_MySQL extends Database_Driver
      */
     protected function format_select_adv(&$builder)
     {
-        if (empty($builder['select_adv']))
-        {
-            return;
-        }
-
-        foreach ($builder['select_adv'] as $item)
+        if ($builder['select_adv'])foreach ($builder['select_adv'] as $item)
         {
             if (!is_array($item))continue;
 
@@ -1370,7 +1365,7 @@ class Driver_Database_Driver_MySQL extends Database_Driver
                 $column = $item[0][0];
                 $alias  = $item[0][1];
             }
-            else if (preg_match('#^(.*) AS (.*)$#i', $item[0] , $m))
+            else if (preg_match('#^(.*) AS (.*)$#i', $item[0], $m))
             {
                 $column = $this->_quote_identifier($m[1]);
                 $alias  = $m[2];
@@ -1385,7 +1380,7 @@ class Driver_Database_Driver_MySQL extends Database_Driver
             $args_str = '';
             if (($count_item=count($item))>2)
             {
-                for($i=2;$i++;$i<count($count_item))
+                for($i=2; $i++; $i<count($count_item))
                 {
                     $args_str .= ','. $this->_quote_identifier($item[$i]);
                 }
@@ -1393,7 +1388,61 @@ class Driver_Database_Driver_MySQL extends Database_Driver
 
             $builder['select'][] = array
             (
-                Database::expr_value(strtoupper($item[1]).'('.$this->_quote_identifier($column.$args_str).')'),
+                Database::expr_value(strtoupper($item[1]) .'('. $this->_quote_identifier($column.$args_str) .')'),
+                $alias,
+            );
+        }
+    }
+
+    /**
+     * 解析 GROUP_CONCAT
+     *
+     * @param array $arr
+     * @return string
+     */
+    protected function format_group_concat(&$builder)
+    {
+        if ($builder['group_concat'])foreach($builder['group_concat'] as $item)
+        {
+            if (is_array($item[0]))
+            {
+                $column = $item[0][0];
+                $alias  = $item[0][1];
+            }
+            else if (preg_match('#^(.*) AS (.*)$#i', $item[0] , $m))
+            {
+                $column = $this->_quote_identifier($m[1]);
+                $alias  = $m[2];
+            }
+            else
+            {
+                $column = $this->_quote_identifier($item[0]);
+                $alias  = $item[0];
+            }
+
+            $str = 'GROUP_CONCAT(';
+
+            if (isset($item[3]) && $item[3])
+            {
+                $str .= 'DISTINCT ';
+            }
+            $str .= $column;
+
+            if (isset($item[1]) && $item[1])
+            {
+                $str .= ' ORDER BY ' . $column .' '. (strtoupper($item[1])=='DESC'?'DESC':'ASC');
+            }
+
+            if ($item[2])
+            {
+                $str .= ' SEPARATOR ' . $this->_quote_identifier($item[2]);
+            }
+
+            $str .= ')';
+
+            $builder['select'][] = array
+            (
+                Database::expr_value($str),
                 $alias,
             );
         }
