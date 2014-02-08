@@ -450,7 +450,7 @@ class Driver_Database_Driver_Mongo extends Database_Driver
                     {
                         if ($item instanceof Database_Expression)
                         {
-                            $v = $item->value($this);
+                            $v = $item->value();
                             if ($v==='COUNT(1) AS `total_row_count`')
                             {
                                 $sql['total_count'] = true;
@@ -1161,7 +1161,7 @@ class Driver_Database_Driver_Mongo extends Database_Driver
                 }
                 elseif ($value instanceof Database_Expression)
                 {
-                    $option = $value->value($this);
+                    $option = $value->value();
                 }
                 else
                 {
