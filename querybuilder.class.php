@@ -443,6 +443,22 @@ class Module_Database_QueryBuilder
     }
 
     /**
+     * 构成生成 GROUP_CONCAT() 的语句
+     *
+     * @param $column
+     * @param string $order_by
+     * @param string $separator
+     * @param bool $distinct
+     * @return Database
+     */
+    public function group_concat($column, $order_by = null, $separator = null, $distinct = false)
+    {
+        $this->_builder['group_concat'] = func_get_args();
+
+        return $this;
+    }
+
+    /**
      * Alias of and_having()
      *
      * @param   mixed   column name or array($column, $alias) or object
@@ -609,28 +625,29 @@ class Module_Database_QueryBuilder
         }
         else
         {
-            $this->_builder_bak           = $this->_builder;
+            $this->_builder_bak             = $this->_builder;
 
-            $this->_builder['select']     =
-            $this->_builder['select_adv'] =
-            $this->_builder['from']       =
-            $this->_builder['join']       =
-            $this->_builder['where']      =
-            $this->_builder['group_by']   =
-            $this->_builder['having']     =
-            $this->_builder['set']        =
-            $this->_builder['columns']    =
-            $this->_builder['values']     =
-            $this->_builder['where']      =
-            $this->_builder['index']      =
-            $this->_builder['order_by']   = array();
+            $this->_builder['select']       =
+            $this->_builder['select_adv']   =
+            $this->_builder['from']         =
+            $this->_builder['join']         =
+            $this->_builder['where']        =
+            $this->_builder['group_by']     =
+            $this->_builder['having']       =
+            $this->_builder['set']          =
+            $this->_builder['columns']      =
+            $this->_builder['values']       =
+            $this->_builder['where']        =
+            $this->_builder['index']        =
+            $this->_builder['group_concat'] =
+            $this->_builder['order_by']     = array();
 
-            $this->_builder['distinct']   = false;
+            $this->_builder['distinct']     = false;
 
-            $this->_builder['limit']      =
-            $this->_builder['offset']     =
-            $this->_builder['table']      =
-            $this->_builder['last_join']  = null;
+            $this->_builder['limit']        =
+            $this->_builder['offset']       =
+            $this->_builder['table']        =
+            $this->_builder['last_join']    = null;
         }
 
         return $this;
@@ -946,7 +963,7 @@ class Module_Database_QueryBuilder
     /**
      * 创建一个不会被过滤处理的字符串
      *
-     * @param string expression
+     * @param string|array expression
      * @return Database_Expression
      */
     public static function expr_value($string)
