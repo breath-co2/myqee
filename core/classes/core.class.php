@@ -56,7 +56,7 @@ abstract class Core_Core extends Bootstrap
      *
      * @var string
      */
-    const VERSION = '3.1';
+    const VERSION = '3.0';
 
     /**
      * 版本发布状态
@@ -65,7 +65,7 @@ abstract class Core_Core extends Bootstrap
      *
      * @var string
      */
-    const RELEASE  = 'rc1';
+    const RELEASE  = 'rc2';
 
     /**
      * 项目开发者
