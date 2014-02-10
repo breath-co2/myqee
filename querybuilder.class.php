@@ -453,7 +453,7 @@ class Module_Database_QueryBuilder
      */
     public function group_concat($column, $order_by = null, $separator = null, $distinct = false)
     {
-        $this->_builder['group_concat'] = func_get_args();
+        $this->_builder['group_concat'][] = func_get_args();
 
         return $this;
     }
