@@ -1,3 +1,71 @@
+
+### 2014-02-09
+
+* 数据库增加对 group_concat 的支持 [Link](https://github.com/breath-co2/myqee/commit/79f991fff41cae57c4d5f102a60ff944a38b66ce) [Link](https://github.com/breath-co2/myqee/commit/4c9e79162668212bee117278400a54f04f69067a) [Link](https://github.com/breath-co2/myqee/commit/5f303d9e9eaf7919fcf797a1e63af11a5a763b4c)
+
+### 2014-01-31
+
+* 修复数据库中type的错误关键字 [Link](https://github.com/breath-co2/myqee/commit/1c3d4f5431e26e27f781dc713624fa87b4a99e97)
+
+### 2014-01-31
+
+* MongoDB数据库驱动完善，支持在group查询中使用distinct查询 [Link](https://github.com/breath-co2/myqee/commit/483378af2ac3050ac7704caa1a0ae15e834a9915)
+
+### 2014-01-15
+
+* 增加 BigInt 类库 [Link](https://github.com/breath-co2/myqee/commit/703dc401d4df60fb9a053abaced19ab49527ac1f)
+* 优化shell默认控制器 [Link](https://github.com/breath-co2/myqee/commit/51430f810a17c63c4f3ff3dd86828e8160ff588a)
+* 日期类库完善 [Link](https://github.com/breath-co2/myqee/commit/0a71f1a5fc7332cdfa2ef48f5a82dd0b18ad23d2)
+
+
+### 2014-01-09
+
+* HttpClient增加upload方法，可实现上传文件功能 [Link](https://github.com/breath-co2/myqee/commit/1dd233474b671a02bd380a6d5ea9d6cbb6c07ae1)
+
+### 2014-01-07
+
+* 修复MongoDB驱动力中查询slave在新的版本里可能导致连接失败的问题 [Link](https://github.com/breath-co2/myqee/commit/3708649b0d2c138e0480e7a435e8d09a8f8020d8)
+* 修复Email中上传附件bug [Link](https://github.com/breath-co2/myqee/commit/050bbe6f4f5736d0df08835a7aaf875f3f51214e)
+
+### 2014-01-06
+
+* 完善邮件类库，支持收件人姓名+邮件的格式，完善密件抄送的功能 [Link](https://github.com/breath-co2/myqee/commit/e07b5d025bd4f15e83ba871d8484c31f25ad0a9e)
+
+### 2014-01-05
+
+* 数据库类库完善 [Link](https://github.com/breath-co2/myqee/commit/3d4401cb841d2e3b8d8160cfe24d7ae9b5b06bb7)
+* 增加 `Core::url()` 可自动输出附带参数 [Link](https://github.com/breath-co2/myqee/commit/4c8f30dca3397606ffd360c66dab673f71fd52c0)
+* 修复缓存驱动参数大小写问题 [Link](https://github.com/breath-co2/myqee/commit/4378014718aceaba9606294f797c0bc36c952366)
+* Session类库优化 [Link](https://github.com/breath-co2/myqee/commit/24f1c8dd64f4440c8754cbb06034458835ca424b)
+
+### 2013-12-19
+
+* 邮件类库完善，支持收件人、发件人别名，修复附件问题 [Link](https://github.com/breath-co2/myqee/commit/fc20fdf6c104f5a901b0bcd713b4771c6b9742c2)
+
+### 2013-12-19
+
+* 完善Session模块 [Link](https://github.com/breath-co2/myqee/commit/28ae6ee8a47e3fd9a57800c35e740f825f887345)
+
+### 2013-12-15
+
+* 缓存驱动移动到驱动目录中 [Link](https://github.com/breath-co2/myqee/commit/cf4549ecf1ef646af58c851bc6f20674e96d5656)
+
+### 2013-12-10
+
+* 文档完善，图片支持retina显示 [Link](https://github.com/breath-co2/myqee/commit/495728659ba04e8fe7a5d61873649f0636f56e2b) [Link](https://github.com/breath-co2/myqee/commit/ec9c026f69fff8278bdf59bd3e1ae3271c8661a9)
+
+### 2013-11-18
+
+* 完善文档输出脚本 [Link](https://github.com/breath-co2/myqee/commit/32b7d09291109c30a9f8f3faf9512c37efd3da5f)
+
+### 2013-11-17
+
+* 文档生成工具完善 [Link](https://github.com/breath-co2/myqee/commit/ba52181d88cee95c23a9c1674e44ae7e879c97a9)
+
+### 2013-10-24
+
+* Swift Storage 驱动完善，token验证支持v1和v2版本，优化参数传送方式，支持url方式的配置 - [Link](https://github.com/breath-co2/myqee/commit/42d3e8f46db63fa32f3835368ac641b23e6ef000)
+
 ### 2013-10-08
 
 * 表单完善，增加token的输出和校验功能，Core支持自动csrf攻击防御，默认配置完善 - [Link](https://github.com/breath-co2/myqee/commit/53230505cc783af28d32fee8b6fc07fc44611d91) [Link](https://github.com/breath-co2/myqee/commit/70e556590f364e05aca20506ab0422b29c583bb0)
