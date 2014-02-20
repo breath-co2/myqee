@@ -1,13 +1,14 @@
 V3.0 RC2
 --------------------------
-* Swift Storage 驱动完善，token验证支持v1和v2版本，优化参数传送方式，支持url方式的配置
 * 完善文档生成脚本
 * 完善模块化的拆分
-* 后台类库
-  * 后台类库使用全新界面，视图使用bootstrap界面框架 详见 [http://getbootstrap.com/](http://getbootstrap.com/)
-  * CSS采用less方式定义，方便修改
-  * JS改为模块化，更方便二次开发
-  * 支持手机版本
+* 数据库增加对 group_concat 的支持，MongoDB数据库驱动支持在group查询中使用distinct查询，修复MongoDB驱动力中查询slave在新的版本里可能导致连接失败的问题
+* 增加 BigInt 类库
+* 日期类库完善
+* HttpClient 增加upload方法，可实现上传文件功能
+* 完善邮件类库，修复 Email 中上传附件bug，支持收件人姓名+邮件的格式，完善密件抄送的功能
+* Session 类库优化
+* Swift Storage 驱动完善，token验证支持v1和v2版本，优化参数传送方式，支持url方式的配置
 
 
 V3.0 RC1
@@ -113,7 +114,7 @@ V2.0 Stable
 * Session类库修复destroy()销毁数据时Member数据无法销毁的bug
 * Session默认驱动中config支持save_handler和save_path关键字设置
 * 完善系统内部通信同步方法
-* 实现MongoDB数据库selete中as方法
+* 实现MongoDB数据库select中as方法
 * QueryBuilder相关类库移动到Database下，并且增加mod和or_mod方法
 * 核心MyQEE类库改为全小写，Develop_Tool类库改为develop，请注意config.new.php中的$config['libraries']例子的变更
 
