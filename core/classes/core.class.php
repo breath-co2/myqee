@@ -65,7 +65,7 @@ abstract class Core_Core extends Bootstrap
      *
      * @var string
      */
-    const RELEASE  = 'rc1';
+    const RELEASE  = 'stable';
 
     /**
      * 项目开发者
@@ -641,10 +641,12 @@ abstract class Core_Core extends Bootstrap
                 {
                     if ($action_name!='action_default' && method_exists($controller, 'action_default'))
                     {
+                        $action      = 'default';
                         $action_name = 'action_default';
                     }
                     elseif ($action_name!='' && (!$arguments || $arguments===array('')) && method_exists($controller, 'action_index'))
                     {
+                        $action      = 'index';
                         $action_name = 'action_index';
                     }
                     elseif (method_exists($controller, '__call'))
@@ -666,12 +668,39 @@ abstract class Core_Core extends Bootstrap
                     array_shift($arguments);
                 }
 
+                # 对后缀进行判断
+                if ($found['suffix'])
+                {
+                    if (Core::config('url_suffix') && in_array($found['suffix'], explode('|', Core::config('url_suffix'))))
+                    {
+                        # 默认允许的后缀
+                    }
+                    elseif (is_array($controller->allow_suffix))
+                    {
+                        if (!isset($controller->allow_suffix[$action]) || !in_array($found['suffix'], explode('|', $controller->allow_suffix[$action])))
+                        {
+                            Core::rm_controoler($controller);
+                            throw new Exception(__('Page Not Found'), 404);
+                        }
+                    }
+                    elseif (!in_array($found['suffix'], explode('|', $controller->allow_suffix)))
+                    {
+                        Core::rm_controoler($controller);
+                        throw new Exception(__('Page Not Found'), 404);
+                    }
+
+                    # 默认输出页面头信息
+                    if (!in_array($found['suffix'], array('php', 'html', 'htm')))
+                    {
+                        @header('Content-Type: '. File::mime_by_ext($found['suffix']));
+                    }
+                }
+
                 $ispublicmethod = new ReflectionMethod($controller, $action_name);
 
                 if (!$ispublicmethod->isPublic())
                 {
                     Core::rm_controoler($controller);
-
                     throw new Exception(__('Request Method Not Allowed.'), 405);
                 }
                 unset($ispublicmethod);
@@ -683,6 +712,7 @@ abstract class Core_Core extends Bootstrap
 
                     if ($auto_check_post_method_referer && !HttpIO::csrf_check())
                     {
+                        Core::rm_controoler($controller);
                         throw new Exception(__('Not Acceptable.'), 406);
                     }
                 }
@@ -705,6 +735,7 @@ abstract class Core_Core extends Bootstrap
                 $controller->controller = $found['class'];
                 $controller->uri        = $uri;
                 $controller->directory  = $found['dir'];
+                $controller->suffix     = $found['suffix'];
 
 
                 if (IS_SYSTEM_MODE)
@@ -791,9 +822,14 @@ abstract class Core_Core extends Bootstrap
     {
         $uri = ltrim($uri, '/');
 
-        if (Core::$config['url_suffix'] && substr(strtolower($uri), -strlen(Core::$config['url_suffix']))==Core::$config['url_suffix'])
+        if (preg_match('#^(.*)\.([a-z0-9]+)$#i', $uri, $m))
         {
-            $uri = substr($uri, 0, -strlen(Core::$config['url_suffix']));
+            $suffix = strtolower($m[2]);
+            $uri    = $m[1];
+        }
+        else
+        {
+            $suffix = '';
         }
 
         if (!IS_SYSTEM_MODE && isset(Core::$config['route']) && Core::$config['route'])
@@ -813,6 +849,7 @@ abstract class Core_Core extends Bootstrap
                 (
                     'class'  => 'Controller_' . preg_replace('#[^a-zA-Z0-9_]#', '_', trim($found_route['controller'])),
                     'route'  => $found_route,
+                    'suffix' => $suffix,
                 );
             }
             else
@@ -1121,9 +1158,14 @@ abstract class Core_Core extends Bootstrap
             }
         }
 
-        if (is_array($found) && isset($found['class']))
+        if (is_array($found))
         {
-            $found['class'] = preg_replace('#[^a-zA-Z0-9_]#', '_', trim($found['class']));
+            $found['suffix'] = $suffix;
+
+            if (isset($found['class']))
+            {
+                $found['class'] = preg_replace('#[^a-zA-Z0-9_]#', '_', trim($found['class']));
+            }
         }
 
         return $found;
