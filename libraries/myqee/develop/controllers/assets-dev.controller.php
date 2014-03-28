@@ -15,7 +15,7 @@ class Library_MyQEE_Develop_Controller_Assets_Dev extends Controller
      *
      * @var string
      */
-    protected $allow_suffix = 'js|css|jpg|jpeg|png|gif|bmp|pdf|html|htm|mp4|swf|eot|svg|ttf|woff|map';
+    public $allow_suffix = 'js|css|jpg|jpeg|png|gif|bmp|json|pdf|tpl|html|htm|mp4|swf|eot|svg|ttf|woff|map';
 
     /**
      * 文件名
@@ -23,13 +23,6 @@ class Library_MyQEE_Develop_Controller_Assets_Dev extends Controller
      * @var sting
      */
     protected $file;
-
-    /**
-     * 文件类型
-     *
-     * @var string
-     */
-    protected $type;
 
     /**
      * 当前文件是否.min后缀
@@ -43,22 +36,13 @@ class Library_MyQEE_Develop_Controller_Assets_Dev extends Controller
         # 只允许本地调试模式下使用
         if (!(IS_DEBUG & 1))Core::show_404(__('Only allows the development mode'));
 
-        # 允许的后缀名
-        $allow_suffix = Core::config('core.asset_allow_suffix');
-        if ($allow_suffix)
-        {
-            $this->allow_suffix .= '|' . $allow_suffix;
-        }
-
         $arguments = $this->arguments;
         $f = array_pop($arguments);
         if ($f)
         {
-            $rpos       = strrpos($f, '.');
             $args       = $arguments;
-            $args[]     = substr($f, 0, $rpos);
+            $args[]     = $f;
             $this->file = implode('/', $args);
-            $this->type = substr($f, $rpos+1);
 
             # 移除.min的后缀
             if (substr($this->file, -4)=='.min')
@@ -86,15 +70,12 @@ class Library_MyQEE_Develop_Controller_Assets_Dev extends Controller
             Core::show_404(__('Special characters of the file exists allowed.'));
         }
 
-        if (!$this->type || !preg_match('#('.$this->allow_suffix.')$#i', $this->type))
+        if (!$this->suffix || !preg_match('#('.$this->allow_suffix.')$#i', $this->suffix))
         {
-            Core::show_404(__('File suffix %s not allow.', array('%s'=>$this->type)));
+            Core::show_404(__('File suffix %s not allow.', array('%s'=>$this->suffix)));
         }
 
-        # 小写的后缀
-        $low_type = strtolower($this->type);
-
-        if ($low_type=='css' || $low_type=='js')
+        if ($this->suffix=='css' || $this->suffix=='js')
         {
             $this->output_css_js_file();
         }
@@ -109,50 +90,6 @@ class Library_MyQEE_Develop_Controller_Assets_Dev extends Controller
     protected function send_header()
     {
         Core::close_buffers(false);
-
-        # 清理所有已输出的header
-        if (version_compare(PHP_VERSION, '5.3', '>='))
-        {
-            $fun = 'header_remove';
-            $fun();
-        }
-
-        $low_type = strtolower($this->type);
-
-        if ($low_type == 'jpg')
-        {
-            header('Content-Type: image/jpeg');
-        }
-        elseif (in_array($low_type, array('gif', 'png')))
-        {
-            header('Content-Type: image/'.$low_type);
-        }
-        elseif ($low_type == 'css')
-        {
-            header('Content-Type: text/css');
-        }
-        elseif ($low_type == 'js')
-        {
-            header('Content-Type: application/x-javascript');
-        }
-        elseif ($low_type == 'swf')
-        {
-            header('Content-Type: application/swf');
-        }
-        else
-        {
-            # 在mimes表里获取
-            $mimes = Core::config('mimes.'.$low_type);
-            if ($mimes && is_array($mimes))
-            {
-                header('Content-Type: '.current($mimes));
-            }
-            else
-            {
-                header('Content-Type: text/plain');
-            }
-        }
-
         HttpIO::set_cache_header(86400);
     }
 
@@ -177,7 +114,7 @@ class Library_MyQEE_Develop_Controller_Assets_Dev extends Controller
         $out_dir = DIR_ASSETS . Core::$project .'/';
 
         # 输出文件
-        $out_file = $out_dir . $this->file . ($this->is_min?'.min':'') . '.' . $this->type;
+        $out_file = $out_dir . $this->file . ($this->is_min?'.min':'') . '.' . $this->suffix;
 
         if (is_file($out_file))
         {
@@ -185,8 +122,6 @@ class Library_MyQEE_Develop_Controller_Assets_Dev extends Controller
             {
                 copy($file, $out_file);
                 touch($out_file, filemtime($file));
-//                 unlink($out_file);
-//                 symlink($this->relative_path($file, $out_file), $out_file);
             }
         }
         else
@@ -228,50 +163,6 @@ class Library_MyQEE_Develop_Controller_Assets_Dev extends Controller
         readfile($file);
     }
 
-    /**
-     * 求相对路径
-     *
-     *      $a = '/a/b/c/a.php';
-     *      $b = '/a/b/e/b.php';
-     *      echo self::relative_path($a, $b, '/');
-     *      // 将输出 ../../c/a.php
-     *
-     * @param string $a 目标路径
-     * @param string $b 相对路径
-     * @return string
-     */
-    protected function relative_path($a, $b)
-    {
-        $str = '';
-        $a = explode('/', ltrim(str_replace('\\', '/', $a), '/'));
-        $b = explode('/', ltrim(str_replace('\\', '/', $b), '/'));
-
-        $intersect = array_intersect_assoc($a, $b);
-
-        if($intersect)
-        {
-            $j   = -1;
-            $num = 0;
-            foreach ($intersect as $k => $v)
-            {
-                if($k-1 != $j)
-                {
-                    break;
-                }
-                else
-                {
-                    $str .= '..'. DS;
-                }
-
-                $j = $k;
-                $num++;
-            }
-            $ret = array_slice($a, $num);
-
-            return $str . implode(DS, $ret);
-        }
-    }
-
 
     /**
      * 直接输出内容
@@ -297,10 +188,10 @@ class Library_MyQEE_Develop_Controller_Assets_Dev extends Controller
         $out_dir = DIR_ASSETS . Core::$project .'/';
 
         # 输出文件
-        $out_file = $out_dir . $this->file . ($this->is_min?'.min':'') .'.'. $this->type;
+        $out_file = $out_dir . $this->file . ($this->is_min?'.min':'') .'.'. $this->suffix;
 
         # md5存放的文件
-        $cachefile = DIR_DATA . 'cache/asset_files_md5_' . str_replace('/', '~', $this->file) . ($this->is_min?'.min':'') . '.'. $this->type . '.serialize';
+        $cachefile = DIR_DATA . 'cache/asset_files_md5_' . str_replace('/', '~', $this->file) . ($this->is_min?'.min':'') . '.'. $this->suffix . '.serialize';
 
         if (is_file($cachefile))
         {
@@ -380,7 +271,7 @@ class Library_MyQEE_Develop_Controller_Assets_Dev extends Controller
                 }
             }
 
-            if ($this->type=='css')
+            if ($this->suffix=='css')
             {
                 $this->add_css_image_version($content);
 
@@ -436,7 +327,7 @@ class Library_MyQEE_Develop_Controller_Assets_Dev extends Controller
     protected function output_other_file()
     {
         $file_name  = $this->file . ($this->is_min?'.min':'');
-        $found_file = Core::find_file('assets', $file_name, '.'. $this->type);
+        $found_file = Core::find_file('assets', $file_name, '.'. $this->suffix);
 
         if ($found_file)
         {
@@ -444,14 +335,14 @@ class Library_MyQEE_Develop_Controller_Assets_Dev extends Controller
         }
         else
         {
-            Core::show_404(__('Assets files : %s not found.', array('%s'=>$file_name .'.'. $this->type)));
+            $this->get_assets_dir_file();
         }
     }
 
     /**
      * 获取CSS或JS文件的整理后的数组
      *
-     * @return array
+     * @return array | boolean
      */
     protected function get_css_or_js_files_array()
     {
@@ -464,17 +355,17 @@ class Library_MyQEE_Develop_Controller_Assets_Dev extends Controller
         # 记录所有相关文件
         $all_files = array();
         # 搜索所有相关文件
-        foreach ( $include_path as $path )
+        foreach ($include_path as $path)
         {
             $path_len = strlen($path . 'assets' . DS);
-            $glob_file = $path .'assets'. DS .$this->file .'.*'. ($this->type=='css'?'':$this->type);
+            $glob_file = $path .'assets'. DS .$this->file .'.*'. ($this->suffix=='css'?'':$this->suffix);
             $files = glob($glob_file, GLOB_NOSORT);
 
             if ($files)foreach($files as $tmpfile)
             {
-                $filename = str_replace('\\', '/', substr($tmpfile,$path_len));
+                $filename = str_replace('\\', '/', substr($tmpfile, $path_len));
 
-                if ($this->type=='css')
+                if ($this->suffix=='css')
                 {
                     $tmptype = strtolower(substr($tmpfile, -5));
                     if (strtolower(substr($tmpfile, -4))!='.css' && $tmptype!='.less' && $tmptype!='.scss' && $tmptype!='.sass')
@@ -498,7 +389,7 @@ class Library_MyQEE_Develop_Controller_Assets_Dev extends Controller
 
         if (!$all_files)
         {
-            Core::show_404();
+            $this->get_assets_dir_file();
         }
 
         foreach ($all_files as $file=>$fullpath)
@@ -579,44 +470,59 @@ class Library_MyQEE_Develop_Controller_Assets_Dev extends Controller
     }
 
     /**
+     * 当项目类库中都没有找到文件时，尝试直接在assets目录里寻找文件并直接输出
+     */
+    protected function get_assets_dir_file()
+    {
+        $file_name   = $this->file . ($this->is_min?'.min':'');
+        $assets_file = DIR_ASSETS . $file_name. '.'. $this->suffix;
+
+        if (is_file($assets_file))
+        {
+            $this->output_by_file($assets_file);
+            exit;
+        }
+        else
+        {
+            Core::show_404(__('Assets files : %s not found.', array('%s'=>$file_name .'.'. $this->suffix)));
+        }
+    }
+
+    /**
      * 增加CSS文件版本号信息
      *
-     * @param css文件内容 $content
-     * @param css文件路径 $file
+     * @param string $content css文件内容
      */
     protected function add_css_image_version(&$content)
     {
-
-        return ;
-
         # 拿到css里所有背景图片
-        if (preg_match_all('#url\((?:\'|")?([^\'"]*)(?:\'|")?\)#Uis',$content,$match))
+        if (preg_match_all('#url\((?:\'|")?([^\'"]*)(?:\'|")?\)#Uis', $content, $match))
         {
-            $file_path_arr = explode('/',$this->file);
-            array_pop($file_path_arr);    // 移除文件名
+            $file_path_arr = explode('/', $this->file);
+            array_pop($file_path_arr);                      // 移除文件名
 
             # 去重
-            $allurl = array_unique($match[1]);
+            $all_urls = array_unique($match[1]);
 
-            foreach ($allurl as $img)
+            foreach ($all_urls as $img)
             {
-                if (strpos($img,'://')!==false)continue;
+                if (strpos($img, '://')!==false)continue;
                 $tmp_file_path_arr = $file_path_arr;
 
                 # 去掉?后面的东西
-                list($format_path,$query) = explode('?',$img.'?');
-                $imgdir = explode('/',$format_path);
+                list($format_path, $query) = explode('?', $img .'?');
+                $img_dir = explode('/', $format_path);
 
-                foreach ($imgdir as $k=>$dir)
+                foreach ($img_dir as $k=>$dir)
                 {
                     if ($dir=='.')
                     {
-                        unset($imgdir[$k]);
+                        unset($img_dir[$k]);
                     }
                     else if ($dir=='..')
                     {
                         array_pop($tmp_file_path_arr);
-                        unset($imgdir[$k]);
+                        unset($img_dir[$k]);
                     }
                     else
                     {
@@ -625,22 +531,22 @@ class Library_MyQEE_Develop_Controller_Assets_Dev extends Controller
                 }
 
                 # 拼装出最后的结果
-                $format_path = implode('/',$tmp_file_path_arr).'/'.implode('/',$imgdir);
+                $format_path = implode('/', $tmp_file_path_arr) .'/'. implode('/', $img_dir);
                 echo $format_path;
 
                 if (isset($file_md5[$format_path]))
                 {
                     if ($query)
                     {
-                        $img2 = $img.'&v='.$file_md5[$format_path];
+                        $img2 = $img .'&v='. $file_md5[$format_path];
                     }
                     else
                     {
-                        $img2 = $img.'?v='.$file_md5[$format_path];
+                        $img2 = $img .'?v='. $file_md5[$format_path];
                     }
-                }
 
-                $content = str_replace($img,$img2,$content);
+                    $content = str_replace($img, $img2, $content);
+                }
             }
         }
     }
