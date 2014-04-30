@@ -1180,7 +1180,18 @@ class Driver_Database_Driver_MySQL extends Database_Driver
                     }
                     else
                     {
-                        // Quote the entire value normally
+                        if (is_array($value))
+                        {
+                            if ($op=='=')
+                            {
+                                $op = 'IN';
+                            }
+                            elseif ($op=='!=')
+                            {
+                                $op = 'NOT IN';
+                            }
+                        }
+
                         $value = $this->quote($value);
                     }
 
