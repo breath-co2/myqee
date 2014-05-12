@@ -66,10 +66,10 @@ class Driver_Cache_Driver_Database extends Cache_Driver
      */
     public function get($key)
     {
+        $key_map = array();
         if (is_array($key))
         {
             $md5_key = array();
-            $key_map = array();
             foreach ($key as &$k)
             {
                 $key_map[$this->prefix . $k] = $k;
@@ -81,6 +81,7 @@ class Driver_Cache_Driver_Database extends Cache_Driver
         }
         else
         {
+            $key_map[$this->prefix . $key] = $key;
             $key = $this->prefix . $key;
 
             $this->_handler->where('key', md5($key))->limit(1);
@@ -141,8 +142,8 @@ class Driver_Cache_Driver_Database extends Cache_Driver
      * 存数据
      *
      * @param string/array $key 支持多存
-     * @param $data Value 多存时此项可空
-     * @param $lifetime 有效期，默认3600，即1小时，0表示不限制
+     * @param mixed $value Value 多存时此项可空
+     * @param mixed $lifetime 有效期，默认3600，即1小时，0表示不限制
      * @return boolean
      */
     public function set($key, $value = null, $lifetime = 3600)
