@@ -63,7 +63,7 @@ abstract class Core_I18n
 
         # 根据类库加载信息获取key
         $libs_key = array();
-        foreach (array_reverse(Core::$include_path) as $nslib=>$libs)
+        foreach (array_reverse(Core::$include_path) as $libs)
         {
             $libs = array_reverse($libs);
             foreach ($libs as $k=>$path)
@@ -175,7 +175,7 @@ abstract class Core_I18n
         # 客户端语言包
         $accept_language = isset($_SERVER['HTTP_ACCEPT_LANGUAGE'])?$_SERVER['HTTP_ACCEPT_LANGUAGE']:null;
 
-        $lang_config = Core::config('core.lang');
+        $lang_config = Core::config('lang');
 
         # 匹配语言设置
         # zh-CN,zh;q=0.8,zh-TW;q=0.6
