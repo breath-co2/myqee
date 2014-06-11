@@ -215,8 +215,8 @@ class Core_Controller
     /**
      * 页面跳转
      *
-     * @param   string   redirect location
-     * @param   integer  status code: 301, 302, etc
+     * @param   string  $url redirect location
+     * @param   integer $code status code: 301, 302, etc
      * @return  void
      * @uses    Core_url::site
      * @uses    HttpIO::send_headers
@@ -238,4 +238,33 @@ class Core_Controller
         HttpIO::set_cache_header($time);
     }
 
+    /**
+     * 分块输出
+     *
+     * @param $msg
+     */
+    public function output_chunk($msg)
+    {
+        HttpIO::output_chunk($msg);
+    }
+
+    /**
+     * 开启分开输出
+     *
+     * @param int $time_limit 允许程序执行的最长时间，0表示永久
+     */
+    public function output_chunk_start($time_limit = 0)
+    {
+        HttpIO::output_chunk_start($time_limit);
+    }
+
+    /**
+     * 关闭分块输出
+     *
+     * !!! 执行此方法后将执行 `exit()`，程序将结束运行
+     */
+    public function output_chunk_end()
+    {
+        HttpIO::output_chunk_end();
+    }
 }

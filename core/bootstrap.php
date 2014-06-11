@@ -74,7 +74,7 @@ if (!defined('IS_CLI'))define('IS_CLI', (PHP_SAPI==='cli'));
  *
  * @var boolean
  */
-define('HAVE_NS', version_compare(PHP_VERSION,'5.3','>=')?true:false);
+define('HAVE_NS', version_compare(PHP_VERSION, '5.3', '>=')?true:false);
 
 /**
  * 是否系统调用模式
@@ -868,7 +868,7 @@ abstract class Bootstrap
 
 
             # 处理组件
-            list($tmp_prefix, $tmp_ns, $tmp_driver) = explode('_', $new_class_name, 4);
+            list($tmp_prefix, $tmp_ns, $tmp_driver) = explode('_', $new_class_name, 4) + array('', '', '');
             if (!isset($module_dir[$tmp_prefix]))
             {
                 $module_dir[$tmp_prefix] = is_dir(DIR_MODULE .$tmp_prefix. DS);

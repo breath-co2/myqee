@@ -449,11 +449,50 @@ abstract class Core_Core extends Bootstrap
         }
         else
         {
-            $url_asstes = URL_ASSETS . Core::$project . '/' . (IS_ADMIN_MODE?'~admin/':'');
+            list($file, $query) = explode('?', $url, 2);
 
-            list($file, $query) = explode('?', $uri.'?', 2);
+            $www_file = DIR_ASSETS . $file;
 
-            $uri = $file . '?' . (strlen($query)>0?$query.'&':'') . Core::assets_hash($file);
+            if (is_file($www_file))
+            {
+                $url_asstes  = Core::config('core.url.assets');
+                $asstes_path = '';
+            }
+            else
+            {
+                $asstes_path = 'p-'. Core::$project . '/' . (IS_ADMIN_MODE?'~admin/':'');
+                $url_asstes  = URL_ASSETS . $asstes_path;
+            }
+
+            # 自动获取min文件
+            if (substr($file, -3)=='.js')
+            {
+                $tmp_filename = substr($file, 0, -3). '.min.js';
+                $min_file     = DIR_ASSETS. $asstes_path . $tmp_filename;
+            }
+            else if (substr($file, -4)=='.css')
+            {
+                $tmp_filename = substr($file, 0, -4). '.min.css';
+                $min_file     = DIR_ASSETS. $asstes_path . $tmp_filename;
+            }
+            else
+            {
+                $min_file = $tmp_filename = null;
+            }
+
+            if ($min_file && is_file($min_file))
+            {
+                if (strlen($query)>0)
+                {
+                    $url = $tmp_filename .'?'. $query;
+                }
+                else
+                {
+                    $url = $tmp_filename;
+                }
+            }
+
+//            $uri = $file . '?' . (strlen($query)>0?$query.'&':'') . Core::assets_hash($file);
         }
 
         return $url_asstes . $url;
@@ -1567,7 +1606,6 @@ abstract class Core_Core extends Bootstrap
         {
             if ($msg instanceof Exception)
             {
-                print_r($msg);exit;
                 $error     = $msg->getMessage();
                 $trace_obj = $msg;
             }
@@ -1584,6 +1622,7 @@ abstract class Core_Core extends Bootstrap
             {
                 # 不记录
                 $view->error_saved = false;
+                $error_no          = '';
             }
             else
             {
