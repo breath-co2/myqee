@@ -2,13 +2,14 @@
 ==============
 目前系统支持的换成驱动包括：
 
-* 文件缓存 Cache::DRIVER_FILE
-* Memcache（Memcached）缓存 Cache::DRIVER_MEMCACHE
-* Apc  Cache::DRIVER_APC
-* 数据库 Cache::DRIVER_DATABASE
-* SQLite数据库  Cache::DRIVER_SQLite
-* WinCache     Cache::DRIVER_WINCACHE
-
+驱动        |  说明
+------------|----------
+`file`      | 文件缓存
+`memcache`  | Memcache 缓存
+`apc`       | Apc 缓存
+`database`  | 数据库缓存
+`sqlite`    | SQLite 缓存
+`WinCache`  | WinCache 缓存
 
 配置举例
 --------
