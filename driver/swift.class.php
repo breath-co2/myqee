@@ -475,7 +475,7 @@ class Module_Storage_Driver_Swift extends Storage_Driver
                 {
                     $data = fread($body, $chunk_size);
                     $len  = dechex(strlen($data));
-                    fwrite($fp, $len . "\n" . $data . "\r\n");
+                    fwrite($fp, $len . "\r\n" . $data . "\r\n");
                 }
                 # 指针移回去
                 rewind($body, 0);
@@ -967,6 +967,7 @@ class Module_Storage_Driver_Swift extends Storage_Driver
         {
             if (is_array($query))
             {
+                $query_str = '';
                 foreach ($query as $key => $value)
                 {
                     $query_str .= '&' . rawurlencode($key) . '=' . rawurlencode($value) ;
