@@ -1,0 +1,26 @@
+{
+  "name": "myqee/oop",
+  "description": "MyQEE OOP ORM Module",
+  "keywords": ["MyQEE", "Module"],
+  "homepage": "http://www.myqee.com/",
+  "type": "myqee-module",
+  "license": "Apache-2.0",
+  "authors": [
+    {
+      "name": "jonwang",
+      "email": "jonwang@queyang.com",
+      "homepage": "http://www.queyang.com/"
+    }
+  ],
+  "myqee": {
+    "name": {
+      "en": "Module OOP&ORM",
+      "zh-cn": "OOP、ORM模块",
+      "zh-tw": "OOP、ORM模塊",
+      "zh-hk": "OOP、ORM模塊"
+    }
+  },
+  "autoload": {
+    "psr-0": {"MyQEE\\Module\\OOP": "src/"}
+  }
+}
