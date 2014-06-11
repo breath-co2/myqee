@@ -1,4 +1,3 @@
-* [ORM 使用入门](index.md)
 * [ORM 字段设置](field.md)
 * [ORM Finder](finder.md)
 * [ORM Result](result.md)

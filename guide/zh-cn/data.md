@@ -1,15 +1,15 @@
 OOP ORM Data
 ============
-数据对象，每一条数据对应一个对象，此对象继承ArrayIterator
+数据对象，每一条数据对应一个对象，此对象继承 `ArrayIterator`
 
-例如：
-ORM_Test_Finder返回的是ORM_Test_Data
-ORM_Test_MyTest_Finder返回的是ORM_Test_MyTest_Data
+例如：<br>
+`ORM_Test_Finder` 返回的是 `ORM_Test_Data`<br>
+`ORM_Test_MyTest_Finder` 返回的是 `ORM_Test_MyTest_Data`
 
 
 as_array()
 ------------
-返回数组同getArrayCopy()
+返回数组同 `getArrayCopy()`
 
 set_data(array $data)
 ------------
@@ -109,4 +109,4 @@ get_field_data()
 
 get_changed_data()
 -------------
-返回修改过的数据，结构同get_field_data()，也是key是数据库字段名，value是数据值
+返回修改过的数据，结构同 `get_field_data()`，也是 key 是数据库字段名，value 是数据值
