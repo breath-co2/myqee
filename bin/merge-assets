@@ -129,7 +129,7 @@ $project = $argv[0];
 include (dirname(__FILE__).'/../index.php');
 
 # 输出目录
-$out_dir = DIR_ASSETS . $project .'/' . ($admin_mode?'~admin/':'');
+$out_dir = DIR_ASSETS . 'p-'. $project .'/' . ($admin_mode?'~admin/':'');
 
 # 清理css多余文件
 if (in_array('-c', $argv))
@@ -154,12 +154,9 @@ $include_path = Core::include_path();
 $include_path = array_reverse($include_path);
 
 # 允许的后缀
-$allow_suffix = Core::config('core.asset_allow_suffix');
-if (!$allow_suffix)
-{
-    $allow_suffix = 'js|css|jpg|jpeg|png|gif|bmp|pdf|html|htm|mp4|swf';
-}
-$allow_suffix = explode('|', $allow_suffix);
+$allow_suffix = Core::config('core.asset_allow_suffix') . '|js|css|jpg|jpeg|png|gif|bmp|pdf|html|htm|mp4|swf|tpl|woff|eot|svg|ttf';
+
+$allow_suffix = array_unique(explode('|', trim($allow_suffix,'|')));
 
 
 # 循环获取所有文件列表
@@ -464,13 +461,13 @@ if (isset($todo_min_files['js']) && $todo_min_files['js'])foreach ($todo_min_fil
 {
     $output = '';
 
-    $cmd = 'cd '.(escapeshellcmd($node_modules_path)).' && ' . escapeshellcmd($node_file).' '.escapeshellarg('./node_modules/uglify-js/bin/uglifyjs').' '.escapeshellarg($realfile).' -nc';
+    $cmd = 'cd '. (escapeshellcmd($node_modules_path)) .' && '. escapeshellcmd($node_file) .' '. escapeshellarg('./node_modules/uglify-js/bin/uglifyjs') .' '. escapeshellarg($realfile) .' -nc';
 
     exec($cmd, $output, $r);
     if (0===$r)
     {
         # 写入文件
-        File::create_file(substr($realfile, 0, -3).'.min.js',implode('', $output));
+        File::create_file(substr($realfile, 0, -3).'.min.js', implode('', $output));
         echo "  => ".$out_dir_path.substr($tmpname, 0, -3).".min.js " . ($rs?$success:$error)."\n";
     }
     elseif (1===$r)
@@ -502,6 +499,22 @@ if (isset($todo_min_files['css']) && $todo_min_files['css'])foreach ($todo_min_f
         $gostr = '=>';
     }
 
+    $the_assets_path = $assets_path;
+
+    $dirname = dirname($tmpname);
+    if ($dirname!='.')
+    {
+        foreach ($include_path as $path)
+        {
+            $dir = $path ."assets/";
+
+            if (is_dir($dir))
+            {
+                $the_assets_path[] = escapeshellarg($dir . $dirname .'/');
+            }
+        }
+    }
+
     if ($type=='less' || $type=='scss' || $type=='sass')
     {
         # 处理LESS转换为CSS
@@ -510,21 +523,21 @@ if (isset($todo_min_files['css']) && $todo_min_files['css'])foreach ($todo_min_f
 
         if ($type=='less')
         {
-            if ($assets_path)$path_str = ' --includePath=' . implode(' --includePath=', $assets_path);
-            $cmd = 'cd '.(escapeshellcmd($node_modules_path)).' && ' . escapeshellcmd($node_file).' '.escapeshellarg('./node_modules/recess/bin/recess').' --compile'.$path_str.' '.escapeshellarg($realfile);
+            $path_str = ' --includePath=' . implode(' --includePath=', $the_assets_path);
+            $cmd = 'cd '. (escapeshellcmd($node_modules_path)) .' && '. escapeshellcmd($node_file) .' '. escapeshellarg('./node_modules/recess/bin/recess') .' --compile'. $path_str .' '. escapeshellarg($realfile);
         }
         else
         {
-            if ($assets_path)$path_str = ' --load-path=' . implode(' --load-path=', $assets_path);
-            $cmd = 'sass -t expanded'.$path_str.' '.escapeshellarg($realfile);
+            $path_str = ' --load-path='. implode(' --load-path=', $the_assets_path);
+            $cmd = 'sass -t expanded'.$path_str .' '. escapeshellarg($realfile);
         }
 
         exec($cmd, $output, $r);
         if (0===$r)
         {
             # 写入文件
-            File::create_file(substr($realfile, 0, -$n).'.css', implode('', $output));
-            echo "  => ".$out_dir_path.substr($tmpname, 0, -$n).".css " . ($rs?$success:$error)."\n";
+            File::create_file(substr($realfile, 0, -$n) .'.css', implode("\r\n", $output));
+            echo "  => " . $out_dir_path . substr($tmpname, 0, -$n) .".css " . ($rs?$success:$error)."\n";
         }
         else
         {
@@ -548,12 +561,12 @@ if (isset($todo_min_files['css']) && $todo_min_files['css'])foreach ($todo_min_f
 
     if ($type=='less' || $type=='css')
     {
-        if ($assets_path)$path_str = ' --includePath=' . implode(' --includePath=', $assets_path);
+        $path_str = ' --includePath=' . implode(' --includePath=', $the_assets_path);
         $cmd = 'cd '.(escapeshellcmd($node_modules_path)).' && ' . escapeshellcmd($node_file).' '.escapeshellarg('./node_modules/recess/bin/recess').' --compress'.$path_str.' '.escapeshellarg($realfile);
     }
     else
     {
-        if ($assets_path)$path_str = ' --load-path=' . implode(' --load-path=', $assets_path);
+        $path_str = ' --load-path=' . implode(' --load-path=', $the_assets_path);
         $cmd = 'sass -t compressed'.$path_str.' '. escapeshellarg($realfile);
     }
 
@@ -692,7 +705,15 @@ function glob_files(&$file_paths,$dir,$dir_len)
 
     if ($files)foreach ($files as $file)
     {
-        if ($file==='.'||$file==='..'||substr($file,0,1)==='.')continue;
+
+        $file = str_replace('\\', '/', $file);
+        $path_rpos = strrpos($file, '/');
+
+        # 文件名
+        $file_name = substr($file, $path_rpos+1);
+        $file_path = substr($file, $dir_len, -strlen($file_name)).$file_name;
+
+        if (in_array(substr($file_name, 0, 1), array('.', '_')))continue;
 
         # 文件夹
         if (is_dir($file))
@@ -703,13 +724,6 @@ function glob_files(&$file_paths,$dir,$dir_len)
 
         # 将文件列表加入到all数组里
         $file_paths['file_md5'][$file] = md5_file($file);
-
-        $file = str_replace('\\', '/', $file);
-        $path_rpos = strrpos($file, '/');
-
-        # 文件名
-        $file_name = substr($file, $path_rpos+1);
-        $file_path = substr($file, $dir_len, -strlen($file_name)).$file_name;
 
         $rpos = strrpos($file_name, '.');
         if ($rpos>0)
