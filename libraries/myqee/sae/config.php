@@ -1,5 +1,5 @@
 <?php
-$config['default'] = array
+$config['database']['default'] = array
 (
     'type'       => 'MySQL',
     'connection' => array
