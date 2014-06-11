@@ -1,0 +1,26 @@
+{
+  "name": "myqee/cache",
+  "description": "MyQEE Cache Module",
+  "keywords": ["MyQEE", "Module"],
+  "homepage": "http://www.myqee.com/",
+  "type": "myqee-module",
+  "license": "Apache-2.0",
+  "authors": [
+    {
+      "name": "jonwang",
+      "email": "jonwang@queyang.com",
+      "homepage": "http://www.queyang.com/"
+    }
+  ],
+  "myqee": {
+    "name": {
+      "en": "Cache Module",
+      "zh-cn": "缓存模块",
+      "zh-tw": "緩存模塊",
+      "zh-hk": "緩存模塊"
+    }
+  },
+  "autoload": {
+    "psr-0": {"MyQEE\\Module\\Cache": "src/"}
+  }
+}
