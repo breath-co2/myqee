@@ -1,0 +1,18 @@
+{
+  "name": "myqee/storage",
+  "description": "MyQEE Storage Module",
+  "keywords": ["MyQEE", "Module", "Storage"],
+  "homepage": "http://www.myqee.com/",
+  "type": "myqee-module",
+  "license": "Apache-2.0",
+  "authors": [
+    {
+      "name": "jonwang",
+      "email": "jonwang@queyang.com",
+      "homepage": "http://www.queyang.com/"
+    }
+  ],
+  "autoload": {
+    "psr-0": {"MyQEE\\Module\\Storage": "src/"}
+  }
+}
