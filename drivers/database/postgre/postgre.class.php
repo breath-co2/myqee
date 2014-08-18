@@ -20,12 +20,6 @@ class Driver_Database_Driver_Postgre extends Database_Driver
     protected $_identifier = '`';
 
     /**
-     * 记录当前连接所对应的数据库
-     * @var array
-     */
-    protected static $_current_databases = array();
-
-    /**
      * 记录当前数据库所对应的页面编码
      * @var array
      */
@@ -38,7 +32,15 @@ class Driver_Database_Driver_Postgre extends Database_Driver
     protected static $_connection_instance = array();
 
     /**
+     * 链接寄存器使用数
+     *
+     * @var array
+     */
+    protected static $_connection_instance_count = array();
+
+    /**
      * 记录connection id所对应的hostname
+     *
      * @var array
      */
     protected static $_current_connection_id_to_hostname = array();
@@ -145,6 +147,8 @@ class Driver_Database_Driver_Postgre extends Database_Driver
                 {
                     $this->_connection_ids[$this->_connection_type] = $_connection_id;
 
+                    # 计数器+1
+                    Database_Driver_Postgre::$_connection_instance_count[$_connection_id]++;
                     return;
                 }
             }
@@ -160,7 +164,7 @@ class Driver_Database_Driver_Postgre extends Database_Driver
             $hostname = $this->_get_rand_host($error_host);
             if (false===$hostname)
             {
-                Core::debug()->error($error_host, 'error_host');
+                if(IS_DEBUG)Core::debug()->error($error_host, 'error_host');
 
                 if ($last_error && $last_error instanceof Exception)throw $last_error;
                 throw new Exception('connect postgre server error.');
@@ -211,9 +215,11 @@ class Driver_Database_Driver_Postgre extends Database_Driver
                 Core::debug()->info('postgre://'.$username.'@'.$hostname.':'.$port.'/'.$database.'/ connection time:' . (microtime(true) - $time));
 
                 # 连接ID
-                $this->_connection_ids[$this->_connection_type]                 = $_connection_id;
-                Database_Driver_Postgre::$_connection_instance[$_connection_id] = $tmplink;
-                Database_Driver_Postgre::$_current_databases[$_connection_id]   = $database;
+                $this->_connection_ids[$this->_connection_type]                       = $_connection_id;
+                # 设置实例化对象
+                Database_Driver_Postgre::$_connection_instance[$_connection_id]       = $tmplink;
+                # 设置计数器
+                Database_Driver_Postgre::$_connection_instance_count[$_connection_id] = 1;
 
                 unset($tmplink);
 
@@ -237,6 +243,28 @@ class Driver_Database_Driver_Postgre extends Database_Driver
                 }
             }
         }
+    }
+
+    /**
+     * 获取链接唯一hash
+     *
+     * @param string $hostname
+     * @param int $port
+     * @param string $username
+     * @return string
+     */
+    protected function _get_connection_hash($hostname, $port, $username, $arr = array())
+    {
+        $hash = sha1(get_class($this) .'_'. $hostname .'_'. $port .'_'. $username .'_'. implode('_', $arr));
+
+        Database_Driver::$_hash_to_hostname[$hash] = array
+        (
+            'hostname' => $hostname,
+            'port'     => $port,
+            'username' => $username,
+        ) + $arr;
+
+        return $hash;
     }
 
     /**
@@ -300,13 +328,21 @@ class Driver_Database_Driver_Postgre extends Database_Driver
         {
             if ($connection_id && Database_Driver_Postgre::$_connection_instance[$connection_id])
             {
-                Core::debug()->info('close '.$key.' postgre '.Database_Driver_Postgre::$_current_connection_id_to_hostname[$connection_id].' connection.');
-                @pg_close(Database_Driver_Postgre::$_connection_instance[$connection_id]);
+                if (isset(Database_Driver_Postgre::$_connection_instance_count[$connection_id]) && Database_Driver_Postgre::$_connection_instance_count[$connection_id]>1)
+                {
+                    Database_Driver_Postgre::$_connection_instance_count[$connection_id]--;
+                }
+                else
+                {
+                    unset(Database_Driver_Postgre::$_connection_instance[$connection_id]);
+                    unset(Database_Driver_Postgre::$_connection_instance_count[$connection_id]);
+                    unset(Database_Driver_Postgre::$_current_charset[$connection_id]);
+                    unset(Database_Driver_Postgre::$_current_connection_id_to_hostname[$connection_id]);
 
-                unset(Database_Driver_Postgre::$_connection_instance[$connection_id]);
-                unset(Database_Driver_Postgre::$_current_databases[$connection_id]);
-                unset(Database_Driver_Postgre::$_current_charset[$connection_id]);
-                unset(Database_Driver_Postgre::$_current_connection_id_to_hostname[$connection_id]);
+                    @pg_close(Database_Driver_Postgre::$_connection_instance[$connection_id]);
+
+                    if(IS_DEBUG)Core::debug()->info('close '.$key.' postgre '.Database_Driver_Postgre::$_current_connection_id_to_hostname[$connection_id].' connection.');
+                }
             }
             else
             {
@@ -357,7 +393,7 @@ class Driver_Database_Driver_Postgre extends Database_Driver
      */
     public function set_charset($charset)
     {
-        if (!$charset)return;
+        if (!$charset)return false;
 
         $connection_id = $this->connection_id();
         $connection = Database_Driver_Postgre::$_connection_instance[$connection_id];
@@ -365,8 +401,7 @@ class Driver_Database_Driver_Postgre extends Database_Driver
         if (!$connection_id || !$connection)
         {
             $this->connect();
-            $this->set_charset($charset);
-            return;
+            return $this->set_charset($charset);
         }
 
         if (isset(Database_Driver_Postgre::$_current_charset[$connection_id]) && $charset == Database_Driver_Postgre::$_current_charset[$connection_id])
@@ -381,6 +416,8 @@ class Driver_Database_Driver_Postgre extends Database_Driver
 
         # 记录当前设置的编码
         Database_Driver_Postgre::$_current_charset[$connection_id] = $charset;
+
+        return true;
     }
 
 
@@ -431,6 +468,11 @@ class Driver_Database_Driver_Postgre extends Database_Driver
         {
             $type = strtoupper($m[1]);
         }
+        else
+        {
+            $type = null;
+        }
+
         $typeArr = array
         (
             'SELECT',
@@ -446,6 +488,7 @@ class Driver_Database_Driver_Postgre extends Database_Driver
         {
             $type = 'MASTER';
         }
+
         $slaverType = array('SELECT', 'SHOW', 'EXPLAIN');
         if ($type!='MASTER' && in_array($type, $slaverType))
         {
@@ -1301,6 +1344,10 @@ class Driver_Database_Driver_Postgre extends Database_Driver
         elseif ($this->config['table_prefix'] && strpos($value, '.') === false)
         {
             $alias = $value;
+        }
+        else
+        {
+            $alias = null;
         }
 
         if ($alias)

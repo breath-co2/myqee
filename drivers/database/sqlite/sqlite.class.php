@@ -34,6 +34,13 @@ class Driver_Database_Driver_SQLite extends Database_Driver
     protected static $_connection_instance = array();
 
     /**
+     * 链接寄存器使用数
+     *
+     * @var array
+     */
+    protected static $_connection_instance_count = array();
+
+    /**
      * 记录connection id所对应的DB
      *
      * @var array
@@ -100,6 +107,8 @@ class Driver_Database_Driver_SQLite extends Database_Driver
             {
                 $this->_connection_ids[$this->_connection_type] = $_connection_id;
 
+                # 计数器+1
+                Database_Driver_SQLite::$_connection_instance_count[$_connection_id]++;
                 return;
             }
         }
@@ -154,7 +163,10 @@ class Driver_Database_Driver_SQLite extends Database_Driver
 
                 # 连接ID
                 $this->_connection_ids[$this->_connection_type] = $_connection_id;
-                Database_Driver_SQLite::$_connection_instance[$_connection_id] = $tmplink;
+                # 设置实例化对象
+                Database_Driver_SQLite::$_connection_instance[$_connection_id]       = $tmplink;
+                # 设置计数器
+                Database_Driver_SQLite::$_connection_instance_count[$_connection_id] = 1;
 
                 unset($tmplink);
 
@@ -206,14 +218,22 @@ class Driver_Database_Driver_SQLite extends Database_Driver
         {
             if ($connection_id && Database_Driver_SQLite::$_connection_instance[$connection_id])
             {
-                Core::debug()->info('close '. $key .' sqlite '. Database_Driver_SQLite::$_current_connection_id_to_db[$connection_id] .' connection.');
-                @sqlite_close(Database_Driver_SQLite::$_connection_instance[$connection_id]);
+                if (isset(Database_Driver_SQLite::$_connection_instance_count[$connection_id]) && Database_Driver_SQLite::$_connection_instance_count[$connection_id]>1)
+                {
+                    Database_Driver_SQLite::$_connection_instance_count[$connection_id]--;
+                }
+                else
+                {
+                    unset(Database_Driver_SQLite::$_connection_instance[$connection_id]);
+                    unset(Database_Driver_SQLite::$_current_charset[$connection_id]);
+                    unset(Database_Driver_SQLite::$_current_connection_id_to_db[$connection_id]);
 
-                unset(Database_Driver_SQLite::$_connection_instance[$connection_id]);
-                unset(Database_Driver_SQLite::$_current_charset[$connection_id]);
-                unset(Database_Driver_SQLite::$_current_connection_id_to_db[$connection_id]);
+                    @sqlite_close(Database_Driver_SQLite::$_connection_instance[$connection_id]);
+
+                    if(IS_DEBUG)Core::debug()->info('close '. $key .' sqlite '. Database_Driver_SQLite::$_current_connection_id_to_db[$connection_id] .' connection.');
+                }
             }
-            else
+            else if(IS_DEBUG)
             {
                 Core::debug()->info($key.' sqlite '. Database_Driver_SQLite::$_current_connection_id_to_db[$connection_id] .' connection has closed.');
             }
@@ -1059,7 +1079,7 @@ class Driver_Database_Driver_SQLite extends Database_Driver
     /**
      * Compiles an array of set values into an SQL partial. Used for UPDATE.
      *
-     * @param   array   updated values
+     * @param   array $values  updated values
      * @return  string
      */
     protected function _compile_set(array $values)
@@ -1150,6 +1170,10 @@ class Driver_Database_Driver_SQLite extends Database_Driver
         elseif ($this->config['table_prefix'] && strpos($value, '.') === false)
         {
             $alias = $value;
+        }
+        else
+        {
+            $alias = null;
         }
 
         if ($alias)

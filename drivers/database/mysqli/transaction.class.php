@@ -10,7 +10,7 @@
  * @copyright  Copyright (c) 2008-2013 myqee.com
  * @license    http://www.myqee.com/license.html
  */
-abstract class Driver_Database_Driver_MySQLI_Transaction extends Database_Transaction
+class Driver_Database_Driver_MySQLI_Transaction extends Database_Transaction
 {
     /**
      * 当前连接ID
