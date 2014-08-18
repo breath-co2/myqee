@@ -60,7 +60,7 @@ class Core_Route
         {
             if (isset($route[$k]['for']))
             {
-                if ($route[$k]['for'] != Core::$project_url)
+                if ($route[$k]['for'] != Core::$base_url)
                 {
                     # 如果路由不是为当前url设置的则或略
                     continue;

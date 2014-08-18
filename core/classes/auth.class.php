@@ -125,7 +125,7 @@ class Core_Auth
      */
     public function get_member_by_username($username)
     {
-        if ($this->config['driver']==Auth::DRIVER_DATABASE)
+        if (!$this->config['driver'] || $this->config['driver']==Auth::DRIVER_DATABASE)
         {
             # 数据库类型
             $tables         = $this->config['tablename'];

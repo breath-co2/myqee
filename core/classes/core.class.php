@@ -206,33 +206,6 @@ abstract class Core_Core extends Bootstrap
                 }
             }
 
-            if (IS_DEBUG)
-            {
-                Core::debug()->info('SERVER IP:' . $_SERVER["SERVER_ADDR"] . (function_exists('php_uname')?'. SERVER NAME:' . php_uname('a') : ''));
-
-                if (Core::$project)
-                {
-                    Core::debug()->info('project: ' . Core::$project);
-                }
-
-                if (IS_ADMIN_MODE)
-                {
-                    Core::debug()->info('admin mode');
-                }
-
-                if (IS_REST_MODE)
-                {
-                    Core::debug()->info('RESTFul mode');
-                }
-
-                Core::debug()->group('include path');
-                foreach ( Core::include_path() as $value )
-                {
-                    Core::debug()->log(Core::debug_path($value));
-                }
-                Core::debug()->groupEnd();
-            }
-
             if ((IS_CLI || IS_DEBUG) && class_exists('ErrException', true))
             {
                 # 注册脚本
@@ -268,11 +241,6 @@ abstract class Core_Core extends Bootstrap
                 }
             }
 
-            if (IS_DEBUG && isset($_REQUEST['debug']) && class_exists('Profiler', true))
-            {
-                Profiler::setup();
-            }
-
             if (!defined('URL_ASSETS'))
             {
                 /**
@@ -281,6 +249,39 @@ abstract class Core_Core extends Bootstrap
                  * @var string
                  */
                 define('URL_ASSETS', rtrim(Core::config('url.assets', Core::url('/assets/')), '/') . '/');
+            }
+
+            if (IS_DEBUG && isset($_REQUEST['debug']) && class_exists('Profiler', true))
+            {
+                Profiler::setup();
+            }
+
+
+            if (IS_DEBUG)
+            {
+                Core::debug()->info('SERVER IP:' . $_SERVER["SERVER_ADDR"] . (function_exists('php_uname')?'. SERVER NAME:' . php_uname('a') : ''));
+
+                if (Core::$project)
+                {
+                    Core::debug()->info('project: ' . Core::$project);
+                }
+
+                if (IS_ADMIN_MODE)
+                {
+                    Core::debug()->info('admin mode');
+                }
+
+                if (IS_REST_MODE)
+                {
+                    Core::debug()->info('RESTFul mode');
+                }
+
+                Core::debug()->group('include path');
+                foreach (Core::include_path() as $value)
+                {
+                    Core::debug()->log(Core::debug_path($value));
+                }
+                Core::debug()->groupEnd();
             }
         }
 
@@ -1132,9 +1133,10 @@ abstract class Core_Core extends Bootstrap
 
                         if (is_file($tmpfile))
                         {
+                            $args_for_default_ctl = $args;
                             if (null!==$tmp_arg)
                             {
-                                array_unshift($args, $tmp_arg);
+                                array_unshift($args_for_default_ctl, $tmp_arg);
 
                                 if (strlen($tmp_arg)>0)
                                 {
@@ -1148,7 +1150,7 @@ abstract class Core_Core extends Bootstrap
                                 'dir'    => $directory,
                                 'ns'     => $ns,
                                 'class'  => 'Controller_' . $real_path . 'Default',
-                                'args'   => $args,
+                                'args'   => $args_for_default_ctl,
                                 'ids'    => $ids,
                             );
                         }
@@ -1775,7 +1777,7 @@ abstract class Core_Core extends Bootstrap
      *
      * @param array $arr
      * @param string $key
-     * @return fixed
+     * @return mixed
      */
     public static function key_string($arr, $key, $default = null)
     {
@@ -2121,7 +2123,8 @@ abstract class Core_Core extends Bootstrap
      *      Bootstrap::import_library('com.myqee.test');
      *      Bootstrap::import_library(array('com.myqee.test','com.myqee.cms'));
      *
-     * @param string|array $library_name 指定类库 支持多个
+     * @param string|array $library_name 指定类库
+     * 支持多个
      * @return boolean
      */
     public static function import_library($library_name)
