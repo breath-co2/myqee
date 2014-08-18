@@ -50,7 +50,7 @@ document.getElementById('expction_div_style').innerHTML = '<style type="text/css
 })();
 </script>
 
-<div style="padding:0 10px;">
+<div style="padding:10px;">
 <div id="expction_div">
 <h1><span class="type"><?php echo $type ?> [ <?php echo $code ?> ]:</span> <span class="message"><?php echo str_replace(DIR_SYSTEM,'./',$message); ?></span></h1>
 <div id="<?php echo $error_id ?>" class="content">

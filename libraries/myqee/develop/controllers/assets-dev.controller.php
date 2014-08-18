@@ -89,6 +89,8 @@ class Library_MyQEE_Develop_Controller_Assets_Dev extends Controller
 
     protected function send_header()
     {
+        if (IS_DEBUG)header_remove();
+
         Core::close_buffers(false);
         HttpIO::set_cache_header(86400);
     }
@@ -111,7 +113,7 @@ class Library_MyQEE_Develop_Controller_Assets_Dev extends Controller
 
 
         # 输出目录
-        $out_dir = DIR_ASSETS . Core::$project .'/';
+        $out_dir = DIR_ASSETS .'p-'. Core::$project . (IS_ADMIN_MODE?DS.'~admin':'') . DS;
 
         # 输出文件
         $out_file = $out_dir . $this->file . ($this->is_min?'.min':'') . '.' . $this->suffix;
@@ -121,7 +123,7 @@ class Library_MyQEE_Develop_Controller_Assets_Dev extends Controller
             if (filemtime($out_file)!=filemtime($file))
             {
                 copy($file, $out_file);
-                touch($out_file, filemtime($file));
+                @touch($out_file, filemtime($file));
             }
         }
         else
@@ -129,7 +131,7 @@ class Library_MyQEE_Develop_Controller_Assets_Dev extends Controller
             if (File::create_dir(dirname($out_file)))
             {
                 copy($file, $out_file);
-                touch($out_file, filemtime($file));
+                @touch($out_file, filemtime($file));
             }
         }
 
@@ -182,20 +184,20 @@ class Library_MyQEE_Develop_Controller_Assets_Dev extends Controller
      */
     protected function output_css_js_file()
     {
-        $file_paths = $this->get_css_or_js_files_array();
+        $file_paths = $this->get_css_or_js_files_array($this->file, $this->suffix);
 
         # 输出目录
-        $out_dir = DIR_ASSETS . Core::$project .'/';
+        $out_dir = DIR_ASSETS . 'p-'. Core::$project . (IS_ADMIN_MODE?DS.'~admin':'') . DS;
 
         # 输出文件
         $out_file = $out_dir . $this->file . ($this->is_min?'.min':'') .'.'. $this->suffix;
 
         # md5存放的文件
-        $cachefile = DIR_DATA . 'cache/asset_files_md5_' . str_replace('/', '~', $this->file) . ($this->is_min?'.min':'') . '.'. $this->suffix . '.serialize';
+        $cache_file = DIR_DATA . 'cache/asset_files_md5_' . Core::$project . (IS_ADMIN_MODE?'~admin':'') .'_'. str_replace('/', '~', $this->file) . ($this->is_min?'.min':'') . '.'. $this->suffix . '.serialize';
 
-        if (is_file($cachefile))
+        if (is_file($cache_file))
         {
-            $asset_files_md5 = (array)unserialize(file_get_contents($cachefile));
+            $asset_files_md5 = (array)unserialize(file_get_contents($cache_file));
         }
         else
         {
@@ -236,17 +238,17 @@ class Library_MyQEE_Develop_Controller_Assets_Dev extends Controller
         {
             $content = '';
 
-            if ($file_paths['file'])foreach ($file_paths['file'] as $file=>$fullpath)
+            if ($file_paths['file'])foreach ($file_paths['file'] as $full_path)
             {
-                $content .= file_get_contents($fullpath);
+                $content .= file_get_contents($full_path);
             }
 
-            if ($file_paths['main'])foreach ($file_paths['main'] as $file=>$fullpath)
+            if ($file_paths['main'])foreach ($file_paths['main'] as $file=>$full_path)
             {
                 # 内容
-                if (true!==$fullpath)
+                if (true!==$full_path)
                 {
-                    $content .= file_get_contents($fullpath);
+                    $content .= file_get_contents($full_path);
                 }
 
                 # 当前文件的扩展
@@ -258,9 +260,9 @@ class Library_MyQEE_Develop_Controller_Assets_Dev extends Controller
                 # 加入模块
                 if (isset($file_paths['modules'][$file]) && $file_paths['modules'][$file])
                 {
-                    foreach ($file_paths['modules'][$file] as $file2 => $fullpath2)
+                    foreach ($file_paths['modules'][$file] as $file2 => $full_path2)
                     {
-                        $content .= CRLF.file_get_contents($fullpath2);
+                        $content .= CRLF.file_get_contents($full_path2);
 
                         # 模块文件的扩展文件
                         if (isset($file_paths['extends'][$file2]) && $file_paths['extends'][$file2])
@@ -289,9 +291,9 @@ class Library_MyQEE_Develop_Controller_Assets_Dev extends Controller
             if (File::create_file($out_file, $content))
             {
                 # 写入文件
-                foreach ($file_paths['file_md5'] as $fullpath => $md5)
+                foreach ($file_paths['file_md5'] as $full_path => $md5)
                 {
-                    $debug_path = Core::debug_path($fullpath);
+                    $debug_path = Core::debug_path($full_path);
                     $asset_files_md5[$debug_path] = $md5;
                 }
 
@@ -300,10 +302,10 @@ class Library_MyQEE_Develop_Controller_Assets_Dev extends Controller
                 asort($asset_files_md5);
 
                 $old_md5_content = serialize($asset_files_md5);
-                if (!is_file($cachefile) || md5($old_md5_content)!=md5_file($cachefile))
+                if (!is_file($cache_file) || md5($old_md5_content)!=md5_file($cache_file))
                 {
                     # 保存MD5列表
-                    File::create_file($cachefile, $old_md5_content);
+                    File::create_file($cache_file, $old_md5_content);
                 }
 
                 $this->output_by_file($out_file);
@@ -344,7 +346,7 @@ class Library_MyQEE_Develop_Controller_Assets_Dev extends Controller
      *
      * @return array | boolean
      */
-    protected function get_css_or_js_files_array()
+    protected function get_css_or_js_files_array($the_file, $the_suffix)
     {
         $include_path = Core::include_path();
         $include_path = array_reverse($include_path);
@@ -358,14 +360,14 @@ class Library_MyQEE_Develop_Controller_Assets_Dev extends Controller
         foreach ($include_path as $path)
         {
             $path_len = strlen($path . 'assets' . DS);
-            $glob_file = $path .'assets'. DS .$this->file .'.*'. ($this->suffix=='css'?'':$this->suffix);
+            $glob_file = $path .'assets'. DS .$the_file .'.*'. ($the_suffix=='css'?'':$the_suffix);
             $files = glob($glob_file, GLOB_NOSORT);
 
             if ($files)foreach($files as $tmpfile)
             {
                 $filename = str_replace('\\', '/', substr($tmpfile, $path_len));
 
-                if ($this->suffix=='css')
+                if ($the_suffix=='css')
                 {
                     $tmptype = strtolower(substr($tmpfile, -5));
                     if (strtolower(substr($tmpfile, -4))!='.css' && $tmptype!='.less' && $tmptype!='.scss' && $tmptype!='.sass')
@@ -793,12 +795,12 @@ class Library_MyQEE_Develop_Controller_Assets_Dev extends Controller
 
                             if ($suffix=='less')
                             {
-                                $parent_file_path = substr($file_path, 0, -strlen($type)).'.css';
+                                $parent_file_path = substr($file_path, 0, -strlen($type)) .'.css';
                             }
 
                             if ('mod'==$type)
                             {
-                                $file_paths['modules'][$parent_file_path][substr($file,$dir_len,-strlen($file_name)).$file_name] = $file;
+                                $file_paths['modules'][$parent_file_path][substr($file, $dir_len ,-strlen($file_name)).$file_name] = $file;
                             }
                             else
                             {
