@@ -5,7 +5,7 @@
  * @author 呼吸二氧化碳 <jonwang@myqee.com>
  *
  */
-class Library_MyQEE_Administration_Controller_Statics extends Controller
+class Library_MyQEE_Administration_Controller_Assets extends Controller
 {
     /**
      * 文件名
@@ -21,15 +21,15 @@ class Library_MyQEE_Administration_Controller_Statics extends Controller
      */
     public $type;
 
-    protected $allow_suffix = 'js|css|jpg|png|gif|bmp|html|htm|mp4|swf|zip';
+    protected $allow_suffix = 'js|css|jpg|png|gif|bmp|html|htm|mp4|swf|zip|woff|otf|eot|svg|ttf';
 
     public function before()
     {
         $f = array_pop($this->arguments);
         if ($f && preg_match('#^([a-zA-Z0-9_/\-\.]+).('.$this->allow_suffix.')$#i', $f, $m))
         {
-            $args = $this->arguments;
-            $args[] = $m[1];
+            $args       = $this->arguments;
+            $args[]     = $m[1];
             $this->file = implode('/', $args);
             $this->type = $m[2];
         }
@@ -40,17 +40,17 @@ class Library_MyQEE_Administration_Controller_Statics extends Controller
         $file = $this->file;
         $type = $this->type;
 
-        if (!preg_match( '#^([a-zA-Z0-9_/\-\.]+)$#', $file ) || !preg_match('#('.$this->allow_suffix.')$#', $type))
+        if (!preg_match('#^([a-zA-Z0-9_/\-\.]+)$#', $file) || !preg_match('#('.$this->allow_suffix.')$#', $type))
         {
             Core::show_404();
         }
 
-        $file = Core::find_file('statics', $file, $type);
+        $file = Core::find_file('assets', $file, $type);
         if ($file)
         {
             if (in_array($type, array('jpg', 'gif', 'png')))
             {
-                header('Content-Type: image/' . $type);
+                header('Content-Type: image/'. $type);
             }
             elseif ($type == 'css')
             {
@@ -66,8 +66,8 @@ class Library_MyQEE_Administration_Controller_Statics extends Controller
             }
 
             header('Cache-Control: max-age=604800');
-            header('Last-Modified: ' . date('D, d M Y H:i:s \G\M\T', filemtime($file)));
-            header('Expires: ' . date('D, d M Y H:i:s \G\M\T', TIME + 86400 * 30));
+            header('Last-Modified: '. date('D, d M Y H:i:s \G\M\T', filemtime($file)));
+            header('Expires: '. date('D, d M Y H:i:s \G\M\T', TIME + 86400 * 30));
             header('Pragma: cache');
 
             readfile($file);
