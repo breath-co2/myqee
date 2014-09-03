@@ -455,7 +455,7 @@ abstract class Bootstrap
             define('IS_COMPOSER_LOADED', $composer);
 
             # 注册自动加载类
-            spl_autoload_register(array('Bootstrap', 'auto_load'), true, true);
+            spl_autoload_register(array('Bootstrap', 'auto_load'));
 
             # 读取配置
             if (!is_file(DIR_SYSTEM .'config'. EXT))
