@@ -55,7 +55,7 @@ class Core_Config
      * 保存一个配置，支持批量设置
      *
      * @param string/array $key 关键字
-     * @param fixed $value 值
+     * @param mixed $value 值
      * @param string $type 类型,长度32以内
      * @param boolean $auto_clear_cache 自动清除缓存
      * @return boolean
@@ -107,6 +107,11 @@ class Core_Config
 
                     $tr->commit();
 
+                    if (is_array($this->config))foreach ($key as $i=>$k)
+                    {
+                        $this->config[$type][$k] = $value[$i];
+                    }
+
                     if ($auto_clear_cache)
                     {
                         $this->clear_cache($type);
@@ -131,26 +136,25 @@ class Core_Config
                 );
                 $status = $db->replace($this->tablename, $data);
                 $status = $status[1];
-            }
 
-
-            if ($status)
-            {
-                if (is_array($this->config))
+                if ($status)
                 {
-                    $this->config[$key] = $value;
-                }
+                    if (is_array($this->config))
+                    {
+                        $this->config[$type][$key] = $value;
+                    }
 
-                if ($auto_clear_cache)
+                    if ($auto_clear_cache)
+                    {
+                        $this->clear_cache($type);
+                    }
+
+                    return true;
+                }
+                else
                 {
-                    $this->clear_cache($type);
+                    return false;
                 }
-
-                return true;
-            }
-            else
-            {
-                return false;
             }
         }
         catch (Exception $e)
@@ -167,7 +171,7 @@ class Core_Config
      * @param string $key KEY
      * @param string $type 类型
      * @param boolean $no_cache 是否允许使用缓存 设置true将直接从数据库中查询
-     * @return fixed
+     * @return mixed
      */
     public function get($key, $type='', $no_cache = false)
     {
@@ -290,12 +294,12 @@ class Core_Config
      */
     public function reload($from_db=true, $type = '')
     {
-        $tmpfile = $this->get_config_cache_file(Core::$project, $type);
+        $tmp_file = $this->get_config_cache_file(Core::$project, $type);
 
-        if ($this->is_use_cache && !$from_db && is_file($tmpfile))
+        if ($this->is_use_cache && !$from_db && is_file($tmp_file))
         {
             # 在data目录中直接读取
-            $this->config[$type] = @unserialize(file_get_contents($tmpfile));
+            $this->config[$type] = @unserialize(file_get_contents($tmp_file));
             if (!is_array($this->config[$type]))
             {
                 $this->config[$type] = array();
@@ -326,7 +330,7 @@ class Core_Config
             if ($this->is_use_cache)
             {
                 // 普通模式下写缓存
-                $rs = File::create_file($tmpfile, serialize($this->config));
+                $rs = File::create_file($tmp_file, serialize($this->config));
 
                 if (IS_DEBUG)Core::debug()->log('save extends config cache ' . ($rs?'success':'fail').'.');
             }
@@ -346,14 +350,20 @@ class Core_Config
             return true;
         }
 
+        $tmp_file = array();
         $projects = array_keys((array)Core::config('core.projects'));
         if ($projects)foreach ($projects as $project)
         {
             # 所有项目的配置文件
-            $tmpfile[] = $this->get_config_cache_file($project, $type);
+            $tmp_file[] = $this->get_config_cache_file($project, $type);
         }
 
-        $rs = File::unlink($tmpfile);
+        if (!$tmp_file)
+        {
+            return true;
+        }
+
+        $rs = File::unlink($tmp_file);
 
         if (IS_DEBUG)Core::debug()->log('clear extends config cache '. ($rs?'success':'fail') .'.');
 
@@ -383,7 +393,7 @@ class Core_Config
     /**
      * 格式化数据方式
      *
-     * @param fixed $data
+     * @param mixed $data
      * @return string
      */
     protected function data_format($data)

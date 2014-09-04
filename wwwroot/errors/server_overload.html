@@ -5,24 +5,22 @@
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 <title>服务器吃不消了</title>
 <style type="text/css">
-body{
-background:#f1f1f1;
+.error-full-page-div {
 font-size:9pt;
 padding:10pt;
-margin:0;
 color:#111;
-font-family:Arial,sans-serif,Helvetica,"宋体";
+font-family:Arial,sans-serif,Helvetica,'宋体';
 }
-h1{
+.error-full-page-div h1{
 font-size:14pt;
 font-weight:bold;
 padding:0 0 10px 0;
 line-height:1.2em;
 margin:0;
 color:#a62e2e;
-_padding-left:0px;
+_padding-left:0;
 }
-.box{
+.error-full-page-div .error-message-box{
 border:1px solid #ccc;
 padding:12px 10px;
 background:#fff;
@@ -38,8 +36,10 @@ box-shadow:2px 2px 5px #e1e1e1;
 </head>
 <body>
 <h1>服务器超载</h1>
-<div class="box">
+<div class="error-full-page-div">
+<div class="error-message-box">
     服务器超载，请稍后再访问。
+</div>
 </div>
 </body>
 </html>

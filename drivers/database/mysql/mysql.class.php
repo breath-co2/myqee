@@ -38,6 +38,13 @@ class Driver_Database_Driver_MySQL extends Database_Driver
     protected static $_connection_instance = array();
 
     /**
+     * 链接寄存器使用数
+     *
+     * @var array
+     */
+    protected static $_connection_instance_count = array();
+
+    /**
      * 记录connection id所对应的hostname
      * @var array
      */
@@ -148,6 +155,8 @@ class Driver_Database_Driver_MySQL extends Database_Driver
                 {
                     $this->_connection_ids[$this->_connection_type] = $_connection_id;
 
+                    # 计数器+1
+                    Database_Driver_MySQL::$_connection_instance_count[$_connection_id]++;
                     return;
                 }
             }
@@ -163,7 +172,7 @@ class Driver_Database_Driver_MySQL extends Database_Driver
             $hostname = $this->_get_rand_host($error_host);
             if (false===$hostname)
             {
-                Core::debug()->error($error_host, 'error_host');
+                if(IS_DEBUG)Core::debug()->error($error_host, 'error_host');
 
                 if ($last_error && $last_error instanceof Exception)throw $last_error;
                 throw new Exception('connect mysql server error.');
@@ -211,7 +220,10 @@ class Driver_Database_Driver_MySQL extends Database_Driver
 
                 # 连接ID
                 $this->_connection_ids[$this->_connection_type] = $_connection_id;
-                Database_Driver_MySQL::$_connection_instance[$_connection_id] = $tmplink;
+                # 设置实例化对象
+                Database_Driver_MySQL::$_connection_instance[$_connection_id]       = $tmplink;
+                # 设置计数器
+                Database_Driver_MySQL::$_connection_instance_count[$_connection_id] = 1;
 
                 unset($tmplink);
 
@@ -305,17 +317,22 @@ class Driver_Database_Driver_MySQL extends Database_Driver
         {
             if ($connection_id && Database_Driver_MySQL::$_connection_instance[$connection_id])
             {
-                Core::debug()->info('close '.$key.' mysql '.Database_Driver_MySQL::$_current_connection_id_to_hostname[$connection_id].' connection.');
-                @mysql_close(Database_Driver_MySQL::$_connection_instance[$connection_id]);
+                if (isset(Database_Driver_MySQL::$_connection_instance_count[$connection_id]) && Database_Driver_MySQL::$_connection_instance_count[$connection_id]>1)
+                {
+                    Database_Driver_MySQL::$_connection_instance_count[$connection_id]--;
+                }
+                else
+                {
+                    unset(Database_Driver_MySQL::$_connection_instance[$connection_id]);
+                    unset(Database_Driver_MySQL::$_connection_instance_count[$connection_id]);
+                    unset(Database_Driver_MySQL::$_current_databases[$connection_id]);
+                    unset(Database_Driver_MySQL::$_current_charset[$connection_id]);
+                    unset(Database_Driver_MySQL::$_current_connection_id_to_hostname[$connection_id]);
 
-                unset(Database_Driver_MySQL::$_connection_instance[$connection_id]);
-                unset(Database_Driver_MySQL::$_current_databases[$connection_id]);
-                unset(Database_Driver_MySQL::$_current_charset[$connection_id]);
-                unset(Database_Driver_MySQL::$_current_connection_id_to_hostname[$connection_id]);
-            }
-            else
-            {
-                Core::debug()->info($key.' mysql '.Database_Driver_MySQL::$_current_connection_id_to_hostname[$connection_id].' connection has closed.');
+                    @mysql_close(Database_Driver_MySQL::$_connection_instance[$connection_id]);
+
+                    if(IS_DEBUG)Core::debug()->info('close '.$key.' mysql '.Database_Driver_MySQL::$_current_connection_id_to_hostname[$connection_id].' connection.');
+                }
             }
 
             $this->_connection_ids[$key] = null;
@@ -353,7 +370,7 @@ class Driver_Database_Driver_MySQL extends Database_Driver
             if (IS_DEBUG)
             {
                 $host = $this->_get_hostname_by_connection_hash($this->connection_id());
-                $benchmark = Core::debug()->info(($host['username']?$host['username'].'@':'') . $host['hostname'] . ($host['port'] && $host['port']!='3306'?':'.$host['port']:'').'select to db:'.$database);
+                Core::debug()->info(($host['username']?$host['username'].'@':'') . $host['hostname'] . ($host['port'] && $host['port']!='3306'?':'.$host['port']:'').'select to db:'.$database);
             }
 
             # 记录当前已选中的数据库
@@ -401,7 +418,7 @@ class Driver_Database_Driver_MySQL extends Database_Driver
      */
     public function set_charset($charset)
     {
-        if (!$charset)return;
+        if (!$charset)return false;
 
         $connection_id = $this->connection_id();
         $connection = Database_Driver_MySQL::$_connection_instance[$connection_id];
@@ -409,8 +426,7 @@ class Driver_Database_Driver_MySQL extends Database_Driver
         if (!$connection_id || !$connection)
         {
             $this->connect();
-            $this->set_charset($charset);
-            return;
+            return $this->set_charset($charset);
         }
 
         static $_set_names = null;
@@ -418,10 +434,10 @@ class Driver_Database_Driver_MySQL extends Database_Driver
         {
             // Determine if we can use mysql_set_charset(), which is only
             // available on PHP 5.2.3+ when compiled against MySQL 5.0+
-            $_set_names = ! function_exists('mysql_set_charset');
+            $_set_names = !function_exists('mysql_set_charset');
         }
 
-        if (isset(Database_Driver_MySQL::$_current_charset[$connection_id]) && $charset==Database_Driver_MySQL::$_current_charset[$connection_id])
+        if (isset(Database_Driver_MySQL::$_current_charset[$connection_id]) && $charset == Database_Driver_MySQL::$_current_charset[$connection_id])
         {
             return true;
         }
@@ -444,6 +460,8 @@ class Driver_Database_Driver_MySQL extends Database_Driver
 
         # 记录当前设置的编码
         Database_Driver_MySQL::$_current_charset[$connection_id] = $charset;
+
+        return true;
     }
 
     public function escape($value)
@@ -478,6 +496,11 @@ class Driver_Database_Driver_MySQL extends Database_Driver
         {
             $type = strtoupper($m[1]);
         }
+        else
+        {
+            $type = null;
+        }
+
         $typeArr = array
         (
             'SELECT',
@@ -493,6 +516,7 @@ class Driver_Database_Driver_MySQL extends Database_Driver
         {
             $type = 'MASTER';
         }
+
         $slaverType = array('SELECT', 'SHOW', 'EXPLAIN');
         if ($type!='MASTER' && in_array($type, $slaverType))
         {
@@ -692,7 +716,7 @@ class Driver_Database_Driver_MySQL extends Database_Driver
      *
      * $table = $db->quote_table($table);
      *
-     * @param   mixed   table name or array(table, alias)
+     * @param   mixed $value  table name or array(table, alias)
      * @return  string
      * @uses    Database::_quote_identifier
      * @uses    Database::table_prefix
@@ -1070,7 +1094,7 @@ class Driver_Database_Driver_MySQL extends Database_Driver
     /**
      * Compiles an array of ORDER BY statements into an SQL partial.
      *
-     * @param   array   sorting columns
+     * @param   array $columns  sorting columns
      * @return  string
      */
     protected function _compile_order_by(array $columns)
@@ -1180,7 +1204,18 @@ class Driver_Database_Driver_MySQL extends Database_Driver
                     }
                     else
                     {
-                        // Quote the entire value normally
+                        if (is_array($value))
+                        {
+                            if ($op=='=')
+                            {
+                                $op = 'IN';
+                            }
+                            elseif ($op=='!=')
+                            {
+                                $op = 'NOT IN';
+                            }
+                        }
+
                         $value = $this->quote($value);
                     }
 
@@ -1198,7 +1233,7 @@ class Driver_Database_Driver_MySQL extends Database_Driver
     /**
      * Compiles an array of JOIN statements into an SQL partial.
      *
-     * @param   array   join statements
+     * @param   array $joins  join statements
      * @return  string
      */
     protected function _compile_join(array $joins)
@@ -1252,7 +1287,7 @@ class Driver_Database_Driver_MySQL extends Database_Driver
     /**
      * Compiles an array of set values into an SQL partial. Used for UPDATE.
      *
-     * @param   array   updated values
+     * @param   array $values  updated values
      * @return  string
      */
     protected function _compile_set(array $values)
@@ -1343,6 +1378,10 @@ class Driver_Database_Driver_MySQL extends Database_Driver
         elseif ($this->config['table_prefix'] && strpos($value, '.') === false)
         {
             $alias = $value;
+        }
+        else
+        {
+            $alias = null;
         }
 
         if ($alias)

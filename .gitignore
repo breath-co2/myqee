@@ -3,6 +3,7 @@ Icon?
 .svn
 *.debug.config.php
 *~
+.sass-cache
 /.idea
 /.idea/*
 /.settings

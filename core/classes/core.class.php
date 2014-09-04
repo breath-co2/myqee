@@ -65,7 +65,7 @@ abstract class Core_Core extends Bootstrap
      *
      * @var string
      */
-    const RELEASE  = 'rc2';
+    const RELEASE  = 'stable';
 
     /**
      * 项目开发者
@@ -206,33 +206,6 @@ abstract class Core_Core extends Bootstrap
                 }
             }
 
-            if (IS_DEBUG)
-            {
-                Core::debug()->info('SERVER IP:' . $_SERVER["SERVER_ADDR"] . (function_exists('php_uname')?'. SERVER NAME:' . php_uname('a') : ''));
-
-                if (Core::$project)
-                {
-                    Core::debug()->info('project: ' . Core::$project);
-                }
-
-                if (IS_ADMIN_MODE)
-                {
-                    Core::debug()->info('admin mode');
-                }
-
-                if (IS_REST_MODE)
-                {
-                    Core::debug()->info('RESTFul mode');
-                }
-
-                Core::debug()->group('include path');
-                foreach ( Core::include_path() as $value )
-                {
-                    Core::debug()->log(Core::debug_path($value));
-                }
-                Core::debug()->groupEnd();
-            }
-
             if ((IS_CLI || IS_DEBUG) && class_exists('ErrException', true))
             {
                 # 注册脚本
@@ -268,11 +241,6 @@ abstract class Core_Core extends Bootstrap
                 }
             }
 
-            if (IS_DEBUG && isset($_REQUEST['debug']) && class_exists('Profiler', true))
-            {
-                Profiler::setup();
-            }
-
             if (!defined('URL_ASSETS'))
             {
                 /**
@@ -281,6 +249,39 @@ abstract class Core_Core extends Bootstrap
                  * @var string
                  */
                 define('URL_ASSETS', rtrim(Core::config('url.assets', Core::url('/assets/')), '/') . '/');
+            }
+
+            if (IS_DEBUG && isset($_REQUEST['debug']) && class_exists('Profiler', true))
+            {
+                Profiler::setup();
+            }
+
+
+            if (IS_DEBUG)
+            {
+                Core::debug()->info('SERVER IP:' . $_SERVER["SERVER_ADDR"] . (function_exists('php_uname')?'. SERVER NAME:' . php_uname('a') : ''));
+
+                if (Core::$project)
+                {
+                    Core::debug()->info('project: ' . Core::$project);
+                }
+
+                if (IS_ADMIN_MODE)
+                {
+                    Core::debug()->info('admin mode');
+                }
+
+                if (IS_REST_MODE)
+                {
+                    Core::debug()->info('RESTFul mode');
+                }
+
+                Core::debug()->group('include path');
+                foreach (Core::include_path() as $value)
+                {
+                    Core::debug()->log(Core::debug_path($value));
+                }
+                Core::debug()->groupEnd();
             }
         }
 
@@ -449,11 +450,50 @@ abstract class Core_Core extends Bootstrap
         }
         else
         {
-            $url_asstes = URL_ASSETS . Core::$project . '/' . (IS_ADMIN_MODE?'~admin/':'');
+            list($file, $query) = explode('?', $url, 2);
 
-            list($file, $query) = explode('?', $uri.'?', 2);
+            $www_file = DIR_ASSETS . $file;
 
-            $uri = $file . '?' . (strlen($query)>0?$query.'&':'') . Core::assets_hash($file);
+            if (is_file($www_file))
+            {
+                $url_asstes  = Core::config('core.url.assets');
+                $asstes_path = '';
+            }
+            else
+            {
+                $asstes_path = 'p-'. Core::$project . '/' . (IS_ADMIN_MODE?'~admin/':'');
+                $url_asstes  = URL_ASSETS . $asstes_path;
+            }
+
+            # 自动获取min文件
+            if (substr($file, -3)=='.js')
+            {
+                $tmp_filename = substr($file, 0, -3). '.min.js';
+                $min_file     = DIR_ASSETS. $asstes_path . $tmp_filename;
+            }
+            else if (substr($file, -4)=='.css')
+            {
+                $tmp_filename = substr($file, 0, -4). '.min.css';
+                $min_file     = DIR_ASSETS. $asstes_path . $tmp_filename;
+            }
+            else
+            {
+                $min_file = $tmp_filename = null;
+            }
+
+            if ($min_file && is_file($min_file))
+            {
+                if (strlen($query)>0)
+                {
+                    $url = $tmp_filename .'?'. $query;
+                }
+                else
+                {
+                    $url = $tmp_filename;
+                }
+            }
+
+//            $uri = $file . '?' . (strlen($query)>0?$query.'&':'') . Core::assets_hash($file);
         }
 
         return $url_asstes . $url;
@@ -641,10 +681,12 @@ abstract class Core_Core extends Bootstrap
                 {
                     if ($action_name!='action_default' && method_exists($controller, 'action_default'))
                     {
+                        $action      = 'default';
                         $action_name = 'action_default';
                     }
                     elseif ($action_name!='' && (!$arguments || $arguments===array('')) && method_exists($controller, 'action_index'))
                     {
+                        $action      = 'index';
                         $action_name = 'action_index';
                     }
                     elseif (method_exists($controller, '__call'))
@@ -666,12 +708,39 @@ abstract class Core_Core extends Bootstrap
                     array_shift($arguments);
                 }
 
+                # 对后缀进行判断
+                if ($found['suffix'])
+                {
+                    if (Core::config('url_suffix') && in_array($found['suffix'], explode('|', Core::config('url_suffix'))))
+                    {
+                        # 默认允许的后缀
+                    }
+                    elseif (is_array($controller->allow_suffix))
+                    {
+                        if (!isset($controller->allow_suffix[$action]) || !in_array($found['suffix'], explode('|', $controller->allow_suffix[$action])))
+                        {
+                            Core::rm_controoler($controller);
+                            throw new Exception(__('Page Not Found'), 404);
+                        }
+                    }
+                    elseif (!in_array($found['suffix'], explode('|', $controller->allow_suffix)))
+                    {
+                        Core::rm_controoler($controller);
+                        throw new Exception(__('Page Not Found'), 404);
+                    }
+
+                    # 默认输出页面头信息
+                    if (!in_array($found['suffix'], array('php', 'html', 'htm')))
+                    {
+                        @header('Content-Type: '. File::mime_by_ext($found['suffix']));
+                    }
+                }
+
                 $ispublicmethod = new ReflectionMethod($controller, $action_name);
 
                 if (!$ispublicmethod->isPublic())
                 {
                     Core::rm_controoler($controller);
-
                     throw new Exception(__('Request Method Not Allowed.'), 405);
                 }
                 unset($ispublicmethod);
@@ -683,6 +752,7 @@ abstract class Core_Core extends Bootstrap
 
                     if ($auto_check_post_method_referer && !HttpIO::csrf_check())
                     {
+                        Core::rm_controoler($controller);
                         throw new Exception(__('Not Acceptable.'), 406);
                     }
                 }
@@ -705,6 +775,7 @@ abstract class Core_Core extends Bootstrap
                 $controller->controller = $found['class'];
                 $controller->uri        = $uri;
                 $controller->directory  = $found['dir'];
+                $controller->suffix     = $found['suffix'];
 
 
                 if (IS_SYSTEM_MODE)
@@ -791,9 +862,14 @@ abstract class Core_Core extends Bootstrap
     {
         $uri = ltrim($uri, '/');
 
-        if (Core::$config['url_suffix'] && substr(strtolower($uri), -strlen(Core::$config['url_suffix']))==Core::$config['url_suffix'])
+        if (preg_match('#^(.*)\.([a-z0-9]+)$#i', $uri, $m))
         {
-            $uri = substr($uri, 0, -strlen(Core::$config['url_suffix']));
+            $suffix = strtolower($m[2]);
+            $uri    = $m[1];
+        }
+        else
+        {
+            $suffix = '';
         }
 
         if (!IS_SYSTEM_MODE && isset(Core::$config['route']) && Core::$config['route'])
@@ -813,6 +889,7 @@ abstract class Core_Core extends Bootstrap
                 (
                     'class'  => 'Controller_' . preg_replace('#[^a-zA-Z0-9_]#', '_', trim($found_route['controller'])),
                     'route'  => $found_route,
+                    'suffix' => $suffix,
                 );
             }
             else
@@ -1056,9 +1133,10 @@ abstract class Core_Core extends Bootstrap
 
                         if (is_file($tmpfile))
                         {
+                            $args_for_default_ctl = $args;
                             if (null!==$tmp_arg)
                             {
-                                array_unshift($args, $tmp_arg);
+                                array_unshift($args_for_default_ctl, $tmp_arg);
 
                                 if (strlen($tmp_arg)>0)
                                 {
@@ -1072,7 +1150,7 @@ abstract class Core_Core extends Bootstrap
                                 'dir'    => $directory,
                                 'ns'     => $ns,
                                 'class'  => 'Controller_' . $real_path . 'Default',
-                                'args'   => $args,
+                                'args'   => $args_for_default_ctl,
                                 'ids'    => $ids,
                             );
                         }
@@ -1121,9 +1199,14 @@ abstract class Core_Core extends Bootstrap
             }
         }
 
-        if (is_array($found) && isset($found['class']))
+        if (is_array($found))
         {
-            $found['class'] = preg_replace('#[^a-zA-Z0-9_]#', '_', trim($found['class']));
+            $found['suffix'] = $suffix;
+
+            if (isset($found['class']))
+            {
+                $found['class'] = preg_replace('#[^a-zA-Z0-9_]#', '_', trim($found['class']));
+            }
         }
 
         return $found;
@@ -1525,7 +1608,6 @@ abstract class Core_Core extends Bootstrap
         {
             if ($msg instanceof Exception)
             {
-                print_r($msg);exit;
                 $error     = $msg->getMessage();
                 $trace_obj = $msg;
             }
@@ -1542,6 +1624,7 @@ abstract class Core_Core extends Bootstrap
             {
                 # 不记录
                 $view->error_saved = false;
+                $error_no          = '';
             }
             else
             {
@@ -1694,7 +1777,7 @@ abstract class Core_Core extends Bootstrap
      *
      * @param array $arr
      * @param string $key
-     * @return fixed
+     * @return mixed
      */
     public static function key_string($arr, $key, $default = null)
     {
@@ -2040,7 +2123,8 @@ abstract class Core_Core extends Bootstrap
      *      Bootstrap::import_library('com.myqee.test');
      *      Bootstrap::import_library(array('com.myqee.test','com.myqee.cms'));
      *
-     * @param string|array $library_name 指定类库 支持多个
+     * @param string|array $library_name 指定类库
+     * 支持多个
      * @return boolean
      */
     public static function import_library($library_name)

@@ -270,13 +270,13 @@ abstract class Module_Database_Driver
      */
     protected function _get_connection_hash($hostname, $port, $username)
     {
-        $hash = sha1(get_class($this) . '_' . $hostname . '_' . $port . '_' . $username);
+        $hash = sha1(get_class($this) .'_'. $hostname .'_'. $port .'_'. $username);
 
         Database_Driver::$_hash_to_hostname[$hash] = array
         (
             'hostname' => $hostname,
             'port'     => $port,
-            'username' => $username
+            'username' => $username,
         );
 
         return $hash;

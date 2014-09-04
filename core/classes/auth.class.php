@@ -33,6 +33,10 @@ class Core_Auth
      */
     const DEFAULT_CONFIG_NAME = 'default';
 
+    const ERROR_CODE_NO_MEMBER = -1;
+
+    const ERROR_CODE_ERROR_PASSWORD = -2;
+
 
     /**
      * 当前配置
@@ -47,8 +51,6 @@ class Core_Auth
      * @var array
      */
     protected static $instances = array();
-
-    protected static $user_info = array();
 
     /**
      * @return Auth
@@ -102,7 +104,7 @@ class Core_Auth
 
         if (!$member)
         {
-            throw new Exception(__('The user does not exist'));
+            throw new Exception(__('The user does not exist'), Auth::ERROR_CODE_NO_MEMBER);
         }
 
         if ($member->check_password($password))
@@ -111,7 +113,7 @@ class Core_Auth
         }
         else
         {
-            throw new Exception(__('Enter the wrong password'));
+            throw new Exception(__('Enter the wrong password'), Auth::ERROR_CODE_ERROR_PASSWORD);
         }
     }
 
@@ -119,52 +121,46 @@ class Core_Auth
      * 根据用户名获取用户
      *
      * @param string $username
-     * @return 用户对象，不存在则返回false
+     * @return Member 用户对象，不存在则返回false
      */
     public function get_member_by_username($username)
     {
-        if (!isset(Auth::$user_info[$this->config_name][$username]))
+        if (!$this->config['driver'] || $this->config['driver']==Auth::DRIVER_DATABASE)
         {
-            if ($this->config['driver']==Auth::DRIVER_DATABASE)
+            # 数据库类型
+            $tables         = $this->config['tablename'];
+            $user_field     = $this->config['username_field']?$this->config['username_field']:'username';
+            $data           = Database::instance($this->config['database'])->from($tables)->where($user_field, $username)->limit(1)->get()->current();
+        }
+        elseif ($this->config['driver']==Auth::DRIVER_FILE)
+        {
+            $file = DIR_DATA . 'auth-data-of-project-' . Core::$project . '.json';
+            if (is_file($file))
             {
-                # 数据库类型
-                $tables         = $this->config['tablename'];
-                $user_field     = $this->config['username_field']?$this->config['username_field']:'username';
-                $password_field = $this->config['password_field']?$this->config['password_field']:'password';
-                $data           = Database::instance($this->config['database'])->from($tables)->where($user_field, $username)->limit(1)->get()->current();
-            }
-            elseif ($this->config['driver']==Auth::DRIVER_FILE)
-            {
-                $file = DIR_DATA . 'auth-data-of-project-' . Core::$project . '.json';
-                if (is_file($file))
+                $data = @json_decode(file_get_contents($file), true);
+                if ($data && isset($data[$username]))
                 {
-                    $data = @json_decode(file_get_contents($file), true);
-                    if ($data && isset($data[$username]))
-                    {
-                        $data = $data[$username];
-                    }
-                    else
-                    {
-                        $data = array();
-                    }
+                    $data = $data[$username];
                 }
                 else
                 {
                     $data = array();
                 }
             }
-
-            if ($data)
-            {
-                $member_obj = $this->config['member_object_name']?$this->config['member_object_name']:'Member';
-                Auth::$user_info[$this->config_name][$username] = new $member_obj($data);
-            }
             else
             {
-                Auth::$user_info[$this->config_name][$username] = false;
+                $data = array();
             }
         }
 
-        return Auth::$user_info[$this->config_name][$username];
+        if ($data)
+        {
+            $member_obj = $this->config['member_object_name']?$this->config['member_object_name']:'Member';
+            return new $member_obj($data);
+        }
+        else
+        {
+            return false;
+        }
     }
 }

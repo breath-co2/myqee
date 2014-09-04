@@ -61,28 +61,40 @@ abstract class Core_I18n
 
         $lang_key = implode('_', $accept_language);
 
-        # 根据类库加载信息获取key
-        $libs_key = array();
-        foreach (array_reverse(Core::$include_path) as $nslib=>$libs)
+        try
         {
-            $libs = array_reverse($libs);
-            foreach ($libs as $k=>$path)
+            static $run = 0;
+            $run++;
+
+            # 获取缓存数据
+            if ($run==1)
             {
-                $libs_key[] = $libs.'.'.$k;
+                # 根据类库加载信息获取key
+                $libs_key = array();
+                foreach (array_reverse(Core::$include_path) as $libs)
+                {
+                    $libs = array_reverse($libs);
+                    foreach ($libs as $k=>$path)
+                    {
+                        $libs_key[] = $libs.'.'.$k;
+                    }
+                }
+
+                $libs_key = md5(implode(',', $libs_key));
+                $key      = 'lang_cache_by_' . $libs_key . '_for_' . $lang_key;
+                $lang     = Cache::instance(I18n::$cache_config)->get($key);
+
+                if ($lang)
+                {
+                    I18n::$lang[Core::$project]     = $lang;
+                    I18n::$is_setup[Core::$project] = true;
+                    return;
+                }
             }
         }
-        $libs_key = md5(implode(',', $libs_key));
-
-        $key = 'lang_cache_by_' . $libs_key . '_for_' . $lang_key;
-
-        # 获取缓存数据
-        $lang = Cache::instance(I18n::$cache_config)->get($key);
-
-        if ($lang)
+        catch(Exception $e)
         {
-            I18n::$lang[Core::$project]     = $lang;
-            I18n::$is_setup[Core::$project] = true;
-            return;
+            # 避免在Exception中再次调用__()方法后陷入死循环
         }
 
         # 逆向排序，调整优先级
@@ -175,7 +187,7 @@ abstract class Core_I18n
         # 客户端语言包
         $accept_language = isset($_SERVER['HTTP_ACCEPT_LANGUAGE'])?$_SERVER['HTTP_ACCEPT_LANGUAGE']:null;
 
-        $lang_config = Core::config('core.lang');
+        $lang_config = Core::config('lang');
 
         # 匹配语言设置
         # zh-CN,zh;q=0.8,zh-TW;q=0.6

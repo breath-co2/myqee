@@ -74,7 +74,7 @@ if (!defined('IS_CLI'))define('IS_CLI', (PHP_SAPI==='cli'));
  *
  * @var boolean
  */
-define('HAVE_NS', version_compare(PHP_VERSION,'5.3','>=')?true:false);
+define('HAVE_NS', version_compare(PHP_VERSION, '5.3', '>=')?true:false);
 
 /**
  * 是否系统调用模式
@@ -225,7 +225,7 @@ function __($string, array $values = null)
 {
     static $have_i18n_class = false;
 
-    if ( false===$have_i18n_class )
+    if (false===$have_i18n_class)
     {
         $have_i18n_class = (boolean)class_exists('I18n', true);
     }
@@ -344,7 +344,7 @@ abstract class Bootstrap
     public static $include_path = array
     (
         'project'      => array(),                                   // 项目类库
-        'team-library' => array('default'=>DIR_TEAM_LIBRARY),        // Team公共类库
+        'team-library' => array('team'=>DIR_TEAM_LIBRARY),           // Team公共类库
         'library'      => array(),                                   // 类库包
         'driver'       => array(),                                   // 驱动
         'module'       => array(),                                   // 组件
@@ -378,13 +378,6 @@ abstract class Bootstrap
      * @var string
      */
     public static $project_dir = 'default';
-
-    /**
-     * 当前项目的URL
-     *
-     * @var string
-     */
-    public static $project_url;
 
     /**
      * 系统文件列表
@@ -462,7 +455,7 @@ abstract class Bootstrap
             define('IS_COMPOSER_LOADED', $composer);
 
             # 注册自动加载类
-            spl_autoload_register(array('Bootstrap', 'auto_load'), true, true);
+            spl_autoload_register(array('Bootstrap', 'auto_load'));
 
             # 读取配置
             if (!is_file(DIR_SYSTEM .'config'. EXT))
@@ -582,6 +575,9 @@ abstract class Bootstrap
             // 获取全局$project变量
             global $project, $admin_mode, $rest_mode;
 
+
+            $request_mode = '';
+
             // 系统内部调用
             if (IS_SYSTEM_MODE)
             {
@@ -627,6 +623,18 @@ abstract class Bootstrap
 
                 // 如果有设置项目
                 self::$project = $project;
+
+                $project_config = self::$core_config['projects'][$project];
+                if (isset($project_config['dir']) && $project_config['dir'])
+                {
+                    self::$project_dir = $project_config['dir'];
+                }
+                else
+                {
+                    self::$project_dir = $project;
+                }
+
+                unset($project_config);
             }
             else
             {
@@ -642,7 +650,9 @@ abstract class Bootstrap
                     //$argv[0]为文件名
                     if (isset($argv[1]) && $argv[1] && isset(self::$core_config['projects'][$argv[1]]))
                     {
-                        self::$project = $argv[1];
+                        self::$project     = $argv[1];
+                        $tmp_config        = self::$core_config['projects'][$argv[1]];
+                        self::$project_dir = isset($tmp_config['dir']) && $tmp_config['dir'] ? $tmp_config['dir'] : self::$project;
                     }
 
                     array_shift($argv); //将文件名移除
@@ -650,7 +660,7 @@ abstract class Bootstrap
 
                     self::$path_info = trim(implode('/', $argv));
 
-                    unset($argv);
+                    unset($argv, $tmp_config);
                 }
                 else
                 {
@@ -721,7 +731,9 @@ abstract class Bootstrap
         $class_name = strtolower(trim($class_name, '\\ '));
 
         $class_name_array = explode('_', $class_name, 2);
-        $is_alias = false;
+        $is_alias         = false;
+        $ns_name          = '';
+        $ns               = '';
 
         if ($class_name_array[0]=='core' && count($class_name_array)==2)
         {
@@ -733,6 +745,12 @@ abstract class Bootstrap
         {
             # 扩展别名
             $is_alias       = true;
+            $new_class_name = $class_name_array[1];
+        }
+        else if ($class_name_array[0]=='team')
+        {
+            # 扩展别名
+            $ns             = 'team';
             $new_class_name = $class_name_array[1];
         }
         else if (preg_match('#^library_((?:[a-z0-9]+)_(?:[a-z0-9]+))_([a-z0-9_]+)$#', $class_name, $m))
@@ -757,12 +775,11 @@ abstract class Bootstrap
         }
         else
         {
-            $ns             = '';
             $new_class_name = $class_name;
         }
 
         # 获取类的前缀
-        $prefix = '';
+        $prefix        = '';
         $new_class_arr = explode('_', $new_class_name);
 
         if (count($new_class_arr)>=2)
@@ -813,6 +830,9 @@ abstract class Bootstrap
                 case 'core':
                     $file = DIR_CORE . $dir_setting[0] . DS;
                     break;
+                case 'team':
+                    $file = DIR_TEAM_LIBRARY . $dir_setting[0] . DS;
+                    break;
                 case 'module':
                     $file = DIR_MODULE;
 
@@ -839,6 +859,11 @@ abstract class Bootstrap
             {
                 require $file;
             }
+
+            if ($prefix=='orm')
+            {
+                self::_auto_extend_orm($new_class_name, $ns .'_');
+            }
         }
         else
         {
@@ -854,7 +879,14 @@ abstract class Bootstrap
                         if (is_file($tmp_file))
                         {
                             require $tmp_file;
-                            if (class_exists($class_name, false))return true;
+                            if (class_exists($class_name, false))
+                            {
+                                if ($type=='team-library' && $prefix=='orm')
+                                {
+                                    self::_auto_extend_orm($new_class_name, 'team_');
+                                }
+                                return true;
+                            }
                         }
                     }
                 }
@@ -868,7 +900,7 @@ abstract class Bootstrap
 
 
             # 处理组件
-            list($tmp_prefix, $tmp_ns, $tmp_driver) = explode('_', $new_class_name, 4);
+            list($tmp_prefix, $tmp_ns, $tmp_driver) = explode('_', $new_class_name, 4) + array('', '', '');
             if (!isset($module_dir[$tmp_prefix]))
             {
                 $module_dir[$tmp_prefix] = is_dir(DIR_MODULE .$tmp_prefix. DS);
@@ -903,22 +935,32 @@ abstract class Bootstrap
             }
 
 
-            foreach (array('library', 'driver', 'module', 'core') as $type)
+            # 处理类库的映射
+            foreach (array('library', 'driver', 'module', 'core', 'team-library') as $type)
             {
                 foreach ($include_path[$type] as $lib_ns=>$path)
                 {
-                    $ns_class_name = ($type=='library'?'library_':'') . str_replace('.', '_', $lib_ns) . '_' . $new_class_name;
+                    $tmp_ns        = ($type=='library'?'library_':'') . str_replace('.', '_', $lib_ns) . '_';
+                    $ns_class_name = $tmp_ns . $new_class_name;
 
                     if (self::auto_load($ns_class_name))
                     {
                         if (!$is_alias && class_exists($class_name, false))
                         {
                             # 在加载$ns_class_name时，当前需要的类库有可能被加载了，直接返回true
+                            if ($prefix=='orm')
+                            {
+                                self::_auto_extend_orm($new_class_name, $tmp_ns);
+                            }
                             return true;
                         }
                         else
                         {
                             class_alias($ns_class_name, $class_name);
+                            if ($prefix=='orm')
+                            {
+                                self::_auto_extend_orm($new_class_name, $tmp_ns);
+                            }
                         }
 
                         break;
@@ -934,6 +976,28 @@ abstract class Bootstrap
         else
         {
             return false;
+        }
+    }
+
+    /**
+     * 自动扩展ORM相关类库
+     *
+     * @param $ns_class_name
+     * @param $class_name
+     */
+    protected static function _auto_extend_orm($class_name, $ns)
+    {
+        if (preg_match('#^(.*)_(data|result|finder)$#i', $class_name, $m))
+        {
+            foreach(array('data', 'result', 'data') as $item)
+            {
+                if ($item==$m[2])continue;
+                $new_class = $m[1].'_'.$item;
+                if (class_exists($ns.$new_class, false) && !class_exists($new_class, false))
+                {
+                    class_alias($ns.$new_class, $new_class);
+                }
+            }
         }
     }
 
@@ -989,9 +1053,9 @@ abstract class Bootstrap
         {
             $the_ext = '';
         }
-        elseif ($ext[0]!='.')
+        elseif (substr($ext, 0, 1)!='.')
         {
-            $the_ext = '.'.$ext;
+            $the_ext = '.'. $ext;
         }
 
         # 是否只需要寻找到第一个文件
@@ -1051,7 +1115,6 @@ abstract class Bootstrap
                 }
                 break;
             default:
-                $the_ext = $ext;
                 break;
         }
 
@@ -1186,6 +1249,16 @@ abstract class Bootstrap
             if (is_file($config_file))
             {
                 $config_files[] = $config_file;
+            }
+
+            if (self::$core_config['runtime_config'])
+            {
+                $config_file = $set[1] .'config'. self::$core_config['runtime_config'] .'.runtime'. EXT;
+
+                if (is_file($config_file))
+                {
+                    $config_files[] = $config_file;
+                }
             }
 
             $load_num++;
@@ -1363,13 +1436,6 @@ abstract class Bootstrap
     {
         foreach ($paths as $path)
         {
-            $config_file = $path . 'config' . EXT;
-
-            if (is_file($config_file))
-            {
-                $config_files[] = $config_file;
-            }
-
             if ($runtime && self::$core_config['runtime_config'])
             {
                 $config_file = $path . 'config.'. self::$core_config['runtime_config'] .'.runtime'. EXT;
@@ -1378,6 +1444,12 @@ abstract class Bootstrap
                 {
                     $config_files[] = $config_file;
                 }
+            }
+
+            $config_file = $path . 'config' . EXT;
+            if (is_file($config_file))
+            {
+                $config_files[] = $config_file;
             }
         }
     }
@@ -1390,7 +1462,7 @@ abstract class Bootstrap
         # 当没有$_SERVER["SCRIPT_URL"] 时拼接起来
         if (!isset($_SERVER['SCRIPT_URL']))
         {
-            $tmp_uri = explode('?', $_SERVER['REQUEST_URI'] ,2);
+            $tmp_uri = explode('?', $_SERVER['REQUEST_URI'], 2);
             $_SERVER['SCRIPT_URL'] = $tmp_uri[0];
         }
 

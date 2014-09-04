@@ -49,6 +49,13 @@ class Core_Controller
     public $directory;
 
     /**
+     * 当前请求的页面的后缀
+     *
+     * @var string
+     */
+    public $suffix;
+
+    /**
      * 当前控制器信息ID
      *
      * 例如访问地址为 http://localhost/123/test/ 控制器为_id.controller.php ,方法为test，则$this->ids=array(123)，系统会在初始化控制器时进行设置
@@ -56,6 +63,24 @@ class Core_Controller
      * @var array
      */
     public $ids = array();
+
+    /**
+     * 当前控制器允许的后缀名
+     *
+     * 例如 `$allow_suffix = css|js` 表示允许css和js两个后缀的请求，也可单独为action设置，比如
+     *
+     * ```
+     * $allow_suffix = array
+     * (
+     *     'default' => 'js',
+     *     'test'    => 'css',
+     * );
+     * ```
+     * 表示 `action_default` 允许js后缀的请求，`action_test` 允许css后缀的请求
+     *
+     * @var string
+     */
+    public $allow_suffix = '';
 
     protected static $message_view = 'show_message';
 
@@ -130,7 +155,15 @@ class Core_Controller
         if (HttpIO::IS_AJAX)
         {
             @header('Content-Type:application/json');
-            echo json_encode($out);
+
+            if (defined('JSON_UNESCAPED_UNICODE'))
+            {
+                echo json_encode($out, JSON_UNESCAPED_UNICODE);
+            }
+            else
+            {
+                echo json_encode($out);
+            }
 
             exit;
         }
@@ -182,8 +215,8 @@ class Core_Controller
     /**
      * 页面跳转
      *
-     * @param   string   redirect location
-     * @param   integer  status code: 301, 302, etc
+     * @param   string  $url redirect location
+     * @param   integer $code status code: 301, 302, etc
      * @return  void
      * @uses    Core_url::site
      * @uses    HttpIO::send_headers
@@ -205,4 +238,33 @@ class Core_Controller
         HttpIO::set_cache_header($time);
     }
 
+    /**
+     * 分块输出
+     *
+     * @param $msg
+     */
+    public function output_chunk($msg)
+    {
+        HttpIO::output_chunk($msg);
+    }
+
+    /**
+     * 开启分开输出
+     *
+     * @param int $time_limit 允许程序执行的最长时间，0表示永久
+     */
+    public function output_chunk_start($time_limit = 0)
+    {
+        HttpIO::output_chunk_start($time_limit);
+    }
+
+    /**
+     * 关闭分块输出
+     *
+     * !!! 执行此方法后将执行 `exit()`，程序将结束运行
+     */
+    public function output_chunk_end()
+    {
+        HttpIO::output_chunk_end();
+    }
 }

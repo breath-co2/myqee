@@ -25,9 +25,9 @@ $error_id = uniqid('error');
 #expction_div ol.trace { display: block; margin: 0 0 0 2em; padding: 0; list-style: decimal; }
 #expction_div ol.trace li { margin: 0; padding: 0; }
 </style>
+<div id="expction_div_style"></div>
 <script type="text/javascript">
-document.write('<style type="text/css"> .collapsed { display: none; } </style>');
-function koggle(elem)
+function _expcption_mqggle(elem)
 {
 elem = document.getElementById(elem);
 
@@ -45,9 +45,12 @@ var disp = document.defaultView.getComputedStyle(elem, null).getPropertyValue('d
 elem.style.display = disp == 'block' ? 'none' : 'block';
 return false;
 }
+(function(){
+document.getElementById('expction_div_style').innerHTML = '<style type="text/css">.collapsed {display: none;}</style>';
+})();
 </script>
 
-<div style="padding:0 10px;">
+<div style="padding:10px;">
 <div id="expction_div">
 <h1><span class="type"><?php echo $type ?> [ <?php echo $code ?> ]:</span> <span class="message"><?php echo str_replace(DIR_SYSTEM,'./',$message); ?></span></h1>
 <div id="<?php echo $error_id ?>" class="content">
@@ -59,13 +62,13 @@ return false;
 <p>
 	<span class="file">
 		<?php if ($step['file']): $source_id = $error_id.'source'.$i; ?>
-			<a href="#<?php echo $source_id ?>" onclick="return koggle('<?php echo $source_id ?>')"><?php echo Core::debug_path($step['file'],'#a00') ?> [ <?php echo $step['line'] ?> ]</a>
+			<a href="#<?php echo $source_id ?>" onclick="return _expcption_mqggle('<?php echo $source_id ?>')"><?php echo Core::debug_path($step['file'],'#a00') ?> [ <?php echo $step['line'] ?> ]</a>
 		<?php else: ?>
 			{PHP internal call}
 		<?php endif ?>
 	</span>
 	&raquo;
-	<?php echo $step['function'] ?>(<?php if ($step['args']): $args_id = $error_id.'args'.$i; ?><a href="#<?php echo $args_id ?>" onclick="return koggle('<?php echo $args_id ?>')">arguments</a><?php endif ?>)
+	<?php echo $step['function'] ?>(<?php if ($step['args']): $args_id = $error_id.'args'.$i; ?><a href="#<?php echo $args_id ?>" onclick="return _expcption_mqggle('<?php echo $args_id ?>')">arguments</a><?php endif ?>)
 </p>
 <?php if (isset($args_id)): ?>
 <div id="<?php echo $args_id ?>" class="collapsed">
@@ -88,10 +91,10 @@ return false;
 </ol>
 </div>
 <?php $env_id = $error_id.'environment';?>
-<h2 onclick="return koggle('<?php echo $env_id ?>');" style="cursor:pointer;" onmouseover="this.getElementsByTagName('A')[0].style.color='#f0ff00';" onmouseout="this.getElementsByTagName('A')[0].style.color='';"><a href="#<?php echo $env_id; ?>" onclick="return false">Environment</a></h2>
+<h2 onclick="return _expcption_mqggle('<?php echo $env_id ?>');" style="cursor:pointer;" onmouseover="this.getElementsByTagName('A')[0].style.color='#f0ff00';" onmouseout="this.getElementsByTagName('A')[0].style.color='';"><a href="#<?php echo $env_id; ?>" onclick="return false">Environment</a></h2>
 <div id="<?php echo $env_id ?>" class="content collapsed">
 	<?php $included = Core::include_path(); ?>
-	<h3><a href="#<?php echo $env_id = $error_id.'environment_include_path' ?>" onclick="return koggle('<?php echo $env_id ?>')">Include path</a> (<?php echo count($included) ?>)</h3>
+	<h3><a href="#<?php echo $env_id = $error_id.'environment_include_path' ?>" onclick="return _expcption_mqggle('<?php echo $env_id ?>')">Include path</a> (<?php echo count($included) ?>)</h3>
 	<div id="<?php echo $env_id ?>" class="collapsed">
 		<table cellspacing="0">
 			<?php foreach ($included as $file): ?>
@@ -102,7 +105,7 @@ return false;
 		</table>
 	</div>
 	<?php $included = get_included_files(); ?>
-	<h3><a href="#<?php echo $env_id = $error_id.'environment_included' ?>" onclick="return koggle('<?php echo $env_id ?>')">Included files</a> (<?php echo count($included) ?>)</h3>
+	<h3><a href="#<?php echo $env_id = $error_id.'environment_included' ?>" onclick="return _expcption_mqggle('<?php echo $env_id ?>')">Included files</a> (<?php echo count($included) ?>)</h3>
 	<div id="<?php echo $env_id ?>" class="collapsed">
 		<table cellspacing="0">
 			<?php foreach ($included as $file): ?>
@@ -113,7 +116,7 @@ return false;
 		</table>
 	</div>
 	<?php $included = get_loaded_extensions() ?>
-	<h3><a href="#<?php echo $env_id = $error_id.'environment_loaded' ?>" onclick="return koggle('<?php echo $env_id ?>')">Loaded extensions</a> (<?php echo count($included) ?>)</h3>
+	<h3><a href="#<?php echo $env_id = $error_id.'environment_loaded' ?>" onclick="return _expcption_mqggle('<?php echo $env_id ?>')">Loaded extensions</a> (<?php echo count($included) ?>)</h3>
 	<div id="<?php echo $env_id ?>" class="collapsed">
 		<table cellspacing="0">
 			<?php foreach ($included as $file): ?>
@@ -125,7 +128,7 @@ return false;
 	</div>
 	<?php foreach (array('_SESSION', '_GET', '_POST', '_FILES', '_COOKIE', '_SERVER') as $var): ?>
 	<?php if (empty($GLOBALS[$var]) OR ! is_array($GLOBALS[$var])) continue ?>
-	<h3><a href="#<?php echo $env_id = $error_id.'environment'.strtolower($var) ?>" onclick="return koggle('<?php echo $env_id ?>')">$<?php echo $var ?></a></h3>
+	<h3><a href="#<?php echo $env_id = $error_id.'environment'.strtolower($var) ?>" onclick="return _expcption_mqggle('<?php echo $env_id ?>')">$<?php echo $var ?></a></h3>
 	<div id="<?php echo $env_id ?>" class="collapsed">
 		<table cellspacing="0">
 			<?php foreach ($GLOBALS[$var] as $key => $value): ?>

@@ -8,7 +8,7 @@ if (!defined('_HTTPIO_METHOD'))
     {
         $is_ajax = true;
     }
-    elseif (isset($_GET['_ajax']) && $_GET['_ajax']=='true')
+    elseif (isset($_GET['_ajax']) && ($_GET['_ajax']=='true'||$_GET['_ajax']=='json'))
     {
         $is_ajax = true;
     }
@@ -211,6 +211,13 @@ abstract class Core_HttpIO
     protected static $controlers = array();
 
     /**
+     * 是否开启了分块输出
+     *
+     * @var bool
+     */
+    protected static $IS_CHUNK_START = false;
+
+    /**
      * 当前控制器
      */
     protected static $current_controller;
@@ -230,6 +237,10 @@ abstract class Core_HttpIO
     protected static $_REQUEST_OLD;
 
     protected static $_COOKIE_OLD;
+
+    protected static $_INPUT;
+
+    protected static $_INPUT_OLD;
 
     public function __construct()
     {
@@ -266,6 +277,10 @@ abstract class Core_HttpIO
                 HttpIO::$_REQUEST =& $_REQUEST;
 
                 HttpIO::$uri =& Core::$path_info;
+
+                HttpIO::$_INPUT_OLD = file_get_contents('php://input');
+                if (HttpIO::$_INPUT_OLD)HttpIO::$_INPUT = @json_decode(HttpIO::$_INPUT_OLD, true);
+                if (!HttpIO::$_INPUT)HttpIO::$_INPUT = array();
             }
 
             // 自动支持子域名AJAX请求
@@ -273,7 +288,6 @@ abstract class Core_HttpIO
             {
                 HttpIO::auto_add_ajax_control_allow_origin();
             }
-
         }
     }
 
@@ -332,13 +346,13 @@ abstract class Core_HttpIO
      * 获取$_GET数据
      *
      * 		// 获取原始数据
-     * 		$get_array = HttpIO::GET(null,HttpIO::PARAM_TYPE_OLDDATA);
+     * 		$get_array = HttpIO::GET(null, HttpIO::PARAM_TYPE_OLDDATA);
      *
      * 		// 获取原始数据为URL格式
-     * 		$url = HttpIO::GET('url',HttpIO::PARAM_TYPE_URL);
+     * 		$url = HttpIO::GET('url', HttpIO::PARAM_TYPE_URL);
      *
      * @param string $key
-     * @param string 返回类型，false或不传，则返回原始数据 例：HttpIO::PARAM_TYPE_URL
+     * @param string $type 返回类型，false或不传，则返回原始数据 例：HttpIO::PARAM_TYPE_URL
      */
     public static function GET($key = null, $type = null)
     {
@@ -349,7 +363,7 @@ abstract class Core_HttpIO
      * 获取$_POST数据
      *
      * @param string $key
-     * @param string 返回类型，false或不传，则返回原始数据 例：HttpIO::PARAM_TYPE_URL
+     * @param string $type 返回类型，false或不传，则返回原始数据 例：HttpIO::PARAM_TYPE_URL
      */
     public static function POST($key = null, $type = null)
     {
@@ -360,7 +374,7 @@ abstract class Core_HttpIO
      * 获取$_COOKIE数据
      *
      * @param string $key
-     * @param string 返回类型，false或不传，则返回原始数据 例：HttpIO::PARAM_TYPE_URL
+     * @param string $type 返回类型，false或不传，则返回原始数据 例：HttpIO::PARAM_TYPE_URL
      */
     public static function COOKIE($key = null, $type = null)
     {
@@ -371,29 +385,42 @@ abstract class Core_HttpIO
      * 获取$_REQUEST数据
      *
      * @param string $key
-     * @param string 返回类型，false或不传，则返回原始数据 例：HttpIO::PARAM_TYPE_URL
+     * @param string $type 返回类型，false或不传，则返回原始数据 例：HttpIO::PARAM_TYPE_URL
      */
     public static function REQUEST($key = null, $type = null)
     {
         return HttpIO::_get_format_data('_REQUEST', $key, $type);
     }
 
-    protected static function _get_format_data($datatype, $key, $type)
+    /**
+     * 获取 `php://input` 数据
+     *
+     * 		$url = HttpIO::INPUT('url');
+     *
+     * @param string $key
+     * @param string $type 返回类型
+     */
+    public static function INPUT($key = null, $type = null)
+    {
+        return HttpIO::_get_format_data('_INPUT', $key, $type);
+    }
+
+    protected static function _get_format_data($data_type, $key, $type)
     {
         if ($type == HttpIO::PARAM_TYPE_OLDDATA)
         {
             # 如果是要拿原始拷贝，则加后缀
-            $datatype .= '_OLD';
+            $data_type .= '_OLD';
         }
-        $data = HttpIO::_key_string(HttpIO::$$datatype, $key);
-        if (null === $data) return null;
+        $data = HttpIO::_key_string(HttpIO::$$data_type, $key);
+        if (null===$data) return null;
 
         if (!$type)
         {
             # 未安全过滤的数据
             $data = HttpIO::sanitize_decode($data);
         }
-        elseif ($type == HttpIO::PARAM_TYPE_URL)
+        elseif ($type==HttpIO::PARAM_TYPE_URL)
         {
             # URL 格式数据
             $data = HttpIO::sanitize_decode($data);
@@ -409,7 +436,7 @@ abstract class Core_HttpIO
      */
     public static function sanitize($str)
     {
-        if (null === $str) return null;
+        if (null===$str)return null;
         if (is_array($str) || is_object($str))
         {
             $data = array();
@@ -421,7 +448,7 @@ abstract class Core_HttpIO
         else
         {
             $str = trim($str);
-            if (strpos($str, "\r") !== false)
+            if (strpos($str, "\r")!==false)
             {
                 $str = str_replace(array("\r\n", "\r"), "\n", $str);
             }
@@ -437,7 +464,7 @@ abstract class Core_HttpIO
      */
     public static function sanitize_decode($str)
     {
-        if (null === $str) return null;
+        if (null===$str)return null;
         if (is_array($str) || is_object($str))
         {
             foreach ($str as $k => $v)
@@ -449,21 +476,22 @@ abstract class Core_HttpIO
         {
             $str = htmlspecialchars_decode($str);
         }
+
         return $str;
     }
 
     /**
      * 页面跳转
      *
-     * @param   string   redirect location
-     * @param   integer  status code: 301, 302, etc
-     * @return  void
-     * @uses    Core_url::site
-     * @uses    HttpIO::send_headers
+     * @param  string  $url 跳转的URL
+     * @param  integer $code 状态 : 301, 302, etc
+     * @return void
+     * @uses   Core::url
+     * @uses   HttpIO::send_headers
      */
     public static function redirect($url, $code = 302)
     {
-        if (strpos($url, '://') === true)
+        if (strpos($url, '://')===true)
         {
             // Make the URI into a URL
             $url = Core::url($url);
@@ -514,7 +542,7 @@ abstract class Core_HttpIO
     protected static function _key_string($arr, $key)
     {
         if (!is_array($arr))return null;
-        if ($key === null || $key === false || !strlen($key) > 0)
+        if ($key===null || $key===false || !strlen($key) > 0)
         {
             return $arr;
         }
@@ -612,9 +640,9 @@ abstract class Core_HttpIO
      *
      * $id = $request->param('id');
      *
-     * @param   string  key of the value
-     * @param   mixed    default value if the key is not set
-     * @return  mixed
+     * @param  string $key key of the value
+     * @param  mixed  $default default value if the key is not set
+     * @return mixed
      */
     public static function param($key = null, $default = null)
     {
@@ -629,12 +657,12 @@ abstract class Core_HttpIO
     /**
      * 返回query构造参数
      *
-     * @param   array   array of GET parameters
-     * @return  string
+     * @param  array $params  array of GET parameters
+     * @return string
      */
     public static function query(array $params = null)
     {
-        if ($params === null)
+        if ($params===null)
         {
             // Use only the current parameters
             $params = HttpIO::GET(null, false);
@@ -654,15 +682,16 @@ abstract class Core_HttpIO
         $query = http_build_query($params, '', '&');
 
         // Don't prepend '?' to an empty string
-        return ($query === '') ? '' : '?' . $query;
+        return ($query==='') ? '' : '?' . $query;
     }
 
     /**
      * 获取新的URI
      *
-     * @param   array   additional route parameters
-     * @return  string
-     * @uses    Route::uri
+     * @param  array $params additional route parameters
+     * @return string
+     * @uses   HttpIO::param
+     * @uses   Route::uri
      */
     public static function uri(array $params = null)
     {
@@ -786,12 +815,11 @@ abstract class Core_HttpIO
      *
      * echo URL::site($this->request->uri($params), $protocol);
      *
-     * @param   string   route name
-     * @param   array    URI parameters
-     * @param   mixed    protocol string or boolean, adds protocol and domain
-     * @return  string
-     * @since   3.0.7
-     * @uses    URL::site
+     * @param  array  $protocol  URI parameters
+     * @param  mixed  $protocol  protocol string or boolean, adds protocol and domain
+     * @return string
+     * @uses   URL::site
+     * @uses   HttpIO::uri
      */
     public static function url(array $params = null, $protocol = null)
     {
@@ -879,11 +907,10 @@ abstract class Core_HttpIO
             'museum',
             'coop',
             'aero',
+            'asia',
             'xxx',
             'idv',
             'mobi',
-            'cc',
-            'me'
         );
 
         $str='';
@@ -899,9 +926,80 @@ abstract class Core_HttpIO
         }
         else
         {
-            $domain = $host;
+            $host_arr = explode('.', $host);
+            $host_c   = count($host_arr) - 1;
+            if (strlen($host_arr[$host_c])==2)
+            {
+                # 2个字母的后缀，比如 t.tt, net.cn
+                $domain = $host_arr[$host_c-1] .'.'. $host_arr[$host_c];
+            }
+            else
+            {
+                $domain = $host;
+            }
         }
 
         return $domain;
+    }
+
+    /**
+     * 分块输出
+     *
+     * @param $msg
+     */
+    public static function output_chunk($msg)
+    {
+        if (!HttpIO::$IS_CHUNK_START)
+        {
+            HttpIO::output_chunk_start();
+        }
+
+        if (is_array($msg))
+        {
+            if (defined('JSON_UNESCAPED_UNICODE'))
+            {
+                $msg = json_encode($msg, JSON_UNESCAPED_UNICODE);
+            }
+            else
+            {
+                $msg = json_encode($msg);
+            }
+        }
+        else
+        {
+            $msg = trim((string)$msg);
+        }
+
+        echo dechex(strlen($msg)), "\r\n", $msg, "\r\n";
+
+        flush();
+    }
+
+    /**
+     * 开始分开输出
+     *
+     * @param int $time_limit
+     */
+    public static function output_chunk_start($time_limit = 0)
+    {
+        HttpIO::$IS_CHUNK_START = true;
+
+        set_time_limit($time_limit);
+        Core::close_buffers(false);
+        header('Content-Type: text/plain');
+
+        echo str_pad('', 1024), "\r\n";
+        flush();
+    }
+
+    /**
+     * 分开输出结束，页面结束
+     *
+     * !!! 执行此方法后将执行 `exit()`，程序将结束运行
+     */
+    public static function output_chunk_end()
+    {
+        echo "0\r\n\r\n";
+        exit;
     }
 }

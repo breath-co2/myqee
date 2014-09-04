@@ -271,10 +271,6 @@ class Driver_Database_Driver_Mongo extends Database_Driver
                 unset(Database_Driver_Mongo::$_current_charset[$connection_id]);
                 unset(Database_Driver_Mongo::$_current_connection_id_to_hostname[$connection_id]);
             }
-            else
-            {
-                Core::debug()->info($key.' mongo '.Database_Driver_Mongo::$_current_connection_id_to_hostname[$connection_id].' connection has closed.');
-            }
 
             $this->_connection_ids[$key] = null;
         }
