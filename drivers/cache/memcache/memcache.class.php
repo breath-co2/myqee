@@ -42,7 +42,7 @@ class Driver_Cache_Driver_Memcache extends Cache_Driver
 
     /**
      * Memcache缓存驱动器
-     * @param $config_name 配置名或数组
+     * @param string $config_name 配置名或数组
      */
     public function __construct($config_name = 'default')
     {

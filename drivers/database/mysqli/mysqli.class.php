@@ -339,10 +339,6 @@ class Driver_Database_Driver_MySQLI extends Database_Driver
                     if(IS_DEBUG)Core::debug()->info('close '.$key.' mysqli '.Database_Driver_MySQLI::$_current_connection_id_to_hostname[$connection_id].' connection.');
                 }
             }
-            else if(IS_DEBUG)
-            {
-                Core::debug()->info($key.' mysqli '.Database_Driver_MySQLI::$_current_connection_id_to_hostname[$connection_id].' connection has closed.');
-            }
 
             $this->_connection_ids[$key] = null;
         }

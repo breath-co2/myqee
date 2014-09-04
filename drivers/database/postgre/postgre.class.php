@@ -344,10 +344,6 @@ class Driver_Database_Driver_Postgre extends Database_Driver
                     if(IS_DEBUG)Core::debug()->info('close '.$key.' postgre '.Database_Driver_Postgre::$_current_connection_id_to_hostname[$connection_id].' connection.');
                 }
             }
-            else
-            {
-                Core::debug()->info($key.' postgre '.Database_Driver_Postgre::$_current_connection_id_to_hostname[$connection_id].' connection has closed.');
-            }
 
             $this->_connection_ids[$key] = null;
         }

@@ -233,10 +233,6 @@ class Driver_Database_Driver_SQLite extends Database_Driver
                     if(IS_DEBUG)Core::debug()->info('close '. $key .' sqlite '. Database_Driver_SQLite::$_current_connection_id_to_db[$connection_id] .' connection.');
                 }
             }
-            else if(IS_DEBUG)
-            {
-                Core::debug()->info($key.' sqlite '. Database_Driver_SQLite::$_current_connection_id_to_db[$connection_id] .' connection has closed.');
-            }
 
             $this->_connection_ids[$key] = null;
         }

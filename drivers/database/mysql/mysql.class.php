@@ -334,10 +334,6 @@ class Driver_Database_Driver_MySQL extends Database_Driver
                     if(IS_DEBUG)Core::debug()->info('close '.$key.' mysql '.Database_Driver_MySQL::$_current_connection_id_to_hostname[$connection_id].' connection.');
                 }
             }
-            else
-            {
-                Core::debug()->info($key.' mysql '.Database_Driver_MySQL::$_current_connection_id_to_hostname[$connection_id].' connection has closed.');
-            }
 
             $this->_connection_ids[$key] = null;
         }
@@ -374,7 +370,7 @@ class Driver_Database_Driver_MySQL extends Database_Driver
             if (IS_DEBUG)
             {
                 $host = $this->_get_hostname_by_connection_hash($this->connection_id());
-                $benchmark = Core::debug()->info(($host['username']?$host['username'].'@':'') . $host['hostname'] . ($host['port'] && $host['port']!='3306'?':'.$host['port']:'').'select to db:'.$database);
+                Core::debug()->info(($host['username']?$host['username'].'@':'') . $host['hostname'] . ($host['port'] && $host['port']!='3306'?':'.$host['port']:'').'select to db:'.$database);
             }
 
             # 记录当前已选中的数据库
