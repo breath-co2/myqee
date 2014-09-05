@@ -1498,7 +1498,7 @@ abstract class Bootstrap
         # 当没有$_SERVER["SCRIPT_URI"] 时拼接起来
         if (!isset($_SERVER['SCRIPT_URI']))
         {
-            $_SERVER['SCRIPT_URI'] = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS']=='on'?'https':'http').'://'.$_SERVER['HTTP_HOST'].$_SERVER['SCRIPT_URL'];
+            $_SERVER['SCRIPT_URI'] = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS']=='on'?'https':'http') .'://'. $_SERVER['HTTP_HOST'] .(isset($_SERVER['SCRIPT_URL'])?$_SERVER['SCRIPT_URL']:$_SERVER["REQUEST_URI"]);
         }
 
         if (isset($_SERVER['PATH_INFO']))
