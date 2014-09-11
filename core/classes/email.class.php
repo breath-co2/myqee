@@ -23,7 +23,7 @@
  *        else
  *        {
  *            echo 'fail';
- *            if (IS_DEBUB)echo $email->print_debugger();       // 输出 debug 信息
+ *            if (IS_DEBUG)echo $email->print_debugger();       // 输出 debug 信息
  *        }
  *
  * @author     呼吸二氧化碳 <jonwang@myqee.com>
@@ -42,7 +42,7 @@ class Core_Email
     public $smtp_user    = '';                      // SMTP Username
     public $smtp_pass    = '';                      // SMTP Password
     public $smtp_port    = 25;                      // SMTP Port
-    public $smtp_timeout = 5;                       // SMTP Timeout in seconds
+    public $smtp_timeout = 30;                      // SMTP Timeout in seconds
     public $smtp_crypto  = '';                      // SMTP Encryption. Can be null, tls or ssl.
     public $wordwrap     = true;                    // true/false  Turns word-wrap on/off
     public $wrapchars    = 76;                      // Number of characters to wrap at.
@@ -52,10 +52,11 @@ class Core_Email
     public $alt_message  = '';                      // Alternative message for HTML emails
     public $validate     = false;                   // true/false.  Enables email validation
     public $priority     = 3;                       // Default priority (1 - 5)
-    public $newline      = "\n";                    // Default newline. "\r\n" or "\n" (Use "\r\n" to comply with RFC 822)
+    public $newline      = "\r\n";                  // Default newline. "\r\n" or "\n" (Use "\r\n" to comply with RFC 822)
     public $crlf         = "\n";                    // The RFC 2045 compliant CRLF for quoted-printable is "\r\n".  Apparently some servers,
                                                     // even on the receiving end think they need to muck with CRLFs, so using "\n", while
                                                     // distasteful, is the only thing that seems to work for all environments.
+    public $mime_version = '1.0';
     public $dsn               = false;              // Delivery Status Notification
     public $send_multipart    = true;               // true/false - Yahoo does not like multipart alternative, so this is an override.  Set to false for Yahoo.
     public $bcc_batch_mode    = false;              // true/false - Turns on/off Bcc batch feature
@@ -96,15 +97,7 @@ class Core_Email
      */
     public function __construct($config = array())
     {
-        if (count($config) > 0)
-        {
-            $this->initialize($config);
-        }
-        else
-        {
-            $this->_smtp_auth = !($this->smtp_user === '' && $this->smtp_pass === '');
-            $this->_safe_mode = (bool)@ini_get('safe_mode');
-        }
+        $this->initialize($config);
     }
 
 	/**
@@ -220,7 +213,7 @@ class Core_Email
      */
     public function initialize($config = array())
     {
-        foreach ($config as $key => $val)
+        if (is_array($config) && $config)foreach ($config as $key => $val)
         {
             if (isset($this->$key))
             {
@@ -265,6 +258,7 @@ class Core_Email
         $this->_headers      = array();
         $this->_debug_msg    = array();
 
+        $this->set_header('MIME-Version', $this->mime_version);
         $this->set_header('User-Agent', $this->useragent);
         $this->set_header('Date', $this->_set_date());
 
@@ -1045,7 +1039,6 @@ class Core_Email
         }
 
         reset($headers);
-        $this->_header_str = '';
 
         foreach ($headers as $key => $val)
         {
@@ -1530,7 +1523,7 @@ class Core_Email
      */
     protected function _smtp_connect()
     {
-        $ssl = ($this->smtp_crypto === 'ssl') ? 'ssl://' : null;
+        $ssl = ($this->smtp_crypto === 'ssl') ? 'ssl://' : '';
 
         $this->_smtp_connect = fsockopen($ssl.$this->smtp_host, $this->smtp_port, $errno, $errstr, $this->smtp_timeout);
 
