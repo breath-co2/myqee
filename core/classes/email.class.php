@@ -1039,6 +1039,7 @@ class Core_Email
         }
 
         reset($headers);
+        $this->_header_str = '';
 
         foreach ($headers as $key => $val)
         {
