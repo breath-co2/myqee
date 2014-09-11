@@ -1525,7 +1525,7 @@ abstract class Core_Core extends Bootstrap
 
         if (IS_CLI)
         {
-            echo $msg . CRLF;
+            echo "\x1b[31m", $msg, CRLF, "\x1b[39m", CRLF;
             exit();
         }
 
@@ -1535,9 +1535,9 @@ abstract class Core_Core extends Bootstrap
             $view->message = $msg;
             $view->render(true);
         }
-        catch ( Exception $e )
+        catch (Exception $e)
         {
-            list ( $REQUEST_URI ) = explode('?', $_SERVER['REQUEST_URI'], 2);
+            list ($REQUEST_URI) = explode('?', $_SERVER['REQUEST_URI'], 2);
             $REQUEST_URI = htmlspecialchars(rawurldecode($REQUEST_URI));
             echo '<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0//EN">' .
             CRLF . '<html>' .
@@ -1548,7 +1548,8 @@ abstract class Core_Core extends Bootstrap
             CRLF . '<h1>Not Found</h1>' .
             CRLF . '<p>The requested URL ' . $REQUEST_URI . ' was not found on this server.</p>' .
             CRLF . '<hr />' .
-            CRLF . $_SERVER['SERVER_SIGNATURE'] .
+            CRLF . $_SERVER['SERVER_SIGNATURE'] .'<br/><br/><br/>'.
+            CRLF . 'Powered by MyQEE V'. Core::VERSION .
             CRLF . '</body>' .
             CRLF . '</html>';
         }
@@ -1589,18 +1590,7 @@ abstract class Core_Core extends Bootstrap
 
         if (IS_CLI)
         {
-            echo "\x1b[36m";
-            if ($msg instanceof Exception)
-            {
-                echo $msg->getMessage() . CRLF;
-            }
-            else
-            {
-                echo $msg . CRLF;
-            }
-
-            echo "\x1b[39m";
-            echo CRLF;
+            echo "\x1b[31m", $msg, CRLF, "\x1b[39m", CRLF;
             exit();
         }
 
@@ -1734,7 +1724,8 @@ abstract class Core_Core extends Bootstrap
             CRLF . '<h1>Internal Server Error</h1>' .
             CRLF . '<p>The requested URL ' . $REQUEST_URI . ' was error on this server.</p>' .
             CRLF . '<hr />' .
-            CRLF . $_SERVER['SERVER_SIGNATURE'] .
+            CRLF . $_SERVER['SERVER_SIGNATURE'] .'<br/><br/><br/>'.
+            CRLF . 'Powered by MyQEE V' .Core::VERSION .
             CRLF . '</body>' .
             CRLF . '</html>';
         }
