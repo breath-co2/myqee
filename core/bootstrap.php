@@ -1343,23 +1343,26 @@ abstract class Bootstrap
             }
             else
             {
-                $https_key = self::$core_config['server_https_on_key'];
-                if ($https_key)
-                {
-                    $https_key = strtoupper($https_key);
-                }
-                else
-                {
-                    $https_key = 'HTTPS';
-                }
-                if ( !empty($_SERVER[$https_key]) && filter_var($_SERVER[$https_key], FILTER_VALIDATE_BOOLEAN) )
+                $protocol = 'http://';
+
+                if (!empty($_SERVER['HTTPS']) && filter_var($_SERVER['HTTPS'], FILTER_VALIDATE_BOOLEAN))
                 {
 
                     $protocol = 'https://';
                 }
                 else
                 {
-                    $protocol = 'http://';
+                    $https_key = self::$core_config['server_https_on_key'];
+                    if ($https_key)
+                    {
+                        $https_key = strtoupper($https_key);
+
+                        if ($https_key!='HTTPS' && !empty($_SERVER[$https_key]) && filter_var($_SERVER[$https_key], FILTER_VALIDATE_BOOLEAN))
+                        {
+
+                            $protocol = 'https://';
+                        }
+                    }
                 }
             }
         }
