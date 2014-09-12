@@ -1343,23 +1343,26 @@ abstract class Bootstrap
             }
             else
             {
-                $https_key = self::$core_config['server_https_on_key'];
-                if ($https_key)
-                {
-                    $https_key = strtoupper($https_key);
-                }
-                else
-                {
-                    $https_key = 'HTTPS';
-                }
-                if ( !empty($_SERVER[$https_key]) && filter_var($_SERVER[$https_key], FILTER_VALIDATE_BOOLEAN) )
+                $protocol = 'http://';
+
+                if (!empty($_SERVER['HTTPS']) && filter_var($_SERVER['HTTPS'], FILTER_VALIDATE_BOOLEAN))
                 {
 
                     $protocol = 'https://';
                 }
                 else
                 {
-                    $protocol = 'http://';
+                    $https_key = self::$core_config['server_https_on_key'];
+                    if ($https_key)
+                    {
+                        $https_key = strtoupper($https_key);
+
+                        if ($https_key!='HTTPS' && !empty($_SERVER[$https_key]) && filter_var($_SERVER[$https_key], FILTER_VALIDATE_BOOLEAN))
+                        {
+
+                            $protocol = 'https://';
+                        }
+                    }
                 }
             }
         }
@@ -1498,7 +1501,7 @@ abstract class Bootstrap
         # 当没有$_SERVER["SCRIPT_URI"] 时拼接起来
         if (!isset($_SERVER['SCRIPT_URI']))
         {
-            $_SERVER['SCRIPT_URI'] = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS']=='on'?'https':'http').'://'.$_SERVER['HTTP_HOST'].$_SERVER['SCRIPT_URL'];
+            $_SERVER['SCRIPT_URI'] = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS']=='on'?'https':'http') .'://'. $_SERVER['HTTP_HOST'] .(isset($_SERVER['SCRIPT_URL'])?$_SERVER['SCRIPT_URL']:$_SERVER["REQUEST_URI"]);
         }
 
         if (isset($_SERVER['PATH_INFO']))
