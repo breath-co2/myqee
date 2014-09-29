@@ -60,9 +60,6 @@ abstract class Core_I18n
 
     public static function setup()
     {
-        # 标记为已初始化
-        I18n::$is_setup[Core::$project] = true;
-
         $lang_cache_key = null;
         $lang_files     = null;
 
@@ -99,6 +96,10 @@ abstract class Core_I18n
                 }
             }
         }
+
+        # 标记为已初始化
+        I18n::$is_setup[Core::$project] = true;
+
 
         # 记录各个类库的解析后的内容
         static $static_lang_array = array();
