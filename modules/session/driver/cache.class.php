@@ -24,19 +24,27 @@ class Module_Session_Driver_Cache
 
     protected $session_name;
 
+    /**
+     * Session前缀
+     *
+     * @var string
+     */
+    protected $prefix = 'session_';
+
     public function __construct($cache_config = null)
     {
         if ($cache_config)
         {
             $this->cache_config = $cache_config;
-            if (is_array($this->cache_config) && !isset($this->cache_config['prefix']))
+            if (is_array($this->cache_config) && isset($this->cache_config['prefix']))
             {
-                $this->cache_config['prefix'] = '_session:';
+                $this->prefix = $this->cache_config['prefix'];
             }
         }
 
         $this->session_name = Session::session_name();
 
+        $this->driver()->set_prefix($this->prefix);
         $this->create();
     }
 
