@@ -61,13 +61,17 @@ class Module_Session_Driver_Cache
 
         $_SESSION = array();
 
-        if (Session::$config['type']=='url')
+        switch(Session::$config['type'])
         {
-            $sid = HttpIO::GET($this->session_name);
-        }
-        else
-        {
-            $sid = HttpIO::COOKIE($this->session_name);
+            case 'auto':
+                $sid = HttpIO::REQUEST($this->session_name);
+                break;
+            case 'url':
+                $sid = HttpIO::GET($this->session_name);
+                break;
+            default;
+                $sid = HttpIO::COOKIE($this->session_name);
+                break;
         }
 
         if (!$sid || !Session::check_session_id($sid))
@@ -77,7 +81,7 @@ class Module_Session_Driver_Cache
             if (Session::$config['type']=='cookie')
             {
                 # 将session存入cookie
-                Core::cookie()->set($this->session_name, $sid, null, $cookie_config['path'], $cookie_config['domain'], $cookie_config['secure'], $cookie_config['httponly']);
+                Core::cookie()->set($this->session_name, $sid, !Session::$config['httponly'] && Session::$config['expiration']>0?Session::$config['expiration']:null, $cookie_config['path'], $cookie_config['domain'], $cookie_config['secure'], Session::$config['httponly']);
             }
         }
 
@@ -139,7 +143,7 @@ class Module_Session_Driver_Cache
      */
     public function write_close()
     {
-        if ( md5(serialize($_SESSION)) != Session_Driver_Cache::$OLD_SESSION_MD5 )
+        if (md5(serialize($_SESSION)) != Session_Driver_Cache::$OLD_SESSION_MD5)
         {
             if (!$_SESSION || $_SESSION===array())
             {

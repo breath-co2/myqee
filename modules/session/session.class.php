@@ -339,8 +339,8 @@ class Module_Session
      *
      *     Session::instance()->get('key','default value');
      *
-     * @param   string  variable key
-     * @param   mixed   default value returned if variable does not exist
+     * @param   string $key variable key
+     * @param   mixed  $default default value returned if variable does not exist
      * @return  mixed   Variable data if key specified, otherwise array containing all session data.
      */
     public function get($key = false, $default = false)
@@ -355,8 +355,8 @@ class Module_Session
     /**
      * 获取后删除相应KEY的SESSION数据
      *
-     * @param   string  variable key
-     * @param   mixed   default value returned if variable does not exist
+     * @param   string $key variable key
+     * @param   mixed  $default default value returned if variable does not exist
      * @return  mixed
      */
     public function get_once($key, $default = false)
@@ -375,10 +375,10 @@ class Module_Session
      *     //删除key1和key2的数据
      *     Session::instance()->delete('key1','key2');
      *
-     * @param   string  variable key(s)
+     * @param   string $key1 variable key(s)
      * @return  void
      */
-    public function delete($key1=null,$key2=null)
+    public function delete($key1=null, $key2=null)
     {
         $args = func_get_args();
 
