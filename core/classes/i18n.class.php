@@ -91,7 +91,8 @@ abstract class Core_I18n
                 if ($lang_cache['mtime'] == $lang_files['last_mtime'])
                 {
                     # 时间相同才使用
-                    I18n::$lang[Core::$project] = $lang_cache['lang'];
+                    I18n::$lang[Core::$project]     = $lang_cache['lang'];
+                    I18n::$is_setup[Core::$project] = true;
                     return;
                 }
             }
