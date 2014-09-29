@@ -26,10 +26,10 @@ class Module_Session_Driver_Cache
 
     public function __construct($cache_config = null)
     {
-        if ( $cache_config )
+        if ($cache_config)
         {
             $this->cache_config = $cache_config;
-            if ( is_array($this->cache_config) && !isset($this->cache_config['prefix']) )
+            if (is_array($this->cache_config) && !isset($this->cache_config['prefix']))
             {
                 $this->cache_config['prefix'] = '_session:';
             }
@@ -78,7 +78,7 @@ class Module_Session_Driver_Cache
         {
             $sid = Session::create_session_id();
 
-            if (Session::$config['type']=='cookie')
+            if (Session::$config['type']!='url')
             {
                 # 将session存入cookie
                 Core::cookie()->set($this->session_name, $sid, !Session::$config['httponly'] && Session::$config['expiration']>0?Session::$config['expiration']:null, $cookie_config['path'], $cookie_config['domain'], $cookie_config['secure'], Session::$config['httponly']);
@@ -133,7 +133,7 @@ class Module_Session_Driver_Cache
 
         $_SESSION = array();
 
-        Core::cookie()->delete($this->session_name,'/');
+        Core::cookie()->delete($this->session_name, '/');
     }
 
     /**
@@ -153,7 +153,7 @@ class Module_Session_Driver_Cache
             else
             {
                 # 如果确实修改则保存
-                $this->driver()->set($this->session_id(), $_SESSION , Session::$config['expiration']>0?Session::$config['expiration']:2592000);
+                $this->driver()->set($this->session_id(), $_SESSION, Session::$config['expiration']>0?Session::$config['expiration']:2592000);
             }
         }
     }
