@@ -55,6 +55,16 @@ abstract class Module_Cache_Driver
     }
 
     /**
+     * 获取前缀
+     *
+     * @return string
+     */
+    public function get_prefix()
+    {
+        return $this->prefix;
+    }
+
+    /**
      * 取得数据
      *
      * @param string/array $key

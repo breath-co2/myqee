@@ -417,6 +417,29 @@ class Module_Cache
         $this->session_mode = (boolean)$open;
     }
 
+    /**
+     * 设置前缀
+     *
+     * @param string $prefix
+     * @return $this
+     */
+    public function set_prefix($prefix)
+    {
+        $this->driver->set_prefix($prefix);
+
+        return $this;
+    }
+
+    /**
+     * 获取前缀
+     *
+     * @return string
+     */
+    public function get_prefix()
+    {
+        $this->driver->get_prefix();
+    }
+
     public function __get($key)
     {
         return $this->get($key);

@@ -44,7 +44,12 @@ class Module_Session_Driver_Cache
 
         $this->session_name = Session::session_name();
 
-        $this->driver()->set_prefix($this->prefix);
+        # 设置前缀
+        if ($this->driver()->get_prefix()=='')
+        {
+            $this->driver()->set_prefix($this->prefix);
+        }
+
         $this->create();
     }
 
