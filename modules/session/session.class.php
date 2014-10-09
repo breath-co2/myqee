@@ -28,7 +28,7 @@ class Module_Session
      *
      * @var Session_Driver_Default
      */
-    protected $driver;
+    protected static $driver;
 
     /**
      * @var Member
@@ -84,16 +84,16 @@ class Module_Session
 
                 if (isset(Session::$config['driver_config']))
                 {
-                    $this->driver = new $driver_name(Session::$config['driver_config']);
+                    Session::$driver = new $driver_name(Session::$config['driver_config']);
                 }
                 else
                 {
-                    $this->driver = new $driver_name();
+                    Session::$driver = new $driver_name();
                 }
             }
             else
             {
-                $this->driver = new Session_Driver_Default();
+                Session::$driver = new Session_Driver_Default();
             }
 
             if (!isset(Session::$config['type']) || Session::$config['type']!='url')
@@ -126,7 +126,7 @@ class Module_Session
             # 清理Flash Session
             $this->expire_flash();
 
-            $_SESSION['SID'] = $this->driver->session_id();
+            $_SESSION['SID'] = Session::$driver->session_id();
 
             # 确保关闭前执行保存
             Core::register_shutdown_function(array('Session', 'write_close'));
@@ -160,6 +160,16 @@ class Module_Session
     }
 
     /**
+     * 获取驱动对象
+     *
+     * @return Session_Driver_Default
+     */
+    public function driver()
+    {
+        return Session::$driver;
+    }
+
+    /**
      * 销毁当前Session
      *
      * @return  void
@@ -167,8 +177,10 @@ class Module_Session
     public function destroy()
     {
         $_SESSION = array();
-        Session::$member = null;
-        $this->driver->destroy();
+        Session::$driver->destroy();
+        Session::$member   = null;
+        Session::$driver   = null;
+        Session::$instance = null;
     }
 
     /**
@@ -180,10 +192,10 @@ class Module_Session
     public function set_member(Member $member)
     {
         Session::$member = $member;
-        if ( $member->id>0 )
+        if ($member->id>0)
         {
             # 设置用户数据
-            $member_data = $member->get_field_data();
+            $member_data        = $member->get_field_data();
             $_SESSION['member'] = $member_data;
         }
         else
@@ -414,7 +426,7 @@ class Module_Session
 
             Session::write_member_data();
 
-            Session::$instance->driver->write_close();
+            Session::$driver->write_close();
 
             Session::$instance = null;
         }
