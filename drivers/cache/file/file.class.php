@@ -310,7 +310,7 @@ class Driver_Cache_Driver_File extends Cache_Driver
         }
         else
         {
-            $prefix = '';
+            $this->prefix = '';
         }
 
         return $this;
