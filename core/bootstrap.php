@@ -936,7 +936,19 @@ abstract class Bootstrap
 
 
             # 处理类库的映射
-            foreach (array('library', 'driver', 'module', 'core', 'team-library') as $type)
+            $libs = array
+            (
+                'library',
+                'driver',
+                'module',
+                'core'
+            );
+            if (!$is_alias)
+            {
+                # 在非映射模式下才需要读取team类库
+                $lib_ns[] = 'team-library';
+            }
+            foreach ($libs as $type)
             {
                 foreach ($include_path[$type] as $lib_ns=>$path)
                 {

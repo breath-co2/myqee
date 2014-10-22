@@ -345,15 +345,15 @@ abstract class Core_Core extends Bootstrap
         }
 
         $c = explode('.', $key);
-        $cname = array_shift($c);
+        $c_name = array_shift($c);
 
-        if (strtolower($cname)=='core')
+        if (strtolower($c_name)=='core')
         {
             $v = Core::$core_config;
         }
-        elseif (isset(Core::$config[$cname]))
+        elseif (isset(Core::$config[$c_name]))
         {
-            $v = Core::$config[$cname];
+            $v = Core::$config[$c_name];
         }
         else
         {
@@ -396,18 +396,28 @@ abstract class Core_Core extends Bootstrap
      *     Core::url('test/');
      *     url('test/');
      *
+     * 不传任何参数则返回当前完整URL
+     *
+     *     echo Core::url();    // 获取当前完整URL（含query_string部分）
+     *
      * @param string $url URL
-     * @param true|string $isfullurl_or_project 若传true，则返回当前项目的完整url(http(s)://开头)，若传项目名，比如default，则返回指定项目的完整URL
+     * @param true|string $is_full_url_or_project 若传true，则返回当前项目的完整url(http(s)://开头)，若传项目名，比如default，则返回指定项目的完整URL
      * @return string
      */
-    public static function url($uri = '' , $isfullurl_or_project = false)
+    public static function url($uri = '' , $is_full_url_or_project = false)
     {
+        if (null===$uri)
+        {
+            # 返回当前URL
+            return $_SERVER["SCRIPT_URI"]. (isset($_SERVER["QUERY_STRING"]) && $_SERVER["QUERY_STRING"]?'?'.$_SERVER["QUERY_STRING"]:'');
+        }
+
         list($url, $query) = explode('?', $uri , 2);
 
-        $url = Core::$base_url. ltrim($url, '/') . ($url!='' && substr($url,-1)!='/' && false===strpos($url, '.') && Core::$config['url_suffix']?Core::$config['url_suffix']:'') . ($query?'?'.$query:'');
+        $url = Core::$base_url. ltrim($url, '/') . ($url!='' && Core::$config['url_suffix'] && substr($url, -1)!='/' && false===strpos($url, '.')?'.'.Core::$config['url_suffix']:'') . ($query?'?'.$query:'');
 
         # 返回完整URL
-        if (true===$isfullurl_or_project && !preg_match('#^http(s)?://#i', $url))
+        if (true===$is_full_url_or_project && !preg_match('#^http(s)?://#i', $url))
         {
             $url = HttpIO::PROTOCOL . $_SERVER["HTTP_HOST"] . $url;
         }
@@ -510,8 +520,8 @@ abstract class Core_Core extends Bootstrap
      *
      *      Core::add_url_args(array('debug'=>'test', 't2'=>'v'2));
      *
-     * @param $key   参数名称
-     * @param $value 参数值
+     * @param string $key   参数名称
+     * @param string $value 参数值
      * @since v3.0
      */
     public static function add_url_args($key, $value)
@@ -530,7 +540,7 @@ abstract class Core_Core extends Bootstrap
      * Include一个指定URI的控制器
      *
      * @param string $uri
-     * @return class_name | false
+     * @return string|false class_name
      */
     public static function load_controller($uri)
     {
@@ -711,7 +721,7 @@ abstract class Core_Core extends Bootstrap
                 # 对后缀进行判断
                 if ($found['suffix'])
                 {
-                    if (Core::config('url_suffix') && in_array($found['suffix'], explode('|', Core::config('url_suffix'))))
+                    if ($found['suffix'] == Core::config('url_suffix'))
                     {
                         # 默认允许的后缀
                     }
@@ -736,14 +746,14 @@ abstract class Core_Core extends Bootstrap
                     }
                 }
 
-                $ispublicmethod = new ReflectionMethod($controller, $action_name);
+                $is_public_method = new ReflectionMethod($controller, $action_name);
 
-                if (!$ispublicmethod->isPublic())
+                if (!$is_public_method->isPublic())
                 {
                     Core::rm_controoler($controller);
                     throw new Exception(__('Request Method Not Allowed.'), 405);
                 }
-                unset($ispublicmethod);
+                unset($is_public_method);
 
                 # POST 方式，自动CSRF判断
                 if (HttpIO::METHOD=='POST')
@@ -1220,7 +1230,7 @@ abstract class Core_Core extends Bootstrap
     *
     * @param string $data
     * @param string $type 日志类型
-    * @param stirng $file 指定文件名，不指定则默认
+    * @param string $file 指定文件名，不指定则默认
     * @return boolean
     */
     protected static function write_log($data, $type = 'log', $file = null)
@@ -1383,7 +1393,7 @@ abstract class Core_Core extends Bootstrap
      *
      * 显示结果类似 ./system/libraries/Database.class.php
      *
-     * @param  string  path to debug
+     * @param  string  $file path to debug
      * @param  boolean $highlight 是否返回高亮前缀，可以传字符颜色，比如#f00
      * @return string
      */
@@ -1475,7 +1485,7 @@ abstract class Core_Core extends Bootstrap
     /**
      * 关闭缓冲区
      *
-     * @param  boolean 是否输出缓冲数据
+     * @param  boolean $flush 是否输出缓冲数据
      * @return void
      */
     public static function close_buffers($flush = true)
@@ -1566,7 +1576,7 @@ abstract class Core_Core extends Bootstrap
         Core::close_buffers(false);
 
         # 避免输出的CSS头试抛出页面无法显示
-        @header('Content-Type: text/html;charset=' . Core::config('core.charset'), true);
+        @header('Content-Type: text/html;charset=' . Core::config('charset'), true);
 
         HttpIO::$status = 500;
         HttpIO::send_headers();
@@ -1885,11 +1895,11 @@ abstract class Core_Core extends Bootstrap
 
         if (IS_CLI)
         {
-            echo __('The release memory:') . ( memory_get_usage() - $old_memory ) . "\n";
+            echo __('The release memory:') . (memory_get_usage() - $old_memory) ."\n";
         }
         else if (IS_DEBUG)
         {
-            Core::debug()->info(__('The release memory:') . ( memory_get_usage() - $old_memory) );
+            Core::debug()->info(__('The release memory:') . (memory_get_usage() - $old_memory));
         }
     }
 
@@ -2000,7 +2010,7 @@ abstract class Core_Core extends Bootstrap
             # 处理base_url
             if (isset($p_config['url']) && $p_config['url'])
             {
-                $url = rtrim(current((array)$p_config['url']),'/');
+                $url = rtrim(current((array)$p_config['url']), '/');
             }
             else
             {
@@ -2183,7 +2193,7 @@ abstract class Core_Core extends Bootstrap
     protected static function run_shutdown_function()
     {
         static $run = null;
-        if ( null!==$run )
+        if (null!==$run)
         {
             return true;
         }
@@ -2197,12 +2207,14 @@ abstract class Core_Core extends Bootstrap
                 {
                     call_user_func_array($item[0], (array)$item[1]);
                 }
-                catch ( Exception $e )
+                catch (Exception $e)
                 {
 
                 }
             }
         }
+
+        return true;
     }
 
     /**
@@ -2239,11 +2251,11 @@ abstract class Core_Core extends Bootstrap
      */
     public static function close_all_connect()
     {
-        foreach ( Core::$close_connect_class_list as $class_name=>$fun )
+        foreach (Core::$close_connect_class_list as $class_name=>$fun)
         {
             try
             {
-                call_user_func_array( array($class_name,$fun), array() );
+                call_user_func_array(array($class_name, $fun), array());
             }
             catch (Exception $e)
             {
@@ -2343,15 +2355,15 @@ abstract class Core_Core extends Bootstrap
         if ($system_exec_pass && strlen($system_exec_pass) >= 10)
         {
             // 如果有则使用系统调用密钥
-            $newhash = sha1($body . $time . $system_exec_pass . $rstr .'_'. $other);
+            $new_hash = sha1($body . $time . $system_exec_pass . $rstr .'_'. $other);
         }
         else
         {
             // 没有，则用系统配置和数据库加密
-            $newhash = sha1($body . $time . serialize(Core::config('core')) . serialize(Core::config('database')) . $rstr .'_'. $other);
+            $new_hash = sha1($body . $time . serialize(Core::config('core')) . serialize(Core::config('database')) . $rstr .'_'. $other);
         }
 
-        if ($newhash==$hash)
+        if ($new_hash==$hash)
         {
             return true;
         }
@@ -2366,7 +2378,7 @@ abstract class Core_Core extends Bootstrap
      * 获取asset文件MD5号
      *
      * @param string $file
-     * @return md5
+     * @return string md5
      */
     public static function assets_hash($file)
     {
@@ -2428,7 +2440,7 @@ abstract class Core_Core extends Bootstrap
         Core::close_all_connect();
 
         # 输出内容
-        echo Core::$output , $output;
+        echo Core::$output, $output;
     }
 }
 

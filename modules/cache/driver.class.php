@@ -48,10 +48,28 @@ abstract class Module_Cache_Driver
         }
         else
         {
-            $prefix = '';
+            $this->prefix = '';
         }
 
         return $this;
+    }
+
+    /**
+     * 获取前缀
+     *
+     * @return string
+     */
+    public function get_prefix()
+    {
+        return $this->prefix;
+    }
+
+    /**
+     * 获取config内容
+     */
+    public function config()
+    {
+        return $this->config;
     }
 
     /**
@@ -66,8 +84,8 @@ abstract class Module_Cache_Driver
      * 存数据
      *
      * @param string/array $key 支持多存
-     * @param $data Value 多存时此项可空
-     * @param $lifetime 有效期，默认3600，即1小时，0表示最大值30天（2592000）
+     * @param mixed $data Value 多存时此项可空
+     * @param int $lifetime 有效期，默认3600，即1小时，0表示最大值30天（2592000）
      * @return boolean
      */
     abstract public function set($key, $value = null, $lifetime = 3600);

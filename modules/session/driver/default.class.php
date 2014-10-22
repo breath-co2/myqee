@@ -22,7 +22,7 @@ class Module_Session_Driver_Default
             if (function_exists('ini_set'))
             {
                 @ini_set('session.gc_probability', (int)Session::$config['gc_probability']);
-                @ini_set('session.gc_divisor', 100);
+                @ini_set('session.gc_divisor', Session::$config['gc_divisor']?Session::$config['gc_divisor']:100);
                 @ini_set('session.gc_maxlifetime', (Session::$config['expiration']==0)?2592000:Session::$config['expiration']);
 
                 // session保存接口
@@ -56,7 +56,7 @@ class Module_Session_Driver_Default
         $cookie_config = Core::config('cookie');
 
         # 这里对IP+非80端口的需要特殊处理下，经试验，当这种情况下，设置session id的cookie的话会失败
-        if (preg_match('#^([0-9]+.[0-9]+.[0-9]+.[0-9]+):[0-9]+$#', $cookie_config['domain'],$m))
+        if (preg_match('#^([0-9]+.[0-9]+.[0-9]+.[0-9]+):[0-9]+$#', $cookie_config['domain'], $m))
         {
             # IP:PORT 方式
             $cookie_config['domain'] = $m[1];
@@ -95,7 +95,7 @@ class Module_Session_Driver_Default
         }
         else
         {
-            session_set_cookie_params($cookie_config['httponly']?0:Session::$config['expiration'], $cookie_config['path'], $cookie_config['domain'], $cookie_config['secure'], $cookie_config['httponly']);
+            session_set_cookie_params(Session::$config['httponly']?0:(int)Session::$config['expiration'], $cookie_config['path'], $cookie_config['domain'], $cookie_config['secure'], Session::$config['httponly']);
         }
 
         session_start();
@@ -124,7 +124,7 @@ class Module_Session_Driver_Default
 
             $_SESSION = array();
 
-            Core::cookie()->delete($name,'/');
+            Core::cookie()->delete($name, '/');
         }
     }
 

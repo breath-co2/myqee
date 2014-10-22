@@ -13,8 +13,10 @@ $config['cookie'] = array
 
 $config['session'] = array
 (
+    'type'           => 'cookie', // SesionnID存储类型，cookie|auto|url
     'name'           => 'SID',    // SessionID名称
-    'expiration'     => 0,
+    'httponly'       => true,     // 是否只httponly有效
+    'expiration'     => 0,        // 数据存放有效时间，此值为0时服务器最长存放数据为2592000秒，浏览器cookie会话为httponly; 当httponly=false，此值同时控制浏览器的session id的cookie的生存时间
     'gc_probability' => 0,
     'check_string'   => '$@de23#$%@.dG2.p4Ad',    // 校验字符串
 );

@@ -236,7 +236,7 @@ class Module_Cache
      * @example $this->set('key','value','200~250,1/100',Cache::TYPE_RENEW_AGE); 表示介于200～250秒之间时命中率为1/100，若命中则更新缓存
      *
      * @param string/array $key 可以同时设置多个
-     * @param fixed $value
+     * @param mixed $value
      * @param int/string $expire 失效时间或命中数，0表示最大有效时间
      * @param string $expire_type 失效类型
      * @return boolean 是否成功
@@ -417,6 +417,37 @@ class Module_Cache
         $this->session_mode = (boolean)$open;
     }
 
+    /**
+     * 设置前缀
+     *
+     * @param string $prefix
+     * @return $this
+     */
+    public function set_prefix($prefix)
+    {
+        $this->driver->set_prefix($prefix);
+
+        return $this;
+    }
+
+    /**
+     * 获取前缀
+     *
+     * @return string
+     */
+    public function get_prefix()
+    {
+        $this->driver->get_prefix();
+    }
+
+    /**
+     * 获取config内容
+     */
+    public function config()
+    {
+        return $this->config;
+    }
+
     public function __get($key)
     {
         return $this->get($key);
@@ -501,6 +532,8 @@ class Module_Cache
 
             return $exp_key;
         }
+
+        return null;
     }
 
     protected function _get_adv_data(& $value)
@@ -553,6 +586,8 @@ class Module_Cache
 
             $value = @unserialize($match['value']);
         }
+
+        return null;
     }
 
     /**
