@@ -827,4 +827,248 @@ abstract class Core_Text
             return $keyc . str_replace('=', '', base64_encode($result));
         }
     }
+
+    /**
+     * 将一个XML字符串解析成一个数组
+     *
+     * 如果需要将数组转换成XML字符串，可使用 `Arr::to_xml($arr)` 方法
+     *
+     * **`$url_xml_setting` 参数说明**
+     *
+     * `$url_xml_setting` 只有当 `$xml_string` 是URL是才生效，可以为一个数字表示缓存时间（秒），
+     * 也可以是一个数组，此数组接受4个key，分别是 `timeout`, `config`, `expire` 和 `expire_type`
+     *
+     *  参数名        |   说明
+     * --------------|----------------
+     * `timeout`     | 如果没有缓存，直接请求URL时超时时间，默认10秒
+     * `config`      | 缓存配置，具体设置请参考 `new Cache($config)' 中 `$config` 配置方法
+     * `expire`      | 缓存超时时长
+     * `expire_type` | 缓存超时类型
+     *
+     * 举例：
+     *     // 使用默认缓存配置缓存1800秒
+     *     print_r(Text::xml_to_array('http://flash.weather.com.cn/wmaps/xml/china.xml', null, null, 1800));
+     *
+     *     // 使用自定义配置
+     *     $st = array
+     *     (
+     *         'timeout'     => 30,                   // 如果没有缓存，直接请求URL时超时时间
+     *         'config'      => 'my_config',          // 缓存配置
+     *         'expire'      => 1800,                 // 1800秒
+     *         'expire_type' => Cache::TYPE_MAX_AGE,  // 表示使用命中时间类型
+     *     );
+     *     print_r(Text::xml_to_array('http://flash.weather.com.cn/wmaps/xml/china.xml', null, null, $st));
+     *
+     * @since 3.0
+     * @param string|SimpleXMLElement $xml_string XML字符串，支持http的XML路径，接受 SimpleXMLElement 对象
+     * @param string $attribute_key attributes所使用的key，默认 @attributes，设置成 true 则和内容自动合并
+     * @param int $max_recursion_depth 解析最高层次，默认25
+     * @param int|array $url_xml_setting 如果传入的 `$xml_string` 是URL，则允许缓存的时间或者是缓存配置的array，默认不缓存
+     * @return array | false 失败则返回false
+     */
+    public static function xml_to_array($xml_string, $attribute_key = '@attributes', $max_recursion_depth = 25, $url_xml_setting = 0)
+    {
+        if (is_string($xml_string))
+        {
+            if (preg_match('#^http(s)?://#', $xml_string))
+            {
+                $timeout = 10;
+
+                if ($url_xml_setting)
+                {
+                    # 缓存xml
+                    $config = Cache::DEFAULT_CONFIG_NAME;
+
+                    if (is_array($url_xml_setting))
+                    {
+                        $config = $url_xml_setting['config'];
+                        if (isset($url_xml_setting['timeout']) && (int)$url_xml_setting['timeout']>0)
+                        {
+                            $timeout = (int)$url_xml_setting['timeout'];
+                        }
+                    }
+
+                    $cache    = new Cache($config);
+                    $key      = '_url_xml_cache_by_url_' . md5($xml_string);
+                    $xml_data = $cache->get($key);
+                }
+                else
+                {
+                    $xml_data = null;
+                }
+
+                if ($xml_data)
+                {
+                    $xml_string = $xml_data;
+                }
+                else
+                {
+                    $xml_string = HttpClient::factory()->get($xml_string, $timeout)->data();
+                    if (!$xml_string)
+                    {
+                        return false;
+                    }
+
+                    if ($url_xml_setting)
+                    {
+                        # 保存缓存
+                        if (is_numeric($url_xml_setting))
+                        {
+                            $expire      = $url_xml_setting;
+                            $expire_type = null;
+                        }
+                        elseif (is_array($url_xml_setting))
+                        {
+                            $expire      = $url_xml_setting['expire'];
+                            $expire_type = $url_xml_setting['expire_type'];
+                        }
+                        else
+                        {
+                            $expire      = 3600;
+                            $expire_type = null;
+                        }
+
+                        $cache->set($key, $xml_string, $expire, $expire_type);
+                    }
+                }
+            }
+            $xml_object = simplexml_load_string($xml_string, 'SimpleXMLElement', LIBXML_NOCDATA);
+        }
+        elseif (is_object($xml_string) && $xml_string instanceof SimpleXMLElement)
+        {
+            $xml_object = $xml_string;
+        }
+        else
+        {
+            return false;
+        }
+
+        if (!$attribute_key)$attribute_key = '@attributes';
+        if (null===$max_recursion_depth || false===$max_recursion_depth)$max_recursion_depth = 25;
+
+        return Text::_exec_xml_to_array($xml_object, $attribute_key, 0, $max_recursion_depth);
+    }
+
+    protected static function _exec_xml_to_array($xml_object, $attribute_key, $recursion_depth, $max_recursion_depth)
+    {
+        /**
+         * @var $xml_object SimpleXMLElement
+         * @var $value SimpleXMLElement
+         */
+        $rs = array
+        (
+            '@name' => $xml_object->getName(),
+        );
+
+        $attr = get_object_vars($xml_object->attributes());
+
+        if ($attr)
+        {
+            foreach($attr['@attributes'] as &$tmp_value)
+            {
+                Text::_format_attribute_value($tmp_value);
+            }
+            unset($tmp_value);
+
+            if (true===$attribute_key)
+            {
+                # 合并到一起
+                $rs += $attr['@attributes'];
+            }
+            else
+            {
+                $rs[$attribute_key] = $attr['@attributes'];
+            }
+        }
+        $tdata = trim("$xml_object");
+        if (strlen($tdata)>0)
+        {
+            $rs['@tdata'] = $tdata;
+        }
+
+        $xml_object_var = get_object_vars($xml_object);
+
+        foreach($xml_object as $key => $value)
+        {
+            $obj_value = $xml_object_var[$key];
+
+            $attr = null;
+            if (is_object($value))
+            {
+                $attr = get_object_vars($value->attributes());
+
+                if ($attr)
+                {
+                    foreach($attr['@attributes'] as &$tmp_value)
+                    {
+                        Text::_format_attribute_value($tmp_value);
+                    }
+                    unset($tmp_value);
+                    $attr = $attr['@attributes'];
+                }
+            }
+
+            if (is_string($obj_value))
+            {
+                Text::_format_attribute_value($obj_value);
+
+                if ($attr)
+                {
+                    if (true===$attribute_key)
+                    {
+                        # 合并到一起
+                        $rs[$key] = $attr + array('@data' => $obj_value);
+                    }
+                    else
+                    {
+                        $rs[$key] = array
+                        (
+                            $attribute_key => $attr,
+                            '@data'        => $obj_value,
+                        );
+                    }
+                }
+                else
+                {
+                    $rs[$key] = $obj_value;
+                }
+            }
+            else
+            {
+                if (is_array($obj_value))
+                {
+                    unset($rs['@name']);
+                    $rs[] = Text::_exec_xml_to_array($value, $attribute_key, $recursion_depth, $max_recursion_depth);
+                }
+                else
+                {
+                    $rs[$key] = Text::_exec_xml_to_array($value, $attribute_key, $recursion_depth, $max_recursion_depth);
+                    if (is_array($rs[$key]) && !isset($rs[$key][0]))
+                    {
+                        unset($rs[$key]['@name']);
+                    }
+                }
+            }
+        }
+
+        return $rs;
+    }
+
+    protected static function _format_attribute_value(& $tmp_value)
+    {
+        switch ($tmp_value)
+        {
+            case 'true':
+                $tmp_value = true;
+                break;
+            case 'false':
+                $tmp_value = false;
+                break;
+            case 'null':
+                $tmp_value = null;
+                break;
+            default:
+                $tmp_value = trim($tmp_value);
+        }
+    }
 }
