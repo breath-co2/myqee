@@ -214,6 +214,55 @@ class Module_HttpClient
     }
 
     /**
+     * 获取一个JSON的URL并返回数组
+     *
+     * 失败则返回 `false`
+     *
+     * @param $url
+     * @param int $timeout
+     * @return bool|array
+     */
+    public function get_json($url, $timeout = 10)
+    {
+        $data = $this->get($url, $timeout)->data();
+
+        if ($data)
+        {
+            return json_decode($data, true);
+        }
+        else
+        {
+            return false;
+        }
+    }
+
+    /**
+     * 获取一个XML的URL并返回数组
+     *
+     * 失败则返回 `false`
+     *
+     * 返回数组方法使用 `Text::xml_to_array` 方法转换
+     *
+     * @param $url
+     * @param int $timeout
+     * @use Text::xml_to_array
+     * @return bool|array
+     */
+    public function get_xml($url, $timeout = 10)
+    {
+        $data = $this->get($url, $timeout)->data();
+
+        if ($data)
+        {
+            return Text::xml_to_array($data);
+        }
+        else
+        {
+            return false;
+        }
+    }
+
+    /**
      * POST方式请求
      *
      * @param $url
