@@ -621,6 +621,24 @@ class Core_Arr extends ArrayIterator
     }
 
     /**
+     * 从XML字符串解析获取一个数组
+     *
+     * 具体使用方法请参考 `Text::xml_to_array()` 方法
+     *
+     * @since 3.0
+     * @use Text::xml_to_array
+     * @param string|SimpleXMLElement $xml_string XML字符串，支持http的XML路径，接受 SimpleXMLElement 对象
+     * @param string $attribute_key attributes所使用的key，默认 @attributes，设置成 true 则和内容自动合并
+     * @param int $max_recursion_depth 解析最高层次，默认25
+     * @param int|array $url_xml_setting 如果传入的 `$xml_string` 是URL，则允许缓存的时间或者是缓存配置的array，默认不缓存
+     * @return array | false 失败则返回false
+     */
+    public static function from_xml($xml_string, $attribute_key = '@attributes', $max_recursion_depth = 25, $url_xml_setting = 0)
+    {
+        return Text::xml_to_array($xml_string, $attribute_key, $max_recursion_depth, $url_xml_setting);
+    }
+
+    /**
      * 将数组转换成XML字符串
      *
      * 本方法的反向方法为 `Text::xml_to_array($xml_string)`
@@ -682,15 +700,16 @@ class Core_Arr extends ArrayIterator
 
         if (isset($array['@tdata']))
         {
-            $str       .= "<![CDATA[{$array['@tdata']}]]>";
-            $close_str = "</{$array['@name']}>";
+            $str .= "<![CDATA[{$array['@tdata']}]]>";
         }
         else
         {
-
+            $have_str = false;
             foreach($array as $key => $value)
             {
                 if ($key === '@name' || $key === $attribute_key || $key === '@data' || $key === '@tdata')continue;
+
+                $have_str = true;
 
                 if (is_array($value))
                 {
@@ -738,11 +757,18 @@ class Core_Arr extends ArrayIterator
                     $str .= "{$crlf}{$left_str}<{$key}>{$value}</{$key}>";
                 }
             }
-        }
 
-        if ($close_str)
-        {
-            $str .= $close_str;
+            if ($have_str)
+            {
+                if ($close_str)
+                {
+                    $str .= $close_str;
+                }
+            }
+            else
+            {
+                $str .= "</{$array['@name']}>";
+            }
         }
 
         return $str;

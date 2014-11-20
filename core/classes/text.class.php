@@ -833,9 +833,19 @@ abstract class Core_Text
      *
      * 如果需要将数组转换成XML字符串，可使用 `Arr::to_xml($arr)` 方法
      *
+     * ** 特殊的key **
+     *
+     *  key            | 说明
+     * ----------------|-------------------------------
+     *  `@attributes`  | XML里所有的 attributes 都存放在 `@attributes` key里，可自定义参数 `$attribute_key` 修改，设置成true则和标签里的内容合并
+     *  `@name`        | 循环数组XML的标签(tag)存放在 `@name` 的key里
+     *  `@tdata`       | CDATA内容存放在 `@tdata` 的key里
+     *  `@data`        | 如果本来的值是字符串，但是又有 attributes，则内容被转移至 `@data` 的key里
+     *
+     *
      * **`$url_xml_setting` 参数说明**
      *
-     * `$url_xml_setting` 只有当 `$xml_string` 是URL是才生效，可以为一个数字表示缓存时间（秒），
+     * `$url_xml_setting` 只有当 `$xml_string` 是URL时才生效，可以为一个数字表示缓存时间（秒），
      * 也可以是一个数组，此数组接受4个key，分别是 `timeout`, `config`, `expire` 和 `expire_type`
      *
      *  参数名        |   说明
@@ -870,7 +880,7 @@ abstract class Core_Text
     {
         if (is_string($xml_string))
         {
-            if (preg_match('#^http(s)?://#', $xml_string))
+            if (preg_match('#^http(s)?://#i', $xml_string))
             {
                 $timeout = 10;
 
@@ -1037,12 +1047,12 @@ abstract class Core_Text
             {
                 if (is_array($obj_value))
                 {
-                    unset($rs['@name']);
-                    $rs[] = Text::_exec_xml_to_array($value, $attribute_key, $recursion_depth, $max_recursion_depth);
+                    if ($recursion_depth>0)unset($rs['@name']);
+                    $rs[] = Text::_exec_xml_to_array($value, $attribute_key, $recursion_depth + 1, $max_recursion_depth);
                 }
                 else
                 {
-                    $rs[$key] = Text::_exec_xml_to_array($value, $attribute_key, $recursion_depth, $max_recursion_depth);
+                    $rs[$key] = Text::_exec_xml_to_array($value, $attribute_key, $recursion_depth + 1, $max_recursion_depth);
                     if (is_array($rs[$key]) && !isset($rs[$key][0]))
                     {
                         unset($rs[$key]['@name']);
