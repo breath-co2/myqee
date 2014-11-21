@@ -42,7 +42,7 @@
 在 `projects/default/controllers/` 目录中建立 `helloworld.controller.php` 文件，内如如下：
 
     <?php
-    Controller_HelloWorld extend Controller
+    class Controller_HelloWorld extends Controller
     {
         public function action_default()
         {
