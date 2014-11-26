@@ -429,11 +429,11 @@ abstract class Bootstrap
             $run = true;
 
             # PHP5.3 支持 composer 的加载
-            if (HAVE_NS && is_file(DIR_VENDOR.'autoload-for-myqee.php'))
+            if (HAVE_NS && is_file(DIR_VENDOR .'autoload-for-myqee.php'))
             {
                 try
                 {
-                    require DIR_VENDOR.'autoload-for-myqee.php';
+                    require DIR_VENDOR .'autoload-for-myqee.php';
                 }
                 catch (Exception $e)
                 {
@@ -1579,7 +1579,10 @@ abstract class Bootstrap
         # 处理项目
         foreach (self::$core_config['projects'] as $project => $item)
         {
-            if (!preg_match('#^[a-z0-9_]+$#i', $project)) continue;
+            if (!preg_match('#^[a-z0-9_\-\.\~]+$#i', $project))
+            {
+                continue;
+            }
 
             $rest_url  = array();
             $admin_url = array();
