@@ -267,4 +267,56 @@ class Core_Controller
     {
         HttpIO::output_chunk_end();
     }
+
+    /**
+     * 通过Sendfile方式发送文件
+     *
+     * 此功能适用于通过PHP下载大文件的场景
+     *
+     * !!! 需要确认自己的环境支持Sendfile，如果不支持，则使用不了这个功能
+     *
+     * @param $file
+     * @link http://wiki.nginx.org/XSendfile
+     * @link http://www.laruence.com/2012/05/02/2613.html
+     * @see http://ifelsend.com/blog/2014/07/31/%E4%BD%BF%E7%94%A8-nginx-%E7%9A%84-x-sendfile-%E6%9C%BA%E5%88%B6%E6%8F%90%E5%8D%87-php-%E6%96%87%E4%BB%B6%E4%B8%8B%E8%BD%BD%E6%80%A7%E8%83%BD.html
+     */
+    public function sendfile($file_path)
+    {
+        switch(strtolower(substr($_SERVER["SERVER_SOFTWARE"], 0, 5)))
+        {
+            case 'apach':     // apache
+                $fun = 'apache_get_modules';
+                if (function_exists($fun))
+                {
+                    if (in_array('mod_xsendfile', $fun()))
+                    {
+                        $head_name = 'X-Sendfile';
+                    }
+                    else
+                    {
+                        throw new Exception('当前Apache没有安装mod_xsendfile扩展，请先安装扩展');
+                    }
+                }
+                else
+                {
+                    $head_name = 'X-Sendfile';
+                }
+                break;
+            case 'light':     // Lighttpd
+            case 'chero':     // Cherokee
+                $head_name = 'X-Sendfile';
+                break;
+            case 'nginx':
+                $head_name = 'X-Accel-Redirect';
+                break;
+            default:
+                $head_name = 'X-Sendfile';      // 未知服务器
+                break;
+        }
+
+        Core::close_buffers(false);
+        header($head_name . ': '. $file_path);
+        flush();
+        exit;
+    }
 }
