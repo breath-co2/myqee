@@ -12,13 +12,6 @@
 abstract class Core_I18n
 {
     /**
-     * 缓存配置
-     *
-     * @var string
-     */
-    public static $cache_config = 'default';
-
-    /**
      * 是否安装了语言包
      *
      * @var array
@@ -40,11 +33,25 @@ abstract class Core_I18n
     protected static $accept_language = null;
 
     /**
-     * 默认语言
+     * 缓存配置
      *
      * @var string
      */
-    protected static $default_language = 'zh-cn';
+    protected static $cache_config = Cache::DEFAULT_CONFIG_NAME;
+
+    /**
+     * 语言包缓存时间
+     *
+     * @var string
+     */
+    protected static $cache_time = '86400~172800,1/1000';
+
+    /**
+     * 语言包缓存类型
+     *
+     * @var string
+     */
+    protected static $cache_type = Cache::TYPE_ADV_AGE;
 
     /**
      * 由系统回调执行
@@ -53,7 +60,7 @@ abstract class Core_I18n
      */
     public static function import_lib_callback(array $libs)
     {
-        # 清楚数据，以便重新获取
+        # 清除数据，以便重新获取
         unset(I18n::$lang[Core::$project]);
         unset(I18n::$is_setup[Core::$project]);
     }
@@ -138,7 +145,7 @@ abstract class Core_I18n
             }
 
             # 写缓存
-            Cache::instance(I18n::$cache_config)->set($lang_cache_key, array('lang'=>$lang, 'mtime'=>$lang_files['last_mtime']), '86400~172800,1/1000', Cache::TYPE_ADV_AGE);
+            Cache::instance(I18n::$cache_config)->set($lang_cache_key, array('lang'=>$lang, 'mtime'=>$lang_files['last_mtime']), I18n::$cache_time, I18n::$cache_type);
         }
     }
 
@@ -171,6 +178,28 @@ abstract class Core_I18n
     }
 
     /**
+     * 重置所有设置
+     *
+     * 将会清理掉所有已读取的语言包
+     *
+     * @param null $project 指定项目，不设置则清理全部
+     */
+    public static function reset($project = null)
+    {
+        if ($project)
+        {
+            unset(I18n::$is_setup[$project]);
+            unset(I18n::$lang[$project]);
+        }
+        else
+        {
+            I18n::$is_setup        = array();
+            I18n::$lang            = array();
+            I18n::$accept_language = null;
+        }
+    }
+
+    /**
      * 获取$accept_language
      *
      * @return array
@@ -182,46 +211,44 @@ abstract class Core_I18n
             return I18n::$accept_language;
         }
 
-        # 客户端语言包
-        $accept_language = isset($_SERVER['HTTP_ACCEPT_LANGUAGE']) ? $_SERVER['HTTP_ACCEPT_LANGUAGE'] : null;
-
-        $lang_config = Core::config('lang');
-
-        # 匹配语言设置
-        # zh-CN,zh;q=0.8,zh-TW;q=0.6
-        if ($accept_language && preg_match_all('#([a-z]+\-[a-z]+),|([a-z]+\-[a-z]+);#i', $accept_language, $matches))
+        if (($local_cookie_name = Core::config('local_lang_cookie_name')) && isset($_COOKIE[$local_cookie_name]) && preg_match('#[a-z0-9\-_]+#i', $_COOKIE[$local_cookie_name]))
         {
-            $accept_language    = $matches[0];
-            $accept_language    = array_values(array_slice($accept_language, 0, 2));    //只取前2个语言设置
-            $accept_language[0] = strtolower(rtrim($accept_language[0], ';,'));
-            if (isset($accept_language[1]))
-            {
-                $accept_language[1] = strtolower(rtrim($accept_language[1], ';,'));
-            }
-
-            if ($lang_config && !in_array($lang_config, $accept_language))
-            {
-                $accept_language[] = $lang_config;
-            }
+            # 读取COOKIE中的语言包设置
+            $accept_language = (string)$_COOKIE[$local_cookie_name];
+        }
+        elseif (($lang_config = Core::config('lang')) && $lang_config!='auto')
+        {
+            # 系统设置的语言包
+            $accept_language = explode(',', $lang_config);
         }
         else
         {
-            if ($lang_config)
+            # 客户端语言包
+            $language        = isset($_SERVER['HTTP_ACCEPT_LANGUAGE']) ? $_SERVER['HTTP_ACCEPT_LANGUAGE'] : null;
+            $accept_language = array();
+
+            # 匹配语言设置
+            # zh-CN,zh;q=0.8,zh-TW;q=0.6
+            if ($language && preg_match_all('#([a-z]+(?:\-[a-z]+)?),|([a-z]+\-[a-z]+);#i', $language, $matches))
             {
-                $accept_language = array($lang_config);
+                $accept_language    = $matches[0];
+                $accept_language    = array_values(array_slice($accept_language, 0, 2));    //只取前2个语言设置
+                $accept_language[0] = strtolower(rtrim($accept_language[0], ';,'));
+                if (isset($accept_language[1]))
+                {
+                    $accept_language[1] = strtolower(rtrim($accept_language[1], ';,'));
+                }
             }
-            else
+
+            if (($default_lang = Core::config('default_lang')) && !in_array($default_lang, $accept_language))
             {
-                $accept_language = array(I18n::$default_language);
+                $accept_language[] = $default_lang;
             }
         }
 
-        # 逆向排序，调整优先级
-        $accept_language       = array_reverse($accept_language);
-
         I18n::$accept_language = $accept_language;
 
-        return $accept_language;
+        return I18n::$accept_language;
     }
 
     /**
@@ -295,12 +322,11 @@ abstract class Core_I18n
         # 当前语言key
         $lang_key = implode('_', I18n::accept_language());
         $libs_key = array();
-        foreach (array_reverse(Core::$include_path) as $libs)
+        foreach (Core::$include_path as $libs)
         {
-            $libs = array_reverse($libs);
-            foreach ($libs as $k=>$path)
+            foreach ($libs as $path)
             {
-                $libs_key[] = $libs.'.'.$k;
+                $libs_key[] = $path;
             }
         }
 

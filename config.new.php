@@ -262,11 +262,37 @@ $config['timezone'] = 'PRC';
 
 
 /**
- * 默认语言包
+ * 语言包
+ *
+ * 多个语言包请用,隔开
+ * 设置成 auto 则表示根据浏览器自动选择
+ *
+ * 例如 zh-cn，采样的语言包将是 `i18n/zh-cn.lang` 文件
  *
  * @var string
  */
-$config['lang'] = 'zh-cn';
+$config['lang'] = 'auto';
+
+
+/**
+ * 动态语言包cookie设置的key名称，用于国际化网站用户，可以根据自己语言选择设置对应的语言
+ *
+ * 即便 `$config['lang']` 设置成 auto 时，此参数仍旧有效，此参数设置成 null 才停用此功能
+ * 例如: `$config['local_lang_cookie_name'] = 'lang'` 表示当前动态语言包名称是获取 `$_COOKIE['lang']` 的值
+ *
+ * @var string
+ */
+$config['local_lang_cookie_name'] = null;       // 例如 lang
+
+
+/**
+ * 默认语言包，仅当 `$config['lang']` 设置成 auto 时有效
+ *
+ * 例如 zh-cn
+ *
+ * @var string
+ */
+$config['default_lang'] = 'zh-cn';
 
 
 /**
@@ -295,6 +321,15 @@ $config['server_https_on_key'] = 'HTTPS';
  */
 $config['slow_query_mtime'] = 2000;
 
+
+/**
+ * URL后缀
+ *
+ * 例如设置成：html，则可以接受 http://localhost/test.html 这样的请求，并且通过 `Core::url()` 生成的url也带.html后缀
+ *
+ * @var string
+ */
+$config['url_suffix'] = '';
 
 /**
  * assets允许的文件后缀名，用|隔开
