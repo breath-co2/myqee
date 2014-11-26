@@ -149,7 +149,7 @@ class Core_HttpCall
 
         $uri_arr[0] = $scr_arr[0];       // 替换 http://
         $uri_arr[2] = $scr_arr[2];       // 替换 域名部分
-        $url = implode('/', $uri_arr);
+        $url        = implode('/', $uri_arr);
 
         # 加入系统参数
         $data = array
@@ -264,7 +264,7 @@ class Core_HttpCall
 
                         $code = curl_getinfo($done['handle'], CURLINFO_HTTP_CODE);
 
-                        if ( $code!=200 )
+                        if ($code!=200)
                         {
                             Core::debug()->error('system exec:'.$done_host.' ERROR,CODE:' . $code );
 //                             $result[$done_host] = false;
@@ -329,7 +329,7 @@ class Core_HttpCall
         curl_setopt($ch, CURLOPT_POSTFIELDS, $vars);
         curl_setopt($ch, CURLOPT_DNS_CACHE_TIMEOUT, 86400);
 
-        if ( preg_match('#^https://#i', $url) )
+        if (preg_match('#^https://#i', $url))
         {
             if (!$port)$port = 443;
             curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
