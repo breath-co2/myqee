@@ -77,7 +77,7 @@ abstract class Module_Database_Driver
     public function __construct($config)
     {
         $this->config = $config;
-        if ( !is_array($this->config['connection']['hostname']) )
+        if (!is_array($this->config['connection']['hostname']))
         {
             # 主从链接采用同一个内存地址
             $this->_connection_ids['master'] =& $this->_connection_ids['slaver'];
@@ -123,8 +123,8 @@ abstract class Module_Database_Driver
      *
      * $value = $db->escape('any string');
      *
-     * @param   string   value to quote
-     * @return  string
+     * @param  string $value  value to quote
+     * @return string
      */
     abstract public function escape($value);
 
@@ -142,7 +142,7 @@ abstract class Module_Database_Driver
      * [Database_Query] objects will be compiled and converted to a sub-query.
      * All other objects will be converted using the `__toString` method.
      *
-     * @param   mixed   any value to quote
+     * @param   mixed  $value any value to quote
      * @return  string
      * @uses    Database::escape
      */
@@ -152,7 +152,6 @@ abstract class Module_Database_Driver
      * 获取当前连接
      *
      * @return mysqli
-     * @return mysql
      */
     abstract public function connection();
 
@@ -173,7 +172,7 @@ abstract class Module_Database_Driver
      */
     public function transaction()
     {
-        $tr_name = 'Database_Driver_'.$this->config['type'].'_Transaction';
+        $tr_name = 'Database_Driver_'. $this->config['type'] .'_Transaction';
 
         if (!class_exists($tr_name, true))
         {
@@ -199,14 +198,14 @@ abstract class Module_Database_Driver
      * @param array $exclude_hosts 排除的HOST
      * @param string $type 配置类型
      */
-    protected function _get_rand_host($exclude_hosts = array() , $type = null)
+    protected function _get_rand_host($exclude_hosts = array(), $type = null)
     {
         if (!$type)$type = $this->_connection_type;
         $hostname = $this->config['connection']['hostname'];
 
         if (!is_array($hostname))
         {
-            if ( in_array($hostname, $exclude_hosts) )
+            if (in_array($hostname, $exclude_hosts))
             {
                 return false;
             }
@@ -236,7 +235,7 @@ abstract class Module_Database_Driver
             {
                 if ($type!='master')
                 {
-                    return $this->_get_rand_host($exclude_hosts,'master');
+                    return $this->_get_rand_host($exclude_hosts, 'master');
                 }
                 else
                 {

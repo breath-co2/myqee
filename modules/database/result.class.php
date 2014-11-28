@@ -12,14 +12,33 @@
  */
 abstract class Module_Database_Result implements Countable, Iterator, SeekableIterator, ArrayAccess
 {
-
+    /**
+     * 当前配置
+     *
+     * @var array
+     */
     protected $_config;
 
-    // Executed SQL for this result
+    /**
+     * 查询语句
+     *
+     * @var string
+     */
     protected $_query;
 
-    // Raw result resource
+    /**
+     * 返回内容的指针
+     *
+     * @var mixed
+     */
     protected $_result;
+
+    /**
+     * 返回的内容
+     *
+     * @var array
+     */
+    protected $_data = array();
 
     /**
      * 返回总行数
@@ -28,12 +47,21 @@ abstract class Module_Database_Result implements Countable, Iterator, SeekableIt
      */
     protected $_total_rows;
 
+    /**
+     * 当前行数
+     *
+     * @var int
+     */
     protected $_current_row = 0;
 
+    /**
+     * 内部指针所在行
+     *
+     * @var int
+     */
     protected $_internal_row = 0;
 
-    // Return rows as an object or associative array
-    protected $_as_object;
+    protected $_as_object = null;
 
     /**
      * 数据是否需要转换编码
@@ -51,30 +79,27 @@ abstract class Module_Database_Result implements Countable, Iterator, SeekableIt
     /**
      * Sets the total number of rows and stores the result locally.
      *
-     * @param   mixed   query result
-     * @param   string  SQL query
-     * @return  void
+     * @param mixed $result query result
+     * @param string $sql SQL query
+     * @param $sql
+     * @param $as_object
+     * @param $config
+     * @return void
      */
-    public function __construct( $result, $sql, $as_object ,$config )
+    public function __construct($result, $sql, $as_object ,$config)
     {
-        // Store the result locally
         $this->_result = $result;
-
-        // Store the SQL locally
-        $this->_query = $sql;
-
+        $this->_query  = $sql;
         $this->_config = $config;
 
-        if ( is_object($as_object) )
+        if (is_object($as_object))
         {
-            // Get the object class name
             $as_object = get_class($as_object);
         }
 
-        // Results as objects or associative arrays
         $this->_as_object = $as_object;
 
-        if ( isset($this->_config['auto_change_charset']) && $this->_config['auto_change_charset'] && $this->_config['charset'] !='UTF8' )
+        if (isset($this->_config['auto_change_charset']) && $this->_config['auto_change_charset'] && $this->_config['charset'] !='UTF8')
         {
             $this->_charset_need_change = true;
         }
@@ -84,15 +109,15 @@ abstract class Module_Database_Result implements Countable, Iterator, SeekableIt
         }
     }
 
-    public function __call($m,$v)
+    public function __call($m, $v)
     {
-        if ( method_exists( $this->_result ,$m ) )
+        if (method_exists($this->_result, $m))
         {
-            return call_user_func_array(array($this->_result,$m), $v);
+            return call_user_func_array(array($this->_result, $m), $v);
         }
         else
         {
-            throw new Exception('method not found in ' . get_class($this));
+            throw new Exception('method not found in '. get_class($this));
         }
     }
 
@@ -101,7 +126,17 @@ abstract class Module_Database_Result implements Countable, Iterator, SeekableIt
      *
      * @return  void
      */
-    abstract public function __destruct();
+    public function __destruct()
+    {
+        $this->release_resource();
+    }
+
+    /**
+     * 释放资源
+     *
+     * @return mixed
+     */
+    abstract protected function release_resource();
 
     /**
      * 统计当前查询返回数据
@@ -122,6 +157,7 @@ abstract class Module_Database_Result implements Countable, Iterator, SeekableIt
     {
         return $this->_result;
     }
+
     /**
      * 获取当前行数据
      *
@@ -129,27 +165,39 @@ abstract class Module_Database_Result implements Countable, Iterator, SeekableIt
      */
     public function current()
     {
-        if ( $this->_current_row !== $this->_internal_row && !$this->seek($this->_current_row) ) return false;
+        if ($this->_current_row !== $this->_internal_row && !$this->seek($this->_current_row)) return false;
 
-        // Increment internal row for optimization assuming rows are fetched in order
-        $this->_internal_row ++;
+        $this->_internal_row++;
+
+        if (isset($this->_data[$this->_current_row]))
+        {
+            return $this->_data[$this->_current_row];
+        }
 
         $data = $this->fetch_assoc();
 
-        if ( $this->_charset_need_change )
+        if ($this->_charset_need_change)
         {
-            $this->_change_data_charset( $data );
+            $this->_change_data_charset($data);
         }
 
-        if ( $this->_as_object === true )
+        if (true === $this->_as_object)
         {
             # 返回默认对象
             $data = new stdClass($data);
         }
-        elseif ( is_string($this->_as_object) )
+        elseif (is_string($this->_as_object))
         {
             # 返回指定对象
-            $data = new $this->_as_object( $data );
+            $data = new $this->_as_object($data);
+        }
+
+        $this->_data[$this->_current_row] = $data;
+
+        if ($this->count()==count($this->_data))
+        {
+            # 释放资源
+            $this->release_resource();
         }
 
         return $data;
@@ -167,88 +215,81 @@ abstract class Module_Database_Result implements Countable, Iterator, SeekableIt
      * // Associative array of rows, "id" => "name"
      * $rows = $result->as_array('id', 'name');
      *
-     * @param   string  column for associative keys
-     * @param   string  column for values
-     * @return  array
+     * @param  string $key column for associative keys
+     * @param  string $value column for values
+     * @return array
      */
     public function as_array($key = null, $value = null)
     {
-        $results = array();
+        $rs = array();
 
-        if ( $key === null && $value === null )
+        if (null===$key && null===$value)
         {
-            // Indexed rows
-
-
-            foreach ( $this as $row )
+            foreach ($this as $row)
             {
-                $results[] = $row;
+                $rs[] = $row;
             }
         }
-        elseif ( $key === null )
+        elseif (null===$key)
         {
-            // Indexed columns
-
-
-            if ( $this->_as_object )
+            if ($this->_as_object)
             {
-                foreach ( $this as $row )
+                foreach ($this as $row)
                 {
-                    $results[] = $row->$value;
+                    $rs[] = $row->$value;
                 }
             }
             else
             {
-                foreach ( $this as $row )
+                foreach ($this as $row)
                 {
-                    $results[] = $row[$value];
+                    $rs[] = $row[$value];
                 }
             }
         }
-        elseif ( $value === null )
+        elseif (null===$value)
         {
-            // Associative rows
-
-
-            if ( $this->_as_object )
+            if ($this->_as_object)
             {
-                foreach ( $this as $row )
+                foreach ($this as $row)
                 {
-                    $results[$row->$key] = $row;
+                    $rs[$row->$key] = $row;
                 }
             }
             else
             {
-                foreach ( $this as $row )
+                foreach ($this as $row)
                 {
-                    $results[$row[$key]] = $row;
+                    $rs[$row[$key]] = $row;
                 }
             }
         }
         else
         {
-            // Associative columns
-
-
-            if ( $this->_as_object )
+            if ($this->_as_object)
             {
-                foreach ( $this as $row )
+                foreach ($this as $row)
                 {
-                    $results[$row->$key] = $row->$value;
+                    $rs[$row->$key] = $row->$value;
                 }
             }
             else
             {
-                foreach ( $this as $row )
+                foreach ($this as $row)
                 {
-                    $results[$row[$key]] = $row[$value];
+                    $rs[$row[$key]] = $row[$value];
                 }
             }
         }
 
         $this->rewind();
 
-        return $results;
+        return $rs;
+    }
+
+    public function getArrayCopy()
+    {
+        return $this->as_array();
     }
 
     /**
@@ -257,21 +298,21 @@ abstract class Module_Database_Result implements Countable, Iterator, SeekableIt
      * // Get the "id" value
      * $id = $result->get('id');
      *
-     * @param   string  column to get
-     * @param   mixed   default value if the column does not exist
-     * @return  mixed
+     * @param  string $name column to get
+     * @param  mixed  $default default value if the column does not exist
+     * @return mixed
      */
     public function get($name, $default = null)
     {
         $row = $this->current();
 
-        if ( $this->_as_object )
+        if ($this->_as_object)
         {
-            if ( isset($row->$name) ) return $row->$name;
+            if (isset($row->$name))return $row->$name;
         }
         else
         {
-            if ( isset($row[$name]) ) return $row[$name];
+            if (isset($row[$name]))return $row[$name];
         }
 
         return $default;
@@ -286,7 +327,7 @@ abstract class Module_Database_Result implements Countable, Iterator, SeekableIt
      */
     public function count()
     {
-        if ( null===$this->_total_rows )
+        if (null===$this->_total_rows)
         {
             $this->_total_rows = $this->total_count();
         }
@@ -296,10 +337,10 @@ abstract class Module_Database_Result implements Countable, Iterator, SeekableIt
     /**
      * Implements [ArrayAccess::offsetExists], determines if row exists.
      *
-     * if (isset($result[10]))
-     * {
-     * // Row 10 exists
-     * }
+     *      if (isset($result[10]))
+     *      {
+     *          // Row 10 exists
+     *      }
      *
      * @return  boolean
      */
@@ -311,13 +352,13 @@ abstract class Module_Database_Result implements Countable, Iterator, SeekableIt
     /**
      * Implements [ArrayAccess::offsetGet], gets a given row.
      *
-     * $row = $result[10];
+     *      $row = $result[10];
      *
      * @return  mixed
      */
     public function offsetGet($offset)
     {
-        if ( $this->seek($offset) ) return null;
+        if (!$this->seek($offset)) return null;
 
         return $this->current();
     }
@@ -351,7 +392,7 @@ abstract class Module_Database_Result implements Countable, Iterator, SeekableIt
     /**
      * Implements [Iterator::key], returns the current row number.
      *
-     * echo key($result);
+     *      echo key($result);
      *
      * @return  integer
      */
@@ -363,39 +404,42 @@ abstract class Module_Database_Result implements Countable, Iterator, SeekableIt
     /**
      * Implements [Iterator::next], moves to the next row.
      *
-     * next($result);
+     *      next($result);
      *
      * @return  $this
      */
     public function next()
     {
-        ++ $this->_current_row;
+        ++$this->_current_row;
+
         return $this;
     }
 
     /**
      * Implements [Iterator::prev], moves to the previous row.
      *
-     * prev($result);
+     *      prev($result);
      *
      * @return  $this
      */
     public function prev()
     {
-        -- $this->_current_row;
+        --$this->_current_row;
+
         return $this;
     }
 
     /**
      * Implements [Iterator::rewind], sets the current row to zero.
      *
-     * rewind($result);
+     *      rewind($result);
      *
      * @return  $this
      */
     public function rewind()
     {
         $this->_current_row = 0;
+
         return $this;
     }
 
@@ -415,6 +459,7 @@ abstract class Module_Database_Result implements Countable, Iterator, SeekableIt
     {
         $data = $this->current();
         $this->next();
+
         return $data;
     }
 
@@ -423,13 +468,13 @@ abstract class Module_Database_Result implements Countable, Iterator, SeekableIt
      *
      * @param array/string $data
      */
-    protected function _change_data_charset( &$data )
+    protected function _change_data_charset(& $data)
     {
-        if ( is_array($data) )
+        if (is_array($data))
         {
-            foreach ( $data as $key=> & $item )
+            foreach ($data as $key=> & $item)
             {
-                if ( $this->_charset_is_bin_field && isset($this->_charset_is_bin_field[$key]) )
+                if ($this->_charset_is_bin_field && isset($this->_charset_is_bin_field[$key]))
                 {
                     continue;
                 }
@@ -438,9 +483,9 @@ abstract class Module_Database_Result implements Countable, Iterator, SeekableIt
         }
         else
         {
-            if ( IS_MBSTRING )
+            if (IS_MBSTRING)
             {
-                $data = mb_convert_encoding($data,'UTF-8',$this->_config['data_charset']);
+                $data = mb_convert_encoding($data, 'UTF-8', $this->_config['data_charset']);
             }
             else
             {
@@ -461,7 +506,7 @@ abstract class Module_Database_Result implements Countable, Iterator, SeekableIt
      * @param string $key
      * @return $this
      */
-    public function is_bin( $key )
+    public function is_bin($key)
     {
         $keys = func_get_args();
         foreach ($keys as $key)

@@ -159,7 +159,7 @@ class Driver_Database_Driver_Mongo extends Database_Driver
                 Core::debug()->error($error_host,'error_host');
 
                 if ($last_error && $last_error instanceof Exception)throw $last_error;
-                throw new Exception('connect mongodb server error.');
+                throw new Exception(__('connect mongodb server error.'));
             }
 
             $_connection_id = $this->_get_connection_hash($hostname, $port, $username);
@@ -169,7 +169,10 @@ class Driver_Database_Driver_Mongo extends Database_Driver
             {
                 $time = microtime(true);
 
-                $options = array();
+                $options = array
+                (
+                    'slaveOkay' => true,        //在从数据库可以查询，避免出现 Cannot run command count(): not master 的错误
+                );
 
                 // 长连接设计
                 if ($persistent)
@@ -177,10 +180,23 @@ class Driver_Database_Driver_Mongo extends Database_Driver
                     $options['persist'] = is_string($persistent)?$persistent:'x';
                 }
 
-                static $mclass = null;
-                if (null===$mclass)
+                static $check = null;
+
+                if (null===$check)
                 {
-                    $mclass = class_exists('MongoClient', false)?'MongoClient':'Mongo';
+                    $check = true;
+
+                    if (!class_exists('MongoClient', false))
+                    {
+                        if (class_exists('Mongo', false))
+                        {
+                            throw new Exception(__('your mongoclient version is too low.'));
+                        }
+                        else
+                        {
+                            throw new Exception(__('You do not have to install mongodb extension,see http://php.net/manual/zh/mongo.installation.php'));
+                        }
+                    }
                 }
 
                 $error_code = 0;
@@ -188,11 +204,11 @@ class Driver_Database_Driver_Mongo extends Database_Driver
                 {
                     if ($username)
                     {
-                        $tmplink = new $mclass("mongodb://{$username}:{$password}@{$hostname}:{$port}/", $options);
+                        $tmplink = new MongoClient("mongodb://{$username}:{$password}@{$hostname}:{$port}/", $options);
                     }
                     else
                     {
-                        $tmplink = new $mclass("mongodb://{$hostname}:{$port}/", $options);
+                        $tmplink = new MongoClient("mongodb://{$hostname}:{$port}/", $options);
                     }
                 }
                 catch (Exception $e)
@@ -304,12 +320,6 @@ class Driver_Database_Driver_Mongo extends Database_Driver
             }
             else
             {
-                # 保证从数据库s可以查询，避免出现 Cannot run command count(): not master 的错误
-                if ($this->_connection_type=='slaver')
-                {
-                    $connection->setSlaveOkay(true);
-                }
-
                 Database_Driver_Mongo::$_connection_instance_db[$connection_id] = $connection;
             }
 

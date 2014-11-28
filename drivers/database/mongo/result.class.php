@@ -11,11 +11,9 @@
  */
 class Driver_Database_Driver_Mongo_Result extends Database_Result
 {
-    protected $_data = array();
-
-    public function __destruct()
+    protected function release_resource()
     {
-
+        $this->_result = null;
     }
 
     protected function total_count()
@@ -24,9 +22,13 @@ class Driver_Database_Driver_Mongo_Result extends Database_Result
         {
             $count = $this->_result->count();
         }
-        else
+        elseif ($this->_result)
         {
             $count = $this->_result->count(true);
+        }
+        else
+        {
+            $count = count($this->_data);
         }
 
         if (!$count>0)$count = 0;
@@ -36,9 +38,13 @@ class Driver_Database_Driver_Mongo_Result extends Database_Result
 
     public function seek($offset)
     {
-        if ($this->_result instanceof ArrayIterator)
+        if (isset($this->_data[$offset]))
         {
-            if ($this->offsetExists($offset) && $this->_result->seet($offset))
+            return true;
+        }
+        elseif ($this->_result instanceof ArrayIterator)
+        {
+            if ($this->offsetExists($offset) && $this->_result->seek($offset))
             {
                 return true;
             }
@@ -89,12 +95,6 @@ class Driver_Database_Driver_Mongo_Result extends Database_Result
             return $data;
         }
 
-        // 当有缓存数据
-        if (isset($this->_data[$this->_current_row]))
-        {
-            return $this->_data[$this->_current_row];
-        }
-
         $data = $this->_result->getNext();
         if (isset($data['_id']) && is_object($data['_id']) && $data['_id'] instanceof MongoId)
         {
@@ -111,15 +111,6 @@ class Driver_Database_Driver_Mongo_Result extends Database_Result
             }
         }
 
-        if (count($this->_data[$this->_current_row])>1000)
-        {
-            // 释放内存
-            $this->_data[$this->_current_row] = array();
-        }
-
-        // 记录
-        $this->_data[$this->_current_row] = $data;
-
         return $data;
     }
 
@@ -130,7 +121,7 @@ class Driver_Database_Driver_Mongo_Result extends Database_Result
      */
     public function snapshot()
     {
-        if (!($this->_result instanceof ArrayIterator))
+        if ($this->_result && !($this->_result instanceof ArrayIterator))
         {
             $this->_result->snapshot();
         }
