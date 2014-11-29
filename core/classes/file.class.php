@@ -133,7 +133,7 @@ class Core_File
                 for($i = 0; $i < count($temp); $i++)
                 {
                     $cur_dir .= $temp[$i] . '/';
-                    if (!@is_dir($cur_dir))
+                    if (!is_dir($cur_dir))
                     {
                         if (@mkdir($cur_dir, 0755))
                         {

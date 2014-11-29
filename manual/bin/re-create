@@ -6,12 +6,12 @@
  *
  * @var string
  */
-define('DS', DIRECTORY_SEPARATOR );
+define('DS', DIRECTORY_SEPARATOR);
 
 error_reporting(7);
 
-define('DIR_MANUAL'       , realpath(dirname(__FILE__).'/../').DS);
-define('DIR_SYSTEM'       , realpath(dirname(__FILE__).'/../../').DS);
+define('DIR_MANUAL', realpath(dirname(__FILE__).'/../').DS);
+define('DIR_SYSTEM', realpath(dirname(__FILE__).'/../../').DS);
 
 include (dirname(__FILE__).'/lib/markdown.php');
 include (dirname(__FILE__).'/lib/markdown_extra.php');

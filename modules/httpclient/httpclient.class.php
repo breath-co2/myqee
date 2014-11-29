@@ -188,19 +188,18 @@ class Module_HttpClient
      * @param array $data
      * @param $timeout
      * @return string
-     * @return HttpClient_Result 但个URL返回当然内容对象
-     * @return Arr 多个URL时将返回一个数组对象
+     * @return HttpClient_Result|Arr 单个URL返回当然内容对象，多个URL时将返回一个数组对象
      */
     public function get($url, $timeout = 10)
     {
         $this->driver()->get($url, $timeout);
         $data = $this->driver()->get_result_data();
 
-        if ( is_array($url) )
+        if (is_array($url))
         {
             # 如果是多个URL
             $result = new Arr();
-            foreach ( $data as $key => $item )
+            foreach ($data as $key => $item)
             {
                 $result[$key] = new HttpClient_Result($item);
             }

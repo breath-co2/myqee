@@ -16,10 +16,11 @@ class Library_MyQEE_Administration_Form extends Core_Form
     /**
      * 时间输入框
      *
-     * @param   string  input name
-     * @param   string  input value
-     * @param   array   html attributes
-     * @return  string
+     * @param   string $name input name
+     * @param   string $value input value
+     * @param   array  $attributes html attributes
+     * @return  bool   $showinput
+     * @return  string $showinput
      * @uses	Form::input
      * @uses	HTML::attributes
      */
@@ -32,9 +33,10 @@ class Library_MyQEE_Administration_Form extends Core_Form
     /**
      * 日期输入框
      *
-     * @param   string  input name
-     * @param   string  input value
-     * @param   array   html attributes
+     * @param   string $name input name
+     * @param   string $value input value
+     * @param   array  $attributes html attributes
+     * @param   bool   $showinput
      * @return  string
      * @uses	Form::input
      * @uses	HTML::attributes

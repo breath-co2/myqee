@@ -12,7 +12,7 @@
 class Module_HttpClient_Result
 {
 
-    protected $data;
+    protected $data = false;
 
     protected $code = 0;
 
@@ -24,17 +24,17 @@ class Module_HttpClient_Result
 
     public function __construct($data)
     {
-        if ( isset($data['code']) ) $this->code = $data['code'];
-        if ( isset($data['time']) ) $this->time = $data['time'];
-        if ( isset($data['data']) ) $this->data = $data['data'];
+        if (isset($data['code']))$this->code = $data['code'];
+        if (isset($data['time']))$this->time = $data['time'];
+        if (isset($data['data']))$this->data = $data['data'];
 
-        if ( isset($data['header']) && is_array($data['header']) ) foreach ( $data['header'] as $item )
+        if (isset($data['header']) && is_array($data['header']))foreach ($data['header'] as $item)
         {
-            if ( preg_match('#^([a-zA-Z0-9\-]+): (.*)$#', $item, $m) )
+            if (preg_match('#^([a-zA-Z0-9\-]+): (.*)$#', $item, $m))
             {
-                if ( $m[1] == 'Set-Cookie' )
+                if ($m[1] == 'Set-Cookie')
                 {
-                    if ( preg_match('#^([a-zA-Z0-9\-_]+)=(.*)$#', $m[2], $m2) )
+                    if (preg_match('#^([a-zA-Z0-9\-_]+)=(.*)$#', $m[2], $m2))
                     {
                         $this->cookies[$m2[1]] = $m2[2];
                     }

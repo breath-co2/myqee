@@ -7,7 +7,7 @@
  * @category   Driver
  * @package    Database
  * @subpackage Mongo
- * @copyright  Copyright (c) 2008-2013 myqee.com
+ * @copyright  Copyright (c) 2008-2015 myqee.com
  * @license    http://www.myqee.com/license.html
  */
 class Driver_Database_Driver_Mongo extends Database_Driver
@@ -59,9 +59,6 @@ class Driver_Database_Driver_Mongo extends Database_Driver
 
         $connection_id = $this->connection_id();
 
-        # 最后检查连接时间
-        static $last_check_connect_time = 0;
-
         if (!$connection_id || !isset(Database_Driver_Mongo::$_connection_instance[$connection_id]))
         {
             $this->_connect();
@@ -72,8 +69,6 @@ class Driver_Database_Driver_Mongo extends Database_Driver
 
         # 切换表
         $this->_select_db($this->config['connection']['database']);
-
-        $last_check_connect_time = time();
     }
 
     /**
@@ -117,7 +112,7 @@ class Driver_Database_Driver_Mongo extends Database_Driver
                 $hostconfig = $hostname[$this->_connection_type];
                 if (!$hostconfig)
                 {
-                    throw new Exception('指定的数据库连接主从配置中('.$this->_connection_type.')不存在，请检查配置');
+                    throw new Exception('指定的数据库连接主从配置中('. $this->_connection_type .')不存在，请检查配置');
                 }
                 if (!is_array($hostconfig))
                 {
@@ -156,7 +151,7 @@ class Driver_Database_Driver_Mongo extends Database_Driver
             $hostname = $this->_get_rand_host($error_host);
             if (false===$hostname)
             {
-                Core::debug()->error($error_host,'error_host');
+                Core::debug()->error($error_host, 'error_host');
 
                 if ($last_error && $last_error instanceof Exception)throw $last_error;
                 throw new Exception(__('connect mongodb server error.'));
@@ -250,7 +245,7 @@ class Driver_Database_Driver_Mongo extends Database_Driver
                 if (IS_DEBUG)
                 {
                     Core::debug()->error(($username?$username.'@':'').$hostname.':'.$port, 'connect mongodb server error');
-                    $last_error = new Exception($e->getMessage(),$e->getCode());
+                    $last_error = new Exception($e->getMessage(), $e->getCode());
                 }
                 else
                 {
@@ -278,7 +273,7 @@ class Driver_Database_Driver_Mongo extends Database_Driver
                 Database_Driver_Mongo::$_connection_instance[$connection_id]->close();
 
                 # 销毁对象
-                Database_Driver_Mongo::$_connection_instance[$connection_id] = null;
+                Database_Driver_Mongo::$_connection_instance[$connection_id]    = null;
                 Database_Driver_Mongo::$_connection_instance_db[$connection_id] = null;
 
                 unset(Database_Driver_Mongo::$_connection_instance[$connection_id]);
@@ -325,7 +320,7 @@ class Driver_Database_Driver_Mongo extends Database_Driver
 
             if (IS_DEBUG)
             {
-                Core::debug()->log('mongodb change to database:'.$database);
+                Core::debug()->log('mongodb change to database:'. $database);
             }
 
             # 记录当前已选中的数据库
@@ -358,6 +353,7 @@ class Driver_Database_Driver_Mongo extends Database_Driver
                 # 批量插入
                 $sql['type'] = 'batchinsert';
 
+                $data = array();
                 foreach ($builder['columns'] as $field)
                 {
                     foreach ($builder['values'] as $k=>$v)
@@ -370,6 +366,7 @@ class Driver_Database_Driver_Mongo extends Database_Driver
             else
             {
                 # 单条插入
+                $data = array();
                 foreach ($builder['columns'] as $field)
                 {
                     $data[$field] = $builder['values'][0][$field];
@@ -562,7 +559,7 @@ class Driver_Database_Driver_Mongo extends Database_Driver
 
             // 必需数组
             if (!is_array($as_object))$as_object = array();
-            return $this->connection()->execute($options,$as_object);
+            return $this->connection()->execute($options, $as_object);
         }
 
         $type = strtoupper($options['type']);
@@ -647,16 +644,16 @@ class Driver_Database_Driver_Mongo extends Database_Driver
                             $group_opt['_id'] = array();
                             foreach ($options['group_by'] as $item)
                             {
-                            	if (false!==strpos($item, '.'))
-                            	{
+                                if (false!==strpos($item, '.'))
+                                {
                                     $key      = str_replace('.', '->', $item);
-                            		$group_opt['_id'][$key] = '$'.$item;
+                                    $group_opt['_id'][$key] = '$'.$item;
                                     $alias_key[$key] = $item;
-                            	}
-                            	else
-                            	{
+                                }
+                                else
+                                {
                                     $group_opt['_id'][$item] = '$'.$item;
-                            	}
+                                }
 
                                 if (!isset($select[$item]))$select[$item] = 1;
                             }
@@ -905,17 +902,17 @@ class Driver_Database_Driver_Mongo extends Database_Driver
 
                             if ($alias_key)foreach ($result as &$item)
                             {
-                            	// 处理 _ID 字段
-                            	if (is_array($item['_id']))foreach ($item['_id'] as $k=>$v)
-                            	{
-                            	    if (false!==strpos($k, '->'))
-                            	    {
-                            	        $item['_id'][str_replace('->', '.', $k)] = $v;
-                            	        unset($item['_id'][$k]);
-                            	    }
-                            	}
+                                // 处理 _ID 字段
+                                if (is_array($item['_id']))foreach ($item['_id'] as $k=>$v)
+                                {
+                                    if (false!==strpos($k, '->'))
+                                    {
+                                        $item['_id'][str_replace('->', '.', $k)] = $v;
+                                        unset($item['_id'][$k]);
+                                    }
+                                }
 
-                            	// 处理 select 的字段
+                                // 处理 select 的字段
                                 foreach($alias_key as $k => $v)
                                 {
                                     $item[$v] = $item[$k];
@@ -945,9 +942,9 @@ class Driver_Database_Driver_Mongo extends Database_Driver
                         $result = $connection->command(
                             array
                             (
-                            'distinct' => $tablename,
-                            'key'      => $options['distinct'] ,
-                            'query'    => $options['where']
+                                'distinct' => $tablename,
+                                'key'      => $options['distinct'] ,
+                                'query'    => $options['where']
                             )
                         );
 
@@ -960,7 +957,7 @@ class Driver_Database_Driver_Mongo extends Database_Driver
 
                         if ($result && $result['ok']==1)
                         {
-                            $rs = new Database_Driver_Mongo_Result(new ArrayIterator($result['values']), $options, $as_object ,$this->config);
+                            $rs = new Database_Driver_Mongo_Result(new ArrayIterator($result['values']), $options, $as_object, $this->config);
                         }
                         else
                         {
@@ -987,7 +984,7 @@ class Driver_Database_Driver_Mongo extends Database_Driver
                             $last_query .= '.count()';
                             $result = $result->count();
                             # 仅统计count
-                            $rs = new Database_Driver_Mongo_Result(new ArrayIterator(array(array('total_row_count'=>$result))), $options, $as_object ,$this->config);
+                            $rs = new Database_Driver_Mongo_Result(new ArrayIterator(array(array('total_row_count'=>$result))), $options, $as_object, $this->config);
                         }
                         else
                         {
@@ -1009,13 +1006,13 @@ class Driver_Database_Driver_Mongo extends Database_Driver
                                 $result = $result->limit($options['limit']);
                             }
 
-                            $rs = new Database_Driver_Mongo_Result($result, $options, $as_object ,$this->config);
+                            $rs = new Database_Driver_Mongo_Result($result, $options, $as_object, $this->config);
                         }
                     }
 
                     break;
                 case 'UPDATE':
-                    $result = $connection->selectCollection($tablename)->update($options['where'] , $options['data'] , $options['options']);
+                    $result = $connection->selectCollection($tablename)->update($options['where'], $options['data'], $options['options']);
                     $count = $rs = $result['n'];
                     $last_query = 'db.'.$tablename.'.update('.json_encode($options['where']).','.json_encode($options['data']).')';
                     break;
@@ -1023,7 +1020,7 @@ class Driver_Database_Driver_Mongo extends Database_Driver
                 case 'INSERT':
                 case 'BATCHINSERT':
                     $fun = strtolower($type);
-                    $result = $connection->selectCollection($tablename)->$fun($options['data'] , $options['options']);
+                    $result = $connection->selectCollection($tablename)->$fun($options['data'], $options['options']);
 
                     if ($type=='BATCHINSERT')
                     {
@@ -1200,7 +1197,7 @@ class Driver_Database_Driver_Mongo extends Database_Driver
                     '$ne' => array('$mod'=>array($value[0],$value[1]))
                 );
             }
-            elseif (substr($value[2],0,1)=='$')
+            elseif (substr($value[2], 0, 1)=='$')
             {
                 $option = array
                 (
@@ -1218,27 +1215,27 @@ class Driver_Database_Driver_Mongo extends Database_Driver
         elseif ($op==='like')
         {
             // 将like转换成正则处理
-            $value = preg_quote($value,'/');
+            $value = preg_quote($value, '/');
 
-            if (substr($value,0,1)=='%')
+            if (substr($value, 0, 1)=='%')
             {
-                $value = '/' . substr($value,1);
+                $value = '/'. substr($value,1);
             }
             else
             {
-                $value = '/^'.$value;
+                $value = '/^'. $value;
             }
 
-            if (substr($value,-1)=='%')
+            if (substr($value, -1)=='%')
             {
-                $value = substr($value,0,-1) . '/i';
+                $value = substr($value, 0, -1) . '/i';
             }
             else
             {
-                $value = $value.'$/i';
+                $value = $value .'$/i';
             }
 
-            $value = str_replace('%','*',$value);
+            $value = str_replace('%', '*', $value);
 
             $option = new MongoRegex($value);
         }
@@ -1314,7 +1311,10 @@ class Driver_Database_Driver_Mongo extends Database_Driver
                         // 新增加的条件也加入进去
                         foreach ($tmp_option as $tmpk => $tmpv)
                         {
-                            $tmp_query['$and'][] = array($column=>array($tmpk => $tmpv));
+                            $tmp_query['$and'][] = array
+                            (
+                                $column => array($tmpk => $tmpv)
+                            );
                         }
                     }
                     else
@@ -1345,7 +1345,7 @@ class Driver_Database_Driver_Mongo extends Database_Driver
         }
         else
         {
-            $tmp_query = array_merge($tmp_query,$tmp_option);
+            $tmp_query = array_merge($tmp_query, $tmp_option);
         }
 
         return $tmp_query;
@@ -1355,7 +1355,7 @@ class Driver_Database_Driver_Mongo extends Database_Driver
      * Compiles an array of conditions into an SQL partial. Used for WHERE
      * and HAVING.
      *
-     * @param   array   condition statements
+     * @param   array  $conditions condition statements
      * @return  string
      */
     protected function _compile_conditions(array $conditions)
@@ -1373,16 +1373,16 @@ class Driver_Database_Driver_Mongo extends Database_Driver
 
                 if ($condition === '(')
                 {
-                    $tmp_query_list[] = array();                                  //增加一行数据
-                    unset($tmp_query);                                            //删除引用关系，这样数据就保存在了$tmp_query_list里
-                    $tmp_query =& $tmp_query_list[count($tmp_query_list)-1];      //把指针移动到新的组里
-                    $last_logic_list[] = $last_logic;                             //放一个备份
-                    $last_logic = '$and';                                         //新组开启，把$last_logic设置成$and
+                    $tmp_query_list[] = array();                                        //增加一行数据
+                    unset($tmp_query);                                                  //删除引用关系，这样数据就保存在了$tmp_query_list里
+                    $tmp_query         =& $tmp_query_list[count($tmp_query_list)-1];    //把指针移动到新的组里
+                    $last_logic_list[] = $last_logic;                                   //放一个备份
+                    $last_logic        = '$and';                                        //新组开启，把$last_logic设置成$and
                 }
                 elseif ($condition === ')')
                 {
                     # 关闭一个组
-                    $last_logic = array_pop($last_logic_list);                    //恢复上一个$last_logic
+                    $last_logic = array_pop($last_logic_list);                          //恢复上一个$last_logic
 
                     # 将最后一个移除
                     $tmp_query2 = array_pop($tmp_query_list);
@@ -1397,15 +1397,15 @@ class Driver_Database_Driver_Mongo extends Database_Driver
                     {
                         $tmp_query =& $query;
                     }
-                    $this->_compile_paste_data($tmp_query , $tmp_query2 , $last_logic , $logic);
+                    $this->_compile_paste_data($tmp_query, $tmp_query2, $last_logic, $logic);
 
-                    unset($tmp_query2,$c);
+                    unset($tmp_query2, $c);
                 }
                 else
                 {
                     list ($column, $op, $value) = $condition;
                     $tmp_option = $this->_compile_set_data($op, $value);
-                    $this->_compile_paste_data($tmp_query, $tmp_option , $last_logic , $logic ,$column);
+                    $this->_compile_paste_data($tmp_query, $tmp_option, $last_logic, $logic, $column);
 
                     $last_logic = $logic;
                 }
