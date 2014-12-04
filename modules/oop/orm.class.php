@@ -6,38 +6,86 @@
  * @author     呼吸二氧化碳 <jonwang@myqee.com>
  * @category   Module
  * @package    ORM
- * @copyright  Copyright (c) 2008-2013 myqee.com
+ * @copyright  Copyright (c) 2008-2015 myqee.com
  * @license    http://www.myqee.com/license.html
  */
 abstract class Module_OOP_ORM
 {
-
     /**
      * ORM版本
+     *
      * @var int
      */
-    const VERSION = '2.3.1';
+    const VERSION = '4.0';
+
+    /**
+     * 一对一，One-to-one
+     *
+     * @var string
+     */
+    const PARAM_TYPE_O2O = 'o2o';
+
+    /**
+     * 一对多，One-to-many
+     *
+     * @var string
+     */
+    const PARAM_TYPE_O2M = 'o2m';
+
+    /**
+     * 一对未知，One-to-fixed
+     *
+     * @var string
+     */
+    const PARAM_TYPE_O2F = 'o2f';
+
+    /**
+     * 多对一，Many-to-one
+     *
+     * @var string
+     */
+    const PARAM_TYPE_M2O = 'm2o';
+
+    /**
+     * 多对多，Many-to-many
+     *
+     * @var string
+     */
+    const PARAM_TYPE_M2M = 'm2m';
 
     /**
      * 返回类型为返回ORM对象
+     *
+     * 在4.0版本后将弃用，使用 PARAM_MAPPING_O2F 代替
+     *
+     * @deprecated
      * @var string
      */
     const PARAM_RETURN_FINDER = 'finder';
 
     /**
      * 返回类型为返回单条数据
+     *
+     * 在4.0版本后将弃用，使用 PARAM_MAPPING_O2O 代替
+     *
+     * @deprecated
      * @var string
      */
     const PARAM_RETURN_SINGLE = 'single';
 
     /**
      * 返回类型为返回一组数据
+     *
+     * 在4.0版本后将弃用，使用 PARAM_MAPPING_O2M 代替
+     *
+     * @deprecated 在4.0版本后将弃用
      * @var string
      */
     const PARAM_RETURN_GROUP = 'group';
 
     /**
      * 定义ORM的名称，不定义则采用系统默认规则
+     *
      * @var string
      */
     protected $_orm_name;
@@ -56,6 +104,13 @@ abstract class Module_OOP_ORM
      */
     protected $_orm_name_result;
 
+    /**
+     * 定义ORM返回的Index名称，不定义则采用系统默认规则
+     *
+     * @var string
+     */
+    protected $_orm_name_index;
+
     protected $_auto_where = array();
 
     /**
@@ -65,48 +120,44 @@ abstract class Module_OOP_ORM
      */
     protected $last_query = '';
 
-    /**
-     * 当前对象ID字段
-     *
-     * 请使用$this->id_field_name()方法获取此值
-     *
-     * @var string
-     */
-    protected $_id_field = false;
+    protected static $orm_name_for_class = array();
 
-//    protected static $ALL_ORM_DATA = array();
-
-    public function __construct($data = null)
+    public function __construct()
     {
         # 检查$this->orm_name变量
-        if ( !isset($this->_orm_name) )
+        if (!$this->_orm_name)
         {
-            $tmpobj = $this;
-            while ( $tmpobj )
+            $my_name = strtolower(get_class($this));
+            if (isset(OOP_ORM::$orm_name_for_class[$my_name]))
             {
-                if ( is_object($tmpobj) )
-                {
-                    $classname = get_class($tmpobj);
-                }
-                else
-                {
-                    $classname = (string)$tmpobj;
-                }
-                if ( preg_match('#^ORM_([a-z0-9_]+)_Finder$#i', $classname, $m) )
-                {
-                    $this->_orm_name = $m[1];
-                    break;
-                }
-                else
-                {
-                    $tmpobj = get_parent_class($tmpobj);
-                }
+                $this->_orm_name = OOP_ORM::$orm_name_for_class[$my_name];
             }
-            unset($tmpobj);
-        }
-        if ( !$this->_orm_name )
-        {
-            throw new Exception('请先定义$this->_orm_name变量');
+            else
+            {
+                $tmp_obj = $this;
+                while ($tmp_obj)
+                {
+                    if (is_object($tmp_obj))
+                    {
+                        $class_name = get_class($tmp_obj);
+                    }
+                    else
+                    {
+                        $class_name = (string)$tmp_obj;
+                    }
+
+                    if (preg_match('#^(?:Library_[a-z0-9]+_[a-z0-9]+_)?ORM_([a-z0-9_]+)_Finder$#i', $class_name, $m))
+                    {
+                        OOP_ORM::$orm_name_for_class[$my_name] = $this->_orm_name = $m[1];
+                        break;
+                    }
+                    else
+                    {
+                        $tmp_obj = get_parent_class($tmp_obj);
+                    }
+                }
+                unset($tmp_obj);
+            }
         }
     }
 
@@ -125,60 +176,103 @@ abstract class Module_OOP_ORM
         {
             return $this->_orm_name_result;
         }
-        return 'ORM_' . $this->_orm_name . '_' . ucfirst($type);
+        elseif($type=='index' && $this->_orm_name_index)
+        {
+            return $this->_orm_name_index;
+        }
+        elseif ($this->_orm_name)
+        {
+            return 'ORM_'. $this->_orm_name .'_'. ucfirst($type);
+        }
+        else
+        {
+            switch ($type)
+            {
+                case 'data':
+                    return 'OOP_ORM_Data';
+                case 'result':
+                    return 'OOP_ORM_Result';
+                case 'index':
+                    return 'OOP_ORM_Index';
+                case 'finder':
+                    return 'OOP_ORM_Finder_DB';
+                default:
+                    throw new Exception('不支持的类型：'. $type);
+                    break;
+            }
+        }
     }
 
     /**
      * 创建一条数据
-     * $is_field_key 是所传进来的数据的key是对象的键名还是字段的键名,true=字段的键名，false=对象的键名
+     *
+     * 如果 `$data` 是数据库获取的内容，`$is_field_key` 请设置成 true
+     *
+     * `$is_field_key` 详细说明：
+     * `$is_field_key` 是所传进来的数据的key是对象的键名还是字段的键名,true:对应字段的键名，false:对应对象的键名
      * 差别在于：
      * 由于ORM DATA的键名可以和数据库的字段名称不一样，所以在设置数据的时候需要指定是哪个数据，如果键名和数据库的字段名完全一样，这样的话则没有区别
      *
      * @param array $data 数据
      * @param boolean $is_field_key 数据的键名是否数据库字段，默认false
+     * @param OOP_ORM_Result $group_id 分组ID，可不传
      * @throws Exception
      */
-    public function create($data = null, $is_field_key = false)
+    public function create($data = null, $is_field_key = false, $group_id = null)
     {
         $orm_data_name = $this->get_orm_name('data');
-        if ( !$orm_data_name )
+        if (!$orm_data_name)
         {
-            throw new Exception(get_class($this) . ' 没有定义data返回对象');
+            throw new Exception(get_class($this) .' 没有定义data返回对象');
         }
-        $orm = new $orm_data_name();
-        # 用ORM调用接口设置参数
-        $orm->__orm_callback_set_orm($this);
-        $orm->__orm_callback_ini_data($data, $is_field_key);
+
+        /**
+         * @var $orm OOP_ORM_Data
+         */
+        $orm = OOP_ORM_Data::create_instance($orm_data_name, $data, $is_field_key);
+
+
+        if ($group_id)
+        {
+            # 设置组ID
+            $orm->__orm_callback('add_group_id', $group_id);
+        }
 
         return $orm;
     }
 
+    /**
+     * 当前驱动
+     *
+     * @return OOP_ORM_Finder_DB
+     */
     abstract public function driver();
 
+    /**
+     * 但会对象
+     *
+     * @return OOP_ORM_Result
+     */
     abstract public function find();
 
     /**
      * 返回ORM数据对象
      *
      * @param $array
-     * @param boolean $is_field_key 数据的键名是否数据库字段，默认false
+     * @param array $opt 参数
      * @return OOP_ORM_Result
      */
-    public function create_group_data($array, $is_field_key = false)
+    public function create_group_data($rs, array $opt = array())
     {
-        $data = array();
-        if ( is_array($array) ) foreach ( $array as $k => $v )
-        {
-            $data[$k] = $this->create($v, $is_field_key);
-        }
         $result_name = $this->get_orm_name('result');
-        if ( !class_exists($result_name, false) )
+
+        if (!class_exists($result_name, false))
         {
             if (IS_DEBUG)
             {
                 static $no_result = array();
 
-                if ( !isset($no_result[$result_name]) )
+                if (!isset($no_result[$result_name]))
                 {
                     Core::debug()->info('指定的' . $result_name . '对象不存在。');
                     $no_result[$result_name] = true;
@@ -188,7 +282,7 @@ abstract class Module_OOP_ORM
             $result_name = 'OOP_ORM_Result';
         }
 
-        return new $result_name($data);
+        return new $result_name($rs, $this, $opt);
     }
 
     /**
@@ -209,16 +303,16 @@ abstract class Module_OOP_ORM
         $this->_auto_where = array();
     }
 
-    public function id_field_name()
+    /**
+     * 获取当前ORM的主键
+     *
+     * 如果是单个组件，则返回字符串，如果是复合主键，则返回数值
+     *
+     * @return string || array || null
+     */
+    public function pk_key_name()
     {
-        if ( false===$this->_id_field )
-        {
-            # 获取ID字段名
-            $tmpdata = $this->create();
-            $this->_id_field = $tmpdata->id_field_name();
-            unset($tmpdata);
-        }
-        return $this->_id_field;
+        return OOP_ORM_Data::get_pk_by_class_name(strtolower($this->get_orm_name('data')));
     }
 
     /**
@@ -229,10 +323,10 @@ abstract class Module_OOP_ORM
      */
     public function get_by_id($id, $use_master = false)
     {
-        $idfield = $this->id_field_name();
-        if ($idfield)
+        $id_field = $this->pk_key_name();
+        if ($id_field)
         {
-            $this->driver()->where($idfield, $id);
+            $this->driver()->where($id_field, $id);
             return $this->find(null, $use_master)->current();
         }
         else
@@ -249,11 +343,11 @@ abstract class Module_OOP_ORM
      */
     public function get_by_ids($ids, $use_master = false)
     {
-        $idfield = $this->id_field_name();
+        $id_field = $this->pk_key_name();
 
-        if ($idfield)
+        if ($id_field)
         {
-            $this->driver()->in($idfield, $ids);
+            $this->driver()->in($id_field, $ids);
 
             return $this->find(null, $use_master);
         }
@@ -271,5 +365,16 @@ abstract class Module_OOP_ORM
     public function last_query()
     {
         return $this->last_query;
+    }
+
+    /**
+     * 获取对象数据
+     *
+     * @param $obj
+     * @return array
+     */
+    public static function get_object_vars($obj)
+    {
+        return get_object_vars($obj);
     }
 }

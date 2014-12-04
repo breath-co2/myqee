@@ -52,6 +52,21 @@ class Module_OOP_ORM_Finder_REST extends OOP_ORM
      */
     protected $_default_method = null;
 
+    function __construct($api_url = null)
+    {
+        if (null!==$api_url)
+        {
+            $this->api_url = $api_url;
+        }
+
+        if (null === $this->api_url)
+        {
+            throw new Exception(__('orm api_url is not declared.'));
+        }
+
+        parent::__construct();
+    }
+
     /**
      * 设置，获取REST的类型
      *
@@ -200,10 +215,10 @@ class Module_OOP_ORM_Finder_REST extends OOP_ORM
     /**
      * 设置查询条件
      *
-     * @param   mixed   column name or array($column, $alias) or object
-     * @param   string  logic operator
-     * @param   mixed   column value
-     * @return  OOP_ORM_Finder_REST
+     * @param   mixed  $column column name or array($column, $alias) or object
+     * @param   string $value logic operator
+     * @param   mixed  $op column value
+     * @return  $this
      */
     public function where($column, $value = null, $op = '=')
     {
@@ -217,7 +232,7 @@ class Module_OOP_ORM_Finder_REST extends OOP_ORM
      *
      * @param string $key
      * @param array $value
-     * @return OOP_ORM_Finder_REST
+     * @return $this
      */
     public function in($column, $value, $no_in = false)
     {
@@ -228,9 +243,9 @@ class Module_OOP_ORM_Finder_REST extends OOP_ORM
     /**
      * 排序
      *
-     * @param   mixed   column name or array($column, $alias) or object
-     * @param   string  direction of sorting
-     * @return  OOP_ORM_Finder_REST
+     * @param   mixed  $column column name or array($column, $alias) or object
+     * @param   string $direction direction of sorting
+     * @return  $this
      */
     public function order_by($column, $direction = 'ASC')
     {
