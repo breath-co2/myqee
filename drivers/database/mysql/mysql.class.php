@@ -470,12 +470,12 @@ class Driver_Database_Driver_MySQL extends Database_Driver
 
         $this->_change_charset($value);
 
-        if (($value = mysql_real_escape_string($value,$connection)) === false)
+        if (($value = mysql_real_escape_string($value, $connection)) === false)
         {
             throw new Exception('Error:' . mysql_error($connection), mysql_errno($connection));
         }
 
-        return "'$value'";
+        return $value;
     }
 
     /**
@@ -708,7 +708,7 @@ class Driver_Database_Driver_MySQL extends Database_Driver
             return sprintf('%F', $value);
         }
 
-        return $this->escape($value);
+        return "'". $this->escape($value) ."'";
     }
 
     /**
@@ -850,7 +850,7 @@ class Driver_Database_Driver_MySQL extends Database_Driver
                     {
                         // Quote each of the parts
                         $this->_change_charset($part);
-                        $part = $this->_identifier . str_replace($this->_identifier, '', $part) . $this->_identifier;
+                        $part = $this->_identifier . str_replace(array($this->_identifier, '\\'), '', $part) . $this->_identifier;
                     }
                 }
 
@@ -859,14 +859,14 @@ class Driver_Database_Driver_MySQL extends Database_Driver
             else
             {
                 $this->_change_charset($column);
-                $column = $this->_identifier . str_replace($this->_identifier, '', $column) . $this->_identifier;
+                $column = $this->_identifier . str_replace(array($this->_identifier, '\\'), '', $column) . $this->_identifier;
             }
         }
 
         if (isset($alias))
         {
             $this->_change_charset($alias);
-            $column .= ' AS ' . $this->_identifier . str_replace($this->_identifier, '', $alias) . $this->_identifier;
+            $column .= ' AS ' . $this->_identifier . str_replace(array($this->_identifier, '\\'), '', $alias) . $this->_identifier;
         }
 
         return $column;

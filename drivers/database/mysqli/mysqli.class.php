@@ -480,7 +480,7 @@ class Driver_Database_Driver_MySQLI extends Database_Driver
             throw new Exception('Error:' . mysqli_errno($connection), mysqli_error($connection));
         }
 
-        return "'$value'";
+        return $value;
     }
 
     /**
@@ -713,7 +713,7 @@ class Driver_Database_Driver_MySQLI extends Database_Driver
             return sprintf('%F', $value);
         }
 
-        return $this->escape($value);
+        return "'". $this->escape($value). "'";
     }
 
     /**
@@ -855,7 +855,7 @@ class Driver_Database_Driver_MySQLI extends Database_Driver
                     {
                         // Quote each of the parts
                         $this->_change_charset($part);
-                        $part = $this->_identifier . str_replace($this->_identifier, '', $part) . $this->_identifier;
+                        $part = $this->_identifier . str_replace(array($this->_identifier, '\\'), '', $part) . $this->_identifier;
                     }
                 }
 
@@ -864,14 +864,14 @@ class Driver_Database_Driver_MySQLI extends Database_Driver
             else
             {
                 $this->_change_charset($column);
-                $column = $this->_identifier . str_replace($this->_identifier, '', $column) . $this->_identifier;
+                $column = $this->_identifier . str_replace(array($this->_identifier, '\\'), '', $column) . $this->_identifier;
             }
         }
 
         if (isset($alias))
         {
             $this->_change_charset($alias);
-            $column .= ' AS ' . $this->_identifier . str_replace($this->_identifier, '', $alias) . $this->_identifier;
+            $column .= ' AS ' . $this->_identifier . str_replace(array($this->_identifier, '\\'), '', $alias) . $this->_identifier;
         }
 
         return $column;

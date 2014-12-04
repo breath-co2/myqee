@@ -431,7 +431,7 @@ class Driver_Database_Driver_Postgre extends Database_Driver
         }
         elseif (is_string($value) || (is_object($value) && method_exists($value, '__toString')))
         {
-            return "'". pg_escape_string($value) ."'";
+            return pg_escape_string($value);
         }
         elseif (is_bool($value))
         {
@@ -615,7 +615,7 @@ class Driver_Database_Driver_Postgre extends Database_Driver
         }
         elseif (is_int($value))
         {
-            return "'".(int)$value."'";
+            return "'". (int)$value ."'";
         }
         elseif (is_float($value))
         {
@@ -623,7 +623,7 @@ class Driver_Database_Driver_Postgre extends Database_Driver
             return sprintf('%F', $value);
         }
 
-        return $this->escape($value);
+        return "'". $this->escape($value). "'";
     }
 
     /**

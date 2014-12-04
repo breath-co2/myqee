@@ -292,7 +292,7 @@ class Driver_Database_Driver_SQLite extends Database_Driver
 
         if (isset(Database_Driver_SQLite::$_current_charset[$connection_id]) && $charset==Database_Driver_SQLite::$_current_charset[$connection_id])
         {
-            return true;
+            return;
         }
 
         $status = (bool)sqlite_query('SET NAMES ' . $this->quote($charset), $connection);
@@ -307,8 +307,7 @@ class Driver_Database_Driver_SQLite extends Database_Driver
 
     public function escape($value)
     {
-        $value = sqlite_escape_string($value);
-        return "'$value'";
+        return sqlite_escape_string($value);
     }
 
     /**
@@ -496,7 +495,7 @@ class Driver_Database_Driver_SQLite extends Database_Driver
             return sprintf('%F', $value);
         }
 
-        return $this->escape($value);
+        return "'". $this->escape($value) ."'";
     }
 
     /**

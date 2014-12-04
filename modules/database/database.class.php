@@ -123,7 +123,7 @@ class Module_Database extends Database_QueryBuilder
             $i_name = '.config_'.md5(serialize($config_name));
         }
 
-        if ( !isset(Database::$instances[$i_name]) )
+        if (!isset(Database::$instances[$i_name]))
         {
             Database::$instances[$i_name] = new Database($config_name);
         }
@@ -136,7 +136,7 @@ class Module_Database extends Database_QueryBuilder
      *
      * 支持 `new Database('mysqli://root:123456@127.0.0.1/myqee/');` 的方式
      *
-     * @param string $config_name 默认值为 Database::DEFAULT_CONFIG_NAME
+     * @param string $config_name 默认值为 `Database::DEFAULT_CONFIG_NAME`
      * @return  void
      */
     public function __construct($config_name = null)
@@ -175,9 +175,9 @@ class Module_Database extends Database_QueryBuilder
         {
             $this->config['auto_change_charset'] = false;
         }
-        if ( $this->config['auto_change_charset'] )
+        if ($this->config['auto_change_charset'])
         {
-            if ( isset($this->config['data_charset']) )
+            if (isset($this->config['data_charset']))
             {
                 $this->config['data_charset'] = strtoupper($this->config['data_charset']);
             }
@@ -255,7 +255,42 @@ class Module_Database extends Database_QueryBuilder
     }
 
     /**
+     * 安全的执行SQL模板查询
+     *
+     *      $rp = array
+     *      (
+     *          ':table'  => 'mytalbe',
+     *          ':id'     => $_GET['id'],
+     *          ':status' => $_GET['status'],
+     *      );
+     *      $rs = $db->execute("SELECT * FROM `:table` WHERE id = ':id' AND status = :status", $rp);
+     *
+     * @param string $sql_tpl
+     * @param array $replace_pairs
+     * @param bool $as_object
+     * @param null $use_master
+     * @return Database_Driver_MySQLI_Result
+     */
+    public function execute($sql_tpl, array $replace_pairs, $as_object = false, $use_master = null)
+    {
+        foreach($replace_pairs as &$value)
+        {
+            $value = $this->driver->escape($value);
+        }
+
+        $sql = strtr($sql_tpl, $replace_pairs);
+
+        echo($sql);exit;
+
+        return $this->query($sql, $as_object, $use_master);
+    }
+
+    /**
      * 执行SQL查询
+     *
+     * [!!] 此方法的SQL语句将不进行SQL注入过滤，执行语句请慎重，建议通过数据库的QueryBuilder来构造SQL语句，如果此方法无法满足要求也只用 excute() 方法
+     *
+     *      $db->query('select * from my_table where id = 10');
      *
      * @param string $sql
      * @param boolean $as_object 返回对象名称 默认false，即返回数组
@@ -270,7 +305,7 @@ class Module_Database extends Database_QueryBuilder
         }
 
         static $slow_query_mtime = null;
-        if ( null===$slow_query_mtime )
+        if (null===$slow_query_mtime)
         {
             if (IS_CLI)
             {
@@ -286,11 +321,11 @@ class Module_Database extends Database_QueryBuilder
 
         $rs = $this->driver->query($sql, $as_object, $use_master);
 
-        if ($slow_query_mtime>0)
+        if ($slow_query_mtime > 0)
         {
             $etime = microtime(1);
-            $time = 1000*($etime-$stime);
-            if ( $time>$slow_query_mtime )
+            $time  = 1000*($etime-$stime);
+            if ($time > $slow_query_mtime)
             {
                 // 记录慢查询
                 Database::$slow_querys[] = array
@@ -325,7 +360,7 @@ class Module_Database extends Database_QueryBuilder
      */
     public function compile($type = 'select', $use_master = null)
     {
-        if ( $type=='select' && null === $use_master && true === $this->is_auto_use_master )
+        if ($type=='select' && null === $use_master && true === $this->is_auto_use_master)
         {
             $use_master = true;
         }
@@ -358,9 +393,9 @@ class Module_Database extends Database_QueryBuilder
      *
      * @param boolean $as_object 返回对象名称 默认false，即返回数组
      * @param boolean $use_master 是否使用主数据库，不设置则自动判断
-     * @return mixed
+     * @return array|object|stdClass
      */
-    public function get_one($as_object = false, $use_master = null)
+    public function get_single($as_object = false, $use_master = null)
     {
         return $this->get($as_object, $use_master)->current();
     }
@@ -445,7 +480,7 @@ class Module_Database extends Database_QueryBuilder
         }
         $sql = $this->compile('delete');
 
-        return $this->query($sql , false , true);
+        return $this->query($sql, false, true);
     }
 
     /**
@@ -577,7 +612,7 @@ class Module_Database extends Database_QueryBuilder
     /**
      * 解析DSN路径格式
      *
-     * @param  string  DSN string
+     * @param  string $dsn DSN string
      * @return array
      */
     public static function parse_dsn($dsn)
@@ -650,7 +685,7 @@ class Module_Database extends Database_QueryBuilder
     {
         if (!Database::$instances || !is_array(Database::$instances)) return;
 
-        foreach ( Database::$instances as $database )
+        foreach (Database::$instances as $database)
         {
             if ($database instanceof Database)
             {
@@ -679,6 +714,6 @@ class Module_Database extends Database_QueryBuilder
         }
 
         // 写入LOG
-        Core::log($data, 'log', 'slow_query/'. date('Y/m_d', TIME));
+        return Core::log($data, 'log', 'slow_query/'. date('Y/m_d', TIME));
     }
 }
