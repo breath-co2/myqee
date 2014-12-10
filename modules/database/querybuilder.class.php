@@ -28,10 +28,53 @@ class Module_Database_QueryBuilder
 
     protected $_last_join = null;
 
+    /**
+     * 预定义模板
+     *
+     * @var string
+     */
+    protected $_statement = null;
+
     public function __construct()
     {
         # 初始化数据
         $this->reset();
+    }
+
+    /**
+     * 设定一个预处理语句
+     *
+     * 此时只是设定一个预处理语句，并不执行，通过 `$this->execute()` 来执行
+     * 设置的模板在 `$this->execute()` 后仍可反复使用，直到重新设置
+     *
+     * [!!] 本方法只能设置1条，再次执行则覆盖之前设置的，与 `PDD::prepare($statement)` 不同，它反复执行可以设置多条
+     *
+     *      $db = new Database();
+     *
+     *      // 用法1，替换掉相同关键字的部分
+     *      $rp = array
+     *      (
+     *          ':id'     => $_GET['id'],
+     *          ':status' => $_GET['status'],
+     *      );
+     *      $rs = $db->prepare("SELECT * FROM `my_table` WHERE id = :id AND status = :status")->execute($rp);
+     *
+     *      // 用法2，按顺序替换掉语句中?的部分
+     *      $rp = array
+     *      (
+     *          $_GET['id'],
+     *          $_GET['status'],
+     *      );
+     *      $rs = $db->prepare("SELECT * FROM `my_table` WHERE id = ? AND status = ?")->execute($rp);
+     *
+     * @param $statement
+     * @return $this
+     */
+    public function prepare($statement)
+    {
+        $this->_statement = trim($statement);
+
+        return $this;
     }
 
     /**

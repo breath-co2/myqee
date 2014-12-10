@@ -30,21 +30,28 @@ class Module_Database extends Database_QueryBuilder
      *
      * @var string
      */
-    const TYPE_MONGO  = 'Mongo';
+    const TYPE_MONGO = 'Mongo';
 
     /**
      * SQLite驱动类型
      *
      * @var string
      */
-    const TYPE_SQLITE  = 'SQLite';
+    const TYPE_SQLITE = 'SQLite';
 
     /**
      * Postgre驱动类型
      *
      * @var string
      */
-    const TYPE_POSTGRE  = 'Postgre';
+    const TYPE_POSTGRE = 'Postgre';
+
+    /**
+     * PDO驱动类型
+     *
+     * @var string
+     */
+    const TYPE_PDO = 'PDO';
 
     /**
      * 默认配置名
@@ -257,38 +264,55 @@ class Module_Database extends Database_QueryBuilder
     /**
      * 安全的执行SQL模板查询
      *
+     * 需要先通过 `$this->prepare($statement)` 设置SQL后执行
+     * 如果当前驱动是PDO，则使用PDO相同的方式处理，
+     *
+     *      // 用法1，替换掉相同关键字的部分
      *      $rp = array
      *      (
-     *          ':table'  => 'mytalbe',
      *          ':id'     => $_GET['id'],
      *          ':status' => $_GET['status'],
      *      );
-     *      $rs = $db->execute("SELECT * FROM `:table` WHERE id = ':id' AND status = :status", $rp);
+     *      $rs = $db->prepare("SELECT * FROM `my_table` WHERE id = :id AND status = :status")->execute($rp);
      *
-     * @param string $sql_tpl
-     * @param array $replace_pairs
+     *      // 用法2，按顺序替换掉语句中?的部分
+     *      $rp = array
+     *      (
+     *          $_GET['id'],
+     *          $_GET['status'],
+     *      );
+     *      $rs = $db->prepare("SELECT * FROM `my_table` WHERE id = ? AND status = ?")->execute($rp);
+     *
+     * @param array $input_parameters
      * @param bool $as_object
      * @param null $use_master
      * @return Database_Driver_MySQLI_Result
      */
-    public function execute($sql_tpl, array $replace_pairs, $as_object = false, $use_master = null)
+    public function execute(array $input_parameters = array(), $as_object = false, $use_master = null)
     {
-        foreach($replace_pairs as &$value)
+        if (!$this->_statement)
         {
-            $value = $this->driver->escape($value);
+            throw new Exception(__('not found statement, you need run `$db->prepare($statement)` before execute.'));
         }
 
-        $sql = strtr($sql_tpl, $replace_pairs);
+        if (null === $use_master && true === $this->is_auto_use_master)
+        {
+            $use_master = true;
+        }
 
-        echo($sql);exit;
+        $time = $this->_start_slow_query();
 
-        return $this->query($sql, $as_object, $use_master);
+        $rs = $this->driver->execute($this->_statement, $input_parameters, $as_object, $use_master);
+
+        if (false!==$time)$this->_record_slow_query($time);
+
+        return $rs;
     }
 
     /**
      * 执行SQL查询
      *
-     * [!!] 此方法的SQL语句将不进行SQL注入过滤，执行语句请慎重，建议通过数据库的QueryBuilder来构造SQL语句，如果此方法无法满足要求也只用 excute() 方法
+     * [!!] 此方法的SQL语句将不进行SQL注入过滤，执行语句请慎重，建议通过数据库的QueryBuilder来构造SQL语句，如果此方法无法满足要求也只用 `$db->execute()` 方法
      *
      *      $db->query('select * from my_table where id = 10');
      *
@@ -304,38 +328,11 @@ class Module_Database extends Database_QueryBuilder
             $use_master = true;
         }
 
-        static $slow_query_mtime = null;
-        if (null===$slow_query_mtime)
-        {
-            if (IS_CLI)
-            {
-                $slow_query_mtime = false;
-            }
-            else
-            {
-                $slow_query_mtime = (int)Core::config('core.slow_query_mtime');
-            }
-        }
-
-        if ($slow_query_mtime>0)$stime = microtime(1);
+        $time = $this->_start_slow_query();
 
         $rs = $this->driver->query($sql, $as_object, $use_master);
 
-        if ($slow_query_mtime > 0)
-        {
-            $etime = microtime(1);
-            $time  = 1000*($etime-$stime);
-            if ($time > $slow_query_mtime)
-            {
-                // 记录慢查询
-                Database::$slow_querys[] = array
-                (
-                    (int)$stime,
-                    $time,
-                    $this->driver->last_query(),            // 不用$sql是因为比如MongoDB这样的会在driver里再处理
-                );
-            }
-        }
+        if (false!==$time)$this->_record_slow_query($time);
 
         return $rs;
     }
@@ -610,6 +607,49 @@ class Module_Database extends Database_QueryBuilder
     }
 
     /**
+     * 开启记录慢查询
+     *
+     * 返回当前时间，如果系统设置关闭记录慢查询，则返回 false
+     *
+     * @return bool|mixed
+     */
+    protected function _start_slow_query()
+    {
+        if (Database::_get_slow_query_setting_time() > 0)
+        {
+            return microtime(1);
+        }
+        else
+        {
+            return false;
+        }
+    }
+
+    /**
+     * 保存慢查询日志
+     *
+     * @param float $start_time 由 `$this->_start_slow_query()` 返回的值
+     */
+    protected function _record_slow_query($start_time)
+    {
+        if (!$start_time)return;
+
+        $end_time = microtime(1);
+        $use_time = 1000 * ($end_time - $start_time);
+
+        if (($min_time = Database::_get_slow_query_setting_time()) && $use_time > $min_time)
+        {
+            // 记录慢查询
+            Database::$slow_querys[] = array
+            (
+                $start_time,
+                $use_time,
+                $this->driver->last_query(),
+            );
+        }
+    }
+
+    /**
      * 解析DSN路径格式
      *
      * @param  string $dsn DSN string
@@ -671,7 +711,7 @@ class Module_Database extends Database_QueryBuilder
             if (isset($connection['path']) && $connection['path'])
             {
                 // Strip leading slash
-                $db['database'] = trim(trim(substr($connection['path'], 1),'/'));
+                $db['database'] = trim(trim(substr($connection['path'], 1) ,'/'));
             }
         }
 
@@ -715,5 +755,24 @@ class Module_Database extends Database_QueryBuilder
 
         // 写入LOG
         return Core::log($data, 'log', 'slow_query/'. date('Y/m_d', TIME));
+    }
+
+    protected static function _get_slow_query_setting_time()
+    {
+        static $slow_query_m_time = null;
+
+        if (null===$slow_query_m_time)
+        {
+            if (IS_CLI)
+            {
+                $slow_query_m_time = false;
+            }
+            else
+            {
+                $slow_query_m_time = (int)Core::config('core.slow_query_mtime');
+            }
+        }
+
+        return $slow_query_m_time;
     }
 }
