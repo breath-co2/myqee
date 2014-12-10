@@ -21,8 +21,8 @@ class OOP_ORM_DI_Default extends OOP_ORM_DI
             # 对于id=true||1的字段，默认为主键
             $this->config = array
             (
-                'field_name'       => $this->key,
-                'is_virtual_field' => false,
+                'field_name' => $this->key,
+                'is_virtual' => false,
             );
 
             if ($this->key=='id')
@@ -35,8 +35,8 @@ class OOP_ORM_DI_Default extends OOP_ORM_DI
         {
             $this->config = array
             (
-                'field_name'       => $this->key,
-                'is_virtual_field' => false,
+                'field_name' => $this->key,
+                'is_virtual' => false,
             );
         }
 
@@ -45,7 +45,7 @@ class OOP_ORM_DI_Default extends OOP_ORM_DI
 
     public function format_config()
     {
-        if (!$this->config['is_virtual_field'] && !isset($this->config['field_name']))
+        if (!$this->config['is_virtual'] && !isset($this->config['field_name']))
         {
             $this->field_name = $this->config['field_name'] = $this->key;
         }
@@ -59,7 +59,7 @@ class OOP_ORM_DI_Default extends OOP_ORM_DI
      * @param $compiled_data
      * @return mixed
      */
-    public function & get_data(OOP_ORM_Data $obj, & $data, & $compiled_data, & $delay_setting)
+    public function & get_data(OOP_ORM_Data $obj, & $data, & $compiled_data, & $compiled_raw_data, & $delay_setting)
     {
         if ($this->field_name && isset($data[$this->field_name]))
         {
@@ -75,7 +75,7 @@ class OOP_ORM_DI_Default extends OOP_ORM_DI
                 # 虚拟对象，尝试解析数据
                 if (is_string($tmp_data))
                 {
-                    if (in_array(substr($tmp_data,0 ,1), array('{', ']')))
+                    if (in_array(substr($tmp_data,0 ,1), array('{', '[')))
                     {
                         # 尝试用 json 解析
                         $tmp_data2 = @json_decode($tmp_data, true);
@@ -108,7 +108,8 @@ class OOP_ORM_DI_Default extends OOP_ORM_DI
                 OOP_ORM_DI::_check_field_type($this->config['field_type'], $tmp_data);
             }
 
-            $compiled_data[$this->key] = $tmp_data;
+            $compiled_data[$this->key]     = $tmp_data;
+            $compiled_raw_data[$this->key] = $tmp_data;     // 保存一个数据备份，用于检查是否修改
         }
         elseif ($delay_setting)
         {
@@ -117,7 +118,7 @@ class OOP_ORM_DI_Default extends OOP_ORM_DI
 
             $delay_setting = null;
 
-            return $this->get_data($obj, $data, $compiled_data, $delay_setting);
+            return $this->get_data($obj, $data, $compiled_data, $compiled_raw_data, $delay_setting);
         }
         else
         {
@@ -138,12 +139,20 @@ class OOP_ORM_DI_Default extends OOP_ORM_DI
      * @param bool $has_compiled
      * @return bool
      */
-    public function set_data(OOP_ORM_Data $obj, & $data, & $compiled_data, $new_value, $has_compiled = false)
+    public function set_data(OOP_ORM_Data $obj, & $data, & $compiled_data, & $compiled_raw_data, $new_value, $has_compiled)
     {
-        if ($this->is_readonly())
+        if ($has_compiled)
         {
-            # 只读字段
-            return false;
+            if ($this->is_readonly())
+            {
+                # 只读字段
+                return false;
+            }
+        }
+        elseif ($this->field_name)
+        {
+            # 未构造完
+            $data[$this->field_name] = $data;
         }
 
         # 处理数据类型
@@ -153,6 +162,11 @@ class OOP_ORM_DI_Default extends OOP_ORM_DI
         }
 
         $compiled_data[$this->key] = $new_value;
+
+        if (!$has_compiled)
+        {
+            $compiled_raw_data[$this->key] = $compiled_data[$this->key];
+        }
 
         return true;
     }

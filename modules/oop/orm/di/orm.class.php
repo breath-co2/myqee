@@ -31,7 +31,7 @@ class OOP_ORM_DI_ORM extends OOP_ORM_DI
         unset($this->config['data'], $this->config['object'], $this->config['format'], $this->config['field_name']);
 
         # 标记为虚拟字段
-        $this->config['is_virtual_field'] = true;
+        $this->config['is_virtual'] = true;
     }
 
     /**
@@ -42,7 +42,7 @@ class OOP_ORM_DI_ORM extends OOP_ORM_DI
      * @param $compiled_data
      * @return bool
      */
-    public function & get_data(OOP_ORM_Data $obj, & $data, & $compiled_data, & $delay_setting)
+    public function & get_data(OOP_ORM_Data $obj, & $data, & $compiled_data, & $compiled_raw_data, & $delay_setting)
     {
         $compiled_data[$this->key] = $this->get_orm_data($obj);
 
@@ -126,9 +126,9 @@ class OOP_ORM_DI_ORM extends OOP_ORM_DI
             case OOP_ORM::PARAM_TYPE_O2O:
                 $rs = $orm_obj->create($data, false);
                 $rs->__orm_callback('set_delay_setting', $st);
-                if ($group_ids = $obj->__orm_callback('get_group_ids'))foreach($group_ids as $group_id)
+                if ($group_ids = $obj->__orm_callback('get_group_ids'))
                 {
-                    $rs->__orm_callback('add_parent_group_id', $group_id);
+                    $rs->__orm_callback('add_parent_group_id', $group_ids);
                 }
                 break;
             case OOP_ORM::PARAM_TYPE_O2M:
@@ -164,15 +164,28 @@ class OOP_ORM_DI_ORM extends OOP_ORM_DI
      * @param bool $has_compiled
      * @return bool
      */
-    public function set_data(OOP_ORM_Data $obj, & $data, & $compiled_data, $new_value, $has_compiled = false)
+    public function set_data(OOP_ORM_Data $obj, & $data, & $compiled_data, & $compiled_raw_data, $new_value, $has_compiled)
     {
-        if ($this->config['is_readonly'])
+        if ($has_compiled && $this->config['is_readonly'])
         {
             # 只读字段
             return false;
         }
+        if ($has_compiled && $new_value instanceof OOP_ORM_Data && isset($compiled_raw_data[$this->key]) && ($c = $compiled_raw_data[$this->key]) && $c instanceof OOP_ORM_Data)
+        {
+            if (($pk = $c->pk()) && $pk === $new_value->pk())
+            {
+                # 主键相同，则不需要更新
+                return true;
+            }
+        }
 
         $compiled_data[$this->key] = $new_value;
+
+        if (!$has_compiled)
+        {
+            $compiled_raw_data[$this->key] = $compiled_data[$this->key];
+        }
 
         return true;
     }

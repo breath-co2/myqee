@@ -486,6 +486,11 @@ class Module_OOP_ORM_Result implements Iterator, ArrayAccess, Serializable, Coun
         );
     }
 
+    public function is_changed()
+    {
+        return false;
+    }
+
     /**
      * 获取指定的对象，如果没有数据则尝试从资源中创建数据
      *

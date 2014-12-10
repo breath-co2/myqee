@@ -29,8 +29,8 @@ abstract class Ex_OOP extends Module_OOP{}
 abstract class OOP_ORM extends Module_OOP_ORM{}
 abstract class Ex_OOP_ORM extends Module_OOP_ORM{}
 
-abstract class OOP_DI extends Module_OOP_ORM_DI{}
-abstract class Ex_OOP_DI extends Module_OOP_ORM_DI{}
+abstract class OOP_ORM_DI extends Module_OOP_ORM_DI{}
+abstract class Ex_OOP_ORM_DI extends Module_OOP_ORM_DI{}
 
 class OOP_ORM_Field extends Module_OOP_ORM_Field{}
 class Ex_OOP_ORM_Field extends Module_OOP_ORM_Field{}

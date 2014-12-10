@@ -31,9 +31,9 @@ class OOP_ORM_DI_Virtual extends OOP_ORM_DI
                 $parent = array_shift($fields);
                 $this->config = array
                 (
-                    'is_virtual_field' => true,
-                    'parent_field'     => $parent,
-                    'sub_fields'       => $fields,
+                    'is_virtual' => true,
+                    'parent_offset'    => $parent,
+                    'sub_offsets'      => $fields,
                 );
             }
             else
@@ -45,8 +45,8 @@ class OOP_ORM_DI_Virtual extends OOP_ORM_DI
         {
             unset($this->config['field_name'], $this->config['pk']);
 
-            $this->config['is_virtual_field'] = true;
-            if (!$this->config['parent_field'] || !$this->config['sub_fields'])
+            $this->config['is_virtual'] = true;
+            if (!$this->config['parent_offset'] || !$this->config['sub_offsets'])
             {
                 throw new Exception('class: '. $this->class_name. ', key: '.$this->key .' 设置参数缺失');
             }
@@ -71,13 +71,13 @@ class OOP_ORM_DI_Virtual extends OOP_ORM_DI
      * @return bool
      * @throws Exception
      */
-    public function & get_data(OOP_ORM_Data $obj, & $data, & $compiled_data, & $delay_setting)
+    public function & get_data(OOP_ORM_Data $obj, & $data, & $compiled_data, & $compiled_raw_data, & $delay_setting)
     {
-        $parent_field = $this->config['parent_field'];
-        $sub_field    = $this->config['sub_fields'];
+        $parent_offset = $this->config['parent_offset'];
+        $sub_offsets   = $this->config['sub_offsets'];
 
-        $tmp_data =& $obj->$parent_field;
-        foreach ($sub_field as $key)
+        $tmp_data =& $obj->$parent_offset;
+        foreach ($sub_offsets as $key)
         {
             if (null===$tmp_data)
             {
@@ -116,29 +116,33 @@ class OOP_ORM_DI_Virtual extends OOP_ORM_DI
             unset($tmp);
         }
 
+        # 移除指针
         unset($compiled_data[$this->key]);
+        # 重新赋值
         $compiled_data[$this->key] =& $tmp_data;
-
-        $obj->__orm_callback('set_virtual_field_update', $parent_field, $this->key);
+        # 记录一个副本用于判断是否修改
+        $compiled_raw_data[$this->key] = $tmp_data;
+        # 回调
+        $obj->__orm_callback('set_virtual_field_update', $parent_offset, $this->key);
 
         return $compiled_data[$this->key];
     }
 
-    public function set_data(OOP_ORM_Data $obj, & $data, & $compiled_data, $new_value, $has_compiled = false)
+    public function set_data(OOP_ORM_Data $obj, & $data, & $compiled_data, & $compiled_raw_data, $new_value, $has_compiled)
     {
-        if ($this->is_readonly())
+        if ($has_compiled && $this->is_readonly())
         {
             # 只读字段
             return false;
         }
 
-        $parent_field = $this->config['parent_field'];
-        $sub_field    = $this->config['sub_fields'];
-        $last_field   = array_pop($sub_field);
+        $parent_offset = $this->config['parent_offset'];
+        $sub_offsets   = $this->config['sub_offsets'];
+        $last_offset   = array_pop($sub_offsets);
 
-        $tmp_data =& $obj->$parent_field;
+        $tmp_data =& $obj->$parent_offset;
 
-        if ($last_field)foreach ($sub_field as $key)
+        if ($last_offset)foreach ($sub_offsets as $key)
         {
             if (is_object($tmp_data))
             {
@@ -175,31 +179,31 @@ class OOP_ORM_DI_Virtual extends OOP_ORM_DI
 
         if (is_object($tmp_data))
         {
-            $tmp_data->$last_field = $new_value;
+            $tmp_data->$last_offset = $new_value;
 
             return true;
         }
         elseif (is_array($tmp_data))
         {
-            $tmp_data[$last_field] = $new_value;
+            $tmp_data[$last_offset] = $new_value;
 
             return true;
         }
         else
         {
-            throw new Exception("Illegal string offset '$last_field' of class {$this->class_name}, key:{$this->key}");
+            throw new Exception("Illegal string offset '$last_offset' of class {$this->class_name}, key:{$this->key}");
         }
     }
 
     public function is_set(OOP_ORM_Data $obj, & $data, & $compiled_data)
     {
-        $parent_field = $this->config['parent_field'];
-        $sub_field    = $this->config['sub_fields'];
-        $last_field   = array_pop($sub_field);
+        $parent_offset = $this->config['parent_offset'];
+        $sub_offsets   = $this->config['sub_offsets'];
+        $last_offset   = array_pop($sub_offsets);
 
-        $tmp_data =& $obj->$parent_field;
+        $tmp_data =& $obj->$parent_offset;
 
-        if ($last_field)foreach ($sub_field as $key)
+        if ($last_offset)foreach ($sub_offsets as $key)
         {
             if (is_object($tmp_data))
             {
@@ -230,11 +234,11 @@ class OOP_ORM_DI_Virtual extends OOP_ORM_DI
 
         if (is_object($tmp_data))
         {
-            return isset($tmp_data->$last_field);
+            return isset($tmp_data->$last_offset);
         }
         elseif (is_array($tmp_data))
         {
-            return isset($tmp_data[$last_field]);
+            return isset($tmp_data[$last_offset]);
         }
         else
         {
@@ -255,13 +259,13 @@ class OOP_ORM_DI_Virtual extends OOP_ORM_DI
             unset($compiled_data[$this->key]);
         }
 
-        $parent_field = $this->config['parent_field'];
-        $sub_field    = $this->config['sub_fields'];
-        $last_field   = array_pop($sub_field);
+        $parent_offset = $this->config['parent_offset'];
+        $sub_offsets   = $this->config['sub_offsets'];
+        $last_offset   = array_pop($sub_offsets);
 
-        $tmp_data =& $obj->$parent_field;
+        $tmp_data =& $obj->$parent_offset;
 
-        if ($last_field)foreach ($sub_field as $key)
+        if ($last_offset)foreach ($sub_offsets as $key)
         {
             if (is_object($tmp_data))
             {
@@ -292,17 +296,27 @@ class OOP_ORM_DI_Virtual extends OOP_ORM_DI
 
         if (is_object($tmp_data))
         {
-            unset($tmp_data->$last_field);
+            unset($tmp_data->$last_offset);
             return true;
         }
         elseif (is_array($tmp_data))
         {
-            unset($tmp_data[$last_field]);
+            unset($tmp_data[$last_offset]);
             return true;
         }
         else
         {
             return true;
         }
+    }
+
+    /**
+     * 获取虚拟字段的父字段名
+     *
+     * @return string
+     */
+    public function get_parent_offset_name()
+    {
+        return $this->config['parent_offset'];
     }
 }

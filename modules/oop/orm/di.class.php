@@ -38,6 +38,20 @@ abstract class Module_OOP_ORM_DI
      * @var array
      */
     protected $config;
+    
+    /**
+     * 记录字段配置处理DI控制器
+     *
+     * @var array
+     */
+    protected static $OFFSET_DI = array();
+
+    /**
+     * 对象主键
+     *
+     * @var array
+     */
+    protected static $CLASS_PK = array();
 
     public function __construct($class_name, $key, $config)
     {
@@ -126,9 +140,9 @@ abstract class Module_OOP_ORM_DI
      * @param $compiled_data
      * @return mixed
      */
-    abstract public function & get_data(OOP_ORM_Data $obj, & $data, & $compiled_data, & $delay_setting);
+    abstract public function & get_data(OOP_ORM_Data $obj, & $data, & $compiled_data, & $compiled_raw_data, & $delay_setting);
 
-    abstract public function set_data(OOP_ORM_Data $obj, & $data, & $compiled_data, $new_value, $has_compiled = false);
+    abstract public function set_data(OOP_ORM_Data $obj, & $data, & $compiled_data, & $compiled_raw_data, $new_value, $has_compiled);
 
     /**
      * 是否设置过对象
@@ -158,7 +172,12 @@ abstract class Module_OOP_ORM_DI
             return false;
         }
 
-        unset($data[$this->key]);
+        $field_name = $this->get_field_name();
+        if (null!==$field_name)
+        {
+            unset($data[$field_name]);
+        }
+
         unset($compiled_data[$this->key]);
 
         return true;
@@ -167,11 +186,11 @@ abstract class Module_OOP_ORM_DI
     /**
      * 获取当前字段名
      *
-     * @return string
+     * @return string|null
      */
     public function get_field_name()
     {
-        return $this->config['field_name'];
+        return isset($this->config['field_name']) ? $this->config['field_name'] : null;
     }
 
     /**
@@ -207,9 +226,145 @@ abstract class Module_OOP_ORM_DI
      *
      * @return bool
      */
-    public function is_change()
+    public function check_data_is_change(OOP_ORM_Data $obj, $only_check_field_data, $current_compiled_data, $current_raw_compiled_data)
     {
+        $field_name = $this->get_field_name();
 
+        if (!$field_name && null === $current_compiled_data)
+        {
+            # 没有字段名，数据也是空
+            return false;
+        }
+        elseif (is_object($current_compiled_data))
+        {
+            if ($current_compiled_data === $current_raw_compiled_data)
+            {
+                # 同一个对象
+                return true;
+            }
+            elseif ($current_compiled_data instanceof OOP_ORM_Data)
+            {
+                # ORM 数据
+                return $current_compiled_data->is_changed($only_check_field_data);
+            }
+            elseif ($current_compiled_data instanceof OOP_ORM_Result)
+            {
+                # ORM 数据
+                return $current_compiled_data->is_changed();
+            }
+            elseif ($current_compiled_data == $current_raw_compiled_data)
+            {
+                # 同一个类型
+                if (isset($this->config['callback']['is_change']) && ($method = $this->config['callback']['is_change']) && method_exists($current_compiled_data, $method))
+                {
+                    # 回调是否修改过
+                    return $current_compiled_data->$method();
+                }
+                elseif (isset($this->config['callback']['get_object_id']) && ($method = $this->config['callback']['get_object_id']) && method_exists($current_compiled_data, $method))
+                {
+                    # 回调对象ID
+                    return (($id = $current_compiled_data->$method()) && $id === $current_raw_compiled_data->$method()) ? false : true;
+                }
+                elseif (isset($this->config['callback']['get_data']) && ($method = $this->config['callback']['get_data']) && method_exists($current_compiled_data, $method))
+                {
+                    # 回调获取数据
+                    return $current_compiled_data->$method() !== $current_raw_compiled_data->$method() ? true : false;
+                }
+                elseif ($current_compiled_data instanceof stdClass || $current_compiled_data instanceof ArrayObject || $current_compiled_data instanceof ArrayIterator)
+                {
+                    # 通过数组进行对比
+                    return (array)$current_compiled_data !== (array)$current_raw_compiled_data ? true: false;
+                }
+                elseif (method_exists($current_compiled_data, '__toString'))
+                {
+                    # 回调获取数据
+                    return $current_compiled_data->__toString() !== $current_raw_compiled_data->__toString() ? true : false;
+                }
+                elseif (method_exists($current_compiled_data, 'getArrayCopy'))
+                {
+                    # 回调获取数据
+                    return $current_compiled_data->getArrayCopy() !== $current_raw_compiled_data->getArrayCopy() ? true : false;
+                }
+                else
+                {
+                    # 序列化成文本进行对比
+                    return serialize($current_compiled_data) !== serialize($current_raw_compiled_data)? true: false;
+                }
+            }
+            else
+            {
+                # 对象发生修改
+                return true;
+            }
+        }
+        else
+        {
+            # 使用旧数据进行对比
+            return $current_compiled_data === $current_raw_compiled_data ? false : true;
+        }
+    }
+
+    public function get_field_data(OOP_ORM_Data $obj, & $data, $current_compiled_data)
+    {
+        if (!isset($this->config['field_name']) || !$this->config['field_name'])
+        {
+            return false;
+        }
+
+        if (is_object($current_compiled_data))
+        {
+            if ($current_compiled_data instanceof OOP_ORM_Data)
+            {
+                $tmp_data = $current_compiled_data->pk();
+            }
+            elseif (isset($this->config['callback']['get_data']) && ($method = $this->config['callback']['get_data']) && method_exists($current_compiled_data, $method))
+            {
+                # 回调获取数据
+                $tmp_data = $current_compiled_data->$method();
+            }
+            elseif ($current_compiled_data instanceof stdClass || $current_compiled_data instanceof ArrayObject || $current_compiled_data instanceof ArrayIterator)
+            {
+                $tmp_data = (array)$current_compiled_data;
+            }
+            elseif (method_exists($current_compiled_data, '__toString'))
+            {
+                $tmp_data = (string)$current_compiled_data;
+            }
+            elseif (method_exists($current_compiled_data, 'getArrayCopy'))
+            {
+                $tmp_data = $current_compiled_data->getArrayCopy();
+            }
+            else
+            {
+                $tmp_data = serialize($current_compiled_data);
+            }
+        }
+        else
+        {
+            $tmp_data = $current_compiled_data;
+        }
+
+        if (isset($this->config['format']) && $this->config['format'])
+        {
+            # 格式化
+            OOP_ORM_DI::_format_data($this->config['format'], $tmp_data);
+        }
+
+        $field_name = $this->config['field_name'];
+
+        $data[$field_name] = $tmp_data;
+
+        return true;
+    }
+
+    /**
+     * 是否虚拟字段
+     *
+     * @return bool
+     */
+    public function is_virtual()
+    {
+        return isset($this->config['is_virtual']) && $this->config['is_virtual'] ? true : false;
     }
 
     /**
@@ -222,6 +377,227 @@ abstract class Module_OOP_ORM_DI
         return $this->config;
     }
 
+    public static function parse_offset($class_name, $class_vars = null, $expand_key = null)
+    {
+        if (isset(OOP_ORM_DI::$OFFSET_DI[$class_name]))
+        {
+            return;
+        }
+
+        $pk = null;
+
+        # 获取当前对象所有变量
+        $config = array();
+
+        if (null===$class_vars)
+        {
+            /**
+             * @var $obj OOP_ORM_Data
+             */
+            $obj        = new $class_name();
+            $class_vars = get_object_vars($obj);
+            $expand_key = $obj->__orm_callback('get_expand_key');
+            unset($obj);
+        }
+
+        if (!$class_vars)return;
+
+        foreach($class_vars as $key => $field_config)
+        {
+            if ($key[0]=='_')continue;
+
+            $type = 'Default';
+
+            if (true===$field_config || null===$field_config)
+            {
+                $type = 'Default';
+            }
+            elseif (is_string($field_config))
+            {
+                if(preg_match('#^(xml|json|http|https)://(.*)$#', $field_config))
+                {
+                    $type = 'Resource';
+                }
+                elseif ((false!==strpos($field_config, '[') && preg_match('#^([a-z0-9_]+)\[(.*)\]$#i', $field_config, $m)) || false!==strpos($field_config, '.'))
+                {
+                    $type = 'Virtual';
+                }
+            }
+            elseif (is_array($field_config))
+            {
+                if (isset($field_config['orm']))
+                {
+                    $type = 'ORM';
+                }
+                elseif (isset($field_config['data']))
+                {
+                    $type = 'Data';
+                }
+                elseif (isset($field_config['object']))
+                {
+                    $type = 'Object';
+                }
+                elseif (isset($field_config['is_virtual']))
+                {
+                    $type = 'Virtual';
+                }
+                elseif (isset($field_config['resource']))
+                {
+                    $type = 'Resource';
+                }
+                elseif (isset($field_config['type']) && $field_config['type'])
+                {
+                    switch ($field_config['type'])
+                    {
+                        case OOP_ORM::PARAM_TYPE_O2O:
+                        case OOP_ORM::PARAM_TYPE_O2M:
+                            $type = 'ORM';
+                            break;
+                        default;
+                            break;
+                    }
+                }
+
+                # 设置扩展key
+                if (isset($field_config['is_expand']) && $field_config['is_expand'])
+                {
+                    if (!$expand_key)
+                    {
+                        $expand_key = $key;
+                    }
+                    elseif(IS_DEBUG)
+                    {
+                        Core::debug()->error($key, $class_name .'设置了多个$expand_key');
+                    }
+                }
+            }
+
+            $type_name = 'OOP_ORM_DI_'. $type;
+
+            /**
+             * @var $tmp OOP_ORM_DI_Default
+             */
+            $tmp = new $type_name($class_name, $key, $field_config);
+
+            # 判断是否主键
+            if ($tmp->is_pk())
+            {
+                $pk[$tmp->get_field_name()] = $key;
+            }
+
+            $config[$key] = $tmp;
+
+            unset($tmp);
+        }
+
+        if ($expand_key)
+        {
+            $config['.$expand_key'] = $expand_key;
+        }
+
+
+        OOP_ORM_DI::$OFFSET_DI[$class_name] = $config;
+        OOP_ORM_DI::$CLASS_PK[$class_name]  = $pk;
+    }
+
+    /**
+     * 获取处理字段DI控制对象
+     *
+     * @param $class_name
+     * @param $key
+     * @return OOP_ORM_DI
+     */
+    public static function get_class_offset_di($class_name, $key)
+    {
+        if (isset(OOP_ORM_DI::$OFFSET_DI[$class_name][$key]))
+        {
+            return OOP_ORM_DI::$OFFSET_DI[$class_name][$key];
+        }
+        elseif (OOP_ORM_DI::$OFFSET_DI[$class_name]['.$expand_key'])
+        {
+            # 自动扩展key
+
+            if (!isset(OOP_ORM_DI::$OFFSET_DI[$class_name]['.expand_field'][$key]))
+            {
+                # 创建一个虚拟对象
+                OOP_ORM_DI::$OFFSET_DI[$class_name]['.expand_field'][$key] = new OOP_ORM_DI_Virtual($class_name, $key, OOP_ORM_DI::$OFFSET_DI[$class_name]['.$expand_key'].'.'. $key);
+            }
+
+            return OOP_ORM_DI::$OFFSET_DI[$class_name]['.expand_field'][$key];
+        }
+        else
+        {
+            if (!isset(OOP_ORM_DI::$OFFSET_DI[$class_name]['.undefined'][$key]))
+            {
+                # 创建一个虚拟对象
+                OOP_ORM_DI::$OFFSET_DI[$class_name]['.undefined'][$key] = new OOP_ORM_DI_Default($class_name, $key, array('is_virtual' => true));
+            }
+
+            return OOP_ORM_DI::$OFFSET_DI[$class_name]['.undefined'][$key];
+        }
+    }
+
+    public static function get_pk_by_class_name($class_name)
+    {
+        if (!isset(OOP_ORM_DI::$CLASS_PK[$class_name]))
+        {
+            OOP_ORM_DI::parse_offset($class_name);
+        }
+
+        return OOP_ORM_DI::$CLASS_PK[$class_name];
+    }
+
+    /**
+     * 根据字段名获取key名
+     *
+     * @param $class_name
+     * @param $field_name
+     * @return null|string
+     */
+    public static function get_key_by_field_name($class_name, $field_name)
+    {
+        if (null===$field_name)return null;
+
+        if (isset(OOP_ORM_DI::$OFFSET_DI[$class_name]))
+        {
+            if (isset(OOP_ORM_DI::$OFFSET_DI[$class_name][$field_name]) && $tmp_di = OOP_ORM_DI::$OFFSET_DI[$class_name][$field_name])
+            {
+                /**
+                 * @var $tmp_di OOP_ORM_DI_Default
+                 */
+                if ($field_name == $tmp_di->get_field_name())
+                {
+                    # field_name 和 key 相同
+                    return $field_name;
+                }
+            }
+
+            # 遍历
+            foreach(OOP_ORM_DI::$OFFSET_DI[$class_name] as $tmp_di)
+            {
+                if ($field_name == $tmp_di->get_field_name())
+                {
+                    # field_name 和 key 相同
+                    return $field_name;
+                }
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * 获取对象数据
+     *
+     * @param $obj
+     * @return array
+     */
+    public static function get_object_vars($obj)
+    {
+        return get_object_vars($obj);
+    }
+
+
     /**
      * 格式化数据
      *
@@ -229,10 +605,8 @@ abstract class Module_OOP_ORM_DI
      * @param $format_config
      * @param $compiled_data
      */
-    protected static function _format_data($key, $format_config, &$compiled_data)
+    protected static function _format_data($format_config, &$tmp_data)
     {
-        $tmp_data = $compiled_data[$key];
-
         foreach((array)$format_config as $v)
         {
             try
@@ -254,8 +628,6 @@ abstract class Module_OOP_ORM_DI
                 Core::debug()->error($v, 'ORM格式化方法不存在');
             }
         }
-
-        $compiled_data[$key] = $tmp_data;
     }
 
     /**
@@ -267,9 +639,7 @@ abstract class Module_OOP_ORM_DI
      */
     protected static function _de_format_data($format_config, &$tmp_data)
     {
-        $format_config = array_reverse((array)$format_config);
-
-        foreach($format_config as $v)
+        foreach(array_reverse((array)$format_config) as $v)
         {
             try
             {

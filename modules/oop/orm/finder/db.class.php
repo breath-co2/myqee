@@ -99,9 +99,6 @@ class Module_OOP_ORM_Finder_DB extends OOP_ORM
 
         }
 
-        # 最后查询SQL
-        $this->last_query = $this->driver()->last_query();
-
         $opt = array
         (
             'is_field_key' => true,
@@ -171,16 +168,6 @@ class Module_OOP_ORM_Finder_DB extends OOP_ORM
     public function tablename()
     {
         return $this->tablename;
-    }
-
-    /**
-     * 获取最后查询SQL
-     *
-     * @return string
-     */
-    public function last_query()
-    {
-        return $this->last_query;
     }
 
 //    /**

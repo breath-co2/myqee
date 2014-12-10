@@ -113,13 +113,6 @@ abstract class Module_OOP_ORM
 
     protected $_auto_where = array();
 
-    /**
-     * 最后查询条件
-     *
-     * @var string
-     */
-    protected $last_query = '';
-
     protected static $orm_name_for_class = array();
 
     public function __construct()
@@ -229,7 +222,7 @@ abstract class Module_OOP_ORM
         /**
          * @var $orm OOP_ORM_Data
          */
-        $orm = OOP_ORM_Data::create_instance($orm_data_name, $data, $is_field_key);
+        $orm = OOP_ORM_Data::create_instance($orm_data_name, $data, $is_field_key, $this);
 
 
         if ($group_id)
@@ -312,7 +305,7 @@ abstract class Module_OOP_ORM
      */
     public function pk_key_name()
     {
-        return OOP_ORM_Data::get_pk_by_class_name(strtolower($this->get_orm_name('data')));
+        return OOP_ORM_DI::get_pk_by_class_name(strtolower($this->get_orm_name('data')));
     }
 
     /**
@@ -364,17 +357,6 @@ abstract class Module_OOP_ORM
      */
     public function last_query()
     {
-        return $this->last_query;
-    }
-
-    /**
-     * 获取对象数据
-     *
-     * @param $obj
-     * @return array
-     */
-    public static function get_object_vars($obj)
-    {
-        return get_object_vars($obj);
+        return $this->driver()->last_query();
     }
 }

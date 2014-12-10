@@ -64,7 +64,7 @@ abstract class Module_OOP_ORM_Parse
                 $field_config = array
                 (
                     'field_name'       => $key,
-                    'is_virtual_field' => false,
+                    'is_virtual' => false,
                 );
 
                 if ($key=='id')
@@ -89,7 +89,7 @@ abstract class Module_OOP_ORM_Parse
                 $field_config = array
                 (
                     'field_name'       => $key,
-                    'is_virtual_field' => false,
+                    'is_virtual' => false,
                 );
             }
             elseif (is_string($value))
@@ -99,13 +99,13 @@ abstract class Module_OOP_ORM_Parse
                 if (false!==strpos($value, '[') && preg_match('#^([a-z0-9_]+)\[(.*)\]$#i', $value, $m))
                 {
                     # 支持 test[abc][def] 格式
-                    $field_config['is_virtual_field'] = true;
+                    $field_config['is_virtual'] = true;
                     $field_config['parent_field']     = explode('][', $m[2]);
                     array_unshift($field_config['parent_field'], $m[1]);
                 }
                 elseif (false!==strpos($value, '.'))
                 {
-                    $field_config['is_virtual_field'] = true;
+                    $field_config['is_virtual'] = true;
                     $field_config['parent_field']     = explode('.', $value);
                 }
                 else
@@ -117,11 +117,11 @@ abstract class Module_OOP_ORM_Parse
 
                     if ($value==$key)
                     {
-                        $field_config['is_virtual_field'] = false;
+                        $field_config['is_virtual'] = false;
                     }
                     else
                     {
-                        $field_config['is_virtual_field'] = true;
+                        $field_config['is_virtual'] = true;
                     }
                 }
             }
@@ -171,7 +171,7 @@ abstract class Module_OOP_ORM_Parse
             }
 
             # 记录虚拟字段
-            if ($field_config['is_virtual_field'])
+            if ($field_config['is_virtual'])
             {
                 OOP_ORM_Parse::$VIRTUAL_FIELD[$class_name][$key] = $key;
             }

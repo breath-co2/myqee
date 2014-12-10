@@ -15,13 +15,29 @@ class OOP_ORM_DI_Resource extends OOP_ORM_DI
     {
         if (is_string($this->config))
         {
-            if (preg_match('#^(xml|json)://(.*)$#', $this->config, $m))
+            if (preg_match('#^(xml|json|http|https)://(.*)$#', $this->config, $m))
             {
-                $this->config = array
-                (
-                    'type'     => $m[1],
-                    'resource' => 'http://'. $m[2],
-                );
+                switch ($m[1])
+                {
+                    case 'xml':
+                    case 'json':
+                        $this->config = array
+                        (
+                            'type'     => $m[1],
+                            'resource' => 'http://'. $m[2],
+                        );
+                        break;
+
+                    case 'http':
+                    case 'https':
+                    default:
+                        $this->config = array
+                        (
+                            'type'     => 'json',
+                            'resource' => $m[1] .'://'. $m[2],
+                        );
+                        break;
+                }
             }
         }
 
@@ -66,13 +82,13 @@ class OOP_ORM_DI_Resource extends OOP_ORM_DI
      * @param $compiled_data
      * @return mixed
      */
-    public function & get_data(OOP_ORM_Data $obj, & $data, & $compiled_data, & $delay_setting)
+    public function & get_data(OOP_ORM_Data $obj, & $data, & $compiled_data, & $compiled_raw_data, & $delay_setting)
     {
         # 处理URL变量
         $url = $this->config['resource'];
         if (preg_match_all('#{{([a-z0-9_]+)}}#i', $url, $m))foreach($m[1] as $v)
         {
-            $url = str_replace('{{'. $v .'}}', $obj->$v, $url);
+            $url = str_replace('{{'.$v.'}}', $obj->$v, $url);
         }
 
         # 获取缓存
@@ -116,7 +132,8 @@ class OOP_ORM_DI_Resource extends OOP_ORM_DI
             OOP_ORM_DI::_de_format_data($this->config['format'], $tmp_data);
         }
 
-        $compiled_data[$this->key] = $tmp_data;
+        $compiled_data[$this->key]     = $tmp_data;
+        $compiled_raw_data[$this->key] = $tmp_data;
 
         return $compiled_data[$this->key];
     }
@@ -132,7 +149,7 @@ class OOP_ORM_DI_Resource extends OOP_ORM_DI
      * @param bool $has_compiled
      * @return bool
      */
-    public function set_data(OOP_ORM_Data $obj, & $data, & $compiled_data, $new_value, $has_compiled = false)
+    public function set_data(OOP_ORM_Data $obj, & $data, & $compiled_data, & $compiled_raw_data, $new_value, $has_compiled)
     {
         return false;
     }
