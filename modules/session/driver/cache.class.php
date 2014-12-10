@@ -139,7 +139,7 @@ class Module_Session_Driver_Cache
     public function destroy()
     {
         $sid = Core::cookie()->get($this->session_name);
-        if ( $sid )
+        if ($sid)
         {
             $this->driver()->delete($sid);
         }
