@@ -28,6 +28,13 @@ class Module_Database_QueryBuilder
 
     protected $_last_join = null;
 
+    /**
+     * 预定义模板
+     *
+     * @var string
+     */
+    protected $_statement = null;
+
     public function __construct()
     {
         # 初始化数据
@@ -35,10 +42,46 @@ class Module_Database_QueryBuilder
     }
 
     /**
+     * 设定一个预处理语句
+     *
+     * 此时只是设定一个预处理语句，并不执行，通过 `$this->execute()` 来执行
+     * 设置的模板在 `$this->execute()` 后仍可反复使用，直到重新设置
+     *
+     * [!!] 本方法只能设置1条，再次执行则覆盖之前设置的，与 `PDD::prepare($statement)` 不同，它反复执行可以设置多条
+     *
+     *      $db = new Database();
+     *
+     *      // 用法1，替换掉相同关键字的部分
+     *      $rp = array
+     *      (
+     *          ':id'     => $_GET['id'],
+     *          ':status' => $_GET['status'],
+     *      );
+     *      $rs = $db->prepare("SELECT * FROM `my_table` WHERE id = :id AND status = :status")->execute($rp);
+     *
+     *      // 用法2，按顺序替换掉语句中?的部分
+     *      $rp = array
+     *      (
+     *          $_GET['id'],
+     *          $_GET['status'],
+     *      );
+     *      $rs = $db->prepare("SELECT * FROM `my_table` WHERE id = ? AND status = ?")->execute($rp);
+     *
+     * @param $statement
+     * @return $this
+     */
+    public function prepare($statement)
+    {
+        $this->_statement = trim($statement);
+
+        return $this;
+    }
+
+    /**
      * 解析为SQL语句
      *
-     * @param   object  Database instance
-     * @return  string
+     * @param  object Database instance
+     * @return string
      */
     public function compile(Database $db)
     {
@@ -79,7 +122,7 @@ class Module_Database_QueryBuilder
      *
      *
      * @param array $builder builder信息数组，不必完整的，建议通过get_builder()获取后设置
-     * @return Database
+     * @return $this
      */
     public function set_builder(array $builder)
     {
@@ -92,8 +135,8 @@ class Module_Database_QueryBuilder
      * 构成查询 SELECT DISTINCT
      * 如果传的是字符串则构造出 SELECT DISTINCT(`test`) as `test` 这样的查询(MySQL)
      *
-     * @param   boolean  enable or disable distinct columns
-     * @return  Database
+     * @param  boolean $value enable or disable distinct columns
+     * @return $this
      */
     public function distinct($value = true)
     {
@@ -118,9 +161,9 @@ class Module_Database_QueryBuilder
      *      echo $db->last_query();     //SELECT SUM("id") as `id` FROM `members`;
      *
      *
-     * @param   mixed  column name or array($column, $alias) or object
-     * @param   ...
-     * @return  Database
+     * @param  mixed $columns column name or array($column, $alias) or object
+     * @param  ...
+     * @return $this
      */
     public function select($columns)
     {
@@ -145,8 +188,8 @@ class Module_Database_QueryBuilder
     /**
      * Choose the columns to select from, using an array.
      *
-     * @param   array  list of column names or aliases
-     * @return  Database
+     * @param  array $columns list of column names or aliases
+     * @return $this
      */
     public function select_array(array $columns)
     {
@@ -161,7 +204,7 @@ class Module_Database_QueryBuilder
      *    $db->select_max('test')->from('db')->group_by('class_id')->get()->as_array();
      *
      * @param string $conlumn
-     * @return  Database
+     * @return $this
      */
     public function select_max($conlumn)
     {
@@ -176,7 +219,7 @@ class Module_Database_QueryBuilder
      *    $db->select_min('test')->from('db')->group_by('class_id')->get()->as_array();
      *
      * @param string $conlumn
-     * @return  Database
+     * @return $this
      */
     public function select_min($conlumn)
     {
@@ -191,7 +234,7 @@ class Module_Database_QueryBuilder
      *    $db->select_avg('test')->from('db')->group_by('class_id')->get()->as_array();
      *
      * @param string $conlumn
-     * @return  Database
+     * @return $this
      */
     public function select_avg($conlumn)
     {
@@ -206,7 +249,7 @@ class Module_Database_QueryBuilder
      *    $db->select_sum('test')->from('db')->group_by('class_id')->get()->as_array();
      *
      * @param string $conlumn
-     * @return  Database
+     * @return $this
      */
     public function select_sum($conlumn)
     {
@@ -227,7 +270,7 @@ class Module_Database_QueryBuilder
      *
      * @param string $conlumn
      * @param string $opt
-     * @return Database
+     * @return $this
      */
     public function select_adv($conlumn, $type, $opt1=null, $opt2=null)
     {
@@ -240,8 +283,8 @@ class Module_Database_QueryBuilder
     /**
      * Set the columns that will be inserted.
      *
-     * @param   array  column names
-     * @return  Database
+     * @param  array $columns column names
+     * @return $this
      */
     public function columns(array $columns)
     {
@@ -266,9 +309,9 @@ class Module_Database_QueryBuilder
      *     $values[] = array('k1'=>3,'k2'=>1);
      *     $db->values($values);            //加入3行数据,等同上面的效果
      *
-     * @param   array   values list
-     * @param   ...
-     * @return  Database
+     * @param  array $values values list
+     * @param  ...
+     * @return $this
      */
     public function values(array $values)
     {
@@ -290,8 +333,8 @@ class Module_Database_QueryBuilder
     /**
      * 为update,insert设置数据
      *
-     * @param   array   associative (column => value) list
-     * @return  Database
+     * @param  array $pairs associative (column => value) list
+     * @return $this
      */
     public function set(array $pairs)
     {
@@ -317,10 +360,10 @@ class Module_Database_QueryBuilder
     /**
      * Set the value of a single column.
      *
-     * @param  mixed  table name or array($table, $alias) or object
-     * @param  mixed  column value
+     * @param  mixed $column table name or array($table, $alias) or object
+     * @param  mixed $value column value
      * @param  string =|+|-
-     * @return Database
+     * @return $this
      */
     public function value($column, $value , $op = '=')
     {
@@ -334,11 +377,11 @@ class Module_Database_QueryBuilder
      *
      * @param string $column
      * @param int $value
-     * @return Database
+     * @return $this
      */
     public function value_increment($column, $value)
     {
-        return $this->value($column, abs($value) , $value>0?'+':'-');
+        return $this->value($column, abs($value), $value>0?'+':'-');
     }
 
     /**
@@ -346,7 +389,7 @@ class Module_Database_QueryBuilder
      *
      * @param string $column
      * @param int $value
-     * @return Database
+     * @return $this
      */
     public function value_decrement($column, $value)
     {
@@ -356,8 +399,8 @@ class Module_Database_QueryBuilder
     /**
      * Sets the table to update.
      *
-     * @param mixed  table name or array($table, $alias) or object
-     * @return Database
+     * @param mixed $table table name or array($table, $alias) or object
+     * @return $this
      */
     public function table($table)
     {
@@ -369,9 +412,9 @@ class Module_Database_QueryBuilder
     /**
      * from(tableA,tableB,...)
      *
-     * @param   mixed  table name or array($table, $alias) or object
-     * @param   ...
-     * @return  Database
+     * @param  mixed $tables table name or array($table, $alias) or object
+     * @param  ...
+     * @return $this
      */
     public function from($tables)
     {
@@ -396,9 +439,9 @@ class Module_Database_QueryBuilder
     /**
      * Adds addition tables to "JOIN ...".
      *
-     * @param   mixed   column name or array($column, $alias) or object
-     * @param   string  join type (LEFT, RIGHT, INNER, etc)
-     * @return  Database
+     * @param  mixed  $table column name or array($column, $alias) or object
+     * @param  string $type join type (LEFT, RIGHT, INNER, etc)
+     * @return $this
      */
     public function join($table, $type = null)
     {
@@ -414,10 +457,10 @@ class Module_Database_QueryBuilder
     /**
      * Adds "ON ..." conditions for the last created JOIN statement.
      *
-     * @param   mixed   column name or array($column, $alias) or object
-     * @param   string  logic operator
-     * @param   mixed   column name or array($column, $alias) or object
-     * @return  Database
+     * @param  mixed  $c1 column name or array($column, $alias) or object
+     * @param  string $c2 logic operator
+     * @param  mixed  $op column name or array($column, $alias) or object
+     * @return $this
      */
     public function on($c1, $c2, $op = '=')
     {
@@ -429,9 +472,9 @@ class Module_Database_QueryBuilder
     /**
      * group_by(c1,c2,c3,.....)
      *
-     * @param   mixed   column name or array($column, $alias) or object
-     * @param   ...
-     * @return  Database
+     * @param  mixed $columns column name or array($column, $alias) or object
+     * @param  ...
+     * @return $this
      */
     public function group_by($columns)
     {
@@ -449,7 +492,7 @@ class Module_Database_QueryBuilder
      * @param string $order_by
      * @param string $separator
      * @param bool $distinct
-     * @return Database
+     * @return $this
      */
     public function group_concat($column, $order_by = null, $separator = null, $distinct = false)
     {
@@ -461,23 +504,32 @@ class Module_Database_QueryBuilder
     /**
      * Alias of and_having()
      *
-     * @param   mixed   column name or array($column, $alias) or object
-     * @param   string  logic operator
-     * @param   mixed   column value
-     * @return  Database
+     * @param  mixed $column column name or array($column, $alias) or object
+     * @param  string $value logic operator
+     * @param  mixed $op column value
+     * @return $this
      */
     public function having($column, $value = null, $op = '=')
     {
+        if (is_array($column))
+        {
+            foreach ($column as $c => $value)
+            {
+                $this->and_having($c, $value, $op);
+            }
+            return $this;
+        }
+
         return $this->and_having($column, $value, $op);
     }
 
     /**
      * Creates a new "AND HAVING" condition for the query.
      *
-     * @param   mixed   column name or array($column, $alias) or object
-     * @param   string  logic operator
-     * @param   mixed   column value
-     * @return  Database
+     * @param  mixed  $column column name or array($column, $alias) or object
+     * @param  string $value logic operator
+     * @param  mixed  $op column value
+     * @return $this
      */
     public function and_having($column, $value = null, $op = '=')
     {
@@ -489,10 +541,10 @@ class Module_Database_QueryBuilder
     /**
      * Creates a new "OR HAVING" condition for the query.
      *
-     * @param   mixed   column name or array($column, $alias) or object
-     * @param   string  logic operator
-     * @param   mixed   column value
-     * @return  Database
+     * @param  mixed $column  column name or array($column, $alias) or object
+     * @param  string $value logic operator
+     * @param  mixed $op column value
+     * @return $this
      */
     public function or_having($column, $value = null, $op = '=')
     {
@@ -504,7 +556,7 @@ class Module_Database_QueryBuilder
     /**
      * Alias of and_having_open()
      *
-     * @return  Database
+     * @return $this
      */
     public function having_open()
     {
@@ -514,7 +566,7 @@ class Module_Database_QueryBuilder
     /**
      * Opens a new "AND HAVING (...)" grouping.
      *
-     * @return  Database
+     * @return $this
      */
     public function and_having_open()
     {
@@ -526,7 +578,7 @@ class Module_Database_QueryBuilder
     /**
      * Opens a new "OR HAVING (...)" grouping.
      *
-     * @return  Database
+     * @return $this
      */
     public function or_having_open()
     {
@@ -538,7 +590,7 @@ class Module_Database_QueryBuilder
     /**
      * Closes an open "AND HAVING (...)" grouping.
      *
-     * @return  Database
+     * @return $this
      */
     public function having_close()
     {
@@ -548,7 +600,7 @@ class Module_Database_QueryBuilder
     /**
      * Closes an open "AND HAVING (...)" grouping.
      *
-     * @return  Database
+     * @return $this
      */
     public function and_having_close()
     {
@@ -560,7 +612,7 @@ class Module_Database_QueryBuilder
     /**
      * Closes an open "OR HAVING (...)" grouping.
      *
-     * @return  Database
+     * @return $this
      */
     public function or_having_close()
     {
@@ -572,8 +624,8 @@ class Module_Database_QueryBuilder
     /**
      * Start returning results after "OFFSET ..."
      *
-     * @param   integer   starting result number
-     * @return  Database
+     * @param  integer  $number starting result number
+     * @return $this
      */
     public function offset($number)
     {
@@ -589,8 +641,8 @@ class Module_Database_QueryBuilder
     /**
      * 重设数据
      *
-     * @param $key 不传则全部清除，可选参数 select,select_adv,from,join,where,group_by,having,set,columns,values,where,index,order_by,distinct,limit,offset,table,last_join,join,on
-     * @return Database
+     * @param string $key 不传则全部清除，可选参数 select,select_adv,from,join,where,group_by,having,set,columns,values,where,index,order_by,distinct,limit,offset,table,last_join,join,on
+     * @return $this
      */
     public function reset($key = null)
     {
@@ -657,7 +709,7 @@ class Module_Database_QueryBuilder
      *
      * @param string $key
      * @param array $value
-     * @return Database
+     * @return $this
      */
     public function in($column, $value, $no_in = false)
     {
@@ -672,10 +724,10 @@ class Module_Database_QueryBuilder
     /**
      * Alias of and_where()
      *
-     * @param   mixed   column name or array($column, $alias) or object
-     * @param   string  logic operator
-     * @param   mixed   column value
-     * @return  Database
+     * @param  mixed  $column column name or array($column, $alias) or object
+     * @param  string $value logic operator
+     * @param  mixed  $op column value
+     * @return $this
      */
     public function where($column, $value = null, $op = '=')
     {
@@ -693,10 +745,10 @@ class Module_Database_QueryBuilder
     /**
      * Creates a new "AND WHERE" condition for the query.
      *
-     * @param   mixed   column name or array($column, $alias) or object
-     * @param   string  logic operator
-     * @param   mixed   column value
-     * @return  Database
+     * @param  mixed  $column column name or array($column, $alias) or object
+     * @param  string $value logic operator
+     * @param  mixed  $op column value
+     * @return $this
      */
     public function and_where($column, $value, $op = '=')
     {
@@ -717,10 +769,10 @@ class Module_Database_QueryBuilder
     /**
      * Creates a new "OR WHERE" condition for the query.
      *
-     * @param   mixed   column name or array($column, $alias) or object
-     * @param   string  logic operator
-     * @param   mixed   column value
-     * @return  Database
+     * @param  mixed  $column column name or array($column, $alias) or object
+     * @param  string $value logic operator
+     * @param  mixed  $op column value
+     * @return $this
      */
     public function or_where($column, $value, $op = '=')
     {
@@ -732,7 +784,7 @@ class Module_Database_QueryBuilder
     /**
      * Alias of and_where_open()
      *
-     * @return  Database
+     * @return $this
      */
     public function where_open()
     {
@@ -742,7 +794,7 @@ class Module_Database_QueryBuilder
     /**
      * Opens a new "AND WHERE (...)" grouping.
      *
-     * @return  Database
+     * @return $this
      */
     public function and_where_open()
     {
@@ -754,7 +806,7 @@ class Module_Database_QueryBuilder
     /**
      * Opens a new "OR WHERE (...)" grouping.
      *
-     * @return  Database
+     * @return $this
      */
     public function or_where_open()
     {
@@ -766,7 +818,7 @@ class Module_Database_QueryBuilder
     /**
      * Closes an open "AND WHERE (...)" grouping.
      *
-     * @return  Database
+     * @return $this
      */
     public function where_close()
     {
@@ -776,7 +828,7 @@ class Module_Database_QueryBuilder
     /**
      * Closes an open "AND WHERE (...)" grouping.
      *
-     * @return  Database
+     * @return $this
      */
     public function and_where_close()
     {
@@ -788,7 +840,7 @@ class Module_Database_QueryBuilder
     /**
      * Closes an open "OR WHERE (...)" grouping.
      *
-     * @return  Database
+     * @return $this
      */
     public function or_where_close()
     {
@@ -800,9 +852,9 @@ class Module_Database_QueryBuilder
     /**
      * Applies sorting with "ORDER BY ..."
      *
-     * @param   mixed   column name or array($column, $alias) or object
-     * @param   string  direction of sorting
-     * @return  Database
+     * @param  mixed  $column column name or array($column, $alias) or object
+     * @param  string $direction direction of sorting
+     * @return $this
      */
     public function order_by($column, $direction = 'ASC')
     {
@@ -814,9 +866,9 @@ class Module_Database_QueryBuilder
     /**
      * Return up to "LIMIT ..." results
      *
-     * @param   integer  maximum results to return
-     * @param   integer  maximum results from offset
-     * @return  Database
+     * @param  integer $number maximum results to return
+     * @param  integer $offset maximum results from offset
+     * @return $this
      */
     public function limit($number, $offset = null)
     {
@@ -835,7 +887,7 @@ class Module_Database_QueryBuilder
      *
      * @param string $column
      * @param string $value
-     * @return  Database
+     * @return $this
      */
     public function like($column, $value = null)
     {
@@ -847,7 +899,7 @@ class Module_Database_QueryBuilder
      *
      * @param string $column
      * @param string $value
-     * @return  Database
+     * @return $this
      */
     public function or_like($column, $value = null)
     {
@@ -860,11 +912,11 @@ class Module_Database_QueryBuilder
      * @param string $column
      * @param int $mod_dig
      * @param int $value
-     * @return  Database
+     * @return $this
      */
     public function mod($column, $mod_dig , $value)
     {
-        return $this->and_where($column, array($mod_dig, $value) , 'mod');
+        return $this->and_where($column, array($mod_dig, $value), 'mod');
     }
 
     /**
@@ -873,22 +925,22 @@ class Module_Database_QueryBuilder
      * @param string $column
      * @param int $mod_dig
      * @param int $value
-     * @return  Database
+     * @return $this
      */
     public function or_mod($column, $mod_dig , $value , $op = '=')
     {
-        return $this->or_where($column, array($mod_dig,$value,$op) , 'mod');
+        return $this->or_where($column, array($mod_dig,$value,$op), 'mod');
     }
 
     /**
      * 使用指定索引
      *
      * @param string
-     * @return  Database
+     * @return $this
      */
     public function use_index($index)
     {
-        $this->_builder['index'][] = array($index,'use');
+        $this->_builder['index'][] = array($index, 'use');
 
         return $this;
     }
@@ -897,11 +949,11 @@ class Module_Database_QueryBuilder
      * 强制使用指定索引
      *
      * @param string
-     * @return  Database
+     * @return $this
      */
     public function force_index($index)
     {
-        $this->_builder['index'][] = array($index,'force');
+        $this->_builder['index'][] = array($index, 'force');
 
         return $this;
     }
@@ -910,11 +962,11 @@ class Module_Database_QueryBuilder
      * 或略指定索引
      *
      * @param string
-     * @return  Database
+     * @return $this
      */
     public function ignore_index($index)
     {
-        $this->_builder['index'][] = array($index,'ignore');
+        $this->_builder['index'][] = array($index, 'ignore');
 
         return $this;
     }
@@ -948,7 +1000,7 @@ class Module_Database_QueryBuilder
      *      echo $db->last_query();   // SELECT * FROM `mydb` WHERE `id` > '10' ORDER BY `id` DESC LIMIT 10
      *
      *
-     * @return Database
+     * @return $this
      */
     public function recovery_last_builder()
     {
@@ -964,7 +1016,7 @@ class Module_Database_QueryBuilder
      * 创建一个不会被过滤处理的字符串
      *
      * @param string|array expression
-     * @return Database_Expression
+     * @return $this_Expression
      */
     public static function expr_value($string)
     {

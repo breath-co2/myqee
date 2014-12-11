@@ -44,8 +44,9 @@ class Driver_Database_Driver_Mongo_Result extends Database_Result
         }
         elseif ($this->_result instanceof ArrayIterator)
         {
-            if ($this->offsetExists($offset) && $this->_result->seek($offset))
+            if ($this->offsetExists($offset))
             {
+                $this->_result->seek($offset);
                 return true;
             }
             else

@@ -39,9 +39,20 @@ class Driver_Database_Driver_Mongo extends Database_Driver
 
     /**
      * 记录connection id所对应的hostname
+     *
      * @var array
      */
     protected static $_current_connection_id_to_hostname = array();
+
+    function __construct(array $config)
+    {
+        if (!isset($config['port']) || !$config['port']>0)
+        {
+            $config['port'] = 27017;
+        }
+
+        parent::__construct($config);
+    }
 
     /**
      * 连接数据库
@@ -68,7 +79,7 @@ class Driver_Database_Driver_Mongo extends Database_Driver
         $this->set_charset($this->config['charset']);
 
         # 切换表
-        $this->_select_db($this->config['connection']['database']);
+        $this->select_db($this->config['connection']['database']);
     }
 
     /**
@@ -96,51 +107,13 @@ class Driver_Database_Driver_Mongo extends Database_Driver
 
     protected function _connect()
     {
+        if ($this->_try_use_exists_connection())
+        {
+            return;
+        }
+
         $database = $hostname = $port = $username = $password = $persistent = $readpreference = null;
         extract($this->config['connection']);
-
-        if (!$port>0)
-        {
-            $port = 27017;
-        }
-
-        # 检查下是否已经有连接连上去了
-        if (Database_Driver_Mongo::$_connection_instance)
-        {
-            if (is_array($hostname))
-            {
-                $hostconfig = $hostname[$this->_connection_type];
-                if (!$hostconfig)
-                {
-                    throw new Exception('指定的数据库连接主从配置中('. $this->_connection_type .')不存在，请检查配置');
-                }
-                if (!is_array($hostconfig))
-                {
-                    $hostconfig = array($hostconfig);
-                }
-            }
-            else
-            {
-                $hostconfig = array
-                (
-                    $hostname
-                );
-            }
-
-            # 先检查是否已经有相同的连接连上了数据库
-            foreach ($hostconfig as $host)
-            {
-                $_connection_id = $this->_get_connection_hash($host, $port, $username);
-
-                if (isset(Database_Driver_Mongo::$_connection_instance[$_connection_id]))
-                {
-                    $this->_connection_ids[$this->_connection_type] = $_connection_id;
-
-                    return;
-                }
-            }
-
-        }
 
         # 错误服务器
         static $error_host = array();
@@ -261,6 +234,54 @@ class Driver_Database_Driver_Mongo extends Database_Driver
     }
 
     /**
+     * @return bool
+     * @throws Exception
+     */
+    protected function _try_use_exists_connection()
+    {
+        # 检查下是否已经有连接连上去了
+        if (Database_Driver_Mongo::$_connection_instance)
+        {
+            $hostname = $this->config['connection']['hostname'];
+            if (is_array($hostname))
+            {
+                $host_config = $hostname[$this->_connection_type];
+                if (!$host_config)
+                {
+                    throw new Exception('指定的数据库连接主从配置中('.$this->_connection_type.')不存在，请检查配置');
+                }
+
+                if (!is_array($host_config))
+                {
+                    $host_config = array($host_config);
+                }
+            }
+            else
+            {
+                $host_config = array
+                (
+                    $hostname
+                );
+            }
+
+            # 先检查是否已经有相同的连接连上了数据库
+            foreach ($host_config as $host)
+            {
+                $_connection_id = $this->_get_connection_hash($host, $this->config['port'], $this->config['username']);
+
+                if (isset(Database_Driver_Mongo::$_connection_instance[$_connection_id]))
+                {
+                    $this->_connection_ids[$this->_connection_type] = $_connection_id;
+
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    /**
      * 关闭链接
      */
     public function close_connect()
@@ -269,9 +290,6 @@ class Driver_Database_Driver_Mongo extends Database_Driver
         {
             if ($connection_id && Database_Driver_Mongo::$_connection_instance[$connection_id])
             {
-                Core::debug()->info('close '.$key.' mongo '.Database_Driver_Mongo::$_current_connection_id_to_hostname[$connection_id].' connection.');
-                Database_Driver_Mongo::$_connection_instance[$connection_id]->close();
-
                 # 销毁对象
                 Database_Driver_Mongo::$_connection_instance[$connection_id]    = null;
                 Database_Driver_Mongo::$_connection_instance_db[$connection_id] = null;
@@ -281,6 +299,8 @@ class Driver_Database_Driver_Mongo extends Database_Driver
                 unset(Database_Driver_Mongo::$_current_databases[$connection_id]);
                 unset(Database_Driver_Mongo::$_current_charset[$connection_id]);
                 unset(Database_Driver_Mongo::$_current_connection_id_to_hostname[$connection_id]);
+
+                if (IS_DEBUG)Core::debug()->info('close '.$key.' mongo '.Database_Driver_Mongo::$_current_connection_id_to_hostname[$connection_id].' connection.');
             }
 
             $this->_connection_ids[$key] = null;
@@ -293,7 +313,7 @@ class Driver_Database_Driver_Mongo extends Database_Driver
      * @param string Database
      * @return void
      */
-    protected function _select_db($database)
+    public function select_db($database)
     {
         if (!$database)return;
 
@@ -304,7 +324,7 @@ class Driver_Database_Driver_Mongo extends Database_Driver
             if (!Database_Driver_Mongo::$_connection_instance[$connection_id])
             {
                 $this->connect();
-                $this->_select_db($database);
+                $this->select_db($database);
                 return;
             }
 
@@ -531,9 +551,29 @@ class Driver_Database_Driver_Mongo extends Database_Driver
         return $value;
     }
 
+    /**
+     * MongoDB 不需要处理
+     *
+     * @param mixed $value
+     * @return mixed|string
+     */
     public function quote($value)
     {
         return $value;
+    }
+
+    /**
+     * 执行构造语法执行
+     *
+     * @param string $statement
+     * @param array $input_parameters
+     * @param null|bool|string $as_object
+     * @param null|bool|string $connection_type
+     * @return Database_Driver_MySQLI_Result
+     */
+    public function execute($statement, array $input_parameters, $as_object = null, $connection_type = null)
+    {
+
     }
 
     /**
@@ -548,52 +588,26 @@ class Driver_Database_Driver_Mongo extends Database_Driver
      * @param boolean $use_master 是否使用主数据库，不设置则自动判断
      * @return Database_Driver_Mongo_Result
      */
-    public function query($options, $as_object = null, $use_connection_type = null)
+    public function query($options, $as_object = null, $connection_type = null)
     {
         if (IS_DEBUG)Core::debug()->log($options);
 
         if (is_string($options))
         {
             # 设置连接类型
-            $this->_set_connection_type($use_connection_type);
+            $this->_set_connection_type($connection_type);
 
-            // 必需数组
+            # 必需数组
             if (!is_array($as_object))$as_object = array();
+
+            # 执行字符串式查询语句
             return $this->connection()->execute($options, $as_object);
         }
 
-        $type = strtoupper($options['type']);
-
-        $slaverType = array
-        (
-            'SELECT',
-            'SHOW',
-            'EXPLAIN'
-        );
-
-        if (in_array($type, $slaverType))
-        {
-            if (true===$use_connection_type)
-            {
-                $use_connection_type = 'master';
-            }
-            else if (is_string($use_connection_type))
-            {
-                if (!preg_match('#^[a-z0-9_]+$#i', $use_connection_type))$use_connection_type = 'master';
-            }
-            else
-            {
-                $use_connection_type = 'slaver';
-            }
-        }
-        else
-        {
-            $use_connection_type = 'master';
-        }
-
+        $type = $this->_get_query_type($options, $connection_type);
 
         # 设置连接类型
-        $this->_set_connection_type($use_connection_type);
+        $this->_set_connection_type($connection_type);
 
         # 连接数据库
         $connection = $this->connection();
@@ -1133,6 +1147,20 @@ class Driver_Database_Driver_Mongo extends Database_Driver
         return $rs;
     }
 
+    /**
+     * 创建一个数据库
+     *
+     * @param string $database
+     * @param string $charset 编码，不传则使用数据库连接配置相同到编码
+     * @param string $collate 整理格式
+     * @return boolean
+     * @throws Exception
+     */
+    public function create_database($database, $charset = null, $collate = null)
+    {
+        // mongodb 不需要手动创建，可自动创建
+    }
+
     protected function _compile_set_data($op, $value)
     {
         $op = strtolower($op);
@@ -1145,6 +1173,8 @@ class Driver_Database_Driver_Mongo extends Database_Driver
             '!=' => 'ne',
             '<>' => 'ne',
         );
+
+        $option = array();
 
         if ($op === 'between' && is_array($value))
         {
@@ -1416,4 +1446,37 @@ class Driver_Database_Driver_Mongo extends Database_Driver
         return $query;
     }
 
+    protected function _get_query_type($options, & $connection_type)
+    {
+        $type = strtoupper($options['type']);
+
+        $slaverType = array
+        (
+            'SELECT',
+            'SHOW',
+            'EXPLAIN'
+        );
+
+        if (in_array($type, $slaverType))
+        {
+            if (true===$connection_type)
+            {
+                $connection_type = 'master';
+            }
+            else if (is_string($connection_type))
+            {
+                if (!preg_match('#^[a-z0-9_]+$#i', $connection_type))$connection_type = 'master';
+            }
+            else
+            {
+                $connection_type = 'slaver';
+            }
+        }
+        else
+        {
+            $connection_type = 'master';
+        }
+
+        return $type;
+    }
 }
