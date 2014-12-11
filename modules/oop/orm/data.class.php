@@ -274,7 +274,7 @@ class Module_OOP_ORM_Data
      */
     public function __unset($key)
     {
-        if ($this->_is_temp_instance && !isset($this->_temp_offset_di[$key]) && !isset($this->_data[$key]))
+        if ($this->_is_temp_instance && !$this->_expand_key && !isset($this->_temp_offset_di[$key]) && !isset($this->_data[$key]))
         {
             # 临时对象且没实例化
             return true;
@@ -284,20 +284,6 @@ class Module_OOP_ORM_Data
 
         if ($rs)
         {
-            if ($this->_is_temp_instance && isset($this->_temp_offset_di[$key]))
-            {
-                # 临时对象
-                unset($this->_temp_offset_di[$key]);
-
-                # 标记为真实数据修改过
-                $this->_changed_status = 2;
-            }
-            elseif (2!==$this->_changed_status)
-            {
-                # 标记为有修改
-                $this->_changed_status = 1;
-            }
-
             $this->_unset_offset[$key] = 1;
         }
 
@@ -601,7 +587,6 @@ class Module_OOP_ORM_Data
             throw new Exception('ORM:'. $this->_class_name .' 不存在ID字段，无法使用ORM系统自带的update方法更新');
         }
 
-
         # 递增或递减数据处理
         if ($this->_value_increment && method_exists($this->finder()->driver(), 'value_increment'))foreach ($this->_value_increment as $field => $value)
         {
@@ -656,7 +641,7 @@ class Module_OOP_ORM_Data
     public function get_changed_field_data()
     {
         $data = array();
-        if (!$this->_compiled_data)return $data;
+        if (!$this->_compiled_data && !$this->_unset_offset)return $data;
 
         foreach($this->_compiled_data as $key => $value)
         {
@@ -670,6 +655,24 @@ class Module_OOP_ORM_Data
             if ($this->_check_offset_is_changed($key))
             {
                 $di->get_field_data($this, $data, $value);
+            }
+        }
+
+        foreach($this->_unset_offset as $key => $true)
+        {
+            # 被unset掉的对象
+            $di = $this->_get_di_by_offset($key);
+            if ($di->is_virtual())
+            {
+                # 虚拟字段
+                continue;
+            }
+
+            $field_name = $di->get_field_name();
+            if ($field_name)
+            {
+                # 标记已删除
+                $data[$field_name] = null;
             }
         }
 
