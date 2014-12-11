@@ -394,7 +394,7 @@ class Driver_Database_Driver_Mongo extends Database_Driver
                 $sql['data'] = $data;
             }
         }
-        elseif ($type == 'update')
+        elseif ($type == 'update' || $type == 'replace')
         {
             $sql = array
             (
@@ -407,22 +407,46 @@ class Driver_Database_Driver_Mongo extends Database_Driver
                     'safe'     => true,
                 ),
             );
+
             foreach ($builder['set'] as $item)
             {
-                if ($item[2]=='+')
+                list ($key, $value, $op) = $item;
+                if ($op=='+')
                 {
+                    # 递增
                     $op = '$inc';
                 }
-                elseif  ($item[2]=='-')
+                elseif ($op=='-')
                 {
-                    $item[1] = - $item[1];
+                    # 递减
+                    $value = -$value;
                     $op = '$inc';
+                }
+                elseif (null===$value)
+                {
+                    # 如果值是 null, 则 unset 此字段
+                    $op    = '$unset';
+                    $value = '';
                 }
                 else
                 {
+                    # 设置字段
                     $op = '$set';
                 }
-                $sql['data'][$op][$item[0]] = $item[1];
+
+                $sql['data'][$op][$key] = $value;
+            }
+
+            # 全部替换的模式
+            if ($type=='replace')
+            {
+                $sql['options']['upsert'] = true;
+
+                if (isset($sql['data']['$set']) && $set = $sql['data']['$set'])
+                {
+                    unset($sql['data']['$set']);
+                    $sql['data'] = array_merge($sql['data'], $set);
+                }
             }
         }
         elseif ($type == 'delete')

@@ -1110,7 +1110,6 @@ abstract class Module_Database_Driver
                 $w_type = '';
             }
 
-            // Quote the column name
             $column = $this->_quote_identifier($column);
 
             if ($w_type)

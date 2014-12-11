@@ -483,7 +483,7 @@ class Module_Database extends Database_QueryBuilder
     /**
      * 统计指定条件的数量
      *
-     * @param   mixed	table name string or array(query, alias)
+     * @param   mixed $table table name string or array(query, alias)
      * @return  integer
      */
     public function count_records($table = null, $where = null)
