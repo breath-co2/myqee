@@ -237,7 +237,7 @@ abstract class Module_OOP_ORM
     /**
      * 当前驱动
      *
-     * @return OOP_ORM_Finder_DB
+     * @return Database
      */
     abstract public function driver();
 

@@ -156,6 +156,11 @@ abstract class Module_OOP_ORM_DI
     {
         if (isset($data[$this->key]) || isset($compiled_data[$this->key]))
         {
+            # isset 比 array_key_exists 快，所以先用 isset 判断
+            return true;
+        }
+        elseif (array_key_exists($this->key, $data) || array_key_exists($this->key, $compiled_data))
+        {
             return true;
         }
         else
@@ -170,12 +175,6 @@ abstract class Module_OOP_ORM_DI
         {
             # 自读字段不允许unset
             return false;
-        }
-
-        $field_name = $this->get_field_name();
-        if (null!==$field_name)
-        {
-            unset($data[$field_name]);
         }
 
         unset($compiled_data[$this->key]);
@@ -304,7 +303,7 @@ abstract class Module_OOP_ORM_DI
         }
     }
 
-    public function get_field_data(OOP_ORM_Data $obj, & $data, $current_compiled_data)
+    public function get_field_data(& $data, $current_compiled_data, $runtime_format = false)
     {
         if (!isset($this->config['field_name']) || !$this->config['field_name'])
         {
@@ -344,10 +343,21 @@ abstract class Module_OOP_ORM_DI
             $tmp_data = $current_compiled_data;
         }
 
-        if (isset($this->config['format']) && $this->config['format'])
+        if ($runtime_format)
         {
-            # 格式化
-            OOP_ORM_DI::_format_data($this->config['format'], $tmp_data);
+            # 动态格式化
+            if (is_array($tmp_data) || is_object($tmp_data))
+            {
+                $tmp_data = serialize($tmp_data);
+            }
+        }
+        else
+        {
+            if (isset($this->config['format']) && $this->config['format'])
+            {
+                # 格式化
+                OOP_ORM_DI::_format_data($this->config['format'], $tmp_data);
+            }
         }
 
         $field_name = $this->config['field_name'];

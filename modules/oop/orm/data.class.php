@@ -109,6 +109,15 @@ class Module_OOP_ORM_Data
     protected $_temp_instance_pk = null;
 
     /**
+     * 字段是否支持对象类型
+     *
+     * 通常情况下，类似MySQL这样的数据
+     *
+     * @var bool
+     */
+    protected $_supper_object_field = false;
+
+    /**
      * 当字段更新时更新虚拟字段对应
      *
      * @var array
@@ -158,6 +167,29 @@ class Module_OOP_ORM_Data
      * @var array
      */
     protected $_delay_setting = null;
+
+    /**
+     * 记录延迟更新数据
+     *
+     * @var array
+     */
+    protected $_delay_update_field_data = array();
+
+    /**
+     * 记录递增或递减字段
+     *
+     * [!!] 此数组的key是field_name，不是对象的key
+     *
+     * @var array
+     */
+    protected $_delay_update_value_increment = array();
+
+    /**
+     * 是否在对象销毁前尝试更新 `delay_update()` 设置的数据
+     *
+     * @var bool
+     */
+    protected $_delay_update_when_destruct = false;
 
     /**
      * 当前的Finder
@@ -211,7 +243,7 @@ class Module_OOP_ORM_Data
     {
         if ($finder && $finder instanceof OOP_ORM)
         {
-            $this->_finder = $finder;
+            $this->__orm_callback_set_finder($finder);
         }
 
         # 更新配置
@@ -226,6 +258,12 @@ class Module_OOP_ORM_Data
 
     function __destruct()
     {
+        # 执行延迟更新
+        if ($this->_delay_update_when_destruct)
+        {
+            $this->update();
+        }
+
         if ($this->_is_register_instance)
         {
             # 释放数增加
@@ -274,16 +312,30 @@ class Module_OOP_ORM_Data
      */
     public function __unset($key)
     {
-        if ($this->_is_temp_instance && !$this->_expand_key && !isset($this->_temp_offset_di[$key]) && !isset($this->_data[$key]))
+        if ($this->_is_temp_instance && !$this->_expand_key && !isset($this->_temp_offset_di[$key]) && !array_key_exists($key, $this->_data))
         {
             # 临时对象且没实例化
             return true;
         }
 
-        $rs = $this->_get_di_by_offset($key)->un_set($this, $this->_data, $this->_compiled_data);
+        $di = $this->_get_di_by_offset($key);
+        $rs = $di->un_set($this, $this->_data, $this->_compiled_data);
 
         if ($rs)
         {
+            if ($this->_is_temp_instance)
+            {
+                # 临时对象赋值后又直接删除，则清理临时数据
+                $field_name = $di->get_field_name();
+                if (!$field_name || !array_key_exists($field_name, $this->_data))
+                {
+                    #移除临时对象相关信息
+                    unset($this->_temp_offset_di[$key], $this->_unset_offset[$key], $di);
+
+                    return $rs;
+                }
+            }
+
             $this->_unset_offset[$key] = 1;
         }
 
@@ -299,7 +351,7 @@ class Module_OOP_ORM_Data
 
     public function & __get($key)
     {
-        if (isset($this->_compiled_data[$key]))return $this->_compiled_data[$key];
+        if (array_key_exists($key, $this->_compiled_data))return $this->_compiled_data[$key];
 
         # 已经被unset
         if (isset($this->_unset_offset[$key]))return null;
@@ -463,9 +515,20 @@ class Module_OOP_ORM_Data
             }
 
             # 移除标记递增
-            if ($this->_value_increment && ($field_name = $this->_get_di_by_offset($key)->get_field_name()) && isset($this->_value_increment[$field_name]))
+            if ($this->_value_increment || $this->_delay_update_value_increment)
             {
-                unset($this->_value_increment[$field_name]);
+                $field_name = $this->_get_di_by_offset($key)->get_field_name();
+
+                if (isset($this->_value_increment[$field_name]))
+                {
+                    unset($this->_value_increment[$field_name]);
+                }
+
+                # 重新设置数据后，之前的递增递减就失效了，移除延迟更新中的unset标记
+                if (isset($this->_delay_update_value_increment[$field_name]))
+                {
+                    unset($this->_delay_update_value_increment[$field_name]);
+                }
             }
 
             if (isset($this->_update_virtual_field[$key]))
@@ -556,12 +619,40 @@ class Module_OOP_ORM_Data
     {
         if ($this->_is_deleted)
         {
-            throw new Exception('current orm is deleted.');
+            throw new Exception('current orm has been deleted.');
         }
 
-        $changed_data = $this->get_changed_field_data();
+        $changed_data    = $this->get_changed_field_data();
+        $value_increment = $this->_value_increment;
 
-        if (!$changed_data)
+        if ($this->_delay_update_field_data)
+        {
+            $changed_data = array_merge($this->_delay_update_field_data, $changed_data);
+            $this->_delay_update_field_data = array();
+        }
+        # 读取延迟更新数据
+        if ($this->_delay_update_value_increment)
+        {
+            foreach($this->_delay_update_value_increment as $key => $value)
+            {
+                $value_increment[$key] += $value;
+                if (0 === $value_increment[$key])
+                {
+                    unset($value_increment[$key]);
+                }
+                unset($changed_data[$key]);
+            }
+
+            $this->_delay_update_value_increment = array();
+        }
+
+        # 移除销毁前更新的标记
+        if (true === $this->_delay_update_when_destruct)
+        {
+            $this->_delay_update_when_destruct = false;
+        }
+
+        if (!$changed_data && !$value_increment)
         {
             return true;
         }
@@ -571,7 +662,7 @@ class Module_OOP_ORM_Data
         {
             foreach($pk as $field => $value)
             {
-                if (isset($this->_data[$field]))
+                if (array_key_exists($field, $this->_data))
                 {
                     # 有可能被修改，使用原始数据
                     $where[$field] = $this->_data[$field];
@@ -588,10 +679,10 @@ class Module_OOP_ORM_Data
         }
 
         # 递增或递减数据处理
-        if ($this->_value_increment && method_exists($this->finder()->driver(), 'value_increment'))foreach ($this->_value_increment as $field => $value)
+        if ($value_increment && method_exists($this->finder()->driver(), 'value_increment'))foreach ($value_increment as $field => $value)
         {
             # 如果存在递增或递减的数据
-            if (0!==$value && isset($changed_data[$field]))
+            if (0!==$value)
             {
                 $this->finder()->driver()->value_increment($field, $value);
                 unset($changed_data[$field]);
@@ -600,9 +691,67 @@ class Module_OOP_ORM_Data
 
         $status = $this->finder()->update($changed_data, $where);
 
-        $this->_clear_changed_value_setting();
+        $this->_clear_changed_value_setting($changed_data);
 
         return $status;
+    }
+
+    /**
+     * 延迟更新
+     *
+     * 记录一个更新点用于程序下次合并一起更新，如果程序最终没有执行 `update()` 方法，之前的更新将不会在数据库里生效
+     *
+     * `$update_when_destruct` 参数若设置成 `true`，如果没有执行 `update()` 方法，程序会在对象销毁前尝试执行 `update()` 方法去更新数据
+     *
+     *      // $obj->id = 1
+     *      $obj->title = 'test';
+     *      var_dump($obj->is_changed());   // 将返回 true
+     *      $obj->delay_update();           // 只记录修改，并不直接更新
+     *
+     *      var_dump($obj->is_changed());   // 将返回 false
+     *
+     *      $obj->name = '123';
+     *      $obj->update();                 // 执行SQL: UPDATE `my_table` SET `title` = 'test', `name` = '123' WHERE `id` = '1';
+     *
+     *
+     * @param bool $update_when_destruct 是否在对象销毁前更新
+     * @return $this
+     */
+    public function delay_update($update_when_destruct = false)
+    {
+        if ($this->_is_deleted)
+        {
+            throw new Exception('current orm has been deleted.');
+        }
+
+        $changed_data = $this->get_changed_field_data();
+
+        if ($changed_data)
+        {
+            $this->_delay_update_field_data = array_merge($this->_delay_update_field_data, $changed_data);
+        }
+
+        if ($this->_value_increment)
+        {
+            if ($changed_data)foreach($this->_value_increment as $key => $value)
+            {
+                unset($this->_delay_update_field_data[$key]);
+            }
+
+            $this->_delay_update_value_increment = $this->_value_increment;
+        }
+
+        $this->_clear_changed_value_setting($changed_data);
+
+        if ($this->_delay_update_field_data || $this->_delay_update_value_increment)
+        {
+            if ($update_when_destruct)
+            {
+                $this->_delay_update_when_destruct = true;
+            }
+        }
+
+        return $this;
     }
 
     /**
@@ -654,7 +803,7 @@ class Module_OOP_ORM_Data
 
             if ($this->_check_offset_is_changed($key))
             {
-                $di->get_field_data($this, $data, $value);
+                $di->get_field_data($data, $value, $this->_is_temp_instance && !$this->_supper_object_field);
             }
         }
 
@@ -735,13 +884,13 @@ class Module_OOP_ORM_Data
      */
     protected function _check_offset_is_changed($key)
     {
-        if (!isset($this->_compiled_data[$key]))return false;
+        if (!array_key_exists($key, $this->_compiled_data))return false;
 
         $value = $this->_compiled_data[$key];
         $di    = $this->_get_di_by_offset($key);
 
         # 通过DI控制器来判断，虚拟字段不用判断，实际字段会判断
-        if ($di->check_data_is_change($this, $key, $value, isset($this->_raw_compiled_data[$key])?$this->_raw_compiled_data[$key] : null))
+        if ($di->check_data_is_change($this, $key, $value, array_key_exists($key, $this->_raw_compiled_data)?$this->_raw_compiled_data[$key] : null))
         {
             return true;
         }
@@ -882,7 +1031,7 @@ class Module_OOP_ORM_Data
         if (!$field_name)return null;
 
         # 获取数据中的数据
-        if ($db_data && isset($this->_data[$field_name]))
+        if ($db_data && array_key_exists($field_name, $this->_data))
         {
             return $this->_data[$field_name];
         }
@@ -890,13 +1039,13 @@ class Module_OOP_ORM_Data
         if ($this->_is_temp_instance)
         {
             # 临时对象
-            if (isset($this->_compiled_data[$field_name]))
+            if (array_key_exists($field_name, $this->_compiled_data))
             {
                 # 已经构造
                 $tmp_data = $this->_compiled_data[$field_name];
                 $key      = $field_name;
             }
-            elseif (isset($this->_data[$field_name]))
+            elseif (array_key_exists($field_name, $this->_data))
             {
                 # 未构造，此时 $db_data 必定是 false
                 return $this->$field_name;
@@ -946,32 +1095,21 @@ class Module_OOP_ORM_Data
                     'is_temp_instance' => true,
                 );
 
-                $class = 'OOP_ORM_DI_Default';
-
-                if (isset($this->_data[$key]))
+                if (!$this->_expand_key || $this->_expand_key===$key || array_key_exists($key, $this->_data))
                 {
+                    $class = 'OOP_ORM_DI_Default';
                     $config['field_name'] = $key;
-                }
-                elseif (null!==$this->_delay_setting)
-                {
-                    $config['may_be_delay'] = true;
                 }
                 else
                 {
-                    $config['is_virtual'] = true;
-
-                    if ($this->_expand_key)
-                    {
-                        # 自动扩展
-                        $config['parent_offset'] = $this->_expand_key;
-                        $config['sub_offsets']   = array
-                        (
-                            $key,
-                        );
-                        $class = 'OOP_ORM_DI_Virtual';
-                    }
+                    # 自动扩展
+                    $class = 'OOP_ORM_DI_Virtual';
+                    $config['parent_offset'] = $this->_expand_key;
+                    $config['sub_offsets']   = array
+                    (
+                        $key,
+                    );
                 }
-
 
                 $this->_temp_offset_di[$key] = new $class($this->_class_name, $key, $config);
             }
@@ -1226,6 +1364,8 @@ class Module_OOP_ORM_Data
             $old_value = 0;
         }
 
+        $old_delay_update_value_increment = $this->_delay_update_value_increment;
+
         # 赋值
         $this->__set($key, $this->$key + $value);
 
@@ -1242,6 +1382,8 @@ class Module_OOP_ORM_Data
             }
         }
 
+        $this->_delay_update_value_increment = $old_delay_update_value_increment;
+
         return $this;
     }
 
@@ -1250,13 +1392,13 @@ class Module_OOP_ORM_Data
      *
      * 与 `$this->increment_value()` 相反
      *
-     * @param string $offset
+     * @param string $key
      * @param int $value
      * @return $this
      */
-    public function value_decrement($offset, $value = 1)
+    public function value_decrement($key, $value = 1)
     {
-        return $this->value_increment($offset, - $value);
+        return $this->value_increment($key, - $value);
     }
 
     /**
@@ -1288,37 +1430,48 @@ class Module_OOP_ORM_Data
     }
 
     /**
-     * 设置扩展key
+     * 设置、获取扩展key
      *
      * 应用场景：假设一个表只有 id, body 两个字段，其中body为序列化字段内容，正常情况下，这个ORM对象只有 id, body 两个key
      * 当设置了 `$this->set_expand_key('body');` 后，类似 `$this->test` 直接映射为 `$this->body['test']`
      *
+     *      // 设置，设置时返回当前对象
+     *      $this->expand_key('body');
+     *
+     *      // 移除$expand_key
+     *      $this->expand_key(null);
+     *
+     *      // 获取
+     *      $expand_key = $this->expand_key();
+     *
      * @param $key
-     * @return $this
+     * @return $this|string|null
      */
-    public function set_expand_key($key)
+    public function expand_key($key = false)
     {
+        if (false===$key)
+        {
+            return $this->_expand_key;
+        }
+
         $this->_expand_key = $key;
 
         return $this;
     }
 
     /**
-     * 获取当前扩展key
-     *
-     * @return string|null
-     */
-    public function get_expand_key()
-    {
-        return $this->_expand_key;
-    }
-
-    /**
      * 清理修改的数据
      */
-    protected function _clear_changed_value_setting()
+    protected function _clear_changed_value_setting(array $changed_value = null)
     {
+        if ($changed_value)
+        {
+            $this->_data = array_merge($this->_data, $changed_value);
+        }
 
+        $this->_unset_offset      = array();
+        $this->_raw_compiled_data = $this->_compiled_data;
+        $this->_value_increment   = array();
     }
 
     /**
@@ -1597,6 +1750,17 @@ class Module_OOP_ORM_Data
     protected function __orm_callback_set_finder(OOP_ORM $finder)
     {
         $this->_finder = $finder;
+
+        $driver = $finder->driver();
+
+        if ($driver instanceof Database)
+        {
+            $this->_supper_object_field = $driver->driver()->supper_object_field();
+        }
+        elseif ($driver instanceof HttpClient)
+        {
+            $this->_supper_object_field = true;
+        }
     }
 
     protected function __orm_callback_get_delay_setting()
