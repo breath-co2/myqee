@@ -388,6 +388,16 @@ abstract class Module_Database_Driver
     }
 
     /**
+     * 是否存储支持对象或数组字段
+     *
+     * @return bool
+     */
+    public function supper_object_field()
+    {
+        return false;
+    }
+
+    /**
      * 获取一个随机HOST
      *
      * @param array $exclude_hosts 排除的HOST
@@ -1110,8 +1120,13 @@ abstract class Module_Database_Driver
                 $w_type = '';
             }
 
-            // Quote the column name
             $column = $this->_quote_identifier($column);
+
+            # 对数组或对象进行序列化处理
+            if ((is_object($value) || is_array($value)) && !$this->supper_object_field())
+            {
+                $value = serialize($value);
+            }
 
             if ($w_type)
             {

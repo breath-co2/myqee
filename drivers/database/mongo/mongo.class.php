@@ -1161,6 +1161,16 @@ class Driver_Database_Driver_Mongo extends Database_Driver
         // mongodb 不需要手动创建，可自动创建
     }
 
+    /**
+     * 是否存储支持对象或数组字段
+     *
+     * @return bool
+     */
+    public function supper_object_field()
+    {
+        return true;
+    }
+
     protected function _compile_set_data($op, $value)
     {
         $op = strtolower($op);
