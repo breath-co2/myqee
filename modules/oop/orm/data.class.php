@@ -162,6 +162,13 @@ class Module_OOP_ORM_Data
     protected $_value_increment = array();
 
     /**
+     * 记录 _ 开头的变量
+     *
+     * @var array
+     */
+    protected $_private_values = array();
+
+    /**
      * 记录延迟获取数据设置
      *
      * @var array
@@ -312,6 +319,12 @@ class Module_OOP_ORM_Data
      */
     public function __unset($key)
     {
+        if ($key[0]==='_')
+        {
+            unset($this->_private_values[$key]);
+            return true;
+        }
+
         if ($this->_is_temp_instance && !$this->_expand_key && !isset($this->_temp_offset_di[$key]) && !array_key_exists($key, $this->_data))
         {
             # 临时对象且没实例化
@@ -346,12 +359,23 @@ class Module_OOP_ORM_Data
     {
         if (isset($this->_unset_offset[$key]))return false;
 
+        if ($key[0]==='_')
+        {
+            return array_key_exists($key, $this->_private_values);
+        }
+
         return $this->_get_di_by_offset($key)->is_set($this, $this->_data, $this->_compiled_data);
     }
 
     public function & __get($key)
     {
         if (array_key_exists($key, $this->_compiled_data))return $this->_compiled_data[$key];
+
+        if ($key[0]==='_')
+        {
+            if (!isset($this->_private_values[$key]))$this->_private_values[$key] = null;
+            return $this->_private_values[$key];
+        }
 
         # 已经被unset
         if (isset($this->_unset_offset[$key]))return null;
@@ -504,6 +528,12 @@ class Module_OOP_ORM_Data
 
     public function __set($key, $value)
     {
+        if ($key[0]==='_')
+        {
+            $this->_private_values[$key] = $value;
+            return true;
+        }
+
         $rs = $this->_get_di_by_offset($key)->set_data($this, $this->_data, $this->_compiled_data, $this->_raw_compiled_data, $value, $this->_orm_data_is_created);
 
         if ($this->_orm_data_is_created && $rs)
@@ -551,49 +581,7 @@ class Module_OOP_ORM_Data
      */
     public function __sleep()
     {
-        $this->__orm_sleep_data__ = array
-        (
-            'v' => '2.0',
-            'd' => $this->get_field_data(),
-        );
-
-        $r = array('__orm_sleep_data__');
-
-        # 获取外部设置的key，比如:$obj->test
-        $r2 = array_keys(OOP_ORM_Parse::get_object_vars($this));
-
-        # 合并数组并移除重复值
-        return array_unique(array_merge($r, $r2));
-    }
-
-    /**
-     * 反序列化 unserialize()
-     */
-    public function __wakeup()
-    {
-        if (isset($this->__orm_sleep_data__['v']))
-        {
-            switch ($this->__orm_sleep_data__['v'])
-            {
-                case '1.0':
-                    # 兼容老版本数据
-                    $this->__construct($this->__orm_sleep_data__['d']);
-
-                    # 清除
-                    unset($this->__orm_sleep_data__);
-                    break;
-                case '2.0':
-
-                    break;
-                default:
-                    $this->__construct();
-                    break;
-            }
-        }
-        else
-        {
-            $this->__construct();
-        }
+        return array('_orm_name', '_expand_key', '_data', '_is_temp_instance', '_is_support_object_field', '_private_values', '_finder');
     }
 
     /**
@@ -605,8 +593,9 @@ class Module_OOP_ORM_Data
     public function __debugInfo()
     {
         return [
-            'data'          => $this->_data,
-            'compiled_data' => $this->_compiled_data,
+            '_data'           => $this->_data,
+            '_compiled_data'  => $this->_compiled_data,
+            '_private_values' => $this->_private_values,
         ];
     }
 
@@ -614,6 +603,7 @@ class Module_OOP_ORM_Data
      * 更新数据
      *
      * @return int $status 作用的行数
+     * @throws Exception
      */
     public function update()
     {
@@ -628,8 +618,8 @@ class Module_OOP_ORM_Data
         if ($this->_delay_update_field_data)
         {
             $changed_data = array_merge($this->_delay_update_field_data, $changed_data);
-            $this->_delay_update_field_data = array();
         }
+
         # 读取延迟更新数据
         if ($this->_delay_update_value_increment)
         {
@@ -642,14 +632,6 @@ class Module_OOP_ORM_Data
                 }
                 unset($changed_data[$key]);
             }
-
-            $this->_delay_update_value_increment = array();
-        }
-
-        # 移除销毁前更新的标记
-        if (true === $this->_delay_update_when_destruct)
-        {
-            $this->_delay_update_when_destruct = false;
         }
 
         if (!$changed_data && !$value_increment)
@@ -675,7 +657,7 @@ class Module_OOP_ORM_Data
         }
         else
         {
-            throw new Exception('ORM:'. $this->_class_name .' 不存在ID字段，无法使用ORM系统自带的update方法更新');
+            throw new Exception('ORM:'. $this->_class_name .' 不存在ID字段，无法使用ORM系统自带的update方法更新，请设置主键或通过 `$this->set_pk_name(\'id\')` 方法设置');
         }
 
         # 递增或递减数据处理
@@ -691,7 +673,7 @@ class Module_OOP_ORM_Data
 
         $status = $this->finder()->update($changed_data, $where);
 
-        $this->_clear_changed_value_setting($changed_data);
+        $this->_clear_changed_value_setting($changed_data, true);
 
         return $status;
     }
@@ -715,6 +697,7 @@ class Module_OOP_ORM_Data
      *
      *
      * @param bool $update_when_destruct 是否在对象销毁前更新
+     * @throws Exception
      * @return $this
      */
     public function delay_update($update_when_destruct = false)
@@ -757,26 +740,45 @@ class Module_OOP_ORM_Data
     /**
      * 插入数据
      *
-     * @return array array(插入ID,作用行数)
+     * @return array array(插入ID, 作用行数)
+     * @throws Exception
      */
     public function insert()
     {
         if ($this->_is_deleted)
         {
-            throw new Exception('current orm is deleted.');
+            throw new Exception('current orm has been deleted.');
         }
 
+        $data = $this->get_all_field_data();
+
+        $rs = $this->finder()->insert($data);
+
+        if ($rs && $rs[1]>0)
+        {
+            $this->_clear_changed_value_setting($data, true);
+        }
+
+        return $rs;
     }
 
     /**
      * 删除对象数据
      *
-     * @return integer 操作行数
+     * @return int 操作行数
      * @throws Exception
      */
     public function delete()
     {
+        $pk = $this->pk(false);
+        if (!$pk)
+        {
+            throw new Exception('ORM:'. $this->_class_name .' 不存在ID字段，无法使用ORM系统自带的delete方法删除数据，请设置主键或通过 `$this->set_pk_name(\'id\')` 方法设置');
+        }
+
         $this->_is_deleted = true;
+
+        return $this->finder()->delete($pk);
     }
 
     /**
@@ -890,7 +892,7 @@ class Module_OOP_ORM_Data
         $di    = $this->_get_di_by_offset($key);
 
         # 通过DI控制器来判断，虚拟字段不用判断，实际字段会判断
-        if ($di->check_data_is_change($this, $key, $value, array_key_exists($key, $this->_raw_compiled_data)?$this->_raw_compiled_data[$key] : null))
+        if ($di->check_data_is_change($this, $key, $value, isset($this->_raw_compiled_data[$key])?$this->_raw_compiled_data[$key] : null))
         {
             return true;
         }
@@ -936,7 +938,7 @@ class Module_OOP_ORM_Data
     public function pk($glue = ',')
     {
         # 临时字段ID
-        if ($pk = $this->pk_key_name())
+        if ($pk = $this->get_pk_name())
         {
             $key_data = array();
             foreach((array)$pk as $field_name => $key)
@@ -965,22 +967,46 @@ class Module_OOP_ORM_Data
      *
      * @return array|null
      */
-    public function pk_key_name()
+    public function get_pk_name()
     {
-        if ($this->_is_temp_instance)
+        if ($this->_temp_instance_pk)
         {
-            if ($this->_temp_instance_pk)
-            {
-                return $this->_temp_instance_pk;
-            }
-            else
-            {
-                # 默认主键
-                return array('id' => 'id');
-            }
+            return $this->_temp_instance_pk;
+        }
+        elseif ($this->_is_temp_instance)
+        {
+            # 默认主键
+            return array('id' => 'id');
         }
 
-        return OOP_ORM_DI::get_pk_by_class_name($this->_class_name);
+        return OOP_ORM_DI::get_pk_name_by_class_name($this->_class_name);
+    }
+
+    /**
+     * 设置主键
+     *
+     * @param array|string $pk
+     * @return $this
+     */
+    public function set_pk_name($pk)
+    {
+        if (is_array($pk))
+        {
+            foreach($pk as $item)
+            {
+                $this->_temp_instance_pk[$item] = $item;
+            }
+        }
+        else
+        {
+            $pk = (string)$pk;
+            $this->_temp_instance_pk = array
+            (
+                $pk => $pk,
+            );
+        }
+
+        return $this;
     }
 
     /**
@@ -1019,106 +1045,95 @@ class Module_OOP_ORM_Data
         }
     }
 
+
+    /**
+     * 获取以数据库字段名为键名的数组数据
+     *
+     * 以字段名称为key，会排除掉虚拟数据，此数据可直接用于数据库的update
+     *
+     * @return array
+     */
+    public function get_all_field_data()
+    {
+        $data = $this->_data;
+
+        foreach($this->_compiled_data as $key => $value)
+        {
+            $di = $this->_get_di_by_offset($key);
+
+            if ($di->is_virtual())
+            {
+                continue;
+            }
+
+            if (!($field_name = $di->get_field_name()))
+            {
+                continue;
+            }
+
+            $this->_get_di_by_offset($key)->get_field_data($data, $this->_compiled_data[$key], $this->_is_temp_instance && !$this->_is_support_object_field);
+        }
+
+        return $data;
+    }
+
     /**
      * 根据字段名获取数据
      *
      * @param string $field_name 字段名
-     * @param bool $db_data      是否数据库中的数据（即未解析的）
+     * @param bool $db_data 是否数据库中的数据（即未解析的）
      * @return mixed|null
      */
-    public function get_value_by_field_name($field_name, $db_data = false)
+    public function get_data_by_field_name($field_name, $db_data = false)
     {
         if (!$field_name)return null;
 
-        # 获取数据中的数据
-        if ($db_data && array_key_exists($field_name, $this->_data))
-        {
-            return $this->_data[$field_name];
-        }
-
         if ($this->_is_temp_instance)
         {
-            # 临时对象
-            if (array_key_exists($field_name, $this->_compiled_data))
-            {
-                # 已经构造
-                $tmp_data = $this->_compiled_data[$field_name];
-                $key      = $field_name;
-            }
-            elseif (array_key_exists($field_name, $this->_data))
-            {
-                # 未构造，此时 $db_data 必定是 false
-                return $this->$field_name;
-            }
-            else
+            $key = $field_name;
+        }
+        else
+        {
+            $key = OOP_ORM_DI::get_key_by_field_name($this->_class_name, $field_name);
+
+            if (null === $key)
             {
                 return null;
             }
         }
 
-        if (null !== ($key = OOP_ORM_DI::get_key_by_field_name($this->_class_name, $field_name)))
-        {
-            $db_data = $this->$key;
-        }
-
-        if (isset($tmp_data))
+        if (array_key_exists($key, $this->_compiled_data))
         {
             if ($db_data)
             {
-                return $this->_get_di_by_offset($key)->get_unresolved_data($db_data);
-            }
-            else
-            {
-                return $tmp_data;
-            }
-        }
-
-        return null;
-    }
-
-    /**
-     * 获取处理字段di控制反转对象
-     *
-     * @param $class_name
-     * @param $key
-     * @return OOP_ORM_DI
-     */
-    protected function _get_di_by_offset($key)
-    {
-        if ($this->_is_temp_instance)
-        {
-            # 临时ORM对象
-            if (!isset($this->_temp_offset_di[$key]))
-            {
-                $config = array
-                (
-                    'is_temp_instance' => true,
-                );
-
-                if (!$this->_expand_key || $this->_expand_key===$key || array_key_exists($key, $this->_data))
+                if ($this->_get_di_by_offset($key)->get_field_data($data, $this->_compiled_data[$key], $this->_is_temp_instance && !$this->_is_support_object_field))
                 {
-                    $class = 'OOP_ORM_DI_Default';
-                    $config['field_name'] = $key;
+                    return $data[$field_name];
                 }
                 else
                 {
-                    # 自动扩展
-                    $class = 'OOP_ORM_DI_Virtual';
-                    $config['parent_offset'] = $this->_expand_key;
-                    $config['sub_offsets']   = array
-                    (
-                        $key,
-                    );
+                    return null;
                 }
-
-                $this->_temp_offset_di[$key] = new $class($this->_class_name, $key, $config);
             }
-
-            return $this->_temp_offset_di[$key];
+            else
+            {
+                return $this->_compiled_data[$key];
+            }
+        }
+        elseif (array_key_exists($field_name, $this->_data))
+        {
+            if ($db_data)
+            {
+                return $this->_data[$field_name];
+            }
+            else
+            {
+                return $this->$key;
+            }
         }
         else
         {
-            return OOP_ORM_DI::get_class_offset_di($this->_class_name, $key);
+            return null;
         }
     }
 
@@ -1142,22 +1157,16 @@ class Module_OOP_ORM_Data
             {
                 case 0 :
                     return $this->$action_name();
-                    break;
                 case 1 :
                     return $this->$action_name($params[0]);
-                    break;
                 case 2 :
                     return $this->$action_name($params[0], $params[1]);
-                    break;
                 case 3 :
                     return $this->$action_name($params[0], $params[1], $params[2]);
-                    break;
                 case 4 :
                     return $this->$action_name($params[0], $params[1], $params[2], $params[3]);
-                    break;
                 default :
                     return call_user_func_array(array($this, $action_name), $params);
-                    break;
             }
         }
 
@@ -1187,7 +1196,7 @@ class Module_OOP_ORM_Data
             $tmp_obj = current(OOP_ORM_Data::$INSTANCE_BY_PK[$orm_data_name]);
 
             # 获取主键
-            $pk_name = $tmp_obj->pk_key_name();
+            $pk_name = $tmp_obj->get_pk_name();
             if (is_array($pk_name))
             {
                 $tmp_id = array();
@@ -1402,34 +1411,6 @@ class Module_OOP_ORM_Data
     }
 
     /**
-     * 设置主键
-     *
-     * @param array|string $pk
-     * @return $this
-     */
-    public function set_pk($pk)
-    {
-        if (is_array($pk))
-        {
-            foreach($pk as $item)
-            {
-                $this->_temp_instance_pk[$item] = $item;
-            }
-        }
-        else
-        {
-            $pk = (string)$pk;
-            $pk = array
-            (
-                $pk => $pk,
-            );
-            $this->_temp_instance_pk = $pk;
-        }
-
-        return $this;
-    }
-
-    /**
      * 设置、获取扩展key
      *
      * 应用场景：假设一个表只有 id, body 两个字段，其中body为序列化字段内容，正常情况下，这个ORM对象只有 id, body 两个key
@@ -1460,9 +1441,55 @@ class Module_OOP_ORM_Data
     }
 
     /**
+     * 获取处理字段di控制反转对象
+     *
+     * @param $class_name
+     * @param $key
+     * @return OOP_ORM_DI
+     */
+    protected function _get_di_by_offset($key)
+    {
+        if ($this->_is_temp_instance)
+        {
+            # 临时ORM对象
+            if (!isset($this->_temp_offset_di[$key]))
+            {
+                $config = array
+                (
+                    'is_temp_instance' => true,
+                );
+
+                if (!$this->_expand_key || $this->_expand_key===$key || array_key_exists($key, $this->_data))
+                {
+                    $class = 'OOP_ORM_DI_Default';
+                    $config['field_name'] = $key;
+                }
+                else
+                {
+                    # 自动扩展
+                    $class = 'OOP_ORM_DI_Virtual';
+                    $config['parent_offset'] = $this->_expand_key;
+                    $config['sub_offsets']   = array
+                    (
+                        $key,
+                    );
+                }
+
+                $this->_temp_offset_di[$key] = new $class($this->_class_name, $key, $config);
+            }
+
+            return $this->_temp_offset_di[$key];
+        }
+        else
+        {
+            return OOP_ORM_DI::get_class_offset_di($this->_class_name, $key);
+        }
+    }
+
+    /**
      * 清理修改的数据
      */
-    protected function _clear_changed_value_setting(array $changed_value = null)
+    protected function _clear_changed_value_setting(array $changed_value = null, $clear_delay_update_setting = false)
     {
         if ($changed_value)
         {
@@ -1472,6 +1499,13 @@ class Module_OOP_ORM_Data
         $this->_unset_offset      = array();
         $this->_raw_compiled_data = $this->_compiled_data;
         $this->_value_increment   = array();
+
+        if ($clear_delay_update_setting)
+        {
+            $this->_delay_update_field_data      = array();
+            $this->_delay_update_value_increment = array();
+            $this->_delay_update_when_destruct   = false;
+        }
     }
 
     /**

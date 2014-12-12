@@ -155,6 +155,14 @@ abstract class Module_OOP_ORM
     }
 
     /**
+     * 支持序列化对象 serialize($this)
+     */
+    public function __sleep()
+    {
+        return array('database', 'tablename');
+    }
+
+    /**
      * 获取对象名称
      * @param string $type
      */
@@ -303,9 +311,9 @@ abstract class Module_OOP_ORM
      *
      * @return string || array || null
      */
-    public function pk_key_name()
+    public function get_pk_name()
     {
-        return OOP_ORM_DI::get_pk_by_class_name(strtolower($this->get_orm_name('data')));
+        return OOP_ORM_DI::get_pk_name_by_class_name(strtolower($this->get_orm_name('data')));
     }
 
     /**
@@ -316,7 +324,7 @@ abstract class Module_OOP_ORM
      */
     public function get_by_id($id, $use_master = false)
     {
-        $id_field = $this->pk_key_name();
+        $id_field = $this->get_pk_name();
         if ($id_field)
         {
             $this->driver()->where($id_field, $id);
@@ -336,7 +344,7 @@ abstract class Module_OOP_ORM
      */
     public function get_by_ids($ids, $use_master = false)
     {
-        $id_field = $this->pk_key_name();
+        $id_field = $this->get_pk_name();
 
         if ($id_field)
         {

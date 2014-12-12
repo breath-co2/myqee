@@ -173,7 +173,7 @@ class Core_Model
                         }
                         else
                         {
-                            $item = $item->get_field_data();
+                            $item = $item->get_all_field_data();
                         }
                         continue;
                     }

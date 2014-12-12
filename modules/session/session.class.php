@@ -195,7 +195,7 @@ class Module_Session
         if ($member->id>0)
         {
             # 设置用户数据
-            $member_data        = $member->get_field_data();
+            $member_data        = $member->get_all_field_data();
             $_SESSION['member'] = $member_data;
         }
         else
@@ -500,7 +500,7 @@ class Module_Session
         if (Session::$member && Session::$member->id>0)
         {
             # 设置用户数据
-            $member_data = Session::$member->get_field_data();
+            $member_data = Session::$member->get_all_field_data();
 
             $_SESSION['member'] = $member_data;
         }

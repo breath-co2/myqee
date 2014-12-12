@@ -547,7 +547,7 @@ abstract class Module_OOP_ORM_DI
         }
     }
 
-    public static function get_pk_by_class_name($class_name)
+    public static function get_pk_name_by_class_name($class_name)
     {
         if (!isset(OOP_ORM_DI::$CLASS_PK[$class_name]))
         {
