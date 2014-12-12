@@ -1166,7 +1166,7 @@ class Driver_Database_Driver_Mongo extends Database_Driver
      *
      * @return bool
      */
-    public function supper_object_field()
+    public function is_support_object_field()
     {
         return true;
     }

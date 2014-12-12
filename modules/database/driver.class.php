@@ -392,7 +392,7 @@ abstract class Module_Database_Driver
      *
      * @return bool
      */
-    public function supper_object_field()
+    public function is_support_object_field()
     {
         return false;
     }
@@ -1123,7 +1123,7 @@ abstract class Module_Database_Driver
             $column = $this->_quote_identifier($column);
 
             # 对数组或对象进行序列化处理
-            if ((is_object($value) || is_array($value)) && !$this->supper_object_field())
+            if ((is_object($value) || is_array($value)) && !$this->is_support_object_field())
             {
                 $value = serialize($value);
             }

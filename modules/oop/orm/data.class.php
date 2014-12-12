@@ -115,7 +115,7 @@ class Module_OOP_ORM_Data
      *
      * @var bool
      */
-    protected $_supper_object_field = false;
+    protected $_is_support_object_field = false;
 
     /**
      * 当字段更新时更新虚拟字段对应
@@ -803,7 +803,7 @@ class Module_OOP_ORM_Data
 
             if ($this->_check_offset_is_changed($key))
             {
-                $di->get_field_data($data, $value, $this->_is_temp_instance && !$this->_supper_object_field);
+                $di->get_field_data($data, $value, $this->_is_temp_instance && !$this->_is_support_object_field);
             }
         }
 
@@ -1755,11 +1755,11 @@ class Module_OOP_ORM_Data
 
         if ($driver instanceof Database)
         {
-            $this->_supper_object_field = $driver->driver()->supper_object_field();
+            $this->_is_support_object_field = $driver->driver()->is_support_object_field();
         }
         elseif ($driver instanceof HttpClient)
         {
-            $this->_supper_object_field = true;
+            $this->_is_support_object_field = true;
         }
     }
 
