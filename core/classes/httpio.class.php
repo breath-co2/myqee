@@ -947,11 +947,11 @@ abstract class Core_HttpIO
      *
      * @param $msg
      */
-    public static function output_chunk($msg)
+    public static function push_chunk($msg)
     {
         if (!HttpIO::$IS_CHUNK_START)
         {
-            HttpIO::output_chunk_start();
+            HttpIO::chunk_start();
         }
 
         if (is_array($msg))
@@ -980,8 +980,10 @@ abstract class Core_HttpIO
      *
      * @param int $time_limit
      */
-    public static function output_chunk_start($time_limit = 0)
+    public static function chunk_start($time_limit = 0)
     {
+        if (true === HttpIO::$IS_CHUNK_START)return;
+
         HttpIO::$IS_CHUNK_START = true;
 
         set_time_limit($time_limit);
@@ -997,7 +999,7 @@ abstract class Core_HttpIO
      *
      * !!! 执行此方法后将执行 `exit()`，程序将结束运行
      */
-    public static function output_chunk_end()
+    public static function chunk_end()
     {
         echo "0\r\n\r\n";
         exit;

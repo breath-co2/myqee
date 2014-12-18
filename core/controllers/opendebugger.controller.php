@@ -5,9 +5,9 @@
  *
  * @author     呼吸二氧化碳 <jonwang@myqee.com>
  * @category   MyQEE
- * @package    System
- * @subpackage Core
- * @copyright  Copyright (c) 2008-2013 myqee.com
+ * @package    Core
+ * @subpackage Controller
+ * @copyright  Copyright (c) 2008-2015 myqee.com
  * @license    http://www.myqee.com/license.html
  */
 class Core_Controller_OpenDebugger extends Controller

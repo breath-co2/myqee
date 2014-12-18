@@ -1,5 +1,14 @@
 <?php
-
+/**
+ * 验证码输出控制器
+ *
+ * @author     呼吸二氧化碳 <jonwang@myqee.com>
+ * @category   MyQEE
+ * @package    Core
+ * @subpackage Controller
+ * @copyright  Copyright (c) 2008-2015 myqee.com
+ * @license    http://www.myqee.com/license.html
+ */
 class Core_Controller_Captcha extends Controller
 {
     /**
@@ -14,6 +23,7 @@ class Core_Controller_Captcha extends Controller
             if ($m[1]>0)$width = $m[1];
             if ($m[1]>0)$height = $m[2];
         }
-        Captcha::render(array('width'=>$width,'height'=>$height));
+
+        Captcha::render(array('width'=>$width, 'height'=>$height));
     }
 }
