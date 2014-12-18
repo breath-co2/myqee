@@ -173,7 +173,7 @@ abstract class Module_OOP_ORM_DI
     {
         if ($this->config['is_readonly'] && $this->is_set($obj, $data, $compiled_data))
         {
-            # 自读字段不允许unset
+            # 只读字段不允许unset
             return false;
         }
 
@@ -362,9 +362,15 @@ abstract class Module_OOP_ORM_DI
 
         $field_name = $this->config['field_name'];
 
-        $data[$field_name] = $tmp_data;
-
-        return true;
+        if (null===$tmp_data && !isset($data[$this->key]) && isset($this->config['is_temp_instance']) && $this->config['is_temp_instance'])
+        {
+            # 对于这种情况应该认为不存在此字段
+        }
+        else
+        {
+            $data[$field_name] = $tmp_data;
+        }
+            return true;
     }
 
     /**
@@ -394,7 +400,7 @@ abstract class Module_OOP_ORM_DI
             return;
         }
 
-        $pk = null;
+        $pk = array();
 
         # 获取当前对象所有变量
         $config = array();
@@ -517,7 +523,7 @@ abstract class Module_OOP_ORM_DI
      * @param $key
      * @return OOP_ORM_DI
      */
-    public static function get_class_offset_di($class_name, $key)
+    public static function get_class_di($class_name, $key)
     {
         if (isset(OOP_ORM_DI::$OFFSET_DI[$class_name][$key]))
         {
@@ -547,6 +553,14 @@ abstract class Module_OOP_ORM_DI
         }
     }
 
+    /**
+     * 返回指定对象主键
+     *
+     * 如果没有主键则返回空数组 `array()`
+     *
+     * @param $class_name
+     * @return array
+     */
     public static function get_pk_name_by_class_name($class_name)
     {
         if (!isset(OOP_ORM_DI::$CLASS_PK[$class_name]))
@@ -575,7 +589,7 @@ abstract class Module_OOP_ORM_DI
                 /**
                  * @var $tmp_di OOP_ORM_DI_Default
                  */
-                if ($field_name == $tmp_di->get_field_name())
+                if ($field_name === $tmp_di->get_field_name())
                 {
                     # field_name 和 key 相同
                     return $field_name;

@@ -111,6 +111,13 @@ abstract class Module_OOP_ORM
      */
     protected $_orm_name_index;
 
+    /**
+     * 复合主键多数据分隔符
+     *
+     * @var string
+     */
+    protected $_composite_pk_value_delimiter = ',';
+
     protected $_auto_where = array();
 
     protected static $orm_name_for_class = array();
@@ -159,7 +166,7 @@ abstract class Module_OOP_ORM
      */
     public function __sleep()
     {
-        return array('database', 'tablename');
+        return array('_orm_name', 'database', 'tablename');
     }
 
     /**
@@ -190,15 +197,15 @@ abstract class Module_OOP_ORM
             switch ($type)
             {
                 case 'data':
-                    return 'OOP_ORM_Data';
+                    return 'oop_orm_data';
                 case 'result':
-                    return 'OOP_ORM_Result';
+                    return 'oop_orm_result';
                 case 'index':
-                    return 'OOP_ORM_Index';
+                    return 'oop_orm_index';
                 case 'finder':
-                    return 'OOP_ORM_Finder_DB';
+                    return 'oop_orm_finder_db';
                 default:
-                    throw new Exception('不支持的类型：'. $type);
+                    throw new Exception('不支持的ORM类型：'. $type);
                     break;
             }
         }
@@ -222,10 +229,6 @@ abstract class Module_OOP_ORM
     public function create($data = null, $is_field_key = false, $group_id = null)
     {
         $orm_data_name = $this->get_orm_name('data');
-        if (!$orm_data_name)
-        {
-            throw new Exception(get_class($this) .' 没有定义data返回对象');
-        }
 
         /**
          * @var $orm OOP_ORM_Data
@@ -245,7 +248,7 @@ abstract class Module_OOP_ORM
     /**
      * 当前驱动
      *
-     * @return Database
+     * @return Database|HttpClient
      */
     abstract public function driver();
 
@@ -290,18 +293,25 @@ abstract class Module_OOP_ORM
      * 设置自动添加条件
      *
      * @param array $auto_where
+     * @return $this
      */
     public function set_auto_where(array $auto_where)
     {
         $this->_auto_where = $auto_where;
+
+        return $this;
     }
 
     /**
      * 清除自动添加条件
+     *
+     * @return $this
      */
     public function clear_auto_where()
     {
         $this->_auto_where = array();
+
+        return $this;
     }
 
     /**
@@ -309,7 +319,7 @@ abstract class Module_OOP_ORM
      *
      * 如果是单个组件，则返回字符串，如果是复合主键，则返回数值
      *
-     * @return string || array || null
+     * @return array
      */
     public function get_pk_name()
     {
@@ -321,13 +331,14 @@ abstract class Module_OOP_ORM
      *
      * @param $id int 对象ID
      * @param $use_master boolean 是否使用主数据
+     * @return OOP_ORM_Data
      */
     public function get_by_id($id, $use_master = false)
     {
-        $id_field = $this->get_pk_name();
-        if ($id_field)
+        $id_fields = $this->get_pk_name();
+        if ($id_fields)
         {
-            $this->driver()->where($id_field, $id);
+            $this->driver()->where(array_combine(array_values($id_fields), is_array($id) ? $id : explode($this->_composite_pk_value_delimiter, $id)));
             return $this->find(null, $use_master)->current();
         }
         else
@@ -341,20 +352,35 @@ abstract class Module_OOP_ORM
      *
      * @return OOP_ORM_Result
      * @param $use_master boolean 是否使用主数据
+     * @return OOP_ORM_Result
      */
-    public function get_by_ids($ids, $use_master = false)
+    public function get_by_ids(array $ids, $use_master = false)
     {
-        $id_field = $this->get_pk_name();
+        $id_fields = $this->get_pk_name();
 
-        if ($id_field)
+        if ($id_fields)
         {
-            $this->driver()->in($id_field, $ids);
+            if (1 === count($id_fields))
+            {
+                $this->driver()->in(current($id_fields), $ids);
+            }
+            else
+            {
+                # 多字段主键查询
+                # 将构造出类似这样的WHERE条件  WHERE (`id1`=1 AND `id2`=1) OR (`id1`=2 AND `id2`=2) OR (`id1`=3 AND `id2`=3)
+                $id_fields = array_values($id_fields);
+
+                foreach($ids as $id)
+                {
+                    $this->driver()->or_where_open()->where(array_combine($id_fields, is_array($id) ? $id : explode($this->_composite_pk_value_delimiter, $id)))->or_where_close();
+                }
+            }
 
             return $this->find(null, $use_master);
         }
         else
         {
-            throw new Exception('ORM设置不存在ID字段，无法使用此方法');
+            throw new Exception(__('Can\'t found pk.'));
         }
     }
 

@@ -36,6 +36,13 @@ class Module_OOP_ORM_Data
     protected $_expand_key;
 
     /**
+     * 自增字段名，通常和主键一致
+     *
+     * @var string
+     */
+    protected $_auto_increment_field_name;
+
+    /**
      * 数据库数据
      *
      * @var array
@@ -129,14 +136,14 @@ class Module_OOP_ORM_Data
      *
      * @var array
      */
-    protected $_unset_offset = array();
+    protected $_unset_key = array();
 
     /**
      * 记录处理字段的DI控制器
      *
      * @var array
      */
-    protected $_temp_offset_di = array();
+    protected $_temp_di = array();
 
     /**
      * 记录当前对象所在组ID
@@ -294,7 +301,7 @@ class Module_OOP_ORM_Data
         # 对象名称
         $this->_class_name = strtolower(get_class($this));
 
-        if (substr($this->_class_name, -12)=='oop_orm_data')
+        if ('oop_orm_data'===substr($this->_class_name, -12))
         {
             # 临时对象
             $this->_is_temp_instance = true;
@@ -319,19 +326,19 @@ class Module_OOP_ORM_Data
      */
     public function __unset($key)
     {
-        if ($key[0]==='_')
+        if ('_'===$key[0])
         {
             unset($this->_private_values[$key]);
             return true;
         }
 
-        if ($this->_is_temp_instance && !$this->_expand_key && !isset($this->_temp_offset_di[$key]) && !array_key_exists($key, $this->_data))
+        if ($this->_is_temp_instance && !$this->_expand_key && !isset($this->_temp_di[$key]) && !array_key_exists($key, $this->_data))
         {
             # 临时对象且没实例化
             return true;
         }
 
-        $di = $this->_get_di_by_offset($key);
+        $di = $this->_get_di_by_key($key);
         $rs = $di->un_set($this, $this->_data, $this->_compiled_data);
 
         if ($rs)
@@ -343,13 +350,13 @@ class Module_OOP_ORM_Data
                 if (!$field_name || !array_key_exists($field_name, $this->_data))
                 {
                     #移除临时对象相关信息
-                    unset($this->_temp_offset_di[$key], $this->_unset_offset[$key], $di);
+                    unset($this->_temp_di[$key], $this->_unset_key[$key], $di);
 
                     return $rs;
                 }
             }
 
-            $this->_unset_offset[$key] = 1;
+            $this->_unset_key[$key] = 1;
         }
 
         return $rs;
@@ -357,14 +364,14 @@ class Module_OOP_ORM_Data
 
     public function __isset($key)
     {
-        if (isset($this->_unset_offset[$key]))return false;
+        if (isset($this->_unset_key[$key]))return false;
 
         if ($key[0]==='_')
         {
             return array_key_exists($key, $this->_private_values);
         }
 
-        return $this->_get_di_by_offset($key)->is_set($this, $this->_data, $this->_compiled_data);
+        return $this->_get_di_by_key($key)->is_set($this, $this->_data, $this->_compiled_data);
     }
 
     public function & __get($key)
@@ -378,10 +385,10 @@ class Module_OOP_ORM_Data
         }
 
         # 已经被unset
-        if (isset($this->_unset_offset[$key]))return null;
+        if (isset($this->_unset_key[$key]))return null;
 
 //        if ($key=='blog_id'||$key=='hits')return $this->_get_field_parse_obj($key);
-        return $this->_get_di_by_offset($key)->get_data($this, $this->_data, $this->_compiled_data, $this->_raw_compiled_data, $this->_delay_setting);
+        return $this->_get_di_by_key($key)->get_data($this, $this->_data, $this->_compiled_data, $this->_raw_compiled_data, $this->_delay_setting);
 
         /*
 
@@ -534,20 +541,20 @@ class Module_OOP_ORM_Data
             return true;
         }
 
-        $rs = $this->_get_di_by_offset($key)->set_data($this, $this->_data, $this->_compiled_data, $this->_raw_compiled_data, $value, $this->_orm_data_is_created);
+        $rs = $this->_get_di_by_key($key)->set_data($this, $this->_data, $this->_compiled_data, $this->_raw_compiled_data, $value, $this->_orm_data_is_created);
 
         if ($this->_orm_data_is_created && $rs)
         {
             # 移除unset标记
-            if (isset($this->_unset_offset[$key]))
+            if (isset($this->_unset_key[$key]))
             {
-                unset($this->_unset_offset[$key]);
+                unset($this->_unset_key[$key]);
             }
 
             # 移除标记递增
             if ($this->_value_increment || $this->_delay_update_value_increment)
             {
-                $field_name = $this->_get_di_by_offset($key)->get_field_name();
+                $field_name = $this->_get_di_by_key($key)->get_field_name();
 
                 if (isset($this->_value_increment[$field_name]))
                 {
@@ -696,11 +703,11 @@ class Module_OOP_ORM_Data
      *      $obj->update();                 // 执行SQL: UPDATE `my_table` SET `title` = 'test', `name` = '123' WHERE `id` = '1';
      *
      *
-     * @param bool $update_when_destruct 是否在对象销毁前更新
+     * @param bool $auto_update 如果在此对象销毁时都还没有执行update()方法更新，是否自动执行update()方法更新，默认 false
      * @throws Exception
      * @return $this
      */
-    public function delay_update($update_when_destruct = false)
+    public function delay_update($auto_update = false)
     {
         if ($this->_is_deleted)
         {
@@ -724,14 +731,11 @@ class Module_OOP_ORM_Data
             $this->_delay_update_value_increment = $this->_value_increment;
         }
 
-        $this->_clear_changed_value_setting($changed_data);
+        $this->_clear_changed_value_setting($changed_data, false);
 
-        if ($this->_delay_update_field_data || $this->_delay_update_value_increment)
+        if ($auto_update && ($this->_delay_update_field_data || $this->_delay_update_value_increment))
         {
-            if ($update_when_destruct)
-            {
-                $this->_delay_update_when_destruct = true;
-            }
+            $this->_delay_update_when_destruct = true;
         }
 
         return $this;
@@ -752,14 +756,43 @@ class Module_OOP_ORM_Data
 
         $data = $this->get_all_field_data();
 
-        $rs = $this->finder()->insert($data);
-
-        if ($rs && $rs[1]>0)
+        if ($data)
         {
-            $this->_clear_changed_value_setting($data, true);
-        }
+            $rs = $this->finder()->insert($data);
 
-        return $rs;
+            if ($rs && $rs[1]>0)
+            {
+                $a_field = $this->_auto_increment_field_name;
+
+                if(!$a_field && $rs[0])
+                {
+                    # 没有设置过自增字段却有返回自增数
+                    if ($pk_name = $this->get_pk_name())
+                    {
+                        $a_field = current($pk_name);
+                        $this->auto_increment_field_name($a_field);
+                    }
+                }
+
+                if ($a_field)
+                {
+                    # 给自增字段赋值
+                    $this->_data[$a_field] = $rs[0];
+
+                    if ($key = $this->get_key_by_field_name($a_field))
+                    {
+                        $this->$key = $rs[0];
+                    }
+                }
+
+                $this->_clear_changed_value_setting($data, true);
+            }
+            return $rs;
+        }
+        else
+        {
+            return false;
+        }
     }
 
     /**
@@ -776,9 +809,17 @@ class Module_OOP_ORM_Data
             throw new Exception('ORM:'. $this->_class_name .' 不存在ID字段，无法使用ORM系统自带的delete方法删除数据，请设置主键或通过 `$this->set_pk_name(\'id\')` 方法设置');
         }
 
-        $this->_is_deleted = true;
+        if ($rs = $this->finder()->delete($pk))
+        {
+            $this->_is_deleted = true;
 
-        return $this->finder()->delete($pk);
+            if ($this->_is_register_instance)
+            {
+                OOP_ORM_Data::release_instance($this, $this->_class_name, $this->pk());
+            }
+        }
+
+        return $rs;
     }
 
     /**
@@ -792,27 +833,27 @@ class Module_OOP_ORM_Data
     public function get_changed_field_data()
     {
         $data = array();
-        if (!$this->_compiled_data && !$this->_unset_offset)return $data;
+        if (!$this->_compiled_data && !$this->_unset_key)return $data;
 
         foreach($this->_compiled_data as $key => $value)
         {
-            $di = $this->_get_di_by_offset($key);
+            $di = $this->_get_di_by_key($key);
             if ($di->is_virtual())
             {
                 # 虚拟字段
                 continue;
             }
 
-            if ($this->_check_offset_is_changed($key))
+            if ($this->_check_key_is_changed($key))
             {
                 $di->get_field_data($data, $value, $this->_is_temp_instance && !$this->_is_support_object_field);
             }
         }
 
-        foreach($this->_unset_offset as $key => $true)
+        foreach($this->_unset_key as $key => $true)
         {
             # 被unset掉的对象
-            $di = $this->_get_di_by_offset($key);
+            $di = $this->_get_di_by_key($key);
             if ($di->is_virtual())
             {
                 # 虚拟字段
@@ -845,18 +886,18 @@ class Module_OOP_ORM_Data
         if (!is_bool($key))
         {
             # 检查单个字段是否修改过
-            return $this->_check_offset_is_changed($key);
+            return $this->_check_key_is_changed($key);
         }
 
         # 临时对象有过unset行为
-        if ($this->_is_temp_instance && $this->_unset_offset)return true;
+        if ($this->_is_temp_instance && $this->_unset_key)return true;
 
         # 递增或递减字段
         if ($this->_value_increment)return true;
 
         foreach ($this->_compiled_data as $k => $v)
         {
-            $di = $this->_get_di_by_offset($k);
+            $di = $this->_get_di_by_key($k);
 
             if (true===$key)
             {
@@ -869,7 +910,7 @@ class Module_OOP_ORM_Data
             # 虚拟字段不用判断，会在主字段里判断
             if ($di->is_virtual())continue;
 
-            if ($this->_check_offset_is_changed($k))
+            if ($this->_check_key_is_changed($k))
             {
                 return true;
             }
@@ -884,12 +925,12 @@ class Module_OOP_ORM_Data
      * @param $key
      * @return bool
      */
-    protected function _check_offset_is_changed($key)
+    protected function _check_key_is_changed($key)
     {
         if (!array_key_exists($key, $this->_compiled_data))return false;
 
         $value = $this->_compiled_data[$key];
-        $di    = $this->_get_di_by_offset($key);
+        $di    = $this->_get_di_by_key($key);
 
         # 通过DI控制器来判断，虚拟字段不用判断，实际字段会判断
         if ($di->check_data_is_change($this, $key, $value, isset($this->_raw_compiled_data[$key])?$this->_raw_compiled_data[$key] : null))
@@ -965,7 +1006,7 @@ class Module_OOP_ORM_Data
     /**
      * 获取当前ORM的主键键名
      *
-     * @return array|null
+     * @return array
      */
     public function get_pk_name()
     {
@@ -986,12 +1027,18 @@ class Module_OOP_ORM_Data
      * 设置主键
      *
      * @param array|string $pk
+     * @param bool $auto_increment 是否自增字段
      * @return $this
      */
-    public function set_pk_name($pk)
+    public function set_pk_name($pk, $auto_increment = true)
     {
         if (is_array($pk))
         {
+            if ($auto_increment)
+            {
+                $this->auto_increment_field_name(current($pk));
+            }
+
             foreach($pk as $item)
             {
                 $this->_temp_instance_pk[$item] = $item;
@@ -1004,7 +1051,26 @@ class Module_OOP_ORM_Data
             (
                 $pk => $pk,
             );
+
+            if ($auto_increment)
+            {
+                $this->auto_increment_field_name($pk);
+            }
         }
+        return $this;
+    }
+
+    /**
+     * 设置、获取自增ID字段
+     *
+     * @param bool $field_name
+     * @return $this|string
+     */
+    public function auto_increment_field_name($field_name = false)
+    {
+        if (false===$field_name)return $this->_auto_increment_field_name;
+
+        $this->_auto_increment_field_name = $field_name;
 
         return $this;
     }
@@ -1059,7 +1125,7 @@ class Module_OOP_ORM_Data
 
         foreach($this->_compiled_data as $key => $value)
         {
-            $di = $this->_get_di_by_offset($key);
+            $di = $this->_get_di_by_key($key);
 
             if ($di->is_virtual())
             {
@@ -1071,7 +1137,7 @@ class Module_OOP_ORM_Data
                 continue;
             }
 
-            $this->_get_di_by_offset($key)->get_field_data($data, $this->_compiled_data[$key], $this->_is_temp_instance && !$this->_is_support_object_field);
+            $this->_get_di_by_key($key)->get_field_data($data, $this->_compiled_data[$key], $this->_is_temp_instance && !$this->_is_support_object_field);
         }
 
         return $data;
@@ -1094,7 +1160,7 @@ class Module_OOP_ORM_Data
         }
         else
         {
-            $key = OOP_ORM_DI::get_key_by_field_name($this->_class_name, $field_name);
+            $key = $this->get_key_by_field_name($field_name);
 
             if (null === $key)
             {
@@ -1106,7 +1172,7 @@ class Module_OOP_ORM_Data
         {
             if ($db_data)
             {
-                if ($this->_get_di_by_offset($key)->get_field_data($data, $this->_compiled_data[$key], $this->_is_temp_instance && !$this->_is_support_object_field))
+                if ($this->_get_di_by_key($key)->get_field_data($data, $this->_compiled_data[$key], $this->_is_temp_instance && !$this->_is_support_object_field))
                 {
                     return $data[$field_name];
                 }
@@ -1184,7 +1250,13 @@ class Module_OOP_ORM_Data
      */
     public static function create_instance($orm_data_name, $data, $is_field_key = false, $finder = null)
     {
-        if (isset(OOP_ORM_Data::$INSTANCE_BY_PK[$orm_data_name]) && OOP_ORM_Data::$INSTANCE_BY_PK[$orm_data_name])
+        if ('oop_orm_data'!==$orm_data_name)
+        {
+            # $orm_data_name = OOP_ORM_Data 的话是虚拟对象，虚拟对象不缓存
+            return new $orm_data_name($data, $finder);
+        }
+
+        if ($data && isset(OOP_ORM_Data::$INSTANCE_BY_PK[$orm_data_name]) && OOP_ORM_Data::$INSTANCE_BY_PK[$orm_data_name])
         {
             # 复用寄存器中的对象
 
@@ -1197,7 +1269,7 @@ class Module_OOP_ORM_Data
 
             # 获取主键
             $pk_name = $tmp_obj->get_pk_name();
-            if (is_array($pk_name))
+            if (is_array($pk_name) && $pk_name)
             {
                 $tmp_id = array();
 
@@ -1214,10 +1286,6 @@ class Module_OOP_ORM_Data
                 {
 
                 }
-            }
-            elseif ($pk_name)
-            {
-                $pk = $data[$pk_name];
             }
             else
             {
@@ -1249,7 +1317,7 @@ class Module_OOP_ORM_Data
          */
         $orm = new $orm_data_name($data, $finder);
 
-        if ($pk = $orm->pk())
+        if ($data && $pk = $orm->pk())
         {
             if (OOP_ORM_Data::$NEW_INSTANCE_COUNT >= OOP_ORM_Data::$RELEASE_INSTANCE_COUNT)
             {
@@ -1289,7 +1357,7 @@ class Module_OOP_ORM_Data
     /**
      * 获取当前ORM
      *
-     * 同 `$this->orm()`
+     * 同 `$this->finder()`
      *
      * @deprecated 在4.0版本后将弃用，请使用 `$this->finder()` 方法
      * @return OOP_ORM_Finder_DB
@@ -1337,14 +1405,16 @@ class Module_OOP_ORM_Data
 
         if (!$this->_orm_name)
         {
-            throw new Exception(get_class($this).'->_orm_name 未定义，请先定义');
+            $orm_class_name = 'OOP_ORM_Finder_DB';
         }
-
-        $orm_class_name = 'ORM_'. $this->_orm_name .'_Finder';
+        else
+        {
+            $orm_class_name = 'ORM_'. $this->_orm_name .'_Finder';
+        }
 
         if (!class_exists($orm_class_name, true))
         {
-            throw new Exception('指定的ORM对象“'. $orm_class_name .'”不存在');
+            throw new Exception(__('Can\'t found ORM :orm.', array(':orm'=>$orm_class_name)));
         }
 
         return $this->_finder = new $orm_class_name();
@@ -1361,7 +1431,7 @@ class Module_OOP_ORM_Data
      */
     public function value_increment($key, $value = 1)
     {
-        $field_name = $this->_get_di_by_offset($key)->get_field_name();
+        $field_name = $this->_get_di_by_key($key)->get_field_name();
 
         if ($field_name && isset($this->_value_increment[$field_name]))
         {
@@ -1441,18 +1511,29 @@ class Module_OOP_ORM_Data
     }
 
     /**
+     * 根据字段名获取key
+     *
+     * @param $field_name
+     * @return null|string
+     */
+    public function get_key_by_field_name($field_name)
+    {
+        return OOP_ORM_DI::get_key_by_field_name($this->_class_name, $field_name);
+    }
+
+    /**
      * 获取处理字段di控制反转对象
      *
      * @param $class_name
      * @param $key
      * @return OOP_ORM_DI
      */
-    protected function _get_di_by_offset($key)
+    protected function _get_di_by_key($key)
     {
         if ($this->_is_temp_instance)
         {
             # 临时ORM对象
-            if (!isset($this->_temp_offset_di[$key]))
+            if (!isset($this->_temp_di[$key]))
             {
                 $config = array
                 (
@@ -1475,14 +1556,14 @@ class Module_OOP_ORM_Data
                     );
                 }
 
-                $this->_temp_offset_di[$key] = new $class($this->_class_name, $key, $config);
+                $this->_temp_di[$key] = new $class($this->_class_name, $key, $config);
             }
 
-            return $this->_temp_offset_di[$key];
+            return $this->_temp_di[$key];
         }
         else
         {
-            return OOP_ORM_DI::get_class_offset_di($this->_class_name, $key);
+            return OOP_ORM_DI::get_class_di($this->_class_name, $key);
         }
     }
 
@@ -1496,7 +1577,7 @@ class Module_OOP_ORM_Data
             $this->_data = array_merge($this->_data, $changed_value);
         }
 
-        $this->_unset_offset      = array();
+        $this->_unset_key         = array();
         $this->_raw_compiled_data = $this->_compiled_data;
         $this->_value_increment   = array();
 
@@ -1516,17 +1597,8 @@ class Module_OOP_ORM_Data
      * @param null $pk
      * @return bool
      */
-    protected static function register_instance(OOP_ORM_Data $orm, $orm_data_name = null, $pk = null)
+    protected static function register_instance(OOP_ORM_Data $orm, $orm_data_name, $pk)
     {
-        if (!$orm_data_name)$orm_data_name = strtolower(get_class($orm));
-        if (!$pk)
-        {
-            if (!($pk = $orm->pk()))
-            {
-                return false;
-            }
-        }
-
         # 标记为已注册对象
         $orm->_is_register_instance = true;
 
@@ -1534,6 +1606,27 @@ class Module_OOP_ORM_Data
         OOP_ORM_Data::$INSTANCE_BY_PK[$orm_data_name][$pk] = $orm;
         OOP_ORM_Data::$ALL_INSTANCE_COUNT++;
         OOP_ORM_Data::$NEW_INSTANCE_COUNT++;
+
+        return true;
+    }
+
+    /**
+     * 释放对象
+     *
+     * @param OOP_ORM_Data $orm
+     * @return bool
+     */
+    protected static function release_instance(OOP_ORM_Data $orm, $orm_data_name, $pk)
+    {
+        # 标记为已注册对象
+        $orm->_is_register_instance = false;
+
+        if (isset(OOP_ORM_Data::$INSTANCE_BY_PK[$orm_data_name][$pk]))
+        {
+            unset(OOP_ORM_Data::$INSTANCE_BY_PK[$orm_data_name][$pk]);
+            OOP_ORM_Data::$ALL_INSTANCE_COUNT--;
+            OOP_ORM_Data::$NEW_INSTANCE_COUNT--;
+        }
 
         return true;
     }
@@ -1560,7 +1653,7 @@ class Module_OOP_ORM_Data
 
             foreach($data as $key => $value)
             {
-                if (null!==($field_name = $this->_get_di_by_offset($key)->get_field_name()))
+                if (null!==($field_name = $this->_get_di_by_key($key)->get_field_name()))
                 {
                     $this->_data[$field_name] = $value;
                 }
