@@ -43,7 +43,7 @@ class Driver_Cache_Driver_File extends Cache_Driver
             $config = (array)Core::config('cache/file.' . $config_name);
         }
 
-        if ($config['storage'])
+        if (isset($config['storage']))
         {
             $this->storage  = $config['storage'];
         }

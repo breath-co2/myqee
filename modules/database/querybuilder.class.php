@@ -78,17 +78,6 @@ class Module_Database_QueryBuilder
     }
 
     /**
-     * 解析为SQL语句
-     *
-     * @param  object Database instance
-     * @return string
-     */
-    public function compile(Database $db)
-    {
-        return $db->driver()->compile($this->_builder);
-    }
-
-    /**
      * 获取Builder配置
      *
      * 可用 $builder = & $obj->get_builder(); 获取到内存指针

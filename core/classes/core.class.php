@@ -40,6 +40,39 @@ function config($key=null)
 
 
 /**
+ * 获取一个ORM对象
+ *
+ * 如果要获取 `ORM_Test_Finder` 对象，只需要使用 `OOP::ORM('Test')` 即可
+ * 如果 `ORM_Test_Finder` 对象不存在，系统将返回默认的 `OOP_ORM_Finder_DB` Finder对象，并且数据库名称为 `Test`
+ *
+ * @param string $orm_name ORM名称
+ * @param string $database 数据库配置，动态设置数据库配置
+ * @return OOP_ORM_Finder_DB|OOP_ORM_Finder_REST
+ */
+function ORM($orm_name, $database = null)
+{
+    if (preg_match('#^http(s)?://#', $orm_name))
+    {
+        # REST
+        return new OOP_ORM_Finder_REST($orm_name);
+    }
+    else
+    {
+        $finder_class_name = 'ORM_'. $orm_name .'_Finder';
+
+        if (class_exists($finder_class_name, true))
+        {
+            return new $finder_class_name();
+        }
+        else
+        {
+            return new OOP_ORM_Finder_DB($orm_name, $database ? $database : Database::DEFAULT_CONFIG_NAME);
+        }
+    }
+}
+
+
+/**
  * MyQEE 核心类
  *
  * @author     呼吸二氧化碳 <jonwang@myqee.com>
@@ -334,8 +367,7 @@ abstract class Core_Core extends Bootstrap
      *
      * @param string $key
      * @param mixed $default 默认值
-     * @return Config
-     * @return array
+     * @return array|string|null
      */
     public static function config($key = null, $default = null)
     {
@@ -406,18 +438,27 @@ abstract class Core_Core extends Bootstrap
      */
     public static function url($uri = '' , $is_full_url_or_project = false)
     {
-        if (null===$uri)
+        if (null === $uri)
         {
             # 返回当前URL
             return $_SERVER["SCRIPT_URI"]. (isset($_SERVER["QUERY_STRING"]) && $_SERVER["QUERY_STRING"]?'?'.$_SERVER["QUERY_STRING"]:'');
         }
 
-        list($url, $query) = explode('?', $uri , 2);
+        if (false !== strpos($uri, '?'))
+        {
+            list($url, $query) = explode('?', $uri , 2);
+        }
+        else
+        {
+            $url  = $uri;
+            $query = null;
+        }
+
 
         $url = Core::$base_url. ltrim($url, '/') . ($url!='' && Core::$config['url_suffix'] && substr($url, -1)!='/' && false===strpos($url, '.')?'.'.Core::$config['url_suffix']:'') . ($query?'?'.$query:'');
 
         # 返回完整URL
-        if (true===$is_full_url_or_project && !preg_match('#^http(s)?://#i', $url))
+        if (true === $is_full_url_or_project && !preg_match('#^http(s)?://#i', $url))
         {
             $url = HttpIO::PROTOCOL . $_SERVER["HTTP_HOST"] . $url;
         }
@@ -581,7 +622,7 @@ abstract class Core_Core extends Bootstrap
      *
      * @param string $msg 日志内容
      * @param string $type 类型，例如：log,error,debug 等
-     * @param stirng $file 指定文件名，不指定则默认
+     * @param string $file 指定文件名，不指定则默认
      * @return boolean
      */
     public static function log($msg, $type = 'log', $file = null)
@@ -1397,7 +1438,7 @@ abstract class Core_Core extends Bootstrap
      * @param  boolean $highlight 是否返回高亮前缀，可以传字符颜色，比如#f00
      * @return string
      */
-    public static function debug_path($file, $highlight=false)
+    public static function debug_path($file, $highlight = false)
     {
         if ($highlight)
         {
