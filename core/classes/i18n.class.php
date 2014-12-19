@@ -40,20 +40,6 @@ abstract class Core_I18n
     protected static $cache_config = Cache::DEFAULT_CONFIG_NAME;
 
     /**
-     * 语言包缓存时间
-     *
-     * @var string
-     */
-    protected static $cache_time = '86400~172800,1/1000';
-
-    /**
-     * 语言包缓存类型
-     *
-     * @var string
-     */
-    protected static $cache_type = Cache::TYPE_ADV_AGE;
-
-    /**
      * 由系统回调执行
      *
      * @param array $lib
@@ -95,7 +81,7 @@ abstract class Core_I18n
                 # 语言包文件
                 $lang_files = I18n::find_lang_files();
 
-                if ($lang_cache['mtime'] == $lang_files['last_mtime'])
+                if ($lang_cache['mtime'] === $lang_files['last_mtime'])
                 {
                     # 时间相同才使用
                     I18n::$lang[Core::$project]     = $lang_cache['lang'];
@@ -145,7 +131,7 @@ abstract class Core_I18n
             }
 
             # 写缓存
-            Cache::instance(I18n::$cache_config)->set($lang_cache_key, array('lang'=>$lang, 'mtime'=>$lang_files['last_mtime']), I18n::$cache_time, I18n::$cache_type);
+            Cache::instance(I18n::$cache_config)->set($lang_cache_key, array('lang'=>$lang, 'mtime'=>$lang_files['last_mtime']), Core::config('lang_cache_time', '2592000~5184000,1/10000'), Cache::TYPE_ADV_AGE);
         }
     }
 
@@ -244,6 +230,38 @@ abstract class Core_I18n
             {
                 $accept_language[] = $default_lang;
             }
+
+            /*
+            $accept_language 整理之前
+            Array
+            (
+                [0] => ko-kr
+                [1] => en-us
+                [2] => zh-cn
+            )
+            $accept_language 整理之后
+            Array
+            (
+                [0] => ko-kr
+                [1] => ko
+                [2] => en-us
+                [3] => en
+                [4] => zh-cn
+                [5] => zh
+            )
+            */
+            $renew_accept_language = array();
+            foreach($accept_language as $item)
+            {
+                $sub_lang = explode('-', $item);
+
+                $renew_accept_language[] = $item;
+                if (count($sub_lang) > 1)
+                {
+                    $renew_accept_language[] = $sub_lang[0];
+                }
+            }
+            $accept_language = array_unique($renew_accept_language);
         }
 
         I18n::$accept_language = $accept_language;
@@ -320,7 +338,6 @@ abstract class Core_I18n
     protected static function get_lang_cache_key()
     {
         # 当前语言key
-        $lang_key = implode('_', I18n::accept_language());
         $libs_key = array();
         foreach (Core::$include_path as $libs)
         {
@@ -331,7 +348,7 @@ abstract class Core_I18n
         }
 
         $libs_key = md5(implode(',', $libs_key));
-        $key      = 'lang_cache_by_' . $libs_key .'_for_'. $lang_key;
+        $key      = 'lang_cache_by_' . $libs_key .'_for_'. implode('_', I18n::accept_language());
 
         return $key;
     }

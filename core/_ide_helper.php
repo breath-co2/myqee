@@ -8,6 +8,9 @@ class Ex_Arr extends Core_Arr{}
 class Auth extends Core_Auth{}
 class Ex_Auth extends Core_Auth{}
 
+class BigInt extends Core_BigInt{}
+class Ex_BigInt extends Core_BigInt{}
+
 class Captcha extends Core_Captcha{}
 class Ex_Captcha extends Core_Captcha{}
 
@@ -94,9 +97,6 @@ class Ex_View extends Core_View{}
 
 class ORM_Test_Finder extends Core_ORM_Test_Finder{}
 class Ex_ORM_Test_Finder extends Core_ORM_Test_Finder{}
-
-class ORM_Test_Data extends Core_ORM_Test_Data{}
-class Ex_ORM_Test_Data extends Core_ORM_Test_Data{}
 
 class ORM_Test_Result extends Core_ORM_Test_Result{}
 class Ex_ORM_Test_Result extends Core_ORM_Test_Result{}

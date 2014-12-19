@@ -219,9 +219,14 @@ $config['error500'] = array
     'type_config' => 'default',
 );
 
+
 /**
  * 错误等级
  *
+ * 开发环境可以用 E_ALL 表示所有的错误都会抛出错误，可以帮助你发现一些不容易察觉的编写不规范的代码
+ * 正式环境可用 7, 即 `E_WARNING ^ E_PARSE ^ E_ERROR`，只会有 E_ERROR、E_WARNING 和 E_PARSE 错误才会报错
+ *
+ * @link http://php.net/manual/zh/function.error-reporting.php
  * @var int
  */
 $config['error_reporting'] = 7;
@@ -275,6 +280,38 @@ $config['lang'] = 'auto';
 
 
 /**
+ * 默认语言包，仅当 `$config['lang']` 设置成 auto 时有效
+ *
+ * 即便 `$config['lang']` 设置成 auto 时，此参数仍旧有效，此参数设置成 null 才停用此功能
+ * 例如 zh-cn
+ *
+ * @var string
+ */
+$config['default_lang'] = 'zh-cn';
+
+
+/**
+ * 可用于html中meta的语言类型数据变量
+ *
+ *      <meta http-equiv="Content-Language" content="zh-CN" />
+ *      或
+ *      <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="zh-CN" lang="zh-CN">
+ *
+ */
+$config['html_content_language'] = 'zh-CN';
+
+
+/**
+ * 语言包缓存时间
+ *
+ *  `$config['i18n_cache_time'] = '2592000~5184000,1/10000'` 表示缓存30-60天，在30-60天后1/10000几率命中后更新缓存
+ *
+ * @var string
+ */
+$config['lang_cache_time'] = '2592000~5184000,1/10000';
+
+
+/**
  * 动态语言包cookie设置的key名称，用于国际化网站用户，可以根据自己语言选择设置对应的语言
  *
  * 即便 `$config['lang']` 设置成 auto 时，此参数仍旧有效，此参数设置成 null 才停用此功能
@@ -283,16 +320,6 @@ $config['lang'] = 'auto';
  * @var string
  */
 $config['local_lang_cookie_name'] = null;       // 例如 lang
-
-
-/**
- * 默认语言包，仅当 `$config['lang']` 设置成 auto 时有效
- *
- * 例如 zh-cn
- *
- * @var string
- */
-$config['default_lang'] = 'zh-cn';
 
 
 /**
@@ -358,7 +385,7 @@ $config['asset_allow_suffix'] = 'js|css|jpg|jpeg|png|gif|bmp|pdf|html|htm|mp4|sw
  *          'www.queyang.com',
  *      );
  *
- * @var auto | array
+ * @var string|array
  */
 $config['ajax_cross_domain'] = 'auto';
 
@@ -370,7 +397,7 @@ $config['ajax_cross_domain'] = 'auto';
  * false  - 显示
  * string - 自定义输出的头信息
  *
- * @var boolean | string
+ * @var bool|string
  */
 $config['hide_x_powered_by_header'] = false;
 

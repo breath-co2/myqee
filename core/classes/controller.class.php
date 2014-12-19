@@ -97,28 +97,6 @@ class Core_Controller
     }
 
     /**
-     * 用于给系统调用设置对象变量
-     *
-     * @param array $data
-     */
-    public function _callback_set_vars($data)
-    {
-        # 将路由信息传入到控制器变量中
-        foreach ($data as $key => $value)
-        {
-            $this->$key = $value;
-        }
-    }
-
-    /**
-     * 用于给系统调用获取控制器变量
-     */
-    public function _callback_get_vars()
-    {
-        return get_object_vars($this);
-    }
-
-    /**
      * 返回Session对象
      *
      * @return Session
@@ -134,47 +112,46 @@ class Core_Controller
      * @param string $message
      * @param int $code
      */
-    public function show_message($msg, $code=0, $data = array())
+    public function show_message($msg, $code = 0, $data = array())
     {
-        $out = array
-        (
-            'code' => $code,
-            'msg'  => (string)$msg,
-            'data' => $data,
-        );
-
         if (IS_SYSTEM_MODE)
         {
             // 系统内部调用模式
-
             echo $msg;
-
             exit;
         }
 
-        if (HttpIO::IS_AJAX)
+        if (is_array($msg))
         {
-            @header('Content-Type:application/json');
-
-            if (defined('JSON_UNESCAPED_UNICODE'))
-            {
-                echo json_encode($out, JSON_UNESCAPED_UNICODE);
-            }
-            else
-            {
-                echo json_encode($out);
-            }
-
-            exit;
+            $out = $msg;
         }
         else
         {
-            View::factory((IS_ADMIN_MODE?'admin/':'') .'message', $out)->render(true);
+            $out = array
+            (
+                'code' => $code,
+                'msg'  => (string)$msg,
+            );
         }
 
-        if (method_exists($this, 'after'))
+        if (is_array($data))
         {
-            $this->after();
+            $out['status'] = $code > 0 ? 'ok' : 'error';
+            $out['data']   = $data;
+        }
+
+        if (HttpIO::IS_AJAX || $this->suffix=='json')
+        {
+            $this->message_for_ajax($out);
+        }
+        else
+        {
+            $this->message_for_view($out);
+
+            if (method_exists($this, 'after'))
+            {
+                $this->after();
+            }
         }
 
         exit;
@@ -195,7 +172,6 @@ class Core_Controller
         $this->show_message($message, -1, $data);
     }
 
-
     /**
      * 执行新控制
      *
@@ -209,7 +185,7 @@ class Core_Controller
      */
     public static function execute($uri, $print = true, $use_route = true, $is_internal = true)
     {
-        return HttpIO::execute($uri, $print, $use_route, $is_internal);
+
     }
 
     /**
@@ -239,13 +215,13 @@ class Core_Controller
     }
 
     /**
-     * 分块输出
+     * 分块推送输出
      *
      * @param $msg
      */
-    public function output_chunk($msg)
+    public function push($msg)
     {
-        HttpIO::output_chunk($msg);
+        HttpIO::push_chunk($msg);
     }
 
     /**
@@ -253,9 +229,9 @@ class Core_Controller
      *
      * @param int $time_limit 允许程序执行的最长时间，0表示永久
      */
-    public function output_chunk_start($time_limit = 0)
+    public function push_start($time_limit = 0)
     {
-        HttpIO::output_chunk_start($time_limit);
+        HttpIO::chunk_start($time_limit);
     }
 
     /**
@@ -263,9 +239,9 @@ class Core_Controller
      *
      * !!! 执行此方法后将执行 `exit()`，程序将结束运行
      */
-    public function output_chunk_end()
+    public function push_end()
     {
-        HttpIO::output_chunk_end();
+        HttpIO::chunk_end();
     }
 
     /**
@@ -294,7 +270,7 @@ class Core_Controller
                     }
                     else
                     {
-                        throw new Exception('当前Apache没有安装mod_xsendfile扩展，请先安装扩展');
+                        throw new Exception('当前Apache没有安装mod_xsendfile扩展，无法使用sendfile方法，请先安装扩展');
                     }
                 }
                 else
@@ -314,9 +290,40 @@ class Core_Controller
                 break;
         }
 
-        Core::close_buffers(false);
         header($head_name . ': '. $file_path);
-        flush();
         exit;
+    }
+
+    /**
+     * 用于输出message的默认方法
+     *
+     * 在非ajax时会调用
+     *
+     * @param $data
+     */
+    protected function message_for_view($data)
+    {
+        View::factory((IS_ADMIN_MODE?'admin/':'') .'message', $data)->render(true);
+    }
+
+    /**
+     * 用于输出ajax的message默认方法
+     *
+     * 在非ajax时会调用
+     *
+     * @param $data
+     */
+    protected function message_for_ajax($data)
+    {
+        @header('Content-Type:application/json');
+
+        if (defined('JSON_UNESCAPED_UNICODE'))
+        {
+            echo json_encode($data, JSON_UNESCAPED_UNICODE);
+        }
+        else
+        {
+            echo json_encode($data);
+        }
     }
 }

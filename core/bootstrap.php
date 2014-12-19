@@ -215,11 +215,11 @@ unset($dir_data, $dir_cache, $dir_log, $dir_temp);
  *
  * __('Welcome back, :user', array(':user' => $username));
  *
- * @uses	I18n::get
- * @param	string  text to translate
- * @param	array   values to replace in the translated text
- * @param	string  target language
- * @return	string
+ * @uses    I18n::get
+ * @param   string text to translate
+ * @param   array  $string values to replace in the translated text
+ * @param   string $values target language
+ * @return  string
  */
 function __($string, array $values = null)
 {
@@ -553,10 +553,10 @@ abstract class Bootstrap
                 }
             }
 
-            if (!IS_CLI)
+            if (!IS_CLI && isset(self::$core_config['charset']))
             {
                 # 输出文件头
-                header('Content-Type: text/html;charset=' . self::$core_config['charset']);
+                header('Content-Type: text/html;charset='. self::$core_config['charset']);
             }
 
             // 设置错误等级
@@ -570,7 +570,6 @@ abstract class Bootstrap
             {
                 @date_default_timezone_set(self::$core_config['timezone']);
             }
-
 
             // 获取全局$project变量
             global $project, $admin_mode, $rest_mode;

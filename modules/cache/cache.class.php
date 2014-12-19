@@ -135,10 +135,17 @@ class Module_Cache
             throw new Exception(__('The :type driver :driver does not exist', array(':type'=>'Cache', ':driver'=>$this->config['driver'])));
         }
 
-        $this->driver = new $driver($this->config['driver_config']);
+        if (isset($this->config['driver_config']))
+        {
+            $this->driver = new $driver($this->config['driver_config']);
+        }
+        else
+        {
+            $this->driver = new $driver();
+        }
 
         # 设置前缀
-        if ($this->config['prefix'])
+        if (isset($this->config['prefix']))
         {
             $this->driver->set_prefix($this->config['prefix']);
         }
