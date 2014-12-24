@@ -260,6 +260,16 @@ abstract class Module_OOP_ORM
     abstract public function find();
 
     /**
+     * 获取一个对象
+     *
+     * @return OOP_ORM_Data
+     */
+    public function find_single()
+    {
+        return $this->find()->current();
+    }
+
+    /**
      * 返回ORM数据对象
      *
      * @param $array

@@ -73,7 +73,13 @@ abstract class Module_OOP_ORM_DI
             $this->config = array();
         }
 
-        if (isset($this->config['field_name']) && $this->config['field_name'])
+        if (isset($this->config['field']) && $this->config['field'])
+        {
+            $this->field_name = $this->config['field_name'] = $this->config['field'];
+
+            unset($this->config['field']);
+        }
+        elseif (isset($this->config['field_name']) && $this->config['field_name'])
         {
             $this->field_name = $this->config['field_name'];
         }
@@ -189,7 +195,7 @@ abstract class Module_OOP_ORM_DI
      */
     public function get_field_name()
     {
-        return isset($this->config['field_name']) ? $this->config['field_name'] : null;
+        return $this->field_name;
     }
 
     /**
@@ -236,9 +242,9 @@ abstract class Module_OOP_ORM_DI
         }
         elseif (is_object($current_compiled_data))
         {
-            if ($current_compiled_data === $current_raw_compiled_data)
+            if ($current_compiled_data !== $current_raw_compiled_data)
             {
-                # 同一个对象
+                # 不是同一个对象
                 return true;
             }
             elseif ($current_compiled_data instanceof OOP_ORM_Data)
@@ -305,21 +311,28 @@ abstract class Module_OOP_ORM_DI
 
     public function get_field_data(& $data, $current_compiled_data, $runtime_format = false)
     {
-        if (!isset($this->config['field_name']) || !$this->config['field_name'])
+        if (!$this->field_name)
         {
             return false;
         }
 
         if (is_object($current_compiled_data))
         {
-            if ($current_compiled_data instanceof OOP_ORM_Data)
-            {
-                $tmp_data = $current_compiled_data->pk();
-            }
-            elseif (isset($this->config['callback']['get_data']) && ($method = $this->config['callback']['get_data']) && method_exists($current_compiled_data, $method))
+            if (isset($this->config['callback']['get_data']) && ($method = $this->config['callback']['get_data']) && method_exists($current_compiled_data, $method))
             {
                 # 回调获取数据
                 $tmp_data = $current_compiled_data->$method();
+            }
+            elseif ($current_compiled_data instanceof OOP_ORM_Data)
+            {
+                if (isset($this->config['bind']) && $this->config['bind'])
+                {
+                    $tmp_data = $current_compiled_data->get_data_by_field_name($this->config['bind'], true);
+                }
+                else
+                {
+                    $tmp_data = $current_compiled_data->pk();
+                }
             }
             elseif ($current_compiled_data instanceof stdClass || $current_compiled_data instanceof ArrayObject || $current_compiled_data instanceof ArrayIterator)
             {
@@ -360,17 +373,16 @@ abstract class Module_OOP_ORM_DI
             }
         }
 
-        $field_name = $this->config['field_name'];
-
         if (null===$tmp_data && !isset($data[$this->key]) && isset($this->config['is_temp_instance']) && $this->config['is_temp_instance'])
         {
             # 对于这种情况应该认为不存在此字段
         }
         else
         {
-            $data[$field_name] = $tmp_data;
+            $data[$this->field_name] = $tmp_data;
         }
-            return true;
+
+        return true;
     }
 
     /**

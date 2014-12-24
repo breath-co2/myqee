@@ -498,7 +498,7 @@ class Module_OOP_ORM_Result implements Iterator, ArrayAccess, Serializable, Coun
      *
      * @param $group_id
      * @param $index
-     * @return OOP_ORM_Data|false
+     * @return OOP_ORM_Data|null
      */
     protected static function get_offset_data($group_id, $index)
     {
@@ -515,14 +515,14 @@ class Module_OOP_ORM_Result implements Iterator, ArrayAccess, Serializable, Coun
 
             if (!$resource || !$finder)
             {
-                return false;
+                return null;
             }
 
             # 从数据库中获取
             $data = $resource->offsetGet($index);
 
             # 返回是null，则seek看是否对应指针数据不存在
-            if (null===$data && false===$resource->seek($index))return false;
+            if (null===$data && false===$resource->seek($index))return null;
 
             # 使用获取的数据创建新对象
             OOP_ORM_Result::$GROUP_DATA[$group_id][$index] = $finder->create($data, isset($option['is_field_key'])?$option['is_field_key']:true, $group_id);

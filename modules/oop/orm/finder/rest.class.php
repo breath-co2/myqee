@@ -93,7 +93,7 @@ class Module_OOP_ORM_Finder_REST extends OOP_ORM
     /**
      * 获取数据
      *
-     * @param $query 请求的参数
+     * @param string $query 请求的参数
      * @return OOP_ORM_Result
      */
     public function find($query = null)

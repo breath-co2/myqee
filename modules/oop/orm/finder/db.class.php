@@ -45,7 +45,7 @@ class Module_OOP_ORM_Finder_DB extends OOP_ORM
 
         if (null === $this->tablename)
         {
-            throw new Exception(__('orm tablename is not declared.'));
+            throw new Exception(__('ORM :orm tablename is not declared.', array(':orm' => get_class($this))));
         }
 
         parent::__construct();
