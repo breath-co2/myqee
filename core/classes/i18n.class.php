@@ -143,11 +143,12 @@ abstract class Core_I18n
      */
     public static function get($string)
     {
-        $string = strtolower(trim($string));
+        $string    = trim($string);
+        $lower_str = strtolower($string);
 
-        if (isset(I18n::$lang[Core::$project][$string]))
+        if (isset(I18n::$lang[Core::$project][$lower_str]))
         {
-            return I18n::$lang[Core::$project][$string];
+            return I18n::$lang[Core::$project][$lower_str];
         }
 
         # 初始化
@@ -160,7 +161,7 @@ abstract class Core_I18n
             return $string;
         }
 
-        return isset(I18n::$lang[Core::$project][$string])?I18n::$lang[Core::$project][$string]:$string;
+        return isset(I18n::$lang[Core::$project][$lower_str]) ? I18n::$lang[Core::$project][$lower_str] : $string;
     }
 
     /**
