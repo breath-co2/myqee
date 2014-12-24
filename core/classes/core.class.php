@@ -26,16 +26,22 @@ function url($uri='')
 }
 
 /**
+ * 获取指定key的配置
+ *
  * 读取配置数据. Core::config() 的别名
+ * 若不传key，则返回 `Config` 对象，可获取动态配置，例如 `Core::config()->get('test');`
  *
  *   echo config('core');    //返回核心配置
  *
+ *   echo Core::config()->get('test');
+ *
  * @param string $key
- * @return string
+ * @param mixed $default 默认值
+ * @return array|string|null|Config
  */
-function config($key=null)
+function config($key = null, $default = null)
 {
-    return Core::config($key);
+    return Core::config($key, $default);
 }
 
 
@@ -66,7 +72,7 @@ function ORM($orm_name, $database = null)
         }
         else
         {
-            return new OOP_ORM_Finder_DB($orm_name, $database ? $database : Database::DEFAULT_CONFIG_NAME);
+            return new OOP_ORM_Finder_DB($orm_name, $database ? $database : null);
         }
     }
 }
@@ -367,7 +373,7 @@ abstract class Core_Core extends Bootstrap
      *
      * @param string $key
      * @param mixed $default 默认值
-     * @return array|string|null
+     * @return array|string|null|Config
      */
     public static function config($key = null, $default = null)
     {
