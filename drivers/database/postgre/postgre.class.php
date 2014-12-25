@@ -134,7 +134,7 @@ class Driver_Database_Driver_Postgre extends Database_Driver
             $hostname = $this->_get_rand_host($error_host);
             if (false===$hostname)
             {
-                if(IS_DEBUG)Core::debug()->error($error_host, 'error_host');
+                if(IS_DEBUG)Core::debug()->warn($error_host, 'error_host');
 
                 if ($last_error && $last_error instanceof Exception)throw $last_error;
                 throw new Exception('connect postgre server error.');
@@ -199,7 +199,7 @@ class Driver_Database_Driver_Postgre extends Database_Driver
             {
                 if (IS_DEBUG)
                 {
-                    Core::debug()->error($username.'@'.$hostname.':'.$port.'.Msg:'.strip_tags($e->getMessage(),'').'.Code:'.$e->getCode(), 'connect postgre server error');
+                    Core::debug()->warn($username.'@'.$hostname.':'.$port.'.Msg:'.strip_tags($e->getMessage(),'').'.Code:'.$e->getCode(), 'connect postgre server error');
                     $last_error = new Exception($e->getMessage(), $e->getCode());
                 }
                 else

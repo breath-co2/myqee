@@ -53,7 +53,7 @@ class Driver_Cache_Driver_WinCache extends Cache_Driver
 
         if (false===$success)
         {
-            if (IS_DEBUG)Core::debug()->error($key, 'wincache mis key');
+            if (IS_DEBUG)Core::debug()->warn($key, 'wincache mis key');
             return false;
         }
         else

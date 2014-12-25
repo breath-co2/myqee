@@ -124,7 +124,7 @@ class Driver_Database_Driver_Mongo extends Database_Driver
             $hostname = $this->_get_rand_host($error_host);
             if (false===$hostname)
             {
-                Core::debug()->error($error_host, 'error_host');
+                Core::debug()->warn($error_host, 'error_host');
 
                 if ($last_error && $last_error instanceof Exception)throw $last_error;
                 throw new Exception(__('connect mongodb server error.'));

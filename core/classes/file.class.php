@@ -94,7 +94,7 @@ class Core_File
             }
             else
             {
-                if (IS_DEBUG)Core::debug()->error('create file error:'.Core::debug_path($file));
+                if (IS_DEBUG)Core::debug()->warn('create file error:'.Core::debug_path($file));
                 return false;
             }
         }
@@ -737,7 +737,7 @@ class Core_File
                 {
                     if (IS_DEBUG)
                     {
-                        Core::debug()->error($i.'/'.count($rs), 'call_http_host rs status');
+                        Core::debug()->error($i .'/'.ccount($rs), 'call_http_host rs status');
                     }
                     return false;
                 }

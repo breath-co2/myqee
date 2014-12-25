@@ -266,7 +266,7 @@ class Driver_Database_Driver_PDO extends Database_Driver
             $dsn = $this->_get_rand_host($error_host);
             if (false===$dsn)
             {
-                if(IS_DEBUG)Core::debug()->error($error_host, 'error_host');
+                if(IS_DEBUG)Core::debug()->warn($error_host, 'error_host');
 
                 if ($last_error && $last_error instanceof Exception)throw $last_error;
                 throw new Exception('connect pdo server error.');

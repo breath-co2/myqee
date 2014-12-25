@@ -204,7 +204,7 @@ class Module_Storage_Driver_Redis extends Storage_Driver
 
         if (false===$return)
         {
-            Core::debug()->error($key,'storage redis mis key');
+            Core::debug()->warn($key,'storage redis mis key');
             Core::debug()->info($time,'use time');
 
             return false;

@@ -2306,7 +2306,7 @@ abstract class Core_Core extends Bootstrap
             }
             catch (Exception $e)
             {
-                Core::debug()->error('close_all_connect error:'.$e->getMessage());
+                Core::debug()->warn('close_all_connect error:'. $e->getMessage());
             }
         }
     }
