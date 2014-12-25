@@ -399,7 +399,13 @@ class Module_Database_QueryBuilder
     }
 
     /**
-     * from(tableA,tableB,...)
+     * from(tableA, tableB,...)
+     *
+     *      $db->from('mytable');                        // FROM `mytable`
+     *      $db->from('mytable as tb1');                 // FROM `mytable` AS `tb1`
+     *      $db->from('tb1', 'tb2');                     // FROM `tb1`, `tb2`
+     *      $db->from('tb1', array('table2', 'tb2'));    // FROM `tb1`, `table2` AS `tb2`
+     *      $db->from(array('table1', 'tb1'));           // FROM `table1` AS `tb1`
      *
      * @param  mixed $tables table name or array($table, $alias) or object
      * @param  ...
@@ -415,7 +421,7 @@ class Module_Database_QueryBuilder
         {
             $tables = explode(',', $tables);
         }
-        elseif (!is_array($tables))
+        elseif (is_array($tables))
         {
             $tables = array($tables);
         }
