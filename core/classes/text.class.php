@@ -938,7 +938,10 @@ abstract class Core_Text
                             $expire_type = null;
                         }
 
-                        $cache->set($key, $xml_string, $expire, $expire_type);
+                        if (isset($cache) && isset($key))
+                        {
+                            $cache->set($key, $xml_string, $expire, $expire_type);
+                        }
                     }
                 }
             }
@@ -954,7 +957,7 @@ abstract class Core_Text
         }
 
         if (!$attribute_key)$attribute_key = '@attributes';
-        if (null===$max_recursion_depth || false===$max_recursion_depth)$max_recursion_depth = 25;
+        if (null === $max_recursion_depth || false === $max_recursion_depth)$max_recursion_depth = 25;
 
         return Text::_exec_xml_to_array($xml_object, $attribute_key, 0, $max_recursion_depth);
     }
@@ -1080,5 +1083,133 @@ abstract class Core_Text
             default:
                 $tmp_value = trim($tmp_value);
         }
+    }
+
+    /**
+     * 获取一个google身份验证器数字
+     *
+     * @param $key
+     * @param int $otp_length
+     * @return int
+     */
+    public static function google_auth_code($key, $counter = null, $otp_length = 6)
+    {
+        if (!$counter)
+        {
+            $counter = self::_get_timestamp();
+        }
+        else
+        {
+            $counter = (int)$counter;
+        }
+
+        return self::_oath_hotp(self::_base32_decode(str_replace(' ', '', $key)), $counter, $otp_length);
+    }
+
+    /**
+     * 验证google身份验证器代码
+     *
+     * @param $b32seed
+     * @param $key
+     * @param int $window 左右浮动窗口期，如果设置成0则表示必须当前窗口期内的验证成功
+     * @param bool $counter 0 表示基于时间验证，如果设置成>0的数字表示基于计数验证
+     * @return bool
+     */
+    public static function google_auth_code_verify($b32seed, $key, $window = 4, $counter = null)
+    {
+        if ($counter)
+        {
+            $time_stamp = (int)$counter;
+        }
+        else
+        {
+            $time_stamp = self::_get_timestamp();
+        }
+
+        $binary_seed = self::_base32_decode(str_replace(' ', '', $b32seed));
+
+        for ($ts = $time_stamp - $window; $ts <= $time_stamp + $window; $ts++)
+        {
+            if (self::_oath_hotp($binary_seed, $ts, strlen($key)) == $key)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    protected static function _oath_hotp($key, $counter, $otp_length)
+    {
+        if (strlen($key) < 8)
+        {
+            throw new Exception('Secret key is too short. Must be at least 16 base 32 characters');
+        }
+
+        $bin_counter = pack('N*', 0) . pack('N*', $counter);        // Counter must be 64-bit int
+        $hash        = hash_hmac ('sha1', $bin_counter, $key, true);
+
+        $offset = ord($hash[19]) & 0xf;
+        $truncate = (
+                ((ord($hash[$offset+0]) & 0x7f) << 24 ) |
+                ((ord($hash[$offset+1]) & 0xff) << 16 ) |
+                ((ord($hash[$offset+2]) & 0xff) << 8 ) |
+                (ord($hash[$offset+3]) & 0xff)
+            ) % pow(10, $otp_length);
+
+        return str_pad($truncate, $otp_length, '0', STR_PAD_LEFT);
+    }
+
+    protected static function _get_timestamp()
+    {
+        return floor(microtime(true)/30);
+    }
+
+    protected static function _base32_decode($b32)
+    {
+        $b32 = strtoupper($b32);
+
+        if (!preg_match('/^[ABCDEFGHIJKLMNOPQRSTUVWXYZ234567]+$/', $b32, $match))
+        {
+            throw new Exception('Invalid characters in the base32 string.');
+        }
+
+        $l      = strlen($b32);
+        $n      = 0;
+        $j      = 0;
+        $binary = '';
+        $lut    = array
+        (
+            'A' => 0,  'B' => 1,
+            'C' => 2,  'D' => 3,
+            'E' => 4,  'F' => 5,
+            'G' => 6,  'H' => 7,
+            'I' => 8,  'J' => 9,
+            'K' => 10, 'L' => 11,
+            'M' => 12, 'N' => 13,
+            'O' => 14, 'P' => 15,
+            'Q' => 16, 'R' => 17,
+            'S' => 18, 'T' => 19,
+            'U' => 20, 'V' => 21,
+            'W' => 22, 'X' => 23,
+            'Y' => 24, 'Z' => 25,
+            '2' => 26, '3' => 27,
+            '4' => 28, '5' => 29,
+            '6' => 30, '7' => 31
+        );
+
+        for ($i = 0; $i < $l; $i++)
+        {
+            $n = $n << 5;
+            $n = $n + $lut[$b32[$i]];
+            $j = $j + 5;
+            if ($j >= 8)
+            {
+                $j = $j - 8;
+                $binary .= chr(($n & (0xFF << $j)) >> $j);
+            }
+        }
+
+        return $binary;
     }
 }
