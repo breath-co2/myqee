@@ -51,9 +51,9 @@ class OOP_ORM_DI_ORM extends OOP_ORM_DI
         if (!$this->config['orm'])
         {
             Core::debug()->info($this->key, 'orm key');
-            Core::debug()->error($this->config, 'orm config');
+            Core::debug()->warn($this->config, 'orm config');
 
-            throw new Exception('Unknown orm');
+            throw new Exception('Unknown ORM');
         }
 
         # 设置为ORM时，data, object, format 配置将无效
@@ -137,45 +137,55 @@ class OOP_ORM_DI_ORM extends OOP_ORM_DI
     protected function get_orm_data(OOP_ORM_Data $obj)
     {
         $orm_config = $this->config;
+        $orm_obj    = ORM($orm_config['orm']);
+        $rs         = null;
 
-        $orm_obj = ORM($orm_config['orm']);
-
-        $st = array
-        (
-            'type'             => 'orm',
-            'class_name'       => $this->class_name,
-            'key'              => $this->key,
-            'config'           => $this->config(),
-            'parent_group_ids' => $obj->__orm_callback('get_parent_group_ids'),
-        );
-
-        $data = array();
-        if(is_array($this->config['mapping']))foreach($this->config['mapping'] as $k0 => $k)
-        {
-            $data[$k0] = $obj->$k;
-        }
-
-        # 获取字段名
-        if (isset($this->config['bind']) && $bind = $this->config['bind'])
-        {
-            $data[$bind] = $obj->get_data_by_field_name($this->field_name, true);
-        }
-
-        $rs = null;
         switch ($orm_config['type'])
         {
             case OOP_ORM::PARAM_TYPE_O2O:
-                $rs = $orm_obj->create($data, false);
 
-                $rs->__orm_callback('set_delay_setting', $st);
+                $st = array
+                (
+                    'type'             => 'orm',
+                    'class_name'       => $this->class_name,
+                    'key'              => $this->key,
+                    'config'           => $this->config(),
+                    'parent_group_ids' => $obj->__orm_callback('get_parent_group_ids'),
+                );
+
+                $data = array();
+                foreach($this->config['mapping'] as $k0 => $k)
+                {
+                    $data[$k0] = $obj->$k;
+                }
+
+                # 获取字段名
+                if (isset($this->config['bind']) && $bind = $this->config['bind'])
+                {
+                    $data[$bind] = $obj->get_data_by_field_name($this->field_name, true);
+                }
+
+                $rs = $orm_obj->create($data, true, null, $st);
 
                 if ($group_ids = $obj->__orm_callback('get_group_ids'))
                 {
                     $rs->__orm_callback('add_parent_group_id', $group_ids);
                 }
+
                 break;
             case OOP_ORM::PARAM_TYPE_O2M:
-                $rs = $orm_obj->create_group_data(array());
+
+                foreach($this->config['mapping'] as $k0 => $k)
+                {
+                    $orm_obj->where($k0, $obj->$k);
+                }
+
+                foreach($this->config['where'] as $k0 => $k)
+                {
+                    $orm_obj->where($k0, $k);
+                }
+
+                $rs = $orm_obj->find();
                 break;
         }
 
@@ -240,7 +250,7 @@ class OOP_ORM_DI_ORM extends OOP_ORM_DI
         {
             if (IS_DEBUG)
             {
-                Core::debug()->error($delay_setting, 'error delay_setting');
+                Core::debug()->warn($delay_setting, 'error delay_setting');
                 throw new Exception($delay_setting['class_name'] .'->'. $delay_setting['key'] .' 获取延迟数据设置异常，缺失mapping或where条件');
             }
             return false;
@@ -331,45 +341,75 @@ class OOP_ORM_DI_ORM extends OOP_ORM_DI
         $cache_fns = array();
         # 尝试批量获取，提高语句查询性能
         $group_data = array();
-        if($delay_setting['parent_group_ids'])foreach ($delay_setting['parent_group_ids'] as $group_id)
+        if($delay_setting['parent_group_ids'])
         {
-            foreach(OOP_ORM_Result::get_data_by_group_id($group_id) as $item)
+            $find   = 1;        // 用来判断使得要跳出while循环
+            $offset = 0;        // 起始位置
+            $limit  = 100;      // 单组批量获取数，这样可以避免某些组数量特别多时导致异常问题
+
+            while ($find)
             {
-                /**
-                 * @var $tmp OOP_ORM_Data
-                 */
-                $tmp = $item->$key;
-                if ($tmp && ($tmp===$obj || $tmp->__orm_callback('get_delay_setting')))
+                $found_count = 0;
+                foreach ($delay_setting['parent_group_ids'] as $group_id)
                 {
-                    $tmp_delay_setting = $tmp->__orm_callback('get_delay_setting');
+                    $tmp_group_data = OOP_ORM_Result::get_data_by_group_id($group_id, $offset, $limit);
+                    $found_count += count($tmp_group_data);
 
-                    if (isset($tmp_delay_setting['config']['cache']))
+                    foreach($tmp_group_data as $item)
                     {
-                        // 缓存配置
-                        list($cache, $cache_key, $data) = OOP_ORM_DI_ORM::_get_cache_data($tmp, $tmp_delay_setting);
+                        /**
+                         * @var $tmp OOP_ORM_Data
+                         */
+                        $tmp = $item->$key;
 
-                        if ($data)
+                        if ($tmp===$obj)
                         {
-                            $item->$key->__orm_callback('set_delay_data', $data);
-
-                            continue;
+                            # 找到了对象自己，则标记为不用再继续寻找
+                            $find = 0;
                         }
 
-                        $tmp_fn = array($cache, $cache_key, $tmp_delay_setting['config']['cache']);
-                    }
-                    else
-                    {
-                        $tmp_fn = null;
-                    }
+                        if ($tmp && ($tmp===$obj || $tmp->__orm_callback('get_delay_setting')))
+                        {
+                            $tmp_delay_setting = $tmp->__orm_callback('get_delay_setting');
 
-                    $cache_fns[]  = $tmp_fn;
-                    $group_data[] = $item;
+                            if (isset($tmp_delay_setting['config']['cache']))
+                            {
+                                // 缓存配置
+                                list($cache, $cache_key, $data) = OOP_ORM_DI_ORM::_get_cache_data($tmp, $tmp_delay_setting);
+
+                                if ($data)
+                                {
+                                    $item->$key->__orm_callback('set_delay_data', $data);
+
+                                    continue;
+                                }
+
+                                $tmp_fn = array($cache, $cache_key, $tmp_delay_setting['config']['cache']);
+                            }
+                            else
+                            {
+                                $tmp_fn = null;
+                            }
+
+                            $cache_fns[]  = $tmp_fn;
+                            $group_data[] = $item;
+                        }
+                    }
                 }
+
+                if (!$found_count)
+                {
+                    # 没有可用的返回数
+                    break;
+                }
+
+                $offset += $limit;
             }
         }
 
         if (!$group_data)
         {
+            # 没有获取到任何内容
             return true;
         }
 
@@ -431,7 +471,6 @@ class OOP_ORM_DI_ORM extends OOP_ORM_DI
                 }
                 elseif ($bind)
                 {
-                    echo $bind;
                     $k = $item->get_data_by_field_name($bind_field, true);
                 }
                 elseif ($where)
@@ -443,20 +482,23 @@ class OOP_ORM_DI_ORM extends OOP_ORM_DI
                     continue;
                 }
 
-                if (isset($rs[$k]))
+                if (!isset($rs[$k]))
                 {
-                    if ($cache_fns[$i])
-                    {
-                        # 先处理缓存
-                        list($cache, $cache_key, $cache_config) = $cache_fns[$i];
-                        /**
-                         * @var $cache Cache
-                         */
-                        $cache->set($cache_key, $rs[$k], $cache_config['expire'], isset($cache_config['expire_type'])?$cache_config['expire_type']:null);
-                    }
-
-                    $item->$key->__orm_callback('set_delay_data', $rs[$k]);
+                    # 有可能数据库中没有对应的数据
+                    $rs[$k] = array();
                 }
+
+                if ($cache_fns[$i])
+                {
+                    # 先处理缓存
+                    list($cache, $cache_key, $cache_config) = $cache_fns[$i];
+                    /**
+                     * @var $cache Cache
+                     */
+                    $cache->set($cache_key, $rs[$k], $cache_config['expire'], isset($cache_config['expire_type'])?$cache_config['expire_type']:null);
+                }
+
+                $item->$key->__orm_callback('set_delay_data', $rs[$k]);
             }
         }
         else
@@ -509,20 +551,23 @@ class OOP_ORM_DI_ORM extends OOP_ORM_DI
                     $k .= ','. $item->get_data_by_field_name($bind_field, true);
                 }
 
-                if (isset($rs[$k]))
+                if (!isset($rs[$k]))
                 {
-                    if ($cache_fns[$i])
-                    {
-                        # 先处理缓存
-                        list($cache, $cache_key, $cache_config) = $cache_fns[$i];
-                        /**
-                         * @var $cache Cache
-                         */
-                        $cache->set($cache_key, $rs[$k], $cache_config['expire'], isset($cache_config['expire_type'])?$cache_config['expire_type']:null);
-                    }
-
-                    $item->$key->__orm_callback('set_delay_data', $rs[$k]);
+                    # 有可能数据库中没有对应的数据
+                    $rs[$k] = array();
                 }
+
+                if ($cache_fns[$i])
+                {
+                    # 先处理缓存
+                    list($cache, $cache_key, $cache_config) = $cache_fns[$i];
+                    /**
+                     * @var $cache Cache
+                     */
+                    $cache->set($cache_key, $rs[$k], $cache_config['expire'], isset($cache_config['expire_type'])?$cache_config['expire_type']:null);
+                }
+
+                $item->$key->__orm_callback('set_delay_data', $rs[$k]);
             }
         }
 

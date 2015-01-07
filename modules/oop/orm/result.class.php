@@ -374,21 +374,21 @@ class Module_OOP_ORM_Result implements Iterator, ArrayAccess, Serializable, Coun
      *
      * @param $group_id
      * @param int $offset 起始位置
-     * @param int $limit 返回数量，0表示全部，默认100个
-     * @return array|bool 返回数组
+     * @param int $limit 返回数量，0表示返回全部
+     * @return array 返回数组
      */
-    public static function get_data_by_group_id($group_id, $offset = 0, $limit = 100)
+    public static function get_data_by_group_id($group_id, $offset = 0, $limit = 0)
     {
-        if (!isset(OOP_ORM_Result::$GROUP_DATA[$group_id]) && !isset(OOP_ORM_Result::$GROUP_RESOURCE[$group_id]))return false;
+        if (!isset(OOP_ORM_Result::$GROUP_DATA[$group_id]) && !isset(OOP_ORM_Result::$GROUP_RESOURCE[$group_id]))return array();
 
         $max = OOP_ORM_Result::get_count_by_group_id($group_id);
-        if ($limit)
+        if ($limit > 0)
         {
             $max = min($max, $offset + $limit);
         }
 
         $rs = array();
-        for($i=$offset; $i<$max; $i++)
+        for($i = $offset; $i < $max; $i++)
         {
             $rs[$i] = OOP_ORM_Result::get_offset_data($group_id, $i);
         }

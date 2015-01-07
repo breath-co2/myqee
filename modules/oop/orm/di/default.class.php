@@ -21,15 +21,11 @@ class OOP_ORM_DI_Default extends OOP_ORM_DI
             # 对于id=true||1的字段，默认为主键
             $this->config = array
             (
-                'field_name' => $this->key,
-                'is_virtual' => false,
+                'pk'          => true,
+                'is_readonly' => true,
+                'field_name'  => $this->key,
+                'is_virtual'  => false,
             );
-
-            if ($this->key=='id')
-            {
-                $this->config['pk']          = true;
-                $this->config['is_readonly'] = true;
-            }
         }
         elseif (null===$this->config)
         {

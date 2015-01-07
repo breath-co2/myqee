@@ -252,8 +252,11 @@ class Module_OOP_ORM_Data
      * ORM数据构造
      *
      * @param array $array 构造时设置数据，通过此设置的数据被认为是以数据库字段field为键的数组
+     * @param null $finder 当前ORM Finder对象
+     * @param bool $is_field_key 传入的 `$data` 数据的key是否和数据库对应的字段，默认 true
+     * @param array $delay_data_setting 是否完整数据|延迟读取参数
      */
-    public function __construct($array = null, $finder = null)
+    public function __construct(array $array = array(), $finder = null, $is_field_key = true, array $delay_data_setting = array())
     {
         if ($finder && $finder instanceof OOP_ORM)
         {
@@ -264,7 +267,12 @@ class Module_OOP_ORM_Data
         $this->_init();
 
         # 如果有数据，则设置数据
-        if ($array && is_array($array))$this->__orm_callback_ini_data($array, true);
+        if ($array && is_array($array))$this->__orm_callback_ini_data($array, $is_field_key);
+
+        if ($delay_data_setting)
+        {
+            $this->_delay_setting = $delay_data_setting;
+        }
 
         # 标志ORM为已构造完成
         $this->_orm_data_is_created = true;
@@ -301,7 +309,7 @@ class Module_OOP_ORM_Data
         # 对象名称
         $this->_class_name = strtolower(get_class($this));
 
-        if ('oop_orm_data'===substr($this->_class_name, -12))
+        if ('oop_orm_data' === substr($this->_class_name, -12))
         {
             # 临时对象
             $this->_is_temp_instance = true;
@@ -326,7 +334,7 @@ class Module_OOP_ORM_Data
      */
     public function __unset($key)
     {
-        if ('_'===$key[0])
+        if ('_' === $key[0])
         {
             unset($this->_private_values[$key]);
             return true;
@@ -366,7 +374,7 @@ class Module_OOP_ORM_Data
     {
         if (isset($this->_unset_key[$key]))return false;
 
-        if ($key[0]==='_')
+        if ('_' === $key[0])
         {
             return array_key_exists($key, $this->_private_values);
         }
@@ -378,7 +386,7 @@ class Module_OOP_ORM_Data
     {
         if (array_key_exists($key, $this->_compiled_data))return $this->_compiled_data[$key];
 
-        if ($key[0]==='_')
+        if ('_' === $key[0])
         {
             if (!isset($this->_private_values[$key]))$this->_private_values[$key] = null;
             return $this->_private_values[$key];
@@ -535,7 +543,7 @@ class Module_OOP_ORM_Data
 
     public function __set($key, $value)
     {
-        if ($key[0]==='_')
+        if ('_' === $key[0])
         {
             $this->_private_values[$key] = $value;
             return true;
@@ -1268,15 +1276,19 @@ class Module_OOP_ORM_Data
      *
      * @param $orm_data_name
      * @param $data
+     * @param OOP_ORM $finder
      * @param bool $is_field_key
+     * @param array $delay_data_setting 延迟读取参数
      * @return OOP_ORM_Data
      */
-    public static function create_instance($orm_data_name, $data, $is_field_key = false, $finder = null)
+    public static function create_instance($orm_data_name, array $data = array(), $finder = null, $is_field_key = false, array $delay_data_setting = array())
     {
-        if ('oop_orm_data'!==$orm_data_name)
+        $orm_data_name = strtolower($orm_data_name);
+
+        if ('oop_orm_data' === $orm_data_name)
         {
             # $orm_data_name = OOP_ORM_Data 的话是虚拟对象，虚拟对象不缓存
-            return new $orm_data_name($data, $finder);
+            return new $orm_data_name($data, $finder, $is_field_key, $delay_data_setting);
         }
 
         if ($data && isset(OOP_ORM_Data::$INSTANCE_BY_PK[$orm_data_name]) && OOP_ORM_Data::$INSTANCE_BY_PK[$orm_data_name])
@@ -1284,7 +1296,7 @@ class Module_OOP_ORM_Data
             # 复用寄存器中的对象
 
             /**
-             * 获取一个临时对象
+             * 利用一个临时对象获取主键名
              *
              * @var $tmp_obj OOP_ORM_Data
              */
@@ -1292,7 +1304,9 @@ class Module_OOP_ORM_Data
 
             # 获取主键
             $pk_name = $tmp_obj->get_pk_name();
-            if (is_array($pk_name) && $pk_name)
+            unset($tmp_obj);
+
+            if ($pk_name)
             {
                 $tmp_id = array();
 
@@ -1307,7 +1321,19 @@ class Module_OOP_ORM_Data
                 }
                 else
                 {
+                    /**
+                     * 实例化一个新的对象
+                     *
+                     * @var $orm OOP_ORM_Data
+                     */
+                    $tmp_orm = new $orm_data_name($data, $finder, $is_field_key, $delay_data_setting);
 
+                    # 字段名
+                    foreach($pk_name as $key)
+                    {
+                        $tmp_id[] = $orm->$key;
+                    }
+                    $pk = implode(',', $tmp_id);
                 }
             }
             else
@@ -1325,20 +1351,33 @@ class Module_OOP_ORM_Data
                 $orm = OOP_ORM_Data::$INSTANCE_BY_PK[$orm_data_name][$pk];
 
                 # 更新ORM数据
-                $orm->__orm_callback('renew_data', $data, $is_field_key);
-                $orm->__orm_callback('renew_finder', $finder);
+                if ($data)
+                {
+                    $orm->__orm_callback('renew_data', $data, $is_field_key);
+                }
+
+                if ($finder)
+                {
+                    $orm->__orm_callback('set_finder', $finder);
+                }
 
                 return $orm;
             }
         }
 
-
-        /**
-         * 实例化一个新的对象
-         *
-         * @var $orm OOP_ORM_Data
-         */
-        $orm = new $orm_data_name($data, $finder);
+        if (isset($tmp_orm))
+        {
+            $orm = $tmp_orm;
+        }
+        else
+        {
+            /**
+             * 实例化一个新的对象
+             *
+             * @var $orm OOP_ORM_Data
+             */
+            $orm = new $orm_data_name($data, $finder, $is_field_key, $delay_data_setting);
+        }
 
         if ($data && $pk = $orm->pk())
         {
@@ -1743,6 +1782,11 @@ class Module_OOP_ORM_Data
         return true;
     }
 
+    protected function __orm_callback_renew_data($data)
+    {
+        return $this->_data = array_merge($this->_data, $data);
+    }
+
     protected function & __orm_callback_get_data($key)
     {
         return $this->_data[$key];
@@ -1920,16 +1964,6 @@ class Module_OOP_ORM_Data
         {
             return false;
         }
-    }
-
-    /**
-     * 设置为延迟获取数据
-     *
-     * @return string
-     */
-    protected function __orm_callback_set_delay_setting(array $setting)
-    {
-        $this->_delay_setting = $setting;
     }
 
 

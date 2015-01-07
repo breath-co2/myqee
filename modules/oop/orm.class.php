@@ -33,27 +33,6 @@ abstract class Module_OOP_ORM
     const PARAM_TYPE_O2M = 'o2m';
 
     /**
-     * 一对未知，One-to-fixed
-     *
-     * @var string
-     */
-    const PARAM_TYPE_O2F = 'o2f';
-
-    /**
-     * 多对一，Many-to-one
-     *
-     * @var string
-     */
-    const PARAM_TYPE_M2O = 'm2o';
-
-    /**
-     * 多对多，Many-to-many
-     *
-     * @var string
-     */
-    const PARAM_TYPE_M2M = 'm2m';
-
-    /**
      * 返回类型为返回ORM对象
      *
      * 在4.0版本后将弃用，使用 PARAM_MAPPING_O2F 代替
@@ -223,17 +202,18 @@ abstract class Module_OOP_ORM
      *
      * @param array $data 数据
      * @param boolean $is_field_key 数据的键名是否数据库字段，默认false
-     * @param OOP_ORM_Result $group_id 分组ID，可不传
+     * @param string $group_id 分组ID，可不传
+     * @param array $delay_data_setting 延迟读取参数
      * @throws Exception
      */
-    public function create($data = null, $is_field_key = false, $group_id = null)
+    public function create(array $data = array(), $is_field_key = false, $group_id = null, array $delay_data_setting = array())
     {
         $orm_data_name = $this->get_orm_name('data');
 
         /**
          * @var $orm OOP_ORM_Data
          */
-        $orm = OOP_ORM_Data::create_instance($orm_data_name, $data, $is_field_key, $this);
+        $orm = OOP_ORM_Data::create_instance($orm_data_name, $data, $this, $is_field_key, $delay_data_setting);
 
 
         if ($group_id)
@@ -288,7 +268,7 @@ abstract class Module_OOP_ORM
 
                 if (!isset($no_result[$result_name]))
                 {
-                    Core::debug()->info('指定的' . $result_name . '对象不存在。');
+                    Core::debug()->warn($result_name .' 对象不存在，将使用默认的 OOP_ORM_Result 对象');
                     $no_result[$result_name] = true;
                 }
             }
