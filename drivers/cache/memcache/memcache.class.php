@@ -225,7 +225,7 @@ class Driver_Cache_Driver_Memcache extends Cache_Driver
 
         if (false===$return)
         {
-            if(IS_DEBUG)Core::debug()->error($key, 'memcache mis key');
+            if(IS_DEBUG)Core::debug()->warn($key, 'memcache mis key');
             return false;
         }
         else
@@ -502,6 +502,6 @@ class Driver_Cache_Driver_Memcache extends Cache_Driver
 
     public static function failure_addserver($host, $port, $udp, $info, $code)
     {
-        Core::debug()->error('memcache server failover:' . ' host: ' . $host . ' port: ' . $port . ' udp: ' . $udp . ' info: ' . $info . ' code: ' . $code);
+        if (IS_DEBUG)Core::debug()->warn('memcache server failover:' . ' host: ' . $host . ' port: ' . $port . ' udp: ' . $udp . ' info: ' . $info . ' code: ' . $code);
     }
 }

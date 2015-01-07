@@ -134,7 +134,7 @@ class Driver_Database_Driver_Postgre extends Database_Driver
             $hostname = $this->_get_rand_host($error_host);
             if (false===$hostname)
             {
-                if(IS_DEBUG)Core::debug()->error($error_host, 'error_host');
+                if(IS_DEBUG)Core::debug()->warn($error_host, 'error_host');
 
                 if ($last_error && $last_error instanceof Exception)throw $last_error;
                 throw new Exception('connect postgre server error.');
@@ -199,7 +199,7 @@ class Driver_Database_Driver_Postgre extends Database_Driver
             {
                 if (IS_DEBUG)
                 {
-                    Core::debug()->error($username.'@'.$hostname.':'.$port.'.Msg:'.strip_tags($e->getMessage(),'').'.Code:'.$e->getCode(), 'connect postgre server error');
+                    Core::debug()->warn($username.'@'.$hostname.':'.$port.'.Msg:'.strip_tags($e->getMessage(),'').'.Code:'.$e->getCode(), 'connect postgre server error');
                     $last_error = new Exception($e->getMessage(), $e->getCode());
                 }
                 else
@@ -250,7 +250,7 @@ class Driver_Database_Driver_Postgre extends Database_Driver
             # 先检查是否已经有相同的连接连上了数据库
             foreach ($host_config as $host)
             {
-                $_connection_id = $this->_get_connection_hash($host.'/'.$database, $this->config['port'], $this->config['username']);
+                $_connection_id = $this->_get_connection_hash($host.'/'.$database, $this->config['connection']['port'], $this->config['connection']['username']);
 
                 if (isset(Database_Driver_Postgre::$_connection_instance[$_connection_id]))
                 {
@@ -335,6 +335,7 @@ class Driver_Database_Driver_Postgre extends Database_Driver
                 else
                 {
                     $link = Database_Driver_Postgre::$_connection_instance[$connection_id];
+                    $id   = Database_Driver_Postgre::$_current_connection_id_to_hostname[$connection_id];
 
                     unset(Database_Driver_Postgre::$_connection_instance[$connection_id]);
                     unset(Database_Driver_Postgre::$_connection_instance_count[$connection_id]);
@@ -349,7 +350,7 @@ class Driver_Database_Driver_Postgre extends Database_Driver
                     {}
                     unset($link);
 
-                    if(IS_DEBUG)Core::debug()->info('close '.$key.' postgre '.Database_Driver_Postgre::$_current_connection_id_to_hostname[$connection_id].' connection.');
+                    if(IS_DEBUG)Core::debug()->info('close '. $key .' postgre '. $id .' connection.');
                 }
             }
 

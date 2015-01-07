@@ -245,6 +245,7 @@ class Driver_Database_Driver_SQLite extends Database_Driver
                 else
                 {
                     $link = Database_Driver_SQLite::$_connection_instance[$connection_id];
+                    $id   = Database_Driver_SQLite::$_current_connection_id_to_db[$connection_id];
 
                     unset(Database_Driver_SQLite::$_connection_instance[$connection_id]);
                     unset(Database_Driver_SQLite::$_current_charset[$connection_id]);
@@ -258,7 +259,7 @@ class Driver_Database_Driver_SQLite extends Database_Driver
                     {}
                     unset($link);
 
-                    if(IS_DEBUG)Core::debug()->info('close '. $key .' sqlite '. Database_Driver_SQLite::$_current_connection_id_to_db[$connection_id] .' connection.');
+                    if(IS_DEBUG)Core::debug()->info('close '. $key .' sqlite '. $id .' connection.');
                 }
             }
 

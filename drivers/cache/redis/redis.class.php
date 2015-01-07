@@ -211,7 +211,7 @@ class Driver_Cache_Driver_Redis extends Cache_Driver
 
         if (false===$return)
         {
-            Core::debug()->error($key,'cache redis mis key');
+            Core::debug()->warn($key,'cache redis mis key');
             Core::debug()->info($time,'use time');
 
             return false;

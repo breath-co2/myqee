@@ -115,7 +115,7 @@ class Module_Storage_Driver_Database extends Storage_Driver
         }
         else
         {
-            if (IS_DEBUG)Core::debug()->error($key, 'database storage mis key');
+            if (IS_DEBUG)Core::debug()->warn($key, 'database storage mis key');
         }
 
         return false;
@@ -211,7 +211,7 @@ class Module_Storage_Driver_Database extends Storage_Driver
         }
         catch (Exception $e)
         {
-            Core::debug()->error($e->getMessage());
+            Core::debug()->warn($e->getMessage());
             return false;
         }
     }

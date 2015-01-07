@@ -52,7 +52,7 @@ class Driver_Cache_Driver_Apc extends Cache_Driver
 
         if (false===$success)
         {
-            if (IS_DEBUG)Core::debug()->error($key, 'apc cache mis key');
+            if (IS_DEBUG)Core::debug()->warn($key, 'apc cache mis key');
             return false;
         }
         else

@@ -131,7 +131,7 @@ class Module_OOP_ORM_Finder_REST extends OOP_ORM
         }
         catch (Exception $e)
         {
-            Core::debug()->error('ORM获取数据失败,URL:' . $url);
+            Core::debug()->warn('ORM获取数据失败,URL:' . $url);
             $rs = '[]';
         }
 

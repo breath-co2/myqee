@@ -132,7 +132,7 @@ class Driver_Cache_Driver_Database extends Cache_Driver
         }
         else
         {
-            if (IS_DEBUG)Core::debug()->error($key, 'database cache mis key');
+            if (IS_DEBUG)Core::debug()->warn($key, 'database cache mis key');
         }
 
         return false;
