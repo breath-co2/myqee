@@ -13,6 +13,13 @@
 class Driver_Database_Driver_Mongo extends Database_Driver
 {
     /**
+     * 默认端口
+     *
+     * @var int
+     */
+    protected $_default_port = 27017;
+
+    /**
      * 记录当前连接所对应的数据库
      * @var array
      */
@@ -43,16 +50,6 @@ class Driver_Database_Driver_Mongo extends Database_Driver
      * @var array
      */
     protected static $_current_connection_id_to_hostname = array();
-
-    function __construct(array $config)
-    {
-        if (!isset($config['port']) || !$config['port']>0)
-        {
-            $config['port'] = 27017;
-        }
-
-        parent::__construct($config);
-    }
 
     /**
      * 连接数据库
@@ -267,7 +264,7 @@ class Driver_Database_Driver_Mongo extends Database_Driver
             # 先检查是否已经有相同的连接连上了数据库
             foreach ($host_config as $host)
             {
-                $_connection_id = $this->_get_connection_hash($host, $this->config['port'], $this->config['username']);
+                $_connection_id = $this->_get_connection_hash($host, $this->config['connection']['port'], $this->config['connection']['username']);
 
                 if (isset(Database_Driver_Mongo::$_connection_instance[$_connection_id]))
                 {
@@ -290,6 +287,8 @@ class Driver_Database_Driver_Mongo extends Database_Driver
         {
             if ($connection_id && Database_Driver_Mongo::$_connection_instance[$connection_id])
             {
+                $id = Database_Driver_Mongo::$_current_connection_id_to_hostname[$connection_id];
+
                 # 销毁对象
                 Database_Driver_Mongo::$_connection_instance[$connection_id]    = null;
                 Database_Driver_Mongo::$_connection_instance_db[$connection_id] = null;
@@ -300,7 +299,7 @@ class Driver_Database_Driver_Mongo extends Database_Driver
                 unset(Database_Driver_Mongo::$_current_charset[$connection_id]);
                 unset(Database_Driver_Mongo::$_current_connection_id_to_hostname[$connection_id]);
 
-                if (IS_DEBUG)Core::debug()->info('close '.$key.' mongo '.Database_Driver_Mongo::$_current_connection_id_to_hostname[$connection_id].' connection.');
+                if (IS_DEBUG)Core::debug()->info('close '. $key .' mongo '. $id .' connection.');
             }
 
             $this->_connection_ids[$key] = null;

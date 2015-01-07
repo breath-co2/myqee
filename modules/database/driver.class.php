@@ -55,6 +55,13 @@ abstract class Module_Database_Driver
      */
     protected $_identifier = '"';
 
+    /**
+     * 默认端口
+     *
+     * @var int
+     */
+    protected $_default_port = null;
+
     protected $_as_table = array();
 
     /**
@@ -81,6 +88,11 @@ abstract class Module_Database_Driver
         {
             # 主从链接采用同一个内存地址
             $this->_connection_ids['master'] =& $this->_connection_ids['slaver'];
+        }
+
+        if ($this->_default_port && (!isset($this->config['connection']['port']) || !$this->config['connection']['port']>0))
+        {
+            $this->config['connection']['port'] = $this->_default_port;
         }
     }
 

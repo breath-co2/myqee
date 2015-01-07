@@ -20,6 +20,13 @@ class Driver_Database_Driver_MySQL extends Database_Driver
     protected $_identifier = '`';
 
     /**
+     * 默认端口
+     *
+     * @var int
+     */
+    protected $_default_port = 3306;
+
+    /**
      * 记录当前连接所对应的数据库
      * @var array
      */
@@ -51,16 +58,6 @@ class Driver_Database_Driver_MySQL extends Database_Driver
      */
     protected static $_current_connection_id_to_hostname = array();
 
-    function __construct(array $config)
-    {
-        if (!isset($config['port']) || !$config['port']>0)
-        {
-            $config['port'] = 3306;
-        }
-
-        parent::__construct($config);
-    }
-
     /**
      * 连接数据库
      *
@@ -86,7 +83,7 @@ class Driver_Database_Driver_MySQL extends Database_Driver
         }
 
         # 如果有当前连接，检查连接
-        if ($last_check_connect_time>0 && time()-$last_check_connect_time>=5)
+        if ($last_check_connect_time > 0 && time() - $last_check_connect_time >= 5)
         {
             # 5秒后检查一次连接状态
             $this->_check_connect();
@@ -150,7 +147,7 @@ class Driver_Database_Driver_MySQL extends Database_Driver
             }
 
             $_connection_id = $this->_get_connection_hash($hostname, $port, $username);
-            Database_Driver_MySQL::$_current_connection_id_to_hostname[$_connection_id] = $hostname.':'.$port;
+            Database_Driver_MySQL::$_current_connection_id_to_hostname[$_connection_id] = $username .'@'. $hostname .':'. $port;
 
             try
             {
@@ -262,7 +259,7 @@ class Driver_Database_Driver_MySQL extends Database_Driver
             # 先检查是否已经有相同的连接连上了数据库
             foreach ($host_config as $host)
             {
-                $_connection_id = $this->_get_connection_hash($host, $this->config['port'], $this->config['username']);
+                $_connection_id = $this->_get_connection_hash($host, $this->config['connection']['port'], $this->config['connection']['username']);
 
                 if (isset(Database_Driver_MySQL::$_connection_instance[$_connection_id]))
                 {
@@ -346,6 +343,7 @@ class Driver_Database_Driver_MySQL extends Database_Driver
                 else
                 {
                     $link = Database_Driver_MySQL::$_connection_instance[$connection_id];
+                    $id   = Database_Driver_MySQL::$_current_connection_id_to_hostname[$connection_id];
 
                     unset(Database_Driver_MySQL::$_connection_instance[$connection_id]);
                     unset(Database_Driver_MySQL::$_connection_instance_count[$connection_id]);
@@ -361,7 +359,7 @@ class Driver_Database_Driver_MySQL extends Database_Driver
                     {}
                     unset($link);
 
-                    if(IS_DEBUG)Core::debug()->info('close '.$key.' mysql '.Database_Driver_MySQL::$_current_connection_id_to_hostname[$connection_id].' connection.');
+                    if(IS_DEBUG)Core::debug()->info('close '. $key .' mysql '. $id .' connection.');
                 }
             }
 

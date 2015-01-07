@@ -139,6 +139,10 @@ class Driver_Database_Driver_PDO extends Database_Driver
             $config['options'][PDO::ATTR_PERSISTENT] = true;
         }
 
+        parse_str(str_replace(';', '&', $host), $ot);
+
+        $default_port = null;
+
         switch ($type)
         {
             case 'ibm':
@@ -150,6 +154,7 @@ class Driver_Database_Driver_PDO extends Database_Driver
                 break;
             case 'sqlsrv':
                 $db_name = 'Database';
+                $default_port = 1433;
                 break;
             case 'mysql':
                 $db_name = 'dbname';
@@ -158,13 +163,14 @@ class Driver_Database_Driver_PDO extends Database_Driver
                 {
                     $options[PDO::MYSQL_ATTR_INIT_COMMAND] = "SET NAMES '{$config['charset']}';";
                 }
+
+                $default_port = 3306;
                 break;
             default:
                 $db_name = 'dbname';
                 break;
         }
 
-        parse_str(str_replace(';', '&', $host), $ot);
         if (!isset($ot[$db_name]))
         {
             if ($config['connection']['database'])
@@ -178,6 +184,15 @@ class Driver_Database_Driver_PDO extends Database_Driver
         else
         {
             $config['connection']['database'] = $ot[$db_name];
+        }
+
+        # 默认端口
+        if ($default_port)
+        {
+            if (!isset($config['connection']['port']) || !$config['connection']['port'])
+            {
+                $config['connection']['port'] = isset($ot['port']) && $ot['port'] ? (int)$ot['port'] : $default_port;
+            }
         }
 
         parent::__construct($config);
@@ -381,7 +396,7 @@ class Driver_Database_Driver_PDO extends Database_Driver
             # 先检查是否已经有相同的连接连上了数据库
             foreach ($host_config as $host)
             {
-                $_connection_id = $this->_get_connection_hash($host, $this->config['port'], $this->config['username']);
+                $_connection_id = $this->_get_connection_hash($host, $this->config['connection']['port'], $this->config['connection']['username']);
 
                 if (isset(Database_Driver_PDO::$_connection_instance[$_connection_id]))
                 {
@@ -413,6 +428,7 @@ class Driver_Database_Driver_PDO extends Database_Driver
                 }
                 else
                 {
+                    $id = Database_Driver_PDO::$_current_connection_id_to_hostname[$connection_id];
                     Database_Driver_PDO::$_connection_instance[$connection_id] = null;
 
                     unset(Database_Driver_PDO::$_connection_instance[$connection_id]);
@@ -421,7 +437,7 @@ class Driver_Database_Driver_PDO extends Database_Driver
                     unset(Database_Driver_PDO::$_current_charset[$connection_id]);
                     unset(Database_Driver_PDO::$_current_connection_id_to_hostname[$connection_id]);
 
-                    if(IS_DEBUG)Core::debug()->info('close '.$key.' pdo '.Database_Driver_PDO::$_current_connection_id_to_hostname[$connection_id].' connection.');
+                    if(IS_DEBUG)Core::debug()->info('close '. $key .' pdo '. $id .' connection.');
                 }
             }
 
