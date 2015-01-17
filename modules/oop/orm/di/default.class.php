@@ -55,7 +55,7 @@ class OOP_ORM_DI_Default extends OOP_ORM_DI
      * @param $compiled_data
      * @return mixed
      */
-    public function & get_data(OOP_ORM_Data $obj, & $data, & $compiled_data, & $compiled_raw_data, & $delay_setting)
+    public function & get_data(OOP_ORM_Data $obj, & $data, & $compiled_data, & $compiled_raw_data)
     {
         if ($this->field_name && isset($data[$this->field_name]))
         {
@@ -106,15 +106,6 @@ class OOP_ORM_DI_Default extends OOP_ORM_DI
 
             $compiled_data[$this->key]     = $tmp_data;
             $compiled_raw_data[$this->key] = $tmp_data;     // 保存一个数据备份，用于检查是否修改
-        }
-        elseif ($delay_setting)
-        {
-            # 获取延迟数据
-            OOP_ORM_DI_ORM::get_delay_data($obj, $delay_setting);
-
-            $delay_setting = null;
-
-            return $this->get_data($obj, $data, $compiled_data, $compiled_raw_data, $delay_setting);
         }
         else
         {

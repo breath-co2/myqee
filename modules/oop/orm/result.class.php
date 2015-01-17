@@ -33,6 +33,27 @@ class Module_OOP_ORM_Result implements Iterator, ArrayAccess, Serializable, Coun
     protected $count = 0;
 
     /**
+     * 数据存放
+     *
+     * @var array
+     */
+    protected $data = array();
+
+    /**
+     * 资源
+     *
+     * @var Database_Result
+     */
+    protected $resource;
+
+    /**
+     * 参数
+     *
+     * @var array
+     */
+    protected $option = array();
+
+    /**
      * 查询对象
      *
      * @var OOP_ORM
@@ -90,9 +111,10 @@ class Module_OOP_ORM_Result implements Iterator, ArrayAccess, Serializable, Coun
             $option['count'] = $this->count;
         }
 
-        OOP_ORM_Result::$GROUP_DATA[$this->id]   = array();
-        OOP_ORM_Result::$GROUP_FINDER[$this->id] = $finder;
-        OOP_ORM_Result::$GROUP_OPTION[$this->id] = $option;
+        OOP_ORM_Result::$GROUP_DATA[$this->id]     = array();
+        OOP_ORM_Result::$GROUP_FINDER[$this->id]   = $finder;
+        OOP_ORM_Result::$GROUP_OPTION[$this->id]   = $option;
+        OOP_ORM_Result::$GROUP_RESOURCE[$this->id] = null;
 
         if (is_array($data))
         {
@@ -106,6 +128,12 @@ class Module_OOP_ORM_Result implements Iterator, ArrayAccess, Serializable, Coun
         {
             throw new Exception(__('Error type of resource.'));
         }
+
+        # 指针引用，使用 $this->no_cached() 方法则会释放所有静态数据
+        $this->data     =& OOP_ORM_Result::$GROUP_DATA[$this->id];
+        $this->finder   =& OOP_ORM_Result::$GROUP_FINDER[$this->id];
+        $this->option   =& OOP_ORM_Result::$GROUP_OPTION[$this->id];
+        $this->resource =& OOP_ORM_Result::$GROUP_RESOURCE[$this->id];
     }
 
     public function __destruct()
@@ -127,11 +155,11 @@ class Module_OOP_ORM_Result implements Iterator, ArrayAccess, Serializable, Coun
     {
         if ($this->is_get_all_resource())
         {
-            return isset(OOP_ORM_Result::$GROUP_DATA[$this->id][$index]);
+            return isset($this->data[$index]);
         }
         else
         {
-            if (isset(OOP_ORM_Result::$GROUP_DATA[$this->id][$index]))return true;
+            if (isset($this->data[$index]))return true;
 
             return $this->resource()->offsetExists($index);
         }
@@ -139,16 +167,16 @@ class Module_OOP_ORM_Result implements Iterator, ArrayAccess, Serializable, Coun
 
     public function offsetGet($index)
     {
-        if (isset(OOP_ORM_Result::$GROUP_DATA[$this->id][$index]))
+        if (isset($this->data[$index]))
         {
-            return OOP_ORM_Result::$GROUP_DATA[$this->id][$index];
+            return $this->data[$index];
         }
         elseif (!$this->resource())
         {
             return null;
         }
 
-        return OOP_ORM_Result::get_offset_data($this->id, $index);
+        return $this->get_offset_data($index);
     }
 
     public function offsetSet($index, $newval)
@@ -181,7 +209,7 @@ class Module_OOP_ORM_Result implements Iterator, ArrayAccess, Serializable, Coun
 
             $this->offset = $old_offset;
 
-            if (isset(OOP_ORM_Result::$GROUP_RESOURCE[$this->id]))
+            if ($this->resource)
             {
                 # 如果还存在则说明之前有跳过index的
                 if ($old_offset>0)
@@ -192,11 +220,13 @@ class Module_OOP_ORM_Result implements Iterator, ArrayAccess, Serializable, Coun
                         $this->offsetGet($i);
                     }
                 }
-                unset(OOP_ORM_Result::$GROUP_RESOURCE[$this->id]);
+
+                # 释放资源
+                $this->release_resource();
             }
         }
 
-        return OOP_ORM_Result::$GROUP_DATA[$this->id];
+        return $this->data;
     }
 
     /**
@@ -242,8 +272,8 @@ class Module_OOP_ORM_Result implements Iterator, ArrayAccess, Serializable, Coun
         return serialize(array
         (
             'version' => '1.0',
-            'finder'  => $this->finder(),
-            'option'  => $this->option(),
+            'finder'  => $this->finder,
+            'option'  => $this->option,
         ));
     }
 
@@ -257,9 +287,9 @@ class Module_OOP_ORM_Result implements Iterator, ArrayAccess, Serializable, Coun
     public function __debugInfo()
     {
         return [
-            'data'     => OOP_ORM_Result::$GROUP_DATA[$this->id],
-            'resource' => $this->resource(),
-            'option'   => $this->option(),
+            'data'     => $this->data,
+            'resource' => $this->resource,
+            'option'   => $this->option,
         ];
     }
 
@@ -327,7 +357,7 @@ class Module_OOP_ORM_Result implements Iterator, ArrayAccess, Serializable, Coun
      */
     public function option()
     {
-        return OOP_ORM_Result::$GROUP_OPTION[$this->id];
+        return $this->option;
     }
 
     /**
@@ -337,7 +367,7 @@ class Module_OOP_ORM_Result implements Iterator, ArrayAccess, Serializable, Coun
      */
     public function finder()
     {
-        return OOP_ORM_Result::$GROUP_FINDER[$this->id];
+        return $this->finder;
     }
 
     /**
@@ -347,7 +377,25 @@ class Module_OOP_ORM_Result implements Iterator, ArrayAccess, Serializable, Coun
      */
     public function resource()
     {
-        return OOP_ORM_Result::$GROUP_RESOURCE[$this->id];
+        return $this->resource;
+    }
+
+    /**
+     * 标记为不缓存组信息
+     *
+     * 设置后，对应的组数据不可以通过 `OOP_ORM_Result::get_data_by_group_id();` 来获取
+     *
+     * @return $this
+     */
+    public function no_cached()
+    {
+        if ($this->id)
+        {
+            OOP_ORM_Result::release($this->id);
+            $this->id = null;
+        }
+
+        return $this;
     }
 
     /**
@@ -357,7 +405,7 @@ class Module_OOP_ORM_Result implements Iterator, ArrayAccess, Serializable, Coun
      */
     protected function is_get_all_resource()
     {
-        if (isset(OOP_ORM_Result::$GROUP_RESOURCE[$this->id]))
+        if ($this->resource)
         {
             return false;
         }
@@ -366,6 +414,65 @@ class Module_OOP_ORM_Result implements Iterator, ArrayAccess, Serializable, Coun
             return true;
         }
     }
+
+    /**
+     * 获取指定的对象，如果没有数据则尝试从资源中创建数据
+     *
+     * 无可用数据则返回false
+     *
+     * @param $group_id
+     * @param $index
+     * @return OOP_ORM_Data|null
+     */
+    protected function get_offset_data($index)
+    {
+        if (!isset($this->data[$index]))
+        {
+            if (!$this->resource || !$this->finder)
+            {
+                return null;
+            }
+
+            # 从数据库中获取
+            $data = $this->resource->offsetGet($index);
+
+            # 返回是null，则seek看是否对应指针数据不存在
+            if (null === $data && false === $this->resource->seek($index))return null;
+
+            # 使用获取的数据创建新对象
+            $this->data[$index] = $this->finder->create($data, isset($this->option['is_field_key'])?$this->option['is_field_key']:true, $this->id);
+
+            if ($this->option['count'] == count($this->data))
+            {
+                # 获取完所有数据后就可以直接释放资源，不用等到对象被消毁
+                $this->release_resource();
+
+                # 重新排序，避免排序错乱
+                asort($this->data, SORT_NUMERIC);
+            }
+        }
+
+        return $this->data[$index];
+    }
+
+    /**
+     * 是否资源
+     *
+     * @return $this
+     */
+    protected function release_resource()
+    {
+        $this->resource = null;
+
+        if ($this->id)
+        {
+            OOP_ORM_Result::$GROUP_RESOURCE[$this->id] = null;
+            unset(OOP_ORM_Result::$GROUP_RESOURCE[$this->id]);
+        }
+
+        return $this;
+    }
+
 
     /**
      * 根据组ID获取指定的offset和数量的数据
@@ -390,7 +497,7 @@ class Module_OOP_ORM_Result implements Iterator, ArrayAccess, Serializable, Coun
         $rs = array();
         for($i = $offset; $i < $max; $i++)
         {
-            $rs[$i] = OOP_ORM_Result::get_offset_data($group_id, $i);
+            $rs[$i] = OOP_ORM_Result::get_offset_data_by_group_id($group_id, $i);
         }
 
         return $rs;
@@ -486,11 +593,6 @@ class Module_OOP_ORM_Result implements Iterator, ArrayAccess, Serializable, Coun
         );
     }
 
-    public function is_changed()
-    {
-        return false;
-    }
-
     /**
      * 获取指定的对象，如果没有数据则尝试从资源中创建数据
      *
@@ -500,7 +602,7 @@ class Module_OOP_ORM_Result implements Iterator, ArrayAccess, Serializable, Coun
      * @param $index
      * @return OOP_ORM_Data|null
      */
-    protected static function get_offset_data($group_id, $index)
+    protected static function get_offset_data_by_group_id($group_id, $index)
     {
         if (!isset(OOP_ORM_Result::$GROUP_DATA[$group_id][$index]))
         {
@@ -509,9 +611,9 @@ class Module_OOP_ORM_Result implements Iterator, ArrayAccess, Serializable, Coun
              * @var $finder OOP_ORM_Finder_DB
              * @ver $option array
              */
-            $resource = OOP_ORM_Result::$GROUP_RESOURCE[$group_id];
-            $finder   = OOP_ORM_Result::$GROUP_FINDER[$group_id];
-            $option   = OOP_ORM_Result::$GROUP_OPTION[$group_id];
+            $resource = isset(OOP_ORM_Result::$GROUP_RESOURCE[$group_id]) ? OOP_ORM_Result::$GROUP_RESOURCE[$group_id] : null;
+            $finder   = isset(OOP_ORM_Result::$GROUP_FINDER[$group_id]) ? OOP_ORM_Result::$GROUP_FINDER[$group_id] : null;
+            $option   = isset(OOP_ORM_Result::$GROUP_OPTION[$group_id]) ? OOP_ORM_Result::$GROUP_OPTION[$group_id] : array();
 
             if (!$resource || !$finder)
             {
@@ -522,14 +624,15 @@ class Module_OOP_ORM_Result implements Iterator, ArrayAccess, Serializable, Coun
             $data = $resource->offsetGet($index);
 
             # 返回是null，则seek看是否对应指针数据不存在
-            if (null===$data && false===$resource->seek($index))return null;
+            if (null === $data && false === $resource->seek($index))return null;
 
             # 使用获取的数据创建新对象
             OOP_ORM_Result::$GROUP_DATA[$group_id][$index] = $finder->create($data, isset($option['is_field_key'])?$option['is_field_key']:true, $group_id);
 
-            if ($option['count'] == count(OOP_ORM_Result::$GROUP_DATA[$group_id]))
+            if (count(OOP_ORM_Result::$GROUP_DATA[$group_id]) == $option['count'])
             {
                 # 获取完所有数据后就可以直接释放资源，不用等到对象被消毁
+                OOP_ORM_Result::$GROUP_RESOURCE[$group_id] = null;
                 unset(OOP_ORM_Result::$GROUP_RESOURCE[$group_id]);
 
                 # 重新排序，避免排序错乱

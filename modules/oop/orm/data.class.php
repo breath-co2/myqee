@@ -176,13 +176,6 @@ class Module_OOP_ORM_Data
     protected $_private_values = array();
 
     /**
-     * 记录延迟获取数据设置
-     *
-     * @var array
-     */
-    protected $_delay_setting = null;
-
-    /**
      * 记录延迟更新数据
      *
      * @var array
@@ -197,6 +190,13 @@ class Module_OOP_ORM_Data
      * @var array
      */
     protected $_delay_update_value_increment = array();
+
+    /**
+     * 记录缓存的批量获取返回结果分组ID
+     *
+     * @var array
+     */
+    protected $_cached_key_batch_group_ids = array();
 
     /**
      * 是否在对象销毁前尝试更新 `delay_update()` 设置的数据
@@ -247,6 +247,13 @@ class Module_OOP_ORM_Data
      */
     protected static $RELEASED_COUNT = 0;
 
+    /**
+     * 记录优化执行的批量获取的分组对象
+     *
+     * @var array
+     */
+    protected static $KEY_BATCH_GROUPS = array();
+
 
     /**
      * ORM数据构造
@@ -254,9 +261,8 @@ class Module_OOP_ORM_Data
      * @param array $array 构造时设置数据，通过此设置的数据被认为是以数据库字段field为键的数组
      * @param null $finder 当前ORM Finder对象
      * @param bool $is_field_key 传入的 `$data` 数据的key是否和数据库对应的字段，默认 true
-     * @param array $delay_data_setting 是否完整数据|延迟读取参数
      */
-    public function __construct(array $array = array(), $finder = null, $is_field_key = true, array $delay_data_setting = array())
+    public function __construct(array $array = array(), $finder = null, $is_field_key = true)
     {
         if ($finder && $finder instanceof OOP_ORM)
         {
@@ -268,11 +274,6 @@ class Module_OOP_ORM_Data
 
         # 如果有数据，则设置数据
         if ($array && is_array($array))$this->__orm_callback_ini_data($array, $is_field_key);
-
-        if ($delay_data_setting)
-        {
-            $this->_delay_setting = $delay_data_setting;
-        }
 
         # 标志ORM为已构造完成
         $this->_orm_data_is_created = true;
@@ -296,6 +297,12 @@ class Module_OOP_ORM_Data
         {
             # 清理干净
             $this->__orm_callback_remove_group_id($group_id);
+        }
+
+        if ($this->_cached_key_batch_group_ids)foreach ($this->_cached_key_batch_group_ids as $group_id)
+        {
+            # 销毁优化执行的分组对象
+            unset(OOP_ORM_Data::$KEY_BATCH_GROUPS[$group_id]);
         }
     }
 
@@ -396,7 +403,7 @@ class Module_OOP_ORM_Data
         if (isset($this->_unset_key[$key]))return null;
 
 //        if ($key=='blog_id'||$key=='hits')return $this->_get_field_parse_obj($key);
-        return $this->_get_di_by_key($key)->get_data($this, $this->_data, $this->_compiled_data, $this->_raw_compiled_data, $this->_delay_setting);
+        return $this->_get_di_by_key($key)->get_data($this, $this->_data, $this->_compiled_data, $this->_raw_compiled_data);
 
         /*
 
@@ -1893,12 +1900,6 @@ class Module_OOP_ORM_Data
         }
 
         $this->_parent_group_ids[$group_id] = 1;
-
-        if ($this->_delay_setting)
-        {
-            # 更新父组ID
-            $this->_delay_setting['parent_group_ids'] = $this->__orm_callback_get_parent_group_ids();
-        }
     }
 
     /**
@@ -1918,12 +1919,6 @@ class Module_OOP_ORM_Data
         }
 
         unset($this->_parent_group_ids[$group_id]);
-
-        if ($this->_delay_setting)
-        {
-            # 更新父组ID
-            $this->_delay_setting['parent_group_ids'] = $this->__orm_callback_get_parent_group_ids();
-        }
     }
 
     /**
@@ -1988,26 +1983,36 @@ class Module_OOP_ORM_Data
         }
     }
 
-    protected function __orm_callback_get_delay_setting()
+    protected function __orm_callback_set_key_batch_orm_group(OOP_ORM_Result $result)
     {
-        return $this->_delay_setting;
+        $this->_cached_key_batch_group_ids[] = $group_id = $result->id();
+
+        # 保存起来，待对象销毁时分组才销毁
+        OOP_ORM_Data::$KEY_BATCH_GROUPS[$group_id] = $result;
+    }
+
+    protected function __orm_callback_set_batch_orm_data($key, $data)
+    {
+        if ($this->_get_di_by_key($key) instanceof OOP_ORM_DI_ORM)
+        {
+            $this->_compiled_data[$key] = $this->_raw_compiled_data[$key] = $data;
+
+            return true;
+        }
+        else
+        {
+            return false;
+        }
     }
 
     /**
-     * 设置延迟获取的数据
+     * 指定的key是否已经构造
      *
-     * @param $data
+     * @param $key
      * @return bool
      */
-    protected function __orm_callback_set_delay_data($data)
+    protected function __orm_callback_is_compiled($key)
     {
-        $this->_delay_setting = null;
-
-        if ($data && is_array($data))
-        {
-            $this->_data = array_merge($this->_data, $data);
-        }
-
-        return true;
+        return array_key_exists($key, $this->_compiled_data);
     }
 }

@@ -136,6 +136,11 @@ abstract class Module_OOP_ORM_DI
         }
     }
 
+    /**
+     * 格式化配置
+     *
+     * @return mixed
+     */
     abstract protected function format_config();
 
     /**
@@ -146,7 +151,7 @@ abstract class Module_OOP_ORM_DI
      * @param $compiled_data
      * @return mixed
      */
-    abstract public function & get_data(OOP_ORM_Data $obj, & $data, & $compiled_data, & $compiled_raw_data, & $delay_setting);
+    abstract public function & get_data(OOP_ORM_Data $obj, & $data, & $compiled_data, & $compiled_raw_data);
 
     abstract public function set_data(OOP_ORM_Data $obj, & $data, & $compiled_data, & $compiled_raw_data, $new_value, $has_compiled);
 

@@ -82,7 +82,7 @@ class OOP_ORM_DI_Resource extends OOP_ORM_DI
      * @param $compiled_data
      * @return mixed
      */
-    public function & get_data(OOP_ORM_Data $obj, & $data, & $compiled_data, & $compiled_raw_data, & $delay_setting)
+    public function & get_data(OOP_ORM_Data $obj, & $data, & $compiled_data, & $compiled_raw_data)
     {
         # 处理URL变量
         $url = $this->config['resource'];

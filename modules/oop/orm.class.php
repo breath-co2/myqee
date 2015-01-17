@@ -33,6 +33,13 @@ abstract class Module_OOP_ORM
     const PARAM_TYPE_O2M = 'o2m';
 
     /**
+     * 一对未知，One-to-fixed
+     *
+     * @var string
+     */
+    const PARAM_TYPE_O2F = 'o2f';
+
+    /**
      * 返回类型为返回ORM对象
      *
      * 在4.0版本后将弃用，使用 PARAM_MAPPING_O2F 代替
@@ -57,7 +64,7 @@ abstract class Module_OOP_ORM
      *
      * 在4.0版本后将弃用，使用 PARAM_MAPPING_O2M 代替
      *
-     * @deprecated 在4.0版本后将弃用
+     * @deprecated
      * @var string
      */
     const PARAM_RETURN_GROUP = 'group';
@@ -95,7 +102,7 @@ abstract class Module_OOP_ORM
      *
      * @var string
      */
-    protected $_composite_pk_value_delimiter = ',';
+    protected $_pk_value_delimiter = ',';
 
     protected $_auto_where = array();
 
@@ -146,6 +153,36 @@ abstract class Module_OOP_ORM
     public function __sleep()
     {
         return array('_orm_name', 'database', 'tablename');
+    }
+
+    public function __call($method, $params)
+    {
+        $count_params = count($params);
+
+        if (method_exists($this->driver(), $method))
+        {
+            switch ($count_params)
+            {
+                case 0 :
+                    return $this->driver()->$method();
+                case 1 :
+                    return $this->driver()->$method($params[0]);
+                case 2 :
+                    return $this->driver()->$method($params[0], $params[1]);
+                case 3 :
+                    return $this->driver()->$method($params[0], $params[1], $params[2]);
+                case 4 :
+                    return $this->driver()->$method($params[0], $params[1], $params[2], $params[3]);
+                default :
+                    return call_user_func_array(array($this->driver(), $method), $params);
+            }
+        }
+        elseif (IS_DEBUG)
+        {
+            Core::debug()->warn($method, 'ORM not found function');
+        }
+
+        return false;
     }
 
     /**
@@ -203,17 +240,16 @@ abstract class Module_OOP_ORM
      * @param array $data 数据
      * @param boolean $is_field_key 数据的键名是否数据库字段，默认false
      * @param string $group_id 分组ID，可不传
-     * @param array $delay_data_setting 延迟读取参数
      * @throws Exception
      */
-    public function create(array $data = array(), $is_field_key = false, $group_id = null, array $delay_data_setting = array())
+    public function create(array $data = array(), $is_field_key = false, $group_id = null)
     {
         $orm_data_name = $this->get_orm_name('data');
 
         /**
          * @var $orm OOP_ORM_Data
          */
-        $orm = OOP_ORM_Data::create_instance($orm_data_name, $data, $this, $is_field_key, $delay_data_setting);
+        $orm = OOP_ORM_Data::create_instance($orm_data_name, $data, $this, $is_field_key);
 
 
         if ($group_id)
@@ -238,6 +274,43 @@ abstract class Module_OOP_ORM
      * @return OOP_ORM_Result
      */
     abstract public function find();
+
+    /**
+     * 设置查询条件
+     *
+     * @param   mixed  $column column name or array($column, $alias) or object
+     * @param   string $value logic operator
+     * @param   mixed  $op column value
+     * @return  $this
+     */
+    abstract public function where($column, $value = null, $op = '=');
+
+    /**
+     * 设置 in
+     *
+     * @param string $key
+     * @param array $value
+     * @return $this
+     */
+    abstract public function in($column, $value, $no_in = false);
+
+    /**
+     * 排序
+     *
+     * @param   mixed  $column column name or array($column, $alias) or object
+     * @param   string $direction direction of sorting
+     * @return  $this
+     */
+    abstract public function order_by($column, $direction = 'ASC');
+
+    /**
+     * group_by(c1,c2,c3,.....)
+     *
+     * @param   mixed $columns  column name or array($column, $alias) or object
+     * @param   ...
+     * @return  $this
+     */
+    abstract public function group_by($columns);
 
     /**
      * 获取一个对象
@@ -328,7 +401,7 @@ abstract class Module_OOP_ORM
         $id_fields = $this->get_pk_name();
         if ($id_fields)
         {
-            $this->driver()->where(array_combine(array_values($id_fields), is_array($id) ? $id : explode($this->_composite_pk_value_delimiter, $id)));
+            $this->driver()->where(array_combine(array_values($id_fields), is_array($id) ? $id : explode($this->_pk_value_delimiter, $id)));
             return $this->find(null, $use_master)->current();
         }
         else
@@ -362,7 +435,7 @@ abstract class Module_OOP_ORM
 
                 foreach($ids as $id)
                 {
-                    $this->driver()->or_where_open()->where(array_combine($id_fields, is_array($id) ? $id : explode($this->_composite_pk_value_delimiter, $id)))->or_where_close();
+                    $this->driver()->or_where_open()->where(array_combine($id_fields, is_array($id) ? $id : explode($this->_pk_value_delimiter, $id)))->or_where_close();
                 }
             }
 

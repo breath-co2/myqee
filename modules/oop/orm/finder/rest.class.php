@@ -103,7 +103,7 @@ class Module_OOP_ORM_Finder_REST extends OOP_ORM
             throw new Exception(__('orm api url is not declared.'));
         }
 
-        $url = $this->parse_api_fullurl($query);
+        $url = $this->parse_api_full_url($query);
 
         try
         {
@@ -131,7 +131,7 @@ class Module_OOP_ORM_Finder_REST extends OOP_ORM
         }
         catch (Exception $e)
         {
-            Core::debug()->warn('ORM获取数据失败,URL:' . $url);
+            Core::debug()->error($url, 'ORM获取数据失败');
             $rs = '[]';
         }
 
@@ -152,7 +152,7 @@ class Module_OOP_ORM_Finder_REST extends OOP_ORM
      * @param string $query
      * @param string
      */
-    protected function parse_api_fullurl($query = null)
+    protected function parse_api_full_url($query = null)
     {
         $url = $this->api_url;
 
@@ -250,6 +250,27 @@ class Module_OOP_ORM_Finder_REST extends OOP_ORM
     public function order_by($column, $direction = 'ASC')
     {
         $this->arguments['order'][] = array($column, $direction);
+        return $this;
+    }
+
+    /**
+     * group_by(c1,c2,c3,.....)
+     *
+     * @param   mixed $columns  column name or array($column, $alias) or object
+     * @param   ...
+     * @return  $this
+     */
+    public function group_by($columns)
+    {
+        if (!$this->arguments['group_by'])
+        {
+            $this->arguments['group_by'] = func_get_args();
+        }
+        else
+        {
+            $this->arguments['group_by'] = array_merge($this->arguments['group_by'], func_get_args());
+        }
+
         return $this;
     }
 

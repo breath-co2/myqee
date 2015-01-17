@@ -71,7 +71,7 @@ class OOP_ORM_DI_Virtual extends OOP_ORM_DI
      * @return bool
      * @throws Exception
      */
-    public function & get_data(OOP_ORM_Data $obj, & $data, & $compiled_data, & $compiled_raw_data, & $delay_setting)
+    public function & get_data(OOP_ORM_Data $obj, & $data, & $compiled_data, & $compiled_raw_data)
     {
         $parent_offset = $this->config['parent_offset'];
         $sub_offsets   = $this->config['sub_offsets'];
