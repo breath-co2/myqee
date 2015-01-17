@@ -240,7 +240,7 @@ class OOP_ORM_DI_ORM extends OOP_ORM_DI
             return null;
         }
 
-        if (OOP_ORM_DI_ORM::_check_can_get_batch($orm_config) && $obj->__orm_callback('get_group_ids'))
+        if ($obj->__orm_callback('get_group_ids') && OOP_ORM_DI_ORM::_check_can_get_batch($orm_config))
         {
             # 批量获取数据
             return $this->_get_o2o_data_batch_type($finder, $obj);
@@ -390,6 +390,8 @@ class OOP_ORM_DI_ORM extends OOP_ORM_DI
         # 对数据进行去重处理
         $batch_where = array_map('array_unique', $batch_where);
 
+        $return = null;
+
         if (1 === count($batch_where))
         {
             # 只有1个条件
@@ -397,8 +399,10 @@ class OOP_ORM_DI_ORM extends OOP_ORM_DI
             $c_key = key($batch_where);         //当前字段名
             $in    = current($batch_where);     //获取where条件
             $rs    = array();
+            $g     = $finder->in($c_key, $in)->find();
+            $obj->__orm_callback('set_key_batch_orm_group', $g);
 
-            foreach ($finder->in($c_key, $in)->find()->no_cached() as $item)
+            foreach ($g as $item)
             {
                 $k = $item->get_data_by_field_name($c_key, true);
 
@@ -432,8 +436,15 @@ class OOP_ORM_DI_ORM extends OOP_ORM_DI
                     $rs[$k] = null;
                 }
 
-                # 通过回调设置ORM批量获取的数据
-                $item->__orm_callback('set_batch_orm_data', $this->key, $rs[$k]);
+                if ($item === $obj)
+                {
+                    $return = $rs[$k];
+                }
+                else
+                {
+                    # 通过回调设置ORM批量获取的数据
+                    $item->__orm_callback('set_batch_orm_data', $this->key, $rs[$k]);
+                }
             }
 
 
@@ -488,11 +499,14 @@ class OOP_ORM_DI_ORM extends OOP_ORM_DI
             $rs = array();
             foreach ($finder->find() as $item)
             {
+                /**
+                 * @var $item OOP_ORM_Data
+                 */
                 $k = '';
 
                 foreach($mapping as $m_k => $v)
                 {
-                    $k .= ','. $item[$m_k];
+                    $k .= ','. $item->$m_k;
                 }
 
                 foreach($where as $m_value)
@@ -502,7 +516,7 @@ class OOP_ORM_DI_ORM extends OOP_ORM_DI
 
                 if ($bind)
                 {
-                    $k .= ','. $item[$bind];
+                    $k .= ','. $item->get_data_by_field_name($bind, true);
                 }
 
                 if (!isset($rs[$k]))$rs[$k] = $item;
@@ -532,9 +546,15 @@ class OOP_ORM_DI_ORM extends OOP_ORM_DI
                     $rs[$k] = null;
                 }
 
-                # 通过回调设置ORM批量获取的数据
-                $item->__orm_callback('set_batch_orm_data', $this->key, $rs[$k]);
-
+                if ($item === $obj)
+                {
+                    $return = $rs[$k];
+                }
+                else
+                {
+                    # 通过回调设置ORM批量获取的数据
+                    $item->__orm_callback('set_batch_orm_data', $this->key, $rs[$k]);
+                }
 
 
 //                if ($cache_fns[$i])
@@ -547,9 +567,10 @@ class OOP_ORM_DI_ORM extends OOP_ORM_DI
 //                    $cache->set($cache_key, $rs[$k], $cache_config['expire'], isset($cache_config['expire_type'])?$cache_config['expire_type'] : null);
 //                }
             }
+
         }
 
-        return true;
+        return $return;
     }
 
 

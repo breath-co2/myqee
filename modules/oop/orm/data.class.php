@@ -88,20 +88,6 @@ class Module_OOP_ORM_Data
     protected $_is_deleted = false;
 
     /**
-     * 是否修改过字段
-     *
-     * 值 | 说明
-     * ---|------
-     * 0  | 未修改
-     * 1  | 任意值修改过（包括虚拟字段）
-     * 2  | 有真实数据被修改过
-     *
-     *
-     * @var int
-     */
-//    protected $_changed_status = 0;
-
-    /**
      * 标记对象是否临时化对象
      *
      * @var bool
@@ -206,9 +192,9 @@ class Module_OOP_ORM_Data
     protected $_delay_update_when_destruct = false;
 
     /**
-     * 当前的Finder
+     * 当前的Finder ID
      *
-     * @var null|OOP_ORM
+     * @var string
      */
     protected $_finder = null;
 
@@ -254,6 +240,12 @@ class Module_OOP_ORM_Data
      */
     protected static $KEY_BATCH_GROUPS = array();
 
+    /**
+     * 记录ORM分组对象
+     *
+     * @var array
+     */
+    protected static $FINDERS = array();
 
     /**
      * ORM数据构造
@@ -303,6 +295,11 @@ class Module_OOP_ORM_Data
         {
             # 销毁优化执行的分组对象
             unset(OOP_ORM_Data::$KEY_BATCH_GROUPS[$group_id]);
+        }
+
+        if ($this->_finder)
+        {
+            unset(OOP_ORM_Data::$FINDERS[$this->_finder]);
         }
     }
 
@@ -1443,7 +1440,7 @@ class Module_OOP_ORM_Data
      */
     public function finder()
     {
-        if ($this->_finder)return $this->_finder;
+        if ($this->_finder && isset(OOP_ORM_Data::$FINDERS[$this->_finder]))return OOP_ORM_Data::$FINDERS[$this->_finder];
 
         if (!$this->_orm_name)
         {
@@ -1486,7 +1483,12 @@ class Module_OOP_ORM_Data
             throw new Exception(__('Can\'t found ORM :orm.', array(':orm'=>$orm_class_name)));
         }
 
-        return $this->_finder = new $orm_class_name();
+        $finder        = new $orm_class_name();
+        $this->_finder = uniqid('f');
+
+        OOP_ORM_Data::$FINDERS[$this->_finder] = $finder;
+
+        return $finder;
     }
 
     /**
@@ -1969,7 +1971,12 @@ class Module_OOP_ORM_Data
      */
     protected function __orm_callback_set_finder(OOP_ORM $finder)
     {
-        $this->_finder = $finder;
+        if (!$this->_finder)
+        {
+            $this->_finder = uniqid('f');
+        }
+
+        OOP_ORM_Data::$FINDERS[$this->_finder] = $finder;
 
         $driver = $finder->driver();
 
