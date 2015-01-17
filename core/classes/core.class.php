@@ -691,7 +691,10 @@ abstract class Core_Core extends Bootstrap
             }
             else
             {
-                require $found['file'];
+                if (!class_exists($found['class'], false))
+                {
+                    require $found['file'];
+                }
 
                 if ($found['ns']=='team-library' || $found['ns']=='project')
                 {

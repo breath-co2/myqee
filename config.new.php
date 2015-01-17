@@ -1,4 +1,18 @@
 <?php
+/*
+ *************** 简要说明，必看 ******************
+
+ 1.本地开发时，请务必找到 $config['local_debug_cfg'] 把它设置成 true（生产环境务必关闭），这样你可使用Chrome浏览器并安装我在做的插件（也可FireFox+FireBug+FirePHP插件），打开控制器台切换到FirePHP标签刷新页面就可以看到程序调试输出的信息了
+ 2.希望开启线上调试可设置 $config['debug_open_password'] 参数的帐号和密码，这样开启后，就可查看和本地开发模式一样的调试信息
+ 3.如果只有1个项目，使用我们提供的 $config['projects'] 配置即可，如果需要增加，可以自己增加
+ 4.如果线上有多个服务器，请配置 $config['web_server_list'] 项目
+ 5.每个参数都有详细使用说明，有兴趣可以看看
+
+*/
+
+
+
+
 /**
  * 项目配置
  *
@@ -110,6 +124,16 @@ $config['url']['assets'] = '/assets/';
 $config['runtime_config'] = '';
 
 
+
+
+
+
+
+
+
+//---------------------------------------------------------- 开发调试相关
+
+
 /**
  * 用于 http://your_domain/opendebugger 页面开启在线debug功能
  *
@@ -127,23 +151,80 @@ $config['debug_open_password'] = array
 
 
 /**
- * 默认打开开发调试环境的关键字，推荐在本地开发时开启此功能
+ * 打开开发调试环境的关键字
  *
- * !!! 开发时使用Firefox+FireBug将可查看程序执行的各项debug数据，方便开发。但注意：生产环境中不要开启
+ * !!! 本地开发强烈推荐开启，生产环境务必关闭。
  *
- * 如果值为 `myqee.debug` 则可在php.ini中加入：
+ * 使用方法：
+ * 首先需要安装浏览器插件。 Firefox 里安装 FireBug 和 FireBug 插件，Chrome 安装我制作的 FirePHP 插件，下面有插件地址。
+ * 安装好后，Firefox打开控制器，Chrome打开开发者工具并切换到FirePHP标签。
+ * 打开任意MyQEE的php页面，你就可以看到相关的系统输出的信息，这些信息在关闭时时不会有任何输出的。
+ * 生成环境可以用上面的 `$config['debug_open_password']` 参数设置后开启关闭
  *
- *     [MyQEE]
- *     myqee.debug = On
+ * 如何在程序中自行输出些 debug 信息？
  *
- * 如果值为 `test.abc` 则可在php.ini中加入：
+ * 在程序中加入 `Core::debug()->info('test message');`，然后刷新页面看看，在控制台就会得到 test message 的内容
  *
- *     [MyQEE]
+ * `Core::debug()` 常用方法举例：
+ *
+ *     Core::debug()->info('信息内容');
+ *     Core::debug()->error('错误信息');
+ *     Core::debug()->group('分组开启');
+ *     Core::debug()->log('日志信息');
+ *     Core::debug()->warn('警示信息');
+ *     Core::debug()->table('表格', array(
+ *         array('标题一','二','三'),
+ *         array('行1列1','行1列2','行1列3'),
+ *         array('行2列1','行2列2','行2列3'),
+ *     ));
+ *     Core::debug()->groupEnd();      //分组关闭
+ *
+ * 详细用法可参考文档 <http://www.myqee.com/docs/zh-cn/dev.html> 或 <http://www.firephp.org/HQ/Use.htm> 的方法
+ *
+ * 我制作的 FirePHP For Chrome 插件下载地址: <https://chrome.google.com/webstore/detail/firephp/gkkcbhnljobgoehijcpenalbacdmhaff?hl=zh-CN&utm_source=chrome-ntp-launcher&authuser=1>
+ * 若被墙打不开链接，请到我博客去下载插件 <http://www.queyang.com/blog/archives/549>
+ *
+ * 参数说明：可以是字符串也可以是bool类型
+ *
+ * 参数       |  说明
+ * ----------|-----------
+ * `true`    | 表示一定开启本地开发模式
+ * `false`   | 表示一定关闭本地开发模式
+ * 字符串     | 根据 php.ini 中设置判断
+ *
+ * 比如 `$config['local_debug_cfg'] = 'myqee.debug'` 则在 php.ini 中加入如下内容可开启本地 debug，否则关闭：
+ *
+ *      myqee.debug = On
+ *
+ * 如果值为 `$config['local_debug_cfg'] = 'test.abc'` 则可在php.ini中加入如下内容可开启本地 debug，否则关闭：
+ *
  *     test.abc = On
  *
- * @var string
+ * @var string|bool
  */
-$config['local_debug_cfg'] = 'myqee.debug';
+$config['local_debug_cfg'] = false;
+
+
+/**
+ * 当DEBUG开启后，是否关闭 /phpinfo 页面的访问
+ *
+ * 设成成 false 时，当DEBUG开启（包括本地开发模式开启）时，打开根目录 /phpinfo 页面则直接输出 `phpinfo()` 的内容
+ * 设置成 true， 则禁用此功能，打开此页面则会显示404错误页面
+ *
+ * @var bool
+ */
+$config['disable_phpinfo_page'] = false;
+
+
+
+
+
+
+
+
+
+//----------------------------------------------------------系统设置相关
+
 
 
 /**
