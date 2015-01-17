@@ -469,8 +469,14 @@ abstract class Bootstrap
             if (isset(self::$core_config['local_debug_cfg']) && self::$core_config['local_debug_cfg'])
             {
                 # 判断是否开启了本地调试
-                if (function_exists('get_cfg_var'))
+                if (true === self::$core_config['local_debug_cfg'])
                 {
+                    # 支持 $config['local_debug_cfg'] = true 的设置
+                    $open_debug = 1;
+                }
+                elseif (is_string(self::$core_config['local_debug_cfg']) && function_exists('get_cfg_var'))
+                {
+                    # 支持字符串方式设置
                     $open_debug = get_cfg_var(self::$core_config['local_debug_cfg'])?1:0;
                 }
                 else
@@ -646,9 +652,34 @@ abstract class Bootstrap
 
                     $argv = $_SERVER["argv"];
 
-                    //$argv[0]为文件名
+                    if (count($argv) === 1)
+                    {
+                        echo 'Choose a project:'. CRLF;
+                        foreach (self::$core_config['projects'] as $key => $item)
+                        {
+                            echo "    \x1b[32m". str_pad($key, 20) ."\x1b[39m - {$item['name']}\n";
+                        }
+
+                        while (true)
+                        {
+                            $project = trim(fgets(STDIN));
+                            if (isset(self::$core_config['projects'][$project]))
+                            {
+                                echo "Now use the project: {$project}\n";
+                                $argv[1] = $project;
+
+                                break;
+                            }
+                            else
+                            {
+                                echo "The project {$project} not exist. please try again.\n";
+                            }
+                        }
+                    }
+
                     if (isset($argv[1]) && $argv[1] && isset(self::$core_config['projects'][$argv[1]]))
                     {
+                        //$argv[0]为文件名
                         self::$project     = $argv[1];
                         $tmp_config        = self::$core_config['projects'][$argv[1]];
                         self::$project_dir = isset($tmp_config['dir']) && $tmp_config['dir'] ? $tmp_config['dir'] : self::$project;
