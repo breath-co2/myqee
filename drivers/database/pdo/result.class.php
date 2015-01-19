@@ -19,17 +19,18 @@ class Driver_Database_Driver_PDO_Result extends Database_Result
 
     protected function total_count()
     {
-        if ($this->_result)
+        if ($this->_total_rows)
         {
-            $count = $this->_result->rowCount();
-            if (!$count>0)$count = 0;
+            return $this->_total_rows;
+        }
+        elseif ($this->_result)
+        {
+            return $this->_total_rows = $this->_result->rowCount();
         }
         else
         {
-            $count = count($this->_data);
+            return count($this->_data);
         }
-
-        return $count;
     }
 
     public function seek($offset)
@@ -40,6 +41,24 @@ class Driver_Database_Driver_PDO_Result extends Database_Result
         }
         elseif ($this->offsetExists($offset) && $this->_result)
         {
+            $num = $offset - $this->_current_row;
+
+            if ($num > 1)
+            {
+                if ($this->_cursor_mode)
+                {
+                    throw new Exception('current pdo database driver not supper cursor mode.');
+                }
+
+                for ($i = $this->_current_row; $i < $num; $i ++)
+                {
+
+                    $this->current();
+
+                    $this->_current_row ++;
+                }
+            }
+
             $this->_current_row = $this->_internal_row = $offset;
 
             return true;

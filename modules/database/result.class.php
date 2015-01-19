@@ -64,6 +64,13 @@ abstract class Module_Database_Result implements Countable, Iterator, SeekableIt
     protected $_as_object = null;
 
     /**
+     * 标记是否指针模式
+     *
+     * @var bool
+     */
+    protected $_cursor_mode = false;
+
+    /**
      * 数据是否需要转换编码
      *
      * @var boolean
@@ -159,17 +166,33 @@ abstract class Module_Database_Result implements Countable, Iterator, SeekableIt
     }
 
     /**
+     * 标记为指针移动模式
+     *
+     * 用于处理较大数据集返回，不至于出现内存超过限制的问题
+     *
+     * [!!] TODO 数据库驱动是PDO时请注意，由于PDO的限制，只能指针按顺序向下移动，否则数据返回异常
+     *
+     * @return $this
+     */
+    public function cursor_mode()
+    {
+        $this->_cursor_mode = true;
+
+        return $this;
+    }
+
+    /**
      * 获取当前行数据
      *
      * @see Iterator::current()
      */
     public function current()
     {
-        if ($this->_current_row !== $this->_internal_row && !$this->seek($this->_current_row)) return false;
+        if ($this->_current_row !== $this->_internal_row && !$this->seek($this->_current_row))return false;
 
-        $this->_internal_row++;
+        $this->_internal_row ++;
 
-        if (isset($this->_data[$this->_current_row]))
+        if ($this->_data && array_key_exists($this->_current_row, $this->_data))
         {
             return $this->_data[$this->_current_row];
         }
@@ -192,12 +215,15 @@ abstract class Module_Database_Result implements Countable, Iterator, SeekableIt
             $data = new $this->_as_object($data);
         }
 
-        $this->_data[$this->_current_row] = $data;
-
-        if ($this->count()==count($this->_data))
+        if (!$this->_cursor_mode)
         {
-            # 释放资源
-            $this->release_resource();
+            $this->_data[$this->_current_row] = $data;
+
+            if ($this->count() == count($this->_data))
+            {
+                # 释放资源
+                $this->release_resource();
+            }
         }
 
         return $data;
