@@ -341,7 +341,7 @@ abstract class Module_OOP_ORM
 
                 if (!isset($no_result[$result_name]))
                 {
-                    Core::debug()->warn($result_name .' 对象不存在，将使用默认的 OOP_ORM_Result 对象');
+                    Core::debug()->warn($result_name .' not found');
                     $no_result[$result_name] = true;
                 }
             }
