@@ -577,7 +577,7 @@ class Driver_Database_Driver_PDO extends Database_Driver
         try
         {
             $sth = $connection->prepare($statement);
-            if (false===$sth)
+            if (false === $sth)
             {
                 throw new Exception('pdo prepare sql error.');
             }

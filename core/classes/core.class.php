@@ -215,7 +215,7 @@ abstract class Core_Core extends Bootstrap
     {
         static $run = null;
 
-        if (null===$run)
+        if (null === $run)
         {
             $run = true;
 
@@ -271,9 +271,9 @@ abstract class Core_Core extends Bootstrap
             # 注册输出函数
             register_shutdown_function(array('Core', '_output_body'));
 
-            if (true===IS_SYSTEM_MODE)
+            if (true === IS_SYSTEM_MODE)
             {
-                if (false===Core::check_system_request_allow())
+                if (false === Core::check_system_request_allow())
                 {
                     # 内部请求验证不通过
                     Core::show_500('system request hash error');
@@ -348,11 +348,11 @@ abstract class Core_Core extends Bootstrap
             {
                 $code = $e->getCode();
 
-                if (404===$code || E_PAGE_NOT_FOUND===$code)
+                if (404 === $code || E_PAGE_NOT_FOUND === $code)
                 {
                     Core::show_404($e->getMessage());
                 }
-                elseif (500===$code)
+                elseif (500 === $code)
                 {
                     Core::show_500($e->getMessage());
                 }
@@ -377,7 +377,7 @@ abstract class Core_Core extends Bootstrap
      */
     public static function config($key = null, $default = null)
     {
-        if (null===$key)
+        if (null === $key)
         {
             return Core::factory('Config');
         }
@@ -385,7 +385,7 @@ abstract class Core_Core extends Bootstrap
         $c = explode('.', $key);
         $c_name = array_shift($c);
 
-        if (strtolower($c_name)=='core')
+        if (strtolower($c_name) === 'core')
         {
             $v = Core::$core_config;
         }
@@ -461,7 +461,7 @@ abstract class Core_Core extends Bootstrap
         }
 
 
-        $url = Core::$base_url. ltrim($url, '/') . ($url!='' && Core::$config['url_suffix'] && substr($url, -1)!='/' && false===strpos($url, '.')?'.'.Core::$config['url_suffix']:'') . ($query?'?'.$query:'');
+        $url = Core::$base_url. ltrim($url, '/') . ($url!='' && Core::$config['url_suffix'] && substr($url, -1) !== '/' && false === strpos($url, '.')?'.'.Core::$config['url_suffix']:'') . ($query?'?'.$query:'');
 
         # 返回完整URL
         if (true === $is_full_url_or_project && !preg_match('#^http(s)?://#i', $url))
@@ -503,7 +503,7 @@ abstract class Core_Core extends Bootstrap
         if (IS_DEBUG & 1)
         {
             # 本地调试环境
-            $url_asstes = Core::url('/assets-dev/');
+            $url_assets = Core::url('/assets-dev/');
         }
         else
         {
@@ -513,22 +513,22 @@ abstract class Core_Core extends Bootstrap
 
             if (is_file($www_file))
             {
-                $url_asstes  = Core::config('core.url.assets');
+                $url_assets  = Core::config('url.assets');
                 $asstes_path = '';
             }
             else
             {
                 $asstes_path = 'p-'. Core::$project . '/' . (IS_ADMIN_MODE?'~admin/':'');
-                $url_asstes  = URL_ASSETS . $asstes_path;
+                $url_assets  = URL_ASSETS . $asstes_path;
             }
 
             # 自动获取min文件
-            if (substr($file, -3)=='.js')
+            if (substr($file, -3) === '.js')
             {
                 $tmp_filename = substr($file, 0, -3). '.min.js';
                 $min_file     = DIR_ASSETS. $asstes_path . $tmp_filename;
             }
-            else if (substr($file, -4)=='.css')
+            else if (substr($file, -4) === '.css')
             {
                 $tmp_filename = substr($file, 0, -4). '.min.css';
                 $min_file     = DIR_ASSETS. $asstes_path . $tmp_filename;
@@ -553,7 +553,7 @@ abstract class Core_Core extends Bootstrap
 //            $uri = $file . '?' . (strlen($query)>0?$query.'&':'') . Core::assets_hash($file);
         }
 
-        return $url_asstes . $url;
+        return $url_assets . $url;
     }
 
     /**
@@ -613,7 +613,7 @@ abstract class Core_Core extends Bootstrap
      */
     public static function is_file_write_disabled()
     {
-        if (Core::config('core.file_write_mode')=='disable')
+        if (Core::config('file_write_mode') === 'disable')
         {
             return true;
         }
@@ -696,7 +696,7 @@ abstract class Core_Core extends Bootstrap
                     require $found['file'];
                 }
 
-                if ($found['ns']=='team-library' || $found['ns']=='project')
+                if ($found['ns'] === 'team-library' || $found['ns'] === 'project')
                 {
                     $class_name = $found['class'];
                 }
@@ -721,7 +721,7 @@ abstract class Core_Core extends Bootstrap
                 if ($arguments)
                 {
                     $action = current($arguments);
-                    if (0===strlen($action))
+                    if (0 === strlen($action))
                     {
                         $action = 'default';
                     }
@@ -744,7 +744,7 @@ abstract class Core_Core extends Bootstrap
                         $action      = 'default';
                         $action_name = 'action_default';
                     }
-                    elseif ($action_name!='' && (!$arguments || $arguments===array('')) && method_exists($controller, 'action_index'))
+                    elseif ($action_name !== '' && (!$arguments || $arguments === array('')) && method_exists($controller, 'action_index'))
                     {
                         $action      = 'index';
                         $action_name = 'action_index';
@@ -753,12 +753,12 @@ abstract class Core_Core extends Bootstrap
                     {
                         $controller->__call($action_name, $arguments);
 
-                        Core::rm_controoler($controller);
+                        Core::rm_controller($controller);
                         return;
                     }
                     else
                     {
-                        Core::rm_controoler($controller);
+                        Core::rm_controller($controller);
 
                         throw new Exception(__('Page Not Found'), 404);
                     }
@@ -779,13 +779,13 @@ abstract class Core_Core extends Bootstrap
                     {
                         if (!isset($controller->allow_suffix[$action]) || !in_array($found['suffix'], explode('|', $controller->allow_suffix[$action])))
                         {
-                            Core::rm_controoler($controller);
+                            Core::rm_controller($controller);
                             throw new Exception(__('Page Not Found'), 404);
                         }
                     }
                     elseif (!in_array($found['suffix'], explode('|', $controller->allow_suffix)))
                     {
-                        Core::rm_controoler($controller);
+                        Core::rm_controller($controller);
                         throw new Exception(__('Page Not Found'), 404);
                     }
 
@@ -800,19 +800,19 @@ abstract class Core_Core extends Bootstrap
 
                 if (!$is_public_method->isPublic())
                 {
-                    Core::rm_controoler($controller);
+                    Core::rm_controller($controller);
                     throw new Exception(__('Request Method Not Allowed.'), 405);
                 }
                 unset($is_public_method);
 
                 # POST 方式，自动CSRF判断
-                if (HttpIO::METHOD=='POST')
+                if (HttpIO::METHOD === 'POST')
                 {
                     $auto_check_post_method_referer = isset($controller->auto_check_post_method_referer)?$controller->auto_check_post_method_referer:Core::config('auto_check_post_method_referer', true);
 
                     if ($auto_check_post_method_referer && !HttpIO::csrf_check())
                     {
-                        Core::rm_controoler($controller);
+                        Core::rm_controller($controller);
                         throw new Exception(__('Not Acceptable.'), 406);
                     }
                 }
@@ -888,7 +888,7 @@ abstract class Core_Core extends Bootstrap
                 }
 
                 # 移除控制器
-                Core::rm_controoler($controller);
+                Core::rm_controller($controller);
 
                 unset($controller);
             }
@@ -903,7 +903,7 @@ abstract class Core_Core extends Bootstrap
         }
     }
 
-    protected static function rm_controoler($controller)
+    protected static function rm_controller($controller)
     {
         foreach (Controller::$controllers as $k=>$c)
         {
@@ -1120,7 +1120,7 @@ abstract class Core_Core extends Bootstrap
                 $tmp_arg   = $tmp_class;
                 $directory = rtrim('/'. substr($uri, 0, $path_len) . $tmp_class, '/');
 
-                if (0===strlen($tmp_class))
+                if (0 === strlen($tmp_class))
                 {
                     $tmp_class = 'index';
                 }
@@ -1165,7 +1165,7 @@ abstract class Core_Core extends Bootstrap
                             $ids = array_merge($ids, $the_id);
                         }
 
-                        if ($directory && substr($directory, -1-strlen($tmp_class))=='/'.$tmp_class)
+                        if ($directory && substr($directory, -1-strlen($tmp_class)) === '/'.$tmp_class)
                         {
                             $directory = substr($directory, 0, -1-strlen($tmp_class));
                         }
@@ -1182,7 +1182,7 @@ abstract class Core_Core extends Bootstrap
 
                         break 2;
                     }
-                    elseif (!$found_index_class && $tmp_class!='default')
+                    elseif (!$found_index_class && $tmp_class !== 'default')
                     {
                         // 记录 index.controller.php 控制器
                         $tmpfile = $tmp_path . 'default' . Core::$dir_setting['controller'][1] . EXT;
@@ -1217,7 +1217,7 @@ abstract class Core_Core extends Bootstrap
                     }
                 }
 
-                if (IS_DEBUG && $find_log2)
+                if (IS_DEBUG && isset($find_log2) && $find_log2)
                 {
                     $find_log = array_merge($find_log, $find_log2);
                 }
@@ -1289,7 +1289,7 @@ abstract class Core_Core extends Bootstrap
 
         if (!$type)$type = 'log';
 
-        if (null===$pro)
+        if (null === $pro)
         {
             if (preg_match('#^(db|cache)://([a-z0-9_]+)/([a-z0-9_]+)$#i', DIR_LOG , $m))
             {
@@ -1302,12 +1302,12 @@ abstract class Core_Core extends Bootstrap
         }
 
         # Log目录采用文件目录
-        if (false===$pro)
+        if (false === $pro)
         {
-            $write_mode = Core::config('core.file_write_mode');
+            $write_mode = Core::config('file_write_mode');
 
             # 禁用写入
-            if ($write_mode=='disable')return true;
+            if ($write_mode === 'disable')return true;
 
             # 再判断是否有转换储存处理
             if (preg_match('#^(db|cache)://([a-z0-9_]+)/([a-z0-9_]+)$#i', $write_mode , $m))
@@ -1316,7 +1316,7 @@ abstract class Core_Core extends Bootstrap
             }
         }
 
-        if (false===$pro)
+        if (false === $pro)
         {
             # 以文件的形式保存
 
@@ -1342,7 +1342,7 @@ abstract class Core_Core extends Bootstrap
             {
                 $temp = explode('/', str_replace('\\', '/', $dir) );
                 $cur_dir = '';
-                for($i=0; $i<count($temp); $i++)
+                for($i = 0; $i < count($temp); $i++)
                 {
                     $cur_dir .= $temp[$i] . "/";
                     if (!is_dir(DIR_LOG.$cur_dir))
@@ -1352,7 +1352,7 @@ abstract class Core_Core extends Bootstrap
                 }
             }
 
-            return false===@file_put_contents(DIR_LOG . $file, $data . CRLF , FILE_APPEND)?false:true;
+            return false === @file_put_contents(DIR_LOG . $file, $data . CRLF , FILE_APPEND)?false:true;
         }
         else
         {
@@ -1371,7 +1371,7 @@ abstract class Core_Core extends Bootstrap
                 );
 
                 $obj = new Database($pro[2]);
-                $status = $obj->insert($pro[3], $db_data) ? true:false;
+                $status = $obj->insert($pro[3], $db_data) ? true : false;
             }
             else
             {
@@ -1380,11 +1380,11 @@ abstract class Core_Core extends Bootstrap
                     $pro[1]['prefix'] = trim($pro[3]) . '_';
                 }
 
-                $pro[1]['prefix'] .= $type.'_';
+                $pro[1]['prefix'] .= $type .'_';
 
                 $obj = new Cache($pro[2]);
 
-                $status = $obj->set(date('Ymd').'_'.md5($file), $data, 86400*30);        // 存1月
+                $status = $obj->set(date('Ymd') .'_'. md5($file), $data, 86400 * 30);        // 存1月
             }
 
             return $status;
@@ -1426,7 +1426,7 @@ abstract class Core_Core extends Bootstrap
         static $debug = null;
         if (null === $debug)
         {
-            if (!IS_CLI && ( IS_DEBUG || false!==strpos($_SERVER["HTTP_USER_AGENT"],'FirePHP') || isset($_SERVER["HTTP_X_FIREPHP_VERSION"]) ) && class_exists('Debug', true))
+            if (!IS_CLI && (IS_DEBUG || false !== strpos($_SERVER["HTTP_USER_AGENT"], 'FirePHP') || isset($_SERVER["HTTP_X_FIREPHP_VERSION"])) && class_exists('Debug', true))
             {
                 $debug = Debug::instance();
             }
@@ -1561,7 +1561,7 @@ abstract class Core_Core extends Bootstrap
         Core::close_buffers(false);
 
         # 避免输出的CSS头试抛出页面无法显示
-        @header('Content-Type: text/html;charset=' . Core::config('core.charset'), true);
+        @header('Content-Type: text/html;charset=' . Core::config('charset'), true);
 
         HttpIO::$status = 404;
         HttpIO::send_headers();
@@ -1626,7 +1626,7 @@ abstract class Core_Core extends Bootstrap
         Core::close_buffers(false);
 
         # 避免输出的CSS头试抛出页面无法显示
-        @header('Content-Type: text/html;charset=' . Core::config('charset'), true);
+        @header('Content-Type: text/html;charset='. Core::config('charset'), true);
 
         HttpIO::$status = 500;
         HttpIO::send_headers();
@@ -1667,7 +1667,7 @@ abstract class Core_Core extends Bootstrap
                 $trace_obj = new Exception($msg);
             }
 
-            $error_config = Core::config('core.error500');
+            $error_config = Core::config('error500');
 
             $view = new View('error/500');
             if ($error_config && isset($error_config['close']) && $error_config['close']==true)
@@ -1723,7 +1723,7 @@ abstract class Core_Core extends Bootstrap
                     if ($save_type=='file')
                     {
                         # 文件模式
-                        $write_mode = Core::config('core.file_write_mode');
+                        $write_mode = Core::config('file_write_mode');
 
                         if (preg_match('#^(db|cache)://([a-z0-9_]+)/([a-z0-9_]+)$#i', $write_mode , $m))
                         {
@@ -1832,11 +1832,12 @@ abstract class Core_Core extends Bootstrap
      */
     public static function key_string($arr, $key, $default = null)
     {
-        if (!is_array($arr)) return $default;
+        if (!is_array($arr))return $default;
+
         $keyArr = explode('.', $key);
-        foreach ( $keyArr as $key )
+        foreach ($keyArr as $key)
         {
-            if ( isset($arr[$key]) )
+            if (array_key_exists($key, $arr))
             {
                 $arr = $arr[$key];
             }
@@ -1880,7 +1881,7 @@ abstract class Core_Core extends Bootstrap
     public static function exception_handler(Exception $e)
     {
         $code = $e->getCode();
-        if ( $code !== 8 )
+        if ($code !== 8)
         {
             Core::show_500($e);
             exit();
@@ -1889,9 +1890,9 @@ abstract class Core_Core extends Bootstrap
 
     public static function error_handler($code, $error, $file = null, $line = null)
     {
-        if ( (error_reporting() & $code) !== 0 )
+        if ((error_reporting() & $code) !== 0)
         {
-            throw new ErrorException( $error, $code, 0, $file, $line );
+            throw new ErrorException($error, $code, 0, $file, $line);
         }
         return true;
     }
@@ -1993,38 +1994,38 @@ abstract class Core_Core extends Bootstrap
         }
 
         # 记录所有项目设置，当切换回项目时，使用此设置还原
-        static $all_prjects_setting = array();
+        static $all_projects_setting = array();
 
         if (Core::$project)
         {
             // 记录上一个项目设置
-            $all_prjects_setting[Core::$project] = array
+            $all_projects_setting[Core::$project] = array
             (
-                'config'        => Core::$config,
-                'include_path'  => Core::$include_path,
-                'file_list'     => Core::$file_list,
-                'project_dir'   => Core::$project_dir,
-                'base_url'      => Core::$base_url,
+                'config'       => Core::$config,
+                'include_path' => Core::$include_path,
+                'file_list'    => Core::$file_list,
+                'project_dir'  => Core::$project_dir,
+                'base_url'     => Core::$base_url,
             );
         }
 
         # 原来的项目
         $old_project = Core::$project;
 
-        if (isset($all_prjects_setting[$project]))
+        if (isset($all_projects_setting[$project]))
         {
             # 设为当前项目
             Core::$project = $project;
 
             # 还原配置
-            Core::$config         = $all_prjects_setting[$project]['config'];
-            Core::$include_path   = $all_prjects_setting[$project]['include_path'];
-            Core::$file_list      = $all_prjects_setting[$project]['file_list'];
-            Core::$project_dir    = $all_prjects_setting[$project]['project_dir'];
-            Core::$base_url       = $all_prjects_setting[$project]['base_url'];
+            Core::$config       = $all_projects_setting[$project]['config'];
+            Core::$include_path = $all_projects_setting[$project]['include_path'];
+            Core::$file_list    = $all_projects_setting[$project]['file_list'];
+            Core::$project_dir  = $all_projects_setting[$project]['project_dir'];
+            Core::$base_url     = $all_projects_setting[$project]['base_url'];
 
             # 清除缓存数据
-            unset($all_prjects_setting[$project]);
+            unset($all_projects_setting[$project]);
         }
         else
         {
@@ -2227,7 +2228,7 @@ abstract class Core_Core extends Bootstrap
             $new_arr = array();
             foreach (Core::$import_library_callback as $item)
             {
-                if ($item!==$fun)
+                if ($item !== $fun)
                 {
                     $new_arr = $item;
                 }
@@ -2284,9 +2285,9 @@ abstract class Core_Core extends Bootstrap
             {
                 $c1[$k] = $v;
             }
-            elseif ( is_array($c1[$k]) && is_array($v) )
+            elseif (is_array($c1[$k]) && is_array($v))
             {
-                $c1[$k] = Core::_merge_project_config($c1[$k] , $v );
+                $c1[$k] = Core::_merge_project_config($c1[$k], $v);
             }
             elseif (is_numeric($k) && is_array($c1[$k]))
             {
@@ -2354,16 +2355,16 @@ abstract class Core_Core extends Bootstrap
         }
 
         // 验证IP
-        if ('127.0.0.1'!=HttpIO::IP && HttpIO::IP != $_SERVER["SERVER_ADDR"])
+        if ('127.0.0.1' !== HttpIO::IP && HttpIO::IP !== $_SERVER["SERVER_ADDR"])
         {
-            $allow_ip = Core::config('core.system_exec_allow_ip');
+            $allow_ip = Core::config('system_exec_allow_ip');
 
             if (is_array($allow_ip) && $allow_ip)
             {
                 $allow = false;
                 foreach ($allow_ip as $ip)
                 {
-                    if (HttpIO::IP == $ip)
+                    if (HttpIO::IP === $ip)
                     {
                         $allow = true;
                         break;
