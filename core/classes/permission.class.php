@@ -49,7 +49,6 @@ class Core_Permission
         }
 
         $keys = func_get_args();
-        $is_own = true;
         foreach ($keys as $key)
         {
             $key = trim($key);
@@ -69,6 +68,23 @@ class Core_Permission
         if (isset($this->setting['_super_admin']) && $this->setting['_super_admin'])
         {
             # 超级管理员
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
+
+    /**
+     * 是否只读管理权限
+     *
+     * @return boolean
+     */
+    public function is_readonly_perm()
+    {
+        if (isset($this->setting['_readonly_perm']) && $this->setting['_readonly_perm'])
+        {
             return true;
         }
         else
