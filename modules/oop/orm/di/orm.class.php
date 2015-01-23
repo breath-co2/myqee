@@ -122,55 +122,64 @@ class OOP_ORM_DI_ORM extends OOP_ORM_DI
         $finder     = ORM($orm_config['orm']);
         $rs         = null;
 
+
+        if (isset($orm_config['cache']))
+        {
+            list($cache, $cache_key, $data) = $this->_get_cache_data($obj);
+
+            if ($data)return $data;
+        }
+
         switch ($orm_config['type'])
         {
             case OOP_ORM::PARAM_TYPE_O2O:
-
                 $rs = $this->get_o2o_data($finder, $obj);
-//
-//                $st = array
-//                (
-//                    'type'             => 'orm',
-//                    'class_name'       => $this->class_name,
-//                    'key'              => $this->key,
-//                    'config'           => $this->config(),
-//                    'parent_group_ids' => $obj->__orm_callback('get_parent_group_ids'),
-//                );
-//
-//                $data = array();
-//                foreach($this->config['mapping'] as $k0 => $k)
-//                {
-//                    $data[$k0] = $obj->$k;
-//                }
-//
-//                # 获取字段名
-//                if (isset($this->config['bind']) && $bind = $this->config['bind'])
-//                {
-//                    $data[$bind] = $obj->get_data_by_field_name($this->field_name, true);
-//                }
-//
-//                $rs = $orm_obj->create($data, true, null, $st);
-
-//
-//                if ($group_ids = $obj->__orm_callback('get_group_ids'))
-//                {
-//                    $rs->__orm_callback('add_parent_group_id', $group_ids);
-//                }
-
-
                 break;
             case OOP_ORM::PARAM_TYPE_O2F:
                 $rs = $finder;
 
+                # WHERE
+                if ($orm_config['where'])
+                {
+                    $where = $orm_config['where'];
+                }
+                else
+                {
+                    $where = array();
+                }
+
+                # MAPPING
+                if ($orm_config['mapping'])
+                {
+                    foreach($orm_config['mapping'] as $k => $v)
+                    {
+                        $where[$k] = $obj->$v;
+                    }
+                }
+
+                # 绑定数据
+                if (isset($orm_config['bind']) && $orm_config['bind'])
+                {
+                    $where[$orm_config['bind']] = $obj->get_data_by_field_name($orm_config['bind'], true);
+                }
+
+                if ($where)
+                {
+                    $rs->set_auto_where($where);
+                }
+
                 break;
             case OOP_ORM::PARAM_TYPE_O2M:
-                $db = $finder->driver();
-
-                OOP_ORM_DI_ORM::_set_query_info($obj, $db, $orm_config);
-
-                $rs = $finder->find();
-
+                $rs = $this->get_o2m_data($finder, $obj);
                 break;
+        }
+
+        if ($rs && isset($cache) && isset($cache_key))
+        {
+            /**
+             * @var $cache Cache
+             */
+            $cache->set($cache_key, $rs, $orm_config['cache']['expire'], isset($orm_config['cache']['expire_type']) ? $orm_config['cache']['expire_type'] : null);
         }
 
         return $rs;
@@ -221,9 +230,12 @@ class OOP_ORM_DI_ORM extends OOP_ORM_DI
 
 
     /**
-     * 获取延迟数据
+     * 获取一对一数据
      *
-     * @return bool
+     * @param OOP_ORM $finder
+     * @param OOP_ORM_Data $obj
+     * @return null|OOP_ORM_Data
+     * @throws Exception
      */
     protected function get_o2o_data(OOP_ORM $finder, OOP_ORM_Data $obj)
     {
@@ -243,11 +255,38 @@ class OOP_ORM_DI_ORM extends OOP_ORM_DI
         if ($obj->__orm_callback('get_group_ids') && OOP_ORM_DI_ORM::_check_can_get_batch($orm_config))
         {
             # 批量获取数据
-            return $this->_get_o2o_data_batch_type($finder, $obj);
+            return $this->_get_data_batch_type($finder, $obj, OOP_ORM::PARAM_TYPE_O2O);
         }
         else
         {
-            return $this->_get_o2o_data_single_type($finder, $obj);
+
+            OOP_ORM_DI_ORM::_set_query_info($obj, $finder, $orm_config);
+
+            return $finder->find()->current();
+        }
+    }
+
+    /**
+     * 获取一对多数据
+     *
+     * @param OOP_ORM $finder
+     * @param OOP_ORM_Data $obj
+     * @return OOP_ORM_Result
+     */
+    protected function get_o2m_data(OOP_ORM $finder, OOP_ORM_Data $obj)
+    {
+        $orm_config = $this->config();
+
+        if ((!isset($orm_config['disable_qo']) || $orm_config['disable_qo'] === false) && OOP_ORM_DI_ORM::_check_can_get_batch($orm_config))
+        {
+            # 优化查询方式获取
+            return $this->_get_data_batch_type($finder, $obj, OOP_ORM::PARAM_TYPE_O2M);
+        }
+        else
+        {
+            OOP_ORM_DI_ORM::_set_query_info($obj, $finder, $orm_config);
+
+            return $finder->find();
         }
     }
 
@@ -258,7 +297,7 @@ class OOP_ORM_DI_ORM extends OOP_ORM_DI
      * @param OOP_ORM_Data $obj
      * @return null|OOP_ORM_Data
      */
-    protected function _get_o2o_data_batch_type(OOP_ORM $finder, OOP_ORM_Data $obj)
+    protected function _get_data_batch_type(OOP_ORM $finder, OOP_ORM_Data $obj, $type)
     {
         $config     = $this->config();
         $mapping    = $config['mapping'];
@@ -408,7 +447,7 @@ class OOP_ORM_DI_ORM extends OOP_ORM_DI
 
                 $item->__orm_callback('add_parent_group_id', $group_ids);
 
-                $rs[$k] = $item;
+                $rs[$k][] = $item;
             }
 
             foreach ($group as $item)
@@ -433,17 +472,32 @@ class OOP_ORM_DI_ORM extends OOP_ORM_DI
 
                 if (!isset($rs[$k]))
                 {
-                    $rs[$k] = null;
+                    if ($type !== OOP_ORM::PARAM_TYPE_O2O)
+                    {
+                        $current = array();
+                    }
+                    else
+                    {
+                        $current = null;
+                    }
+                }
+                else
+                {
+                    $current = $rs[$k];
+                    if ($type === OOP_ORM::PARAM_TYPE_O2O)
+                    {
+                        $current = current($current);
+                    }
                 }
 
                 if ($item === $obj)
                 {
-                    $return = $rs[$k];
+                    $return = $current;
                 }
                 else
                 {
                     # 通过回调设置ORM批量获取的数据
-                    $item->__orm_callback('set_batch_orm_data', $this->key, $rs[$k]);
+                    $item->__orm_callback('set_batch_orm_data', $this->key, $current);
                 }
             }
 
@@ -540,20 +594,36 @@ class OOP_ORM_DI_ORM extends OOP_ORM_DI
                     $k .= ','. $item->get_data_by_field_name($bind_field, true);
                 }
 
+
                 if (!isset($rs[$k]))
                 {
                     # 有可能数据库中没有对应的数据
-                    $rs[$k] = null;
+                    if ($type !== OOP_ORM::PARAM_TYPE_O2O)
+                    {
+                        $current = array();
+                    }
+                    else
+                    {
+                        $current = null;
+                    }
+                }
+                else
+                {
+                    $current = $rs[$k];
+                    if ($type === OOP_ORM::PARAM_TYPE_O2O)
+                    {
+                        $current = current($current);
+                    }
                 }
 
                 if ($item === $obj)
                 {
-                    $return = $rs[$k];
+                    $return = $current;
                 }
                 else
                 {
                     # 通过回调设置ORM批量获取的数据
-                    $item->__orm_callback('set_batch_orm_data', $this->key, $rs[$k]);
+                    $item->__orm_callback('set_batch_orm_data', $this->key, $current);
                 }
 
 
@@ -575,44 +645,6 @@ class OOP_ORM_DI_ORM extends OOP_ORM_DI
 
 
     /**
-     * 获取单独数据
-     *
-     * @param OOP_ORM $finder
-     * @param OOP_ORM_Data $obj
-     * @return null|OOP_ORM_Data
-     */
-    protected function _get_o2o_data_single_type(OOP_ORM $finder, OOP_ORM_Data $obj)
-    {
-        $config = $this->config();
-
-        if (isset($config['cache']))
-        {
-            list($cache, $cache_key, $data) = $this->_get_cache_data($obj);
-        }
-        else
-        {
-            $data = null;
-        }
-
-        if (!$data)
-        {
-            OOP_ORM_DI_ORM::_set_query_info($obj, $finder, $config);
-
-            $data = $finder->find()->current();
-
-            if ($data && isset($cache) && isset($cache_key))
-            {
-                /**
-                 * @var $cache Cache
-                 */
-                $cache->set($cache_key, $data, $config['cache']['expire'], isset($config['cache']['expire_type']) ? $config['cache']['expire_type'] : null);
-            }
-        }
-
-        return $data;
-    }
-
-    /**
      * 获取缓存数据
      *
      * @param OOP_ORM_Data $obj
@@ -628,25 +660,29 @@ class OOP_ORM_DI_ORM extends OOP_ORM_DI
             # 有缓存配置
             $orm_config_copy = $config;
 
-            if (is_array($orm_config_copy['mapping']))foreach($orm_config_copy['mapping'] as $key => $value)
+            if ($orm_config_copy['mapping'])foreach($orm_config_copy['mapping'] as $key => $value)
             {
-                $orm_config_copy['mapping'][$key] = $obj->$key;
+                $orm_config_copy['mapping'][$key] = $obj->$value;
             }
-            unset($orm_config_copy['cache']);
+
+            if (isset($orm_config_copy['bind']) && $orm_config_copy['bind'])
+            {
+                $orm_config_copy['.bind.value'] = $obj->get_data_by_field_name($orm_config_copy['bind'], true);
+            }
 
             # 根据配置生成一个key
             asort($orm_config_copy);
 
-            $cache_key = '_orm_cache_'. md5(var_export($orm_config_copy, true));
+            $cache_key = '_orm_cache.'. strtolower(get_class($obj)) .'->'. $this->key .','. md5(var_export($orm_config_copy, true));
 
             # 缓存对象
             $cache = Cache::instance(isset($config['cache']['config']) ? $config['cache']['config'] : null);
 
             $data = $cache->get($cache_key);
 
-            if (IS_DEBUG)
+            if ($data && IS_DEBUG)
             {
-                Core::debug()->info('orm '. get_class($obj) .'->'. $this->key .' found by cache, item pk is '. $data->pk());
+                Core::debug()->info('found orm cache '. get_class($obj) . '{PK:'. $obj->pk() .'}' .'->'. $this->key . ($data instanceof OOP_ORM_Data?' item pk is '. $data->pk() : ''));
             }
 
             return array($cache, $cache_key, $data);
