@@ -118,19 +118,19 @@ class OOP_ORM_DI_ORM extends OOP_ORM_DI
      */
     protected function get_orm_data(OOP_ORM_Data $obj)
     {
-        $orm_config = $this->config();
-        $finder     = ORM($orm_config['orm']);
-        $rs         = null;
+        $config = $this->config();
+        $finder = ORM($config['orm']);
+        $rs     = null;
 
 
-        if (isset($orm_config['cache']))
+        if (isset($config['cache']))
         {
             list($cache, $cache_key, $data) = $this->_get_cache_data($obj);
 
-            if ($data)return $data;
+            if ($data)return @unserialize($data);
         }
 
-        switch ($orm_config['type'])
+        switch ($config['type'])
         {
             case OOP_ORM::PARAM_TYPE_O2O:
                 $rs = $this->get_o2o_data($finder, $obj);
@@ -139,9 +139,9 @@ class OOP_ORM_DI_ORM extends OOP_ORM_DI
                 $rs = $finder;
 
                 # WHERE
-                if ($orm_config['where'])
+                if ($config['where'])
                 {
-                    $where = $orm_config['where'];
+                    $where = $config['where'];
                 }
                 else
                 {
@@ -149,18 +149,18 @@ class OOP_ORM_DI_ORM extends OOP_ORM_DI
                 }
 
                 # MAPPING
-                if ($orm_config['mapping'])
+                if ($config['mapping'])
                 {
-                    foreach($orm_config['mapping'] as $k => $v)
+                    foreach($config['mapping'] as $k => $v)
                     {
                         $where[$k] = $obj->$v;
                     }
                 }
 
                 # 绑定数据
-                if (isset($orm_config['bind']) && $orm_config['bind'])
+                if (isset($config['bind']) && $config['bind'])
                 {
-                    $where[$orm_config['bind']] = $obj->get_data_by_field_name($orm_config['bind'], true);
+                    $where[$config['bind']] = $obj->get_data_by_field_name($config['bind'], true);
                 }
 
                 if ($where)
@@ -174,12 +174,12 @@ class OOP_ORM_DI_ORM extends OOP_ORM_DI
                 break;
         }
 
-        if ($rs && isset($cache) && isset($cache_key))
+        if (isset($cache) && isset($cache_key))
         {
             /**
              * @var $cache Cache
              */
-            $cache->set($cache_key, $rs, $orm_config['cache']['expire'], isset($orm_config['cache']['expire_type']) ? $orm_config['cache']['expire_type'] : null);
+            $cache->set($cache_key, serialize($rs), $config['cache']['expire'], isset($config['cache']['expire_type']) ? $config['cache']['expire_type'] : null);
         }
 
         return $rs;
@@ -228,6 +228,24 @@ class OOP_ORM_DI_ORM extends OOP_ORM_DI
         return true;
     }
 
+    public function set_data_by_batch_type($obj, & $_compiled_data, & $_raw_compiled_data, $data)
+    {
+        $_compiled_data[$this->key] = $_raw_compiled_data[$this->key] = $data;
+
+        $config = $this->config();
+
+        # 如果有缓存，设置缓存
+        if (isset($config['cache']))
+        {
+            list($cache, $cache_key) = $this->_get_cache_st($obj);
+
+            /**
+             * @var $cache Cache
+             */
+            $cache->set($cache_key, serialize($data), $config['cache']['expire'], isset($config['cache']['expire_type']) ? $config['cache']['expire_type'] : null);
+        }
+    }
+
 
     /**
      * 获取一对一数据
@@ -239,20 +257,20 @@ class OOP_ORM_DI_ORM extends OOP_ORM_DI
      */
     protected function get_o2o_data(OOP_ORM $finder, OOP_ORM_Data $obj)
     {
-        $orm_config = $this->config();
+        $config = $this->config();
 
-        if (!$orm_config['mapping'] && !$orm_config['where'] && !isset($orm_config['bind']))
+        if (!$config['mapping'] && !$config['where'] && !isset($config['bind']))
         {
             if (IS_DEBUG)
             {
-                Core::debug()->warn($orm_config, 'error orm setting');
+                Core::debug()->warn($config, 'error orm setting');
                 throw new Exception($this->class_name .'->'. $this->key .' 获取延迟数据设置异常，缺失mapping或where或bind条件');
             }
 
             return null;
         }
 
-        if ($obj->__orm_callback('get_group_ids') && OOP_ORM_DI_ORM::_check_can_get_batch($orm_config))
+        if ($obj->__orm_callback('get_group_ids') && OOP_ORM_DI_ORM::_check_can_get_batch($config))
         {
             # 批量获取数据
             return $this->_get_data_batch_type($finder, $obj, OOP_ORM::PARAM_TYPE_O2O);
@@ -260,7 +278,7 @@ class OOP_ORM_DI_ORM extends OOP_ORM_DI
         else
         {
 
-            OOP_ORM_DI_ORM::_set_query_info($obj, $finder, $orm_config);
+            OOP_ORM_DI_ORM::_set_query_info($obj, $finder, $config);
 
             return $finder->find()->current();
         }
@@ -275,16 +293,16 @@ class OOP_ORM_DI_ORM extends OOP_ORM_DI
      */
     protected function get_o2m_data(OOP_ORM $finder, OOP_ORM_Data $obj)
     {
-        $orm_config = $this->config();
+        $config = $this->config();
 
-        if ((!isset($orm_config['disable_qo']) || $orm_config['disable_qo'] === false) && OOP_ORM_DI_ORM::_check_can_get_batch($orm_config))
+        if ((!isset($config['disable_qo']) || $config['disable_qo'] === false) && OOP_ORM_DI_ORM::_check_can_get_batch($config))
         {
             # 优化查询方式获取
             return $this->_get_data_batch_type($finder, $obj, OOP_ORM::PARAM_TYPE_O2M);
         }
         else
         {
-            OOP_ORM_DI_ORM::_set_query_info($obj, $finder, $orm_config);
+            OOP_ORM_DI_ORM::_set_query_info($obj, $finder, $config);
 
             return $finder->find();
         }
@@ -399,7 +417,9 @@ class OOP_ORM_DI_ORM extends OOP_ORM_DI
         if (!$group)
         {
             # 没有获取到任何组，则采样单个获取的方法
-            return $this->_get_o2o_data_single_type($finder, $obj);
+            OOP_ORM_DI_ORM::_set_query_info($obj, $finder, $config);
+
+            return $finder->find()->current();
         }
 
         $batch_where = array();
@@ -643,7 +663,6 @@ class OOP_ORM_DI_ORM extends OOP_ORM_DI
         return $return;
     }
 
-
     /**
      * 获取缓存数据
      *
@@ -657,27 +676,11 @@ class OOP_ORM_DI_ORM extends OOP_ORM_DI
 
         if (isset($config['cache']))
         {
-            # 有缓存配置
-            $orm_config_copy = $config;
+            list($cache, $cache_key) = $this->_get_cache_st($obj);
 
-            if ($orm_config_copy['mapping'])foreach($orm_config_copy['mapping'] as $key => $value)
-            {
-                $orm_config_copy['mapping'][$key] = $obj->$value;
-            }
-
-            if (isset($orm_config_copy['bind']) && $orm_config_copy['bind'])
-            {
-                $orm_config_copy['.bind.value'] = $obj->get_data_by_field_name($orm_config_copy['bind'], true);
-            }
-
-            # 根据配置生成一个key
-            asort($orm_config_copy);
-
-            $cache_key = '_orm_cache.'. strtolower(get_class($obj)) .'->'. $this->key .','. md5(var_export($orm_config_copy, true));
-
-            # 缓存对象
-            $cache = Cache::instance(isset($config['cache']['config']) ? $config['cache']['config'] : null);
-
+            /**
+             * @var $cache Cache
+             */
             $data = $cache->get($cache_key);
 
             if ($data && IS_DEBUG)
@@ -690,6 +693,48 @@ class OOP_ORM_DI_ORM extends OOP_ORM_DI
         else
         {
             return array(null, null, null);
+        }
+    }
+
+    /**
+     * 获取缓存数据
+     *
+     * @param OOP_ORM_Data $obj
+     * @param $orm_config
+     * @return array array($cache, $cache_key)
+     */
+    protected function _get_cache_st(OOP_ORM_Data $obj)
+    {
+        $config = $this->config();
+
+        if (isset($config['cache']))
+        {
+            # 有缓存配置
+            $config_copy = $config;
+
+            if ($config_copy['mapping'])foreach($config_copy['mapping'] as $key => $value)
+            {
+                $config_copy['mapping'][$key] = $obj->$value;
+            }
+
+            if (isset($config_copy['bind']) && $config_copy['bind'])
+            {
+                $config_copy['.bind.value'] = $obj->get_data_by_field_name($config_copy['bind'], true);
+            }
+
+            # 根据配置生成一个key
+            asort($config_copy);
+
+            $cache_key = '_orm_cache.'. strtolower(get_class($obj)) .'->'. $this->key .','. md5(var_export($config_copy, true));
+
+            # 缓存对象
+            $cache = Cache::instance(isset($config['cache']['config']) ? $config['cache']['config'] : null);
+
+            return array($cache, $cache_key);
+        }
+        else
+        {
+            return array(null, null);
         }
     }
 
@@ -725,50 +770,50 @@ class OOP_ORM_DI_ORM extends OOP_ORM_DI
         $config['orm'] = $config['orm']['name'];
     }
 
-    protected static function _check_can_get_batch($orm_config)
+    protected static function _check_can_get_batch($config)
     {
         $get_batch_data = true;
 
-        if (isset($orm_config['order_by']))
+        if (isset($config['order_by']))
         {
             $get_batch_data = false;
         }
-        elseif (isset($orm_config['offset']) && $orm_config['offset'] > 0)
+        elseif (isset($config['offset']) && $config['offset'] > 0)
         {
             # OFFSET
             $get_batch_data = false;
         }
-        elseif (isset($orm_config['group_by']))
+        elseif (isset($config['group_by']))
         {
             # GROUP BY
             $get_batch_data = false;
         }
-        elseif (isset($orm_config['order_by']))
+        elseif (isset($config['order_by']))
         {
             # ORDER BY
             $get_batch_data = false;
         }
-        elseif (isset($orm_config['in']))
+        elseif (isset($config['in']))
         {
             # IN
             $get_batch_data = false;
         }
-        elseif ($orm_config['limit'])
+        elseif ($config['limit'])
         {
             # LIMIT
             $get_batch_data = false;
         }
-        elseif ($orm_config['like'])
+        elseif ($config['like'])
         {
             # LIKE
             $get_batch_data = false;
         }
-        elseif ($orm_config['having'])
+        elseif ($config['having'])
         {
             # HAVING
             $get_batch_data = false;
         }
-        elseif ($orm_config['other'])
+        elseif ($config['other'])
         {
             # 其它任意
             $get_batch_data = false;
@@ -777,92 +822,92 @@ class OOP_ORM_DI_ORM extends OOP_ORM_DI
         return $get_batch_data;
     }
 
-    protected static function _set_query_info(OOP_ORM_Data $obj, OOP_ORM $finder, $orm_config)
+    protected static function _set_query_info(OOP_ORM_Data $obj, OOP_ORM $finder, $config)
     {
         # WHERE
-        if ($orm_config['where'])
+        if ($config['where'])
         {
-            $finder->where($orm_config['where']);
+            $finder->where($config['where']);
         }
 
         # MAPPING
-        if ($orm_config['mapping'])
+        if ($config['mapping'])
         {
-            foreach($orm_config['mapping'] as $k => $v)
+            foreach($config['mapping'] as $k => $v)
             {
                 $finder->where($k, $obj->$v);
             }
         }
 
         # 绑定数据
-        if (isset($orm_config['bind']) && $orm_config['bind'])
+        if (isset($config['bind']) && $config['bind'])
         {
-            $finder->where($orm_config['bind'], $obj->get_data_by_field_name($orm_config['bind'], true));
+            $finder->where($config['bind'], $obj->get_data_by_field_name($config['bind'], true));
         }
 
-        if (isset($orm_config['order_by']) && $orm_config['order_by'])
+        if (isset($config['order_by']) && $config['order_by'])
         {
-            foreach($orm_config['order_by'] as $k => $v)
+            foreach($config['order_by'] as $k => $v)
             {
                 $finder->order_by($k, $v);
             }
         }
 
         # OFFSET
-        if (isset($orm_config['offset']) && $orm_config['offset'] > 0)
+        if (isset($config['offset']) && $config['offset'] > 0)
         {
-            $finder->offset($orm_config['offset']);
+            $finder->offset($config['offset']);
         }
 
         # GROUP BY
-        if (isset($orm_config['group_by']) && $orm_config['group_by'])
+        if (isset($config['group_by']) && $config['group_by'])
         {
-            foreach ($orm_config['group_by'] as $item)
+            foreach ($config['group_by'] as $item)
             {
                 $finder->group_by($item);
             }
         }
 
         # ORDER BY
-        if (isset($orm_config['order_by']) && $orm_config['order_by'])
+        if (isset($config['order_by']) && $config['order_by'])
         {
-            foreach ($orm_config['order_by'] as $key => $item)
+            foreach ($config['order_by'] as $key => $item)
             {
                 $finder->order_by($key, $item);
             }
         }
 
         # IN
-        if (isset($orm_config['in']) && $orm_config['in'])
+        if (isset($config['in']) && $config['in'])
         {
-            foreach ($orm_config['in'] as $key => $item)
+            foreach ($config['in'] as $key => $item)
             {
                 $finder->in($key, $item);
             }
         }
 
         # LIMIT
-        if (isset($orm_config['limit']) && $orm_config['limit'])
+        if (isset($config['limit']) && $config['limit'])
         {
-            $finder->limit($orm_config['limit']);
+            $finder->limit($config['limit']);
         }
 
         # LIKE
-        if (isset($orm_config['like']) && $orm_config['like'])
+        if (isset($config['like']) && $config['like'])
         {
-            $finder->like($orm_config['like']);
+            $finder->like($config['like']);
         }
 
         # HAVING
-        if (isset($orm_config['having']) && $orm_config['having'])
+        if (isset($config['having']) && $config['having'])
         {
-            $finder->having($orm_config['having']);
+            $finder->having($config['having']);
         }
 
         # 支持扩展所有的方法
-        if (isset($orm_config['other']) && $orm_config['other'])
+        if (isset($config['other']) && $config['other'])
         {
-            foreach ($orm_config['other'] as $argv)
+            foreach ($config['other'] as $argv)
             {
                 $k = array_pop($argv);
                 call_user_func_array(array($finder, $k), $argv);

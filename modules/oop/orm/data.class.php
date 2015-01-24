@@ -2000,9 +2000,10 @@ class Module_OOP_ORM_Data
 
     protected function __orm_callback_set_batch_orm_data($key, $data)
     {
-        if ($this->_get_di_by_key($key) instanceof OOP_ORM_DI_ORM)
+        $di = $this->_get_di_by_key($key);
+        if ($di instanceof OOP_ORM_DI_ORM)
         {
-            $this->_compiled_data[$key] = $this->_raw_compiled_data[$key] = $data;
+            $di->set_data_by_batch_type($this, $this->_compiled_data, $this->_raw_compiled_data, $data);
 
             return true;
         }
