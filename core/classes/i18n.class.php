@@ -37,7 +37,14 @@ abstract class Core_I18n
      *
      * @var string
      */
-    protected static $cache_config = Cache::DEFAULT_CONFIG_NAME;
+    protected static $cache_config = null;
+
+    /**
+     * 系统 Core 类库是否加载完毕
+     *
+     * @var bool
+     */
+    private static $core_initialized = false;
 
     /**
      * 由系统回调执行
@@ -47,61 +54,68 @@ abstract class Core_I18n
     public static function import_lib_callback(array $libs)
     {
         # 清除数据，以便重新获取
-        unset(I18n::$lang[Core::$project]);
-        unset(I18n::$is_setup[Core::$project]);
+        unset(self::$lang[Core::$project]);
+        unset(self::$is_setup[Core::$project]);
     }
 
     public static function setup()
     {
-        $lang_cache_key = null;
-        $lang_files     = null;
-
-        # 增加回调
-        Core::import_library_add_callback('I18n::import_lib_callback');
-
-        # 未初始化则获取数据
-        if (!isset(I18n::$is_setup[Core::$project]))
-        {
-            # 根据类库加载信息获取key
-
-            $lang_cache_key = I18n::get_lang_cache_key();
-
-            try
-            {
-                $lang_cache = Cache::instance(I18n::$cache_config)->get($lang_cache_key);
-            }
-            catch(Exception $e)
-            {
-                # 避免在Exception中调用__()方法后导致程序陷入死循环
-                $lang_cache = null;
-            }
-
-            if ($lang_cache)
-            {
-                # 语言包文件
-                $lang_files = I18n::find_lang_files();
-
-                if ($lang_cache['mtime'] === $lang_files['last_mtime'])
-                {
-                    # 时间相同才使用
-                    I18n::$lang[Core::$project]     = $lang_cache['lang'];
-                    I18n::$is_setup[Core::$project] = true;
-                    return;
-                }
-            }
-        }
-
-        # 标记为已初始化
-        I18n::$is_setup[Core::$project] = true;
-
-
         # 记录各个类库的解析后的内容
         static $static_lang_array = array();
 
-        if (null===$lang_files)
+        $lang_cache_key = null;
+        $lang_files     = null;
+
+        if (self::$core_initialized)
+        {
+            if (isset(self::$lang['..core..']))
+            {
+                unset(self::$lang['..core..']);
+            }
+
+            # 增加回调
+            Core::event_add('system.import_library', array('I18n', 'import_lib_callback'));
+
+            # 未初始化则获取数据
+            if (!isset(self::$is_setup[Core::$project]))
+            {
+                # 根据类库加载信息获取key
+
+                $lang_cache_key = I18n::get_lang_cache_key();
+
+                try
+                {
+                    $lang_cache = Cache::instance(self::$cache_config)->get($lang_cache_key);
+                }
+                catch(Exception $e)
+                {
+                    # 避免在Exception中调用__()方法后导致程序陷入死循环
+                    $lang_cache = null;
+                }
+
+                if ($lang_cache)
+                {
+                    # 语言包文件
+                    $lang_files = I18n::find_lang_files();
+
+                    if ($lang_cache['mtime'] === $lang_files['last_mtime'])
+                    {
+                        # 时间相同才使用
+                        self::$lang[Core::$project]     = $lang_cache['lang'];
+                        self::$is_setup[Core::$project] = true;
+                        return;
+                    }
+                }
+            }
+
+            # 标记为已初始化
+            self::$is_setup[Core::$project] = true;
+        }
+
+        if (null === $lang_files)
         {
             # 语言包文件
-            $lang_files = I18n::find_lang_files();
+            $lang_files = self::$core_initialized ? I18n::find_lang_files() : self::find_lang_files();
         }
 
         # 获取语言文件
@@ -111,7 +125,7 @@ abstract class Core_I18n
         {
             if (!isset($static_lang_array[$file]))
             {
-                $static_lang_array[$file] = I18n::parse_lang($file);
+                $static_lang_array[$file] = self::$core_initialized ? I18n::parse_lang($file) : self::parse_lang($file);
             }
 
             # 合并语言包
@@ -121,17 +135,24 @@ abstract class Core_I18n
             }
         }
 
-        I18n::$lang[Core::$project] = $lang;
-
-        if ($lang_files['last_mtime'])
+        if (self::$core_initialized)
         {
-            if (null===$lang_cache_key)
-            {
-                $lang_cache_key = I18n::get_lang_cache_key();
-            }
+            self::$lang[Core::$project] = $lang;
 
-            # 写缓存
-            Cache::instance(I18n::$cache_config)->set($lang_cache_key, array('lang'=>$lang, 'mtime'=>$lang_files['last_mtime']), Core::config('lang_cache_time', '2592000~5184000,1/10000'), Cache::TYPE_ADV_AGE);
+            if ($lang_files['last_mtime'])
+            {
+                if (null === $lang_cache_key)
+                {
+                    $lang_cache_key = I18n::get_lang_cache_key();
+                }
+
+                # 写缓存
+                Cache::instance(self::$cache_config)->set($lang_cache_key, array('lang'=>$lang, 'mtime'=>$lang_files['last_mtime']), Core::config('lang_cache_time', '2592000~5184000,1/10000'), Cache::TYPE_ADV_AGE);
+            }
+        }
+        else
+        {
+            self::$lang['..core..'] = $lang;
         }
     }
 
@@ -146,22 +167,39 @@ abstract class Core_I18n
         $string    = trim($string);
         $lower_str = strtolower($string);
 
-        if (isset(I18n::$lang[Core::$project][$lower_str]))
+        if (false === self::$core_initialized)
         {
-            return I18n::$lang[Core::$project][$lower_str];
+            if (class_exists('Core', false))
+            {
+                self::$core_initialized = true;
+            }
+        }
+
+        if (self::$core_initialized)
+        {
+            $p = Core::$project;
+        }
+        else
+        {
+            $p = '..core..';
+        }
+
+        if (isset(self::$lang[$p][$lower_str]))
+        {
+            return self::$lang[$p][$lower_str];
         }
 
         # 初始化
-        if (!isset(I18n::$is_setup[Core::$project]))
+        if (!isset(self::$is_setup[$p]))
         {
-            I18n::setup();
+            self::setup();
         }
         else
         {
             return $string;
         }
 
-        return isset(I18n::$lang[Core::$project][$lower_str]) ? I18n::$lang[Core::$project][$lower_str] : $string;
+        return isset(self::$lang[$p][$lower_str]) ? self::$lang[$p][$lower_str] : $string;
     }
 
     /**
@@ -175,14 +213,14 @@ abstract class Core_I18n
     {
         if ($project)
         {
-            unset(I18n::$is_setup[$project]);
-            unset(I18n::$lang[$project]);
+            unset(self::$is_setup[$project]);
+            unset(self::$lang[$project]);
         }
         else
         {
-            I18n::$is_setup        = array();
-            I18n::$lang            = array();
-            I18n::$accept_language = null;
+            self::$is_setup        = array();
+            self::$lang            = array();
+            self::$accept_language = null;
         }
     }
 
@@ -193,17 +231,17 @@ abstract class Core_I18n
      */
     protected static function accept_language()
     {
-        if (null!==I18n::$accept_language)
+        if (null !== self::$accept_language)
         {
-            return I18n::$accept_language;
+            return self::$accept_language;
         }
 
-        if (($local_cookie_name = Core::config('local_lang_cookie_name')) && isset($_COOKIE[$local_cookie_name]) && preg_match('#[a-z0-9\-_]+#i', $_COOKIE[$local_cookie_name]))
+        if (self::$core_initialized && ($local_cookie_name = Core::config('local_lang_cookie_name')) && isset($_COOKIE[$local_cookie_name]) && preg_match('#[a-z0-9\-_]+#i', $_COOKIE[$local_cookie_name]))
         {
             # 读取COOKIE中的语言包设置
             $accept_language = (string)$_COOKIE[$local_cookie_name];
         }
-        elseif (($lang_config = Core::config('lang')) && $lang_config!='auto')
+        elseif (self::$core_initialized && ($lang_config = Core::config('lang')) && $lang_config !== 'auto')
         {
             # 系统设置的语言包
             $accept_language = explode(',', $lang_config);
@@ -227,7 +265,7 @@ abstract class Core_I18n
                 }
             }
 
-            if (($default_lang = Core::config('default_lang')) && !in_array($default_lang, $accept_language))
+            if (self::$core_initialized && ($default_lang = Core::config('default_lang')) && !in_array($default_lang, $accept_language))
             {
                 $accept_language[] = $default_lang;
             }
@@ -265,9 +303,9 @@ abstract class Core_I18n
             $accept_language = array_unique($renew_accept_language);
         }
 
-        I18n::$accept_language = $accept_language;
+        self::$accept_language = $accept_language;
 
-        return I18n::$accept_language;
+        return self::$accept_language;
     }
 
     /**
@@ -277,7 +315,16 @@ abstract class Core_I18n
      */
     protected static function find_lang_files()
     {
-        $accept_language = I18n::accept_language();
+        if (self::$core_initialized)
+        {
+            $accept_language = I18n::accept_language();
+            $include_path    = array_reverse(Core::$include_path);
+        }
+        else
+        {
+            $accept_language = self::accept_language();
+            $include_path    = array_reverse(Bootstrap::$include_path);
+        }
 
         $found = array
         (
@@ -285,7 +332,7 @@ abstract class Core_I18n
             'last_mtime' => 0,          // 最后修改时间
         );
 
-        foreach (array_reverse(Core::$include_path) as $libs)
+        foreach ($include_path as $libs)
         {
             $libs = array_reverse($libs);
             foreach ($libs as $path)
