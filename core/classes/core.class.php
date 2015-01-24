@@ -159,45 +159,17 @@ abstract class Core_Core extends Bootstrap
     protected static $buffer_level = 0;
 
     /**
-     * 页面在关闭前需要执行的方法列队
-     * 通过Core::register_shutdown_function()设置
+     * 记录所有Event
+     *
      * @var array
      */
-    protected static $shutdown_function = array();
+    protected static $events = array();
 
     /**
      * getFactory获取的对象寄存器
      * @var array
      */
     protected static $instances = array();
-
-    /**
-     * 执行Core::close_all_connect()方法时会关闭链接的类和方法名的列队
-     *
-     * 可通过Core::add_close_connect_class()方法进行设置增加
-     *
-     *     array
-     *     (
-     *         'Database' => 'close_all_connect',
-     *     );
-     *
-     * @var array
-     */
-    protected static $close_connect_class_list = array();
-
-    /**
-     * import_library回调函数列表
-     *
-     * @var array
-     */
-    protected static $import_library_callback = array();
-
-    /**
-     * change_project回调函数列表
-     *
-     * @var array
-     */
-    protected static $change_project_callback = array();
 
     /**
      * 使用 Core::url() 会附带的参数列表
@@ -405,6 +377,85 @@ abstract class Core_Core extends Bootstrap
         }
 
         return $v;
+    }
+
+    /**
+     * 增加事件调用
+     *
+     *      // 注册一个事件调用
+     *      Core::event_add('system.shut_down', 'test');
+     *
+     *      // 运行一个事件调用
+     *      Core::event_run('system.shut_down');
+     *
+     * @param $key
+     * @param $callback
+     */
+    public static function event_add($key, $callback)
+    {
+        if (!isset(Core::$events[$key]))
+        {
+            Core::$events[$key] = array
+            (
+                $callback,
+            );
+        }
+        elseif (!in_array($callback, Core::$events[$key]))
+        {
+            Core::$events[$key][] = $callback;
+        }
+    }
+
+    /**
+     * 移除事件调用
+     *
+     * 不指定 `$callback` 则移除key下的所有事件调用
+     *
+     * @param $key
+     * @param null $callback
+     */
+    public static function event_remove($key, $callback = null)
+    {
+        if (isset(Core::$events[$key]))
+        {
+            if ($callback)
+            {
+                if (false !== ($k = array_search($callback, Core::$events[$key])))
+                {
+                    unset(Core::$events[$key][$k]);
+                }
+            }
+            else
+            {
+                unset(Core::$events[$key]);
+            }
+        }
+    }
+
+    /**
+     * 运行事件
+     *
+     * @param $key
+     */
+    public static function event_run($key, $arguments = null)
+    {
+        if (isset(Core::$events[$key]))foreach(Core::$events[$key] as $call_back)
+        {
+            try
+            {
+                call_user_func_array($call_back, is_array($arguments) ? $arguments : array());
+            }
+            catch (Exception $e)
+            {
+                if (IS_DEBUG)
+                {
+                    Core::debug()->group('Run Event '. $key .'Error');
+                    Core::debug()->warn($e->getMessage(), 'Message');
+                    Core::debug()->warn($call_back, 'Event');
+                    Core::debug()->groupEnd();
+                }
+            }
+        }
     }
 
     /**
@@ -1854,11 +1905,10 @@ abstract class Core_Core extends Bootstrap
      * 将利用call_user_func或call_user_func_array回调
      * 类似 register_shutdown_function
      * @param array $function 方法名，可以是数组
-     * @param array $param_arr 参数，可空
      */
-    public static function register_shutdown_function($function, $param_arr = null)
+    public static function register_shutdown_function($function)
     {
-        Core::$shutdown_function[] = array($function, $param_arr);
+        Core::event_add('system.shutdown', $function);
     }
 
     public static function shutdown_handler()
@@ -2109,60 +2159,13 @@ abstract class Core_Core extends Bootstrap
         # 记录debug信息
         if (IS_DEBUG)
         {
-            Core::debug()->info($project, '程序已切换到了新项目');
+            Core::debug()->info($project, 'Change to new Project');
         }
 
-        # 回调callback
-        if (Core::$change_project_callback)
-        {
-            foreach (Core::$change_project_callback as $fun)
-            {
-                call_user_func($fun, $old_project, $project);
-            }
-        }
+        # 调用Event
+        Core::event_run('system.change_project');
 
         return true;
-    }
-
-    /**
-     * 增加change_project回调事件
-     *
-     *     //将在每次执行 Core::change_project($new_project) 成功后执行 MyClass::myfun($old_project, $new_project) 方法,其中$old_project是原来的项目名
-     *     Core::change_project_add_callback('MyClass::myfun');
-     *
-     * @param string|array $fun
-     */
-    public static function change_project_add_callback($fun)
-    {
-        Core::$change_project_callback[] = $fun;
-
-        if (count(Core::$change_project_callback)>1)
-        {
-            # 移除重复的项目
-            Core::$change_project_callback = array_unique(Core::$change_project_callback);
-        }
-    }
-
-    /**
-    * 移除import_library回调事件
-    *
-    * @param string|array $fun
-    */
-    public static function change_project_remove_callback($fun)
-    {
-        if (Core::$change_project_callback)
-        {
-            $new_arr = array();
-            foreach (Core::$change_project_callback as $item)
-            {
-                if ($item!==$fun)
-                {
-                    $new_arr = $item;
-                }
-            }
-
-            Core::$change_project_callback = $new_arr;
-        }
     }
 
     /**
@@ -2186,87 +2189,14 @@ abstract class Core_Core extends Bootstrap
         $status = parent::import_library($library_name);
 
         # 回调callback
-        if ($status>0 && Core::$import_library_callback)
+        if ($status>0)
         {
-            foreach (Core::$import_library_callback as $fun)
-            {
-                call_user_func($fun, $library_name);
-            }
+            Core::event_run('system.import_library');
         }
 
         return $status;
     }
 
-    /**
-     * 增加import_library回调事件
-     *
-     *     //将在每次执行 Core::import_library($library_name) 成功后执行 MyClass::myfun((array)$library_name) 方法
-     *     Core::add_import_library_callback('MyClass::myfun');
-     *
-     * @param string|array $fun
-     */
-    public static function import_library_add_callback($fun)
-    {
-        Core::$import_library_callback[] = $fun;
-
-        if (count(Core::$import_library_callback)>1)
-        {
-            # 移除重复的项目
-            Core::$import_library_callback = array_unique(Core::$import_library_callback);
-        }
-    }
-
-    /**
-     * 移除import_library回调事件
-     *
-     * @param string|array $fun
-     */
-    public static function import_library_remove_callback($fun)
-    {
-        if (Core::$import_library_callback)
-        {
-            $new_arr = array();
-            foreach (Core::$import_library_callback as $item)
-            {
-                if ($item !== $fun)
-                {
-                    $new_arr = $item;
-                }
-            }
-
-            Core::$import_library_callback = $new_arr;
-        }
-    }
-
-    /**
-     * 执行注册的关闭方法
-     */
-    protected static function run_shutdown_function()
-    {
-        static $run = null;
-        if (null!==$run)
-        {
-            return true;
-        }
-        $run = true;
-
-        if (Core::$shutdown_function)
-        {
-            foreach (Core::$shutdown_function as $item)
-            {
-                try
-                {
-                    call_user_func_array($item[0], (array)$item[1]);
-                }
-                catch (Exception $e)
-                {
-
-                }
-            }
-        }
-
-        return true;
-    }
 
     /**
      * 特殊的合并项目配置
@@ -2302,17 +2232,7 @@ abstract class Core_Core extends Bootstrap
      */
     public static function close_all_connect()
     {
-        foreach (Core::$close_connect_class_list as $class_name=>$fun)
-        {
-            try
-            {
-                call_user_func_array(array($class_name, $fun), array());
-            }
-            catch (Exception $e)
-            {
-                Core::debug()->warn('close_all_connect error:'. $e->getMessage());
-            }
-        }
+        Core::event_run('system.close_all_connect');
     }
 
     /**
@@ -2326,9 +2246,9 @@ abstract class Core_Core extends Bootstrap
      * @param string $class_name
      * @param string $fun
      */
-    public static function add_close_connect_class($class_name, $fun='close_all_connect')
+    public static function add_close_connect_class($class_name, $fun = 'close_all_connect')
     {
-        Core::$close_connect_class_list[$class_name] = $fun;
+        Core::event_add('system.close_all_connect', array($class_name, $fun));
     }
 
     /**
@@ -2484,7 +2404,7 @@ abstract class Core_Core extends Bootstrap
 
         # 执行注册的关闭方法
         ob_start();
-        Core::run_shutdown_function();
+        Core::event_run('system.shutdown');
         $output = ob_get_clean();
 
         # 在页面输出前关闭所有的连接
