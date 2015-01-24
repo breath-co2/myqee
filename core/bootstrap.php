@@ -225,9 +225,9 @@ function __($string, array $values = null)
 {
     static $have_i18n_class = false;
 
-    if (false===$have_i18n_class)
+    if (false === $have_i18n_class)
     {
-        $have_i18n_class = (boolean)class_exists('I18n', true);
+        $have_i18n_class = class_exists('I18n', true);
     }
 
     if ($have_i18n_class)
@@ -235,7 +235,7 @@ function __($string, array $values = null)
         $string = I18n::get($string);
     }
 
-    return empty($values)?$string:strtr($string, $values);
+    return empty($values) ? $string : strtr($string, $values);
 }
 
 /**
@@ -370,7 +370,7 @@ abstract class Bootstrap
      *
      * @var string
      */
-    public static $project = 'default';
+    public static $project = null;
 
     /**
      * 当前项目目录
@@ -1808,15 +1808,57 @@ abstract class Bootstrap
         {
             # 开头补/
             if (substr($url, 0, 1) !== '/') $url = '/'. $url;
-            $len = strlen($url);
+            $len     = strlen($url);
+            $tmp_url = strtolower(substr(self::$path_info, 0, $len));
 
-            if (strtolower(substr(self::$path_info, 0, $len)) === $url)
+            if ($tmp_url === $url)
             {
                 # 匹配到项目
                 return '/'. substr(self::$path_info, $len);
             }
+            elseif ($url === $tmp_url .'/' && substr($tmp_url, -1) !== '/')
+            {
+                # 这种情况下处理
+                # $url     = /a/b/c/
+                # $tmp_url = /a/b/c
+
+                if (!IS_CLI && !IS_SYSTEM_MODE && isset($_SERVER["REQUEST_METHOD"]) && $_SERVER["REQUEST_METHOD"] === 'GET' && !self::_is_ajax())
+                {
+                    # 根目录，但是结尾缺少/，非GET请求并且不是AJAX，通过302跳转到项目根目录
+                    header('Location: '. $url . (isset($_SERVER["QUERY_STRING"]) && strlen($_SERVER["QUERY_STRING"]) ? '?'.$_SERVER["QUERY_STRING"] : ''));
+                    exit;
+                }
+                else
+                {
+                    # POST 等请求正常返回
+                    return '/'. substr(self::$path_info, $len);
+                }
+            }
         }
 
         return false;
+    }
+
+    /**
+     * 判断页面是否 AJAX 请求
+     *
+     * @return bool
+     */
+    private static function _is_ajax()
+    {
+        if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && 'xmlhttprequest' === strtolower($_SERVER['HTTP_X_REQUESTED_WITH']))
+        {
+            $is_ajax = true;
+        }
+        elseif (isset($_GET['_ajax']) && ($_GET['_ajax'] === 'true' || $_GET['_ajax'] === 'json'))
+        {
+            $is_ajax = true;
+        }
+        else
+        {
+            $is_ajax = false;
+        }
+
+        return $is_ajax;
     }
 }

@@ -117,7 +117,7 @@ $config['url']['assets'] = '/assets/';
  * 那么，服务器上除了会读取 `config.php` 还会再读取 `config.server.runtime.php` 的配置文件，而在开发环境上则读取 `config.dev.runtime.php` 配置文件
  *
  * !!! 只会读取根目录、团队类库和项目中的 .runtime.php，不支持类库(含Core)中 .runtime.php
- * !!! V2中 `$config['debug_config'] = false;` 参数已废弃，可用次参数设为debug实现类似功能
+ * !!! V2中 `$config['debug_config'] = false;` 参数已废弃，可用此参数设为debug实现类似功能
  *
  * @var string
  */

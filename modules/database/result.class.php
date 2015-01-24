@@ -384,9 +384,27 @@ abstract class Module_Database_Result implements Countable, Iterator, SeekableIt
      */
     public function offsetGet($offset)
     {
+        if ($this->_data && array_key_exists($offset, $this->_data))return $this->_data[$offset];
+
         if (!$this->seek($offset)) return null;
 
-        return $this->current();
+        if (!$offset != $this->_current_row)
+        {
+            $old_current         = $this->_current_row;
+            $old_internal        = $this->_internal_row;
+            $this->_current_row  = $offset;
+            $this->_internal_row = $offset;
+        }
+
+        $rs = $this->current();
+
+        if (isset($old_current) && isset($old_internal))
+        {
+            $this->_current_row  = $old_current;
+            $this->_internal_row = $old_internal;
+        }
+
+        return $rs;
     }
 
     /**
