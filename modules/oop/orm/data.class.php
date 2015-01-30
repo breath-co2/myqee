@@ -1238,42 +1238,6 @@ class Module_OOP_ORM_Data
         }
     }
 
-    /**
-     * 用于系统回调
-     *
-     * @param $key
-     * @param null $arg1
-     * @param null $arg2
-     */
-    public function & __orm_callback($method, $arg1 = null, $arg2 = null)
-    {
-        $params       = func_get_args();
-        array_shift($params);
-
-        $count_params = count($params);
-        $action_name  = '__orm_callback_'. $method;
-        if (method_exists($this, $action_name))
-        {
-            switch ($count_params)
-            {
-                case 0 :
-                    return $this->$action_name();
-                case 1 :
-                    return $this->$action_name($params[0]);
-                case 2 :
-                    return $this->$action_name($params[0], $params[1]);
-                case 3 :
-                    return $this->$action_name($params[0], $params[1], $params[2]);
-                case 4 :
-                    return $this->$action_name($params[0], $params[1], $params[2], $params[3]);
-                default :
-                    return call_user_func_array(array($this, $action_name), $params);
-            }
-        }
-
-        throw new Exception('method '. $action_name .' does not exits.');
-    }
-
 
     /**
      * 获取一个根据主键唯一的实例化对象
@@ -1621,6 +1585,40 @@ class Module_OOP_ORM_Data
 
         return $this;
     }
+
+
+    /**
+     * 用于系统回调
+     *
+     * @param $key
+     * @param null $arg1
+     * @param null $arg2
+     */
+    public function & __orm_callback($method, $arg1 = null, $arg2 = null)
+    {
+        $params = func_get_args();
+        array_shift($params);
+
+        $count_params = count($params);
+        $action_name  = '__orm_callback_'. $method;
+
+        switch ($count_params)
+        {
+            case 0 :
+                return $this->$action_name();
+            case 1 :
+                return $this->$action_name($params[0]);
+            case 2 :
+                return $this->$action_name($params[0], $params[1]);
+            case 3 :
+                return $this->$action_name($params[0], $params[1], $params[2]);
+            case 4 :
+                return $this->$action_name($params[0], $params[1], $params[2], $params[3]);
+            default :
+                return call_user_func_array(array($this, $action_name), $params);
+        }
+    }
+
 
     /**
      * 获取处理字段di控制反转对象
