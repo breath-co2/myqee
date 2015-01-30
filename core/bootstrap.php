@@ -976,11 +976,12 @@ abstract class Bootstrap
             if (!$is_alias)
             {
                 # 在非映射模式下才需要读取team类库
-                $lib_ns[] = 'team-library';
+                $libs[] = 'team-library';
             }
+
             foreach ($libs as $type)
             {
-                foreach ($include_path[$type] as $lib_ns=>$path)
+                foreach ($include_path[$type] as $lib_ns => $path)
                 {
                     $tmp_ns        = ($type === 'library' ? 'library_' : '') . str_replace('.', '_', $lib_ns) .'_';
                     $ns_class_name = $tmp_ns . $new_class_name;
