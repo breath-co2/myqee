@@ -2369,17 +2369,17 @@ abstract class Core_Core extends Bootstrap
     {
         $ip = array();
 
-        if (isset($_SERVER['HTTP_X_FORWARDED_FOR']))
+        if (isset($_SERVER['HTTP_X_FORWARDED_FOR']) && $_SERVER['HTTP_X_FORWARDED_FOR'])
         {
             $ip = explode(',', str_replace(' ', '', $_SERVER['HTTP_X_FORWARDED_FOR']));
         }
 
-        if(isset($_SERVER['HTTP_CLIENT_IP']))
+        if(isset($_SERVER['HTTP_CLIENT_IP']) && $_SERVER['HTTP_CLIENT_IP'])
         {
             $ip = array_merge($ip, explode(',', str_replace(' ', '', $_SERVER['HTTP_CLIENT_IP'])));
         }
 
-        if (isset($_SERVER['REMOTE_ADDR']))
+        if (isset($_SERVER['REMOTE_ADDR']) && $_SERVER['REMOTE_ADDR'])
         {
             $ip = array_merge($ip, explode(',', str_replace(' ', '', $_SERVER['REMOTE_ADDR'])));
         }
