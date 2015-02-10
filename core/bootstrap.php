@@ -1032,9 +1032,8 @@ abstract class Bootstrap
     {
         if (preg_match('#^(.*)_(data|result|finder)$#i', $class_name, $m))
         {
-            foreach(array('data', 'result', 'data') as $item)
+            foreach(array('data', 'result', 'finder') as $item)
             {
-                if ($item === $m[2])continue;
                 $new_class = $m[1] .'_'. $item;
                 if (class_exists($ns.$new_class, false) && !class_exists($new_class, false))
                 {
