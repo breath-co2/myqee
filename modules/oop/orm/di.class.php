@@ -437,11 +437,11 @@ abstract class Module_OOP_ORM_DI
 
         foreach($class_vars as $key => $field_config)
         {
-            if ($key[0]=='_')continue;
+            if ($key[0] === '_')continue;
 
             $type = 'Default';
 
-            if (true===$field_config || null===$field_config)
+            if (true === $field_config || null === $field_config)
             {
                 $type = 'Default';
             }
@@ -451,7 +451,7 @@ abstract class Module_OOP_ORM_DI
                 {
                     $type = 'Resource';
                 }
-                elseif ((false!==strpos($field_config, '[') && preg_match('#^([a-z0-9_]+)\[(.*)\]$#i', $field_config, $m)) || false!==strpos($field_config, '.'))
+                elseif ((false !== strpos($field_config, '[') && preg_match('#^([a-z0-9_]+)\[(.*)\]$#i', $field_config, $m)) || false!==strpos($field_config, '.'))
                 {
                     $type = 'Virtual';
                 }
@@ -465,6 +465,10 @@ abstract class Module_OOP_ORM_DI
                 elseif (isset($field_config['data']))
                 {
                     $type = 'Data';
+                }
+                elseif (isset($field_config['function']))
+                {
+                    $type = 'Function';
                 }
                 elseif (isset($field_config['object']))
                 {

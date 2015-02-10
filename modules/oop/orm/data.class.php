@@ -2021,4 +2021,16 @@ class Module_OOP_ORM_Data
     {
         return array_key_exists($key, $this->_compiled_data);
     }
+
+    /**
+     * 用于给di控制器调用可以执行内部方法
+     *
+     * @param $fun
+     * @param $args
+     * @return mixed
+     */
+    protected function __orm_callback_get_by_function_di($fun, $args)
+    {
+        return call_user_func_array($fun, $args);
+    }
 }
