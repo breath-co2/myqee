@@ -44,7 +44,7 @@ class Driver_Cache_Driver_Redis extends Cache_Driver
     /**
      * Redis缓存驱动器
      *
-     * @param $config_name 配置名或数组
+     * @param string|array $config_name 配置名或数组
      */
     public function __construct($config_name = 'default')
     {
@@ -106,7 +106,7 @@ class Driver_Cache_Driver_Redis extends Cache_Driver
                     'timeout'    => 2,
                 );
 
-                if ( $server['persistent'] )
+                if ($server['persistent'])
                 {
                     $action = 'pconnect';
                 }
@@ -152,12 +152,12 @@ class Driver_Cache_Driver_Redis extends Cache_Driver
      */
     public function close_connect()
     {
-        if ( $this->config_name && $this->_redis )
+        if ($this->config_name && $this->_redis)
         {
             unset($this->_redis);
             Cache_Driver_Redis::$redis_num[$this->config_name]--;
 
-            if ( 0 == Cache_Driver_Redis::$redis_num[$this->config_name] )
+            if (0 == Cache_Driver_Redis::$redis_num[$this->config_name])
             {
                 @Cache_Driver_Redis::$redis[$this->config_name]->close();
 
@@ -229,14 +229,14 @@ class Driver_Cache_Driver_Redis extends Cache_Driver
      * 存数据，支持多存
      *
      * @param string/array $key
-     * @param $data Value 多存时此项可空
-     * @param $lifetime 有效期，默认3600，即1小时，0表示最大值30天（2592000）
+     * @param mixed $data Value 多存时此项可空
+     * @param int $lifetime 有效期，默认3600，即1小时，0表示最大值
      * @return boolean
      */
     public function set($key, $value = null, $lifetime = 3600)
     {
         $this->_connect();
-        Core::debug()->info($key,'cache redis set key');
+        Core::debug()->info($key, 'cache redis set key');
 
         if (is_array($key))
         {
@@ -244,7 +244,24 @@ class Driver_Cache_Driver_Redis extends Cache_Driver
             {
                 $this->_format_data($item);
             }
-            return $this->_redis->mset($key);
+
+            if ($lifetime)
+            {
+                $rs = true;
+                foreach($key as $k => $v)
+                {
+                    if (!$this->_redis->set($k, $v, $lifetime))
+                    {
+                        $rs = false;
+                    }
+                }
+            }
+            else
+            {
+                $rs = $this->_redis->mset($key);
+            }
+
+            return $rs;
         }
         else
         {
@@ -254,27 +271,49 @@ class Driver_Cache_Driver_Redis extends Cache_Driver
     }
 
     /**
-     * 删除指定key的缓存，若$key===true则表示删除全部
+     * 删除指定key的缓存
      *
-     * @param string $key
+     * 若 `$key===true` 则表示删除全部
+     *
+     *      // 支持下面的方式
+     *      $this->delete('abc');
+     *      $this->delete('abc', 'abc2');
+     *      $this->delete(['abc', 'abc2']);
+     *
+     *      // 删除全部
+     *      $this->delete(true);
+     *      // 也可使用
+     *      $this->delete_all();
+     *
+     * @param string|array|true $key
      */
     public function delete($key)
     {
         $this->_connect();
-        if ( $key === true )
-        {
 
+        if (true === $key)
+        {
             return $this->_redis->flushAll();
         }
         else
         {
-            $keys = func_get_args();
+            if (is_array($key))
+            {
+                $keys = $key;
+            }
+            else
+            {
+                $keys = func_get_args();
+            }
+
             return $this->_redis->delete($keys);
         }
     }
 
     /**
      * 删除全部
+     *
+     * @return bool
      */
     public function delete_all()
     {
@@ -292,6 +331,7 @@ class Driver_Cache_Driver_Redis extends Cache_Driver
 
     /**
      * 递减
+     *
      * 与原始decrement方法区别的是若不存指定KEY时返回false，这个会自动递减
      *
      * @param string $key
@@ -320,7 +360,7 @@ class Driver_Cache_Driver_Redis extends Cache_Driver
 
         if (method_exists($this->_redis, $method))
         {
-            return call_user_func_array(array($this->_redis,$method), $params);
+            return call_user_func_array(array($this->_redis, $method), $params);
         }
     }
 
@@ -337,7 +377,7 @@ class Driver_Cache_Driver_Redis extends Cache_Driver
             }
             catch (Exception $e)
             {
-                Core::debug()->error('close cache redis connect error:'.$e);
+                Core::debug()->error('close cache redis connect error:'. $e);
             }
 
             Cache_Driver_Redis::$redis[$config_name] = null;
