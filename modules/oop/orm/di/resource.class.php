@@ -57,13 +57,16 @@ class OOP_ORM_DI_Resource extends OOP_ORM_DI
             $this->config['type']     = 'xml';
         }
 
-        if ($this->config['type']=='json')
+        if (!isset($this->config['format']) || !$this->config['format'])
         {
-            $this->config['format'][] = 'json';
-        }
-        elseif ($this->config['type']=='xml')
-        {
-            $this->config['format'][] = 'xml';
+            if ($this->config['type']=='json')
+            {
+                $this->config['format'][] = 'json';
+            }
+            elseif ($this->config['type']=='xml')
+            {
+                $this->config['format'][] = 'xml';
+            }
         }
 
         if (isset($this->config['api']))
@@ -108,10 +111,10 @@ class OOP_ORM_DI_Resource extends OOP_ORM_DI
         }
 
         # 获取内容
-        if (false!==$tmp_data)
+        if (false !== $tmp_data)
         {
             $tmp_data = HttpClient::factory()->get($url)->data();
-            if (false===$tmp_data)return false;
+            if (false === $tmp_data)return false;
 
             # 处理数据类型
             if (isset($this->config['field_type']))

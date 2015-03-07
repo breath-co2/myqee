@@ -814,11 +814,32 @@ abstract class Module_OOP_ORM_DI
         return explode($exp_str, $data);
     }
 
-    protected static function _format_action_xml($data)
+    /**
+     * 格式化成XML字符串
+     *
+     * @use Text::to_xml
+     * @param array $array 数组
+     * @param string $tab 缩进字符，默认 tab 符
+     * @param string $crlf 换行符，默认window换行符
+     * @param string $attribute_key XML的attributes所在key，默认 `@attributes`
+     * @param string $xml_header_string XML第一行声明的字符串
+     * @return string
+     */
+    protected static function _format_action_xml($data, $tab = "\t", $crlf = CRLF, $attribute_key = '@attributes', $xml_header_string = null)
     {
-        return Arr::to_xml($data);
+        return Arr::to_xml($data, $tab, $crlf, $attribute_key, $xml_header_string);
     }
 
+    /**
+     * 从XML格式化成数组
+     *
+     * @use Text::xml_to_array
+     * @param string|SimpleXMLElement $xml_string XML字符串，支持http的XML路径，接受 SimpleXMLElement 对象
+     * @param string $attribute_key attributes所使用的key，默认 @attributes，设置成 true 则和内容自动合并
+     * @param int $max_recursion_depth 解析最高层次，默认25
+     * @param int|array $url_xml_setting 如果传入的 `$xml_string` 是URL，则允许缓存的时间或者是缓存配置的array，默认不缓存
+     * @return array | false 失败则返回false
+     */
     protected static function _de_format_action_xml($data, $attribute_key = null, $max_recursion_depth = null, $url_xml_setting = null)
     {
         return Text::xml_to_array($data, $attribute_key, $max_recursion_depth, $url_xml_setting);

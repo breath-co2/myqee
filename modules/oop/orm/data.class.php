@@ -1140,7 +1140,7 @@ class Module_OOP_ORM_Data
      */
     public function valid($key = null)
     {
-        if (null===$key)
+        if (null === $key)
         {
             # 批量验证
         }
@@ -1675,7 +1675,7 @@ class Module_OOP_ORM_Data
         {
             foreach($changed_value as $key => $value)
             {
-                if (null===$value)
+                if (null === $value)
                 {
                     unset($this->_data[$key]);
                 }
