@@ -187,7 +187,6 @@ class Module_HttpClient
      * @param string/array $url 支持多个URL
      * @param array $data
      * @param $timeout
-     * @return string
      * @return HttpClient_Result|Arr 单个URL返回当然内容对象，多个URL时将返回一个数组对象
      */
     public function get($url, $timeout = 10)
