@@ -44,11 +44,11 @@ abstract class Module_Storage_Driver
     {
         if ($prefix)
         {
-            $this->prefix = trim($prefix, ' /_') . '_';
+            $this->prefix = trim($prefix, ' /_') .'_';
         }
         else
         {
-            $prefix = '';
+            $this->prefix = '';
         }
 
         return $this;
@@ -66,7 +66,7 @@ abstract class Module_Storage_Driver
      * 存数据
      *
      * @param string/array $key 支持多存
-     * @param $data Value 多存时此项可空
+     * @param mixed $value 多存时此项可空
      * @return boolean
      */
     abstract public function set($key, $value = null);
@@ -85,22 +85,22 @@ abstract class Module_Storage_Driver
      */
     abstract public function delete_all();
 
-    protected function _de_format_data(&$data)
+    protected function _de_format_data(& $data)
     {
-        if (null===$data || is_bool($data))
+        if (null === $data || is_bool($data))
         {
             # bool类型不处理
         }
         elseif (!is_numeric($data))
         {
             # 解压
-            if (substr($data,0,14)=='::gzcompress::')
+            if (substr($data, 0, 14) === '::gzcompress::')
             {
                 $data = @gzuncompress(substr($data, 14));
             }
 
             # 解序列化
-            if (substr($data,0,13)=='::serialize::')
+            if (substr($data, 0, 13) === '::serialize::')
             {
                 $data = @unserialize(substr($data, 13));
             }
@@ -112,12 +112,12 @@ abstract class Module_Storage_Driver
         if (!is_numeric($data) && !is_string($data))
         {
             # 序列化
-            $data = '::serialize::' . serialize($data);
+            $data = '::serialize::'. serialize($data);
 
             # 压缩
             if ($this->compress)
             {
-                $data = '::gzcompress::' . @gzcompress($data,9);
+                $data = '::gzcompress::'. @gzcompress($data, 9);
             }
         }
     }

@@ -465,8 +465,14 @@ abstract class Bootstrap
 
             __include_config_file(self::$core_config, DIR_SYSTEM .'config'. EXT);
 
-            # 本地调试模式
-            if (isset(self::$core_config['local_debug_cfg']) && self::$core_config['local_debug_cfg'])
+            # 调试模式
+            if (IS_CLI && function_exists('getenv') && getenv('DEBUG'))
+            {
+                # 命令行中执行 DEBUG=1 php index.php 可开启DEBUG
+                $open_debug = 1;
+                fwrite(STDOUT, "\x1b[31mNow open debug.\x1b[39m\n");
+            }
+            elseif (isset(self::$core_config['local_debug_cfg']) && self::$core_config['local_debug_cfg'])
             {
                 # 判断是否开启了本地调试
                 if (true === self::$core_config['local_debug_cfg'])
@@ -651,46 +657,65 @@ abstract class Bootstrap
                     }
 
                     $argv = $_SERVER["argv"];
+                    array_shift($argv); //将文件名移除
 
-                    if (count($argv) === 1)
+                    # 从运行变量中获取
+                    $env_project  = null;
+                    if (function_exists('getenv'))
                     {
-                        echo 'Choose a project:'. CRLF;
-                        foreach (self::$core_config['projects'] as $key => $item)
+                        $env_project = getenv('PROJECT');
+                    }
+
+                    if (!$env_project)
+                    {
+                        if (count($argv) === 0)
                         {
-                            echo "    \x1b[32m". str_pad($key, 20) ."\x1b[39m - {$item['name']}\n";
+                            echo 'Choose a project:'. CRLF;
+                            foreach (self::$core_config['projects'] as $key => $item)
+                            {
+                                echo "    \x1b[32m". str_pad($key, 20) ."\x1b[39m - {$item['name']}\n";
+                            }
+
+                            while (true)
+                            {
+                                $project = trim(fgets(STDIN));
+                                if (isset(self::$core_config['projects'][$project]))
+                                {
+                                    echo "Now use the project: {$project}\n";
+                                    $env_project = $project;
+
+                                    break;
+                                }
+                                else
+                                {
+                                    echo "The project {$project} not exist. please try again.\n";
+                                }
+                            }
                         }
-
-                        while (true)
+                        else
                         {
-                            $project = trim(fgets(STDIN));
-                            if (isset(self::$core_config['projects'][$project]))
-                            {
-                                echo "Now use the project: {$project}\n";
-                                $argv[1] = $project;
-
-                                break;
-                            }
-                            else
-                            {
-                                echo "The project {$project} not exist. please try again.\n";
-                            }
+                            # 第一个参数是项目
+                            $env_project = array_shift($argv);
                         }
                     }
 
-                    if (isset($argv[1]) && $argv[1] && isset(self::$core_config['projects'][$argv[1]]))
+                    if ($env_project && isset(self::$core_config['projects'][$env_project]))
                     {
                         //$argv[0]为文件名
-                        self::$project     = $argv[1];
-                        $tmp_config        = self::$core_config['projects'][$argv[1]];
+                        self::$project     = $env_project;
+                        $tmp_config        = self::$core_config['projects'][$env_project];
                         self::$project_dir = isset($tmp_config['dir']) && $tmp_config['dir'] ? $tmp_config['dir'] : self::$project;
                     }
+                    else
+                    {
+                        echo "Not found project.\n";
+                        exit;
+                    }
 
-                    array_shift($argv); //将文件名移除
-                    array_shift($argv); //将项目名移除
 
                     self::$path_info = trim(implode('/', $argv));
 
-                    unset($argv, $tmp_config);
+                    unset($argv, $tmp_config, $env_project);
                 }
                 else
                 {
@@ -1543,7 +1568,7 @@ abstract class Bootstrap
             $_SERVER['SCRIPT_URI'] = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on'?'https':'http') .'://'. $_SERVER['HTTP_HOST'] .(isset($_SERVER['SCRIPT_URL'])?$_SERVER['SCRIPT_URL']:$_SERVER["REQUEST_URI"]);
         }
 
-        if (isset($_SERVER['PATH_INFO']))
+        if (isset($_SERVER['PATH_INFO']) && $_SERVER['PATH_INFO'])
         {
             if (substr($_SERVER['PATH_INFO'], 0 , 9) === '/wwwroot/')
             {
@@ -1596,7 +1621,7 @@ abstract class Bootstrap
         }
         $pathinfo = trim($pathinfo);
 
-        if (!isset($_SERVER["PATH_INFO"]))
+        if (!isset($_SERVER["PATH_INFO"]) || !$_SERVER["PATH_INFO"])
         {
             $_SERVER["PATH_INFO"] = $pathinfo;
         }

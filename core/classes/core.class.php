@@ -386,23 +386,23 @@ abstract class Core_Core extends Bootstrap
      *      Core::event_add('system.shut_down', 'test');
      *
      *      // 运行一个事件调用
-     *      Core::event_run('system.shut_down');
+     *      Core::event_trigger('system.shut_down');
      *
-     * @param $key
-     * @param $callback
+     * @param string $event
+     * @param string|array $callback
      */
-    public static function event_add($key, $callback)
+    public static function event_add($event, $callback)
     {
-        if (!isset(Core::$events[$key]))
+        if (!isset(Core::$events[$event]))
         {
-            Core::$events[$key] = array
+            Core::$events[$event] = array
             (
                 $callback,
             );
         }
-        elseif (!in_array($callback, Core::$events[$key]))
+        elseif (!in_array($callback, Core::$events[$event]))
         {
-            Core::$events[$key][] = $callback;
+            Core::$events[$event][] = $callback;
         }
     }
 
@@ -411,23 +411,23 @@ abstract class Core_Core extends Bootstrap
      *
      * 不指定 `$callback` 则移除key下的所有事件调用
      *
-     * @param $key
+     * @param string $event
      * @param null $callback
      */
-    public static function event_remove($key, $callback = null)
+    public static function event_remove($event, $callback = null)
     {
-        if (isset(Core::$events[$key]))
+        if (isset(Core::$events[$event]))
         {
             if ($callback)
             {
-                if (false !== ($k = array_search($callback, Core::$events[$key])))
+                if (false !== ($k = array_search($callback, Core::$events[$event])))
                 {
-                    unset(Core::$events[$key][$k]);
+                    unset(Core::$events[$event][$k]);
                 }
             }
             else
             {
-                unset(Core::$events[$key]);
+                unset(Core::$events[$event]);
             }
         }
     }
@@ -435,27 +435,36 @@ abstract class Core_Core extends Bootstrap
     /**
      * 运行事件
      *
-     * @param $key
+     * @param string $event
+     * @return bool
      */
-    public static function event_run($key, $arguments = null)
+    public static function event_trigger($event, $arguments = null)
     {
-        if (isset(Core::$events[$key]))foreach(Core::$events[$key] as $call_back)
+        $rs = true;
+
+        if (isset(Core::$events[$event]))foreach(Core::$events[$event] as $call_back)
         {
             try
             {
-                call_user_func_array($call_back, is_array($arguments) ? $arguments : array());
+                if (false === call_user_func_array($call_back, is_array($arguments) ? $arguments : array()))
+                {
+                    $rs = false;
+                }
             }
             catch (Exception $e)
             {
+                $rs = false;
                 if (IS_DEBUG)
                 {
-                    Core::debug()->group('Run Event '. $key .'Error');
+                    Core::debug()->group('Run Event '. $event .'Error');
                     Core::debug()->warn($e->getMessage(), 'Message');
                     Core::debug()->warn($call_back, 'Event');
                     Core::debug()->groupEnd();
                 }
             }
         }
+
+        return $rs;
     }
 
     /**
@@ -769,7 +778,7 @@ abstract class Core_Core extends Bootstrap
                 # 是否有必要将action从$arguments中移出
                 $need_shift_action = false;
                 $arguments = $found['args'];
-                if ($arguments)
+                if ($arguments && $arguments)
                 {
                     $action = current($arguments);
                     if (0 === strlen($action))
@@ -1159,7 +1168,15 @@ abstract class Core_Core extends Bootstrap
 
                 if (strlen($tmp_p)>0)
                 {
-                    $args = explode('/', substr($uri, $path_len));
+                    $tmp_uri = trim(substr($uri, $path_len), ' /');
+                    if (strlen($tmp_uri))
+                    {
+                        $args = explode('/', $tmp_uri);
+                    }
+                    else
+                    {
+                        $args = array();
+                    }
                 }
                 else
                 {
@@ -2163,7 +2180,7 @@ abstract class Core_Core extends Bootstrap
         }
 
         # 调用Event
-        Core::event_run('system.change_project');
+        Core::event_trigger('system.change_project');
 
         return true;
     }
@@ -2191,7 +2208,7 @@ abstract class Core_Core extends Bootstrap
         # 回调callback
         if ($status>0)
         {
-            Core::event_run('system.import_library');
+            Core::event_trigger('system.import_library');
         }
 
         return $status;
@@ -2232,7 +2249,7 @@ abstract class Core_Core extends Bootstrap
      */
     public static function close_all_connect()
     {
-        Core::event_run('system.close_all_connect');
+        Core::event_trigger('system.close_all_connect');
     }
 
     /**
@@ -2404,7 +2421,7 @@ abstract class Core_Core extends Bootstrap
 
         # 执行注册的关闭方法
         ob_start();
-        Core::event_run('system.shutdown');
+        Core::event_trigger('system.shutdown');
         $output = ob_get_clean();
 
         # 在页面输出前关闭所有的连接

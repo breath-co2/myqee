@@ -405,6 +405,129 @@ abstract class Core_HttpIO
         return HttpIO::_get_format_data('_INPUT', $key, $type);
     }
 
+    /**
+     * 设备是否移动端请求
+     *
+     * !!! 不支持老式手机浏览器的判断
+     *
+     * @return bool
+     */
+    public static function is_mobile()
+    {
+        $user_agent = strtolower(HttpIO::USER_AGENT);
+
+        if (strpos($user_agent, 'mobile') || strpos($user_agent, 'phone'))
+        {
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
+
+    /**
+     * 设备是否支持Touch
+     *
+     * @use HttpIO::is_mobile
+     * @return bool
+     */
+    public static function is_support_touch()
+    {
+        if (HttpIO::is_mobile())
+        {
+            return true;
+        }
+
+        $user_agent = strtolower(HttpIO::USER_AGENT);
+
+        if (strpos($user_agent, 'touch'))
+        {
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
+
+    /**
+     * 设备是否Iphone
+     *
+     * @param bool $include_ipod 是否包含iPod设备也算
+     * @return bool
+     */
+    public static function is_iphone($include_ipod = false)
+    {
+        $user_agent = strtolower(HttpIO::USER_AGENT);
+
+        if (strpos($user_agent, 'iphone') || ($include_ipod && strpos($user_agent, 'ipod')))
+        {
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
+
+    /**
+     * 设备是否Ipod
+     *
+     * @return bool
+     */
+    public static function is_ipod()
+    {
+        $user_agent = strtolower(HttpIO::USER_AGENT);
+
+        if (strpos($user_agent, 'ipod'))
+        {
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
+
+    /**
+     * 设备是否Ipad
+     *
+     * @return bool
+     */
+    public static function is_ipad()
+    {
+        $user_agent = strtolower(HttpIO::USER_AGENT);
+
+        if (strpos($user_agent, 'ipad'))
+        {
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
+
+    /**
+     * 设备是否Apple Watch
+     *
+     * @return bool
+     */
+    public static function is_apple_watch()
+    {
+        $user_agent = strtolower(HttpIO::USER_AGENT);
+
+        if (strpos($user_agent, 'apple watch'))
+        {
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
+
     protected static function _get_format_data($data_type, $key, $type)
     {
         if ($type == HttpIO::PARAM_TYPE_OLDDATA)
