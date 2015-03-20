@@ -827,4 +827,389 @@ abstract class Core_Text
             return $keyc . str_replace('=', '', base64_encode($result));
         }
     }
+
+    /**
+     * 将一个XML字符串解析成一个数组
+     *
+     * 如果需要将数组转换成XML字符串，可使用 `Arr::to_xml($arr)` 方法
+     *
+     * ** 特殊的key **
+     *
+     *  key            | 说明
+     * ----------------|-------------------------------
+     *  `@attributes`  | XML里所有的 attributes 都存放在 `@attributes` key里，可自定义参数 `$attribute_key` 修改，设置成true则和标签里的内容合并
+     *  `@name`        | 循环数组XML的标签(tag)存放在 `@name` 的key里
+     *  `@tdata`       | CDATA内容存放在 `@tdata` 的key里
+     *  `@data`        | 如果本来的值是字符串，但是又有 attributes，则内容被转移至 `@data` 的key里
+     *
+     *
+     * **`$url_xml_setting` 参数说明**
+     *
+     * `$url_xml_setting` 只有当 `$xml_string` 是URL时才生效，可以为一个数字表示缓存时间（秒），
+     * 也可以是一个数组，此数组接受4个key，分别是 `timeout`, `config`, `expire` 和 `expire_type`
+     *
+     *  参数名        |   说明
+     * --------------|----------------
+     * `timeout`     | 如果没有缓存，直接请求URL时超时时间，默认10秒
+     * `config`      | 缓存配置，具体设置请参考 `new Cache($config)' 中 `$config` 配置方法
+     * `expire`      | 缓存超时时长
+     * `expire_type` | 缓存超时类型
+     *
+     * 举例：
+     *     // 使用默认缓存配置缓存1800秒
+     *     print_r(Text::xml_to_array('http://flash.weather.com.cn/wmaps/xml/china.xml', null, null, 1800));
+     *
+     *     // 使用自定义配置
+     *     $st = array
+     *     (
+     *         'timeout'     => 30,                   // 如果没有缓存，直接请求URL时超时时间
+     *         'config'      => 'my_config',          // 缓存配置
+     *         'expire'      => 1800,                 // 1800秒
+     *         'expire_type' => Cache::TYPE_MAX_AGE,  // 表示使用命中时间类型
+     *     );
+     *     print_r(Text::xml_to_array('http://flash.weather.com.cn/wmaps/xml/china.xml', null, null, $st));
+     *
+     * @since 3.0
+     * @param string|SimpleXMLElement $xml_string XML字符串，支持http的XML路径，接受 SimpleXMLElement 对象
+     * @param string $attribute_key attributes所使用的key，默认 @attributes，设置成 true 则和内容自动合并
+     * @param int $max_recursion_depth 解析最高层次，默认25
+     * @param int|array $url_xml_setting 如果传入的 `$xml_string` 是URL，则允许缓存的时间或者是缓存配置的array，默认不缓存
+     * @return array | false 失败则返回false
+     */
+    public static function xml_to_array($xml_string, $attribute_key = '@attributes', $max_recursion_depth = 25, $url_xml_setting = 0)
+    {
+        if (is_string($xml_string))
+        {
+            if (preg_match('#^http(s)?://#i', $xml_string))
+            {
+                $timeout = 10;
+
+                if ($url_xml_setting)
+                {
+                    # 缓存xml
+                    $config = Cache::DEFAULT_CONFIG_NAME;
+
+                    if (is_array($url_xml_setting))
+                    {
+                        $config = $url_xml_setting['config'];
+                        if (isset($url_xml_setting['timeout']) && (int)$url_xml_setting['timeout']>0)
+                        {
+                            $timeout = (int)$url_xml_setting['timeout'];
+                        }
+                    }
+
+                    $cache    = new Cache($config);
+                    $key      = '_url_xml_cache_by_url_' . md5($xml_string);
+                    $xml_data = $cache->get($key);
+                }
+                else
+                {
+                    $xml_data = null;
+                }
+
+                if ($xml_data)
+                {
+                    $xml_string = $xml_data;
+                }
+                else
+                {
+                    $xml_string = HttpClient::factory()->get($xml_string, $timeout)->data();
+                    if (!$xml_string)
+                    {
+                        return false;
+                    }
+
+                    if ($url_xml_setting)
+                    {
+                        # 保存缓存
+                        if (is_numeric($url_xml_setting))
+                        {
+                            $expire      = $url_xml_setting;
+                            $expire_type = null;
+                        }
+                        elseif (is_array($url_xml_setting))
+                        {
+                            $expire      = $url_xml_setting['expire'];
+                            $expire_type = $url_xml_setting['expire_type'];
+                        }
+                        else
+                        {
+                            $expire      = 3600;
+                            $expire_type = null;
+                        }
+
+                        if (isset($cache) && isset($key))
+                        {
+                            $cache->set($key, $xml_string, $expire, $expire_type);
+                        }
+                    }
+                }
+            }
+            $xml_object = simplexml_load_string($xml_string, 'SimpleXMLElement', LIBXML_NOCDATA);
+        }
+        elseif (is_object($xml_string) && $xml_string instanceof SimpleXMLElement)
+        {
+            $xml_object = $xml_string;
+        }
+        else
+        {
+            return false;
+        }
+
+        if (!$attribute_key)$attribute_key = '@attributes';
+        if (null === $max_recursion_depth || false === $max_recursion_depth)$max_recursion_depth = 25;
+
+        return Text::_exec_xml_to_array($xml_object, $attribute_key, 0, $max_recursion_depth);
+    }
+
+    protected static function _exec_xml_to_array($xml_object, $attribute_key, $recursion_depth, $max_recursion_depth)
+    {
+        /**
+         * @var $xml_object SimpleXMLElement
+         * @var $value SimpleXMLElement
+         */
+        $rs = array
+        (
+            '@name' => $xml_object->getName(),
+        );
+
+        $attr = get_object_vars($xml_object->attributes());
+
+        if ($attr)
+        {
+            foreach($attr['@attributes'] as &$tmp_value)
+            {
+                Text::_format_attribute_value($tmp_value);
+            }
+            unset($tmp_value);
+
+            if (true===$attribute_key)
+            {
+                # 合并到一起
+                $rs += $attr['@attributes'];
+            }
+            else
+            {
+                $rs[$attribute_key] = $attr['@attributes'];
+            }
+        }
+        $tdata = trim("$xml_object");
+        if (strlen($tdata)>0)
+        {
+            $rs['@tdata'] = $tdata;
+        }
+
+        $xml_object_var = get_object_vars($xml_object);
+
+        foreach($xml_object as $key => $value)
+        {
+            $obj_value = $xml_object_var[$key];
+
+            $attr = null;
+            if (is_object($value))
+            {
+                $attr = get_object_vars($value->attributes());
+
+                if ($attr)
+                {
+                    foreach($attr['@attributes'] as &$tmp_value)
+                    {
+                        Text::_format_attribute_value($tmp_value);
+                    }
+                    unset($tmp_value);
+                    $attr = $attr['@attributes'];
+                }
+            }
+
+            if (is_string($obj_value))
+            {
+                Text::_format_attribute_value($obj_value);
+
+                if ($attr)
+                {
+                    if (true===$attribute_key)
+                    {
+                        # 合并到一起
+                        $rs[$key] = $attr + array('@data' => $obj_value);
+                    }
+                    else
+                    {
+                        $rs[$key] = array
+                        (
+                            $attribute_key => $attr,
+                            '@data'        => $obj_value,
+                        );
+                    }
+                }
+                else
+                {
+                    $rs[$key] = $obj_value;
+                }
+            }
+            else
+            {
+                if (is_array($obj_value))
+                {
+                    if ($recursion_depth>0)unset($rs['@name']);
+                    $rs[] = Text::_exec_xml_to_array($value, $attribute_key, $recursion_depth + 1, $max_recursion_depth);
+                }
+                else
+                {
+                    $rs[$key] = Text::_exec_xml_to_array($value, $attribute_key, $recursion_depth + 1, $max_recursion_depth);
+                    if (is_array($rs[$key]) && !isset($rs[$key][0]))
+                    {
+                        unset($rs[$key]['@name']);
+                    }
+                }
+            }
+        }
+
+        return $rs;
+    }
+
+    protected static function _format_attribute_value(& $tmp_value)
+    {
+        switch ($tmp_value)
+        {
+            case 'true':
+                $tmp_value = true;
+                break;
+            case 'false':
+                $tmp_value = false;
+                break;
+            case 'null':
+                $tmp_value = null;
+                break;
+            default:
+                $tmp_value = trim($tmp_value);
+        }
+    }
+
+    /**
+     * 获取一个google身份验证器数字
+     *
+     * @param $key
+     * @param int $otp_length
+     * @return int
+     */
+    public static function google_auth_code($key, $counter = null, $otp_length = 6)
+    {
+        if (!$counter)
+        {
+            $counter = self::_get_timestamp();
+        }
+        else
+        {
+            $counter = (int)$counter;
+        }
+
+        return self::_oath_hotp(self::_base32_decode(str_replace(' ', '', $key)), $counter, $otp_length);
+    }
+
+    /**
+     * 验证google身份验证器代码
+     *
+     * @param $b32seed
+     * @param $key
+     * @param int $window 左右浮动窗口期，如果设置成0则表示必须当前窗口期内的验证成功
+     * @param bool $counter 0 表示基于时间验证，如果设置成>0的数字表示基于计数验证
+     * @return bool
+     */
+    public static function google_auth_code_verify($b32seed, $key, $window = 4, $counter = null)
+    {
+        if ($counter)
+        {
+            $time_stamp = (int)$counter;
+        }
+        else
+        {
+            $time_stamp = self::_get_timestamp();
+        }
+
+        $binary_seed = self::_base32_decode(str_replace(' ', '', $b32seed));
+
+        for ($ts = $time_stamp - $window; $ts <= $time_stamp + $window; $ts++)
+        {
+            if (self::_oath_hotp($binary_seed, $ts, strlen($key)) == $key)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    protected static function _oath_hotp($key, $counter, $otp_length)
+    {
+        if (strlen($key) < 8)
+        {
+            throw new Exception('Secret key is too short. Must be at least 16 base 32 characters');
+        }
+
+        $bin_counter = pack('N*', 0) . pack('N*', $counter);        // Counter must be 64-bit int
+        $hash        = hash_hmac ('sha1', $bin_counter, $key, true);
+
+        $offset = ord($hash[19]) & 0xf;
+        $truncate = (
+                ((ord($hash[$offset+0]) & 0x7f) << 24 ) |
+                ((ord($hash[$offset+1]) & 0xff) << 16 ) |
+                ((ord($hash[$offset+2]) & 0xff) << 8 ) |
+                (ord($hash[$offset+3]) & 0xff)
+            ) % pow(10, $otp_length);
+
+        return str_pad($truncate, $otp_length, '0', STR_PAD_LEFT);
+    }
+
+    protected static function _get_timestamp()
+    {
+        return floor(microtime(true)/30);
+    }
+
+    protected static function _base32_decode($b32)
+    {
+        $b32 = strtoupper($b32);
+
+        if (!preg_match('/^[ABCDEFGHIJKLMNOPQRSTUVWXYZ234567]+$/', $b32, $match))
+        {
+            throw new Exception('Invalid characters in the base32 string.');
+        }
+
+        $l      = strlen($b32);
+        $n      = 0;
+        $j      = 0;
+        $binary = '';
+        $lut    = array
+        (
+            'A' => 0,  'B' => 1,
+            'C' => 2,  'D' => 3,
+            'E' => 4,  'F' => 5,
+            'G' => 6,  'H' => 7,
+            'I' => 8,  'J' => 9,
+            'K' => 10, 'L' => 11,
+            'M' => 12, 'N' => 13,
+            'O' => 14, 'P' => 15,
+            'Q' => 16, 'R' => 17,
+            'S' => 18, 'T' => 19,
+            'U' => 20, 'V' => 21,
+            'W' => 22, 'X' => 23,
+            'Y' => 24, 'Z' => 25,
+            '2' => 26, '3' => 27,
+            '4' => 28, '5' => 29,
+            '6' => 30, '7' => 31
+        );
+
+        for ($i = 0; $i < $l; $i++)
+        {
+            $n = $n << 5;
+            $n = $n + $lut[$b32[$i]];
+            $j = $j + 5;
+            if ($j >= 8)
+            {
+                $j = $j - 8;
+                $binary .= chr(($n & (0xFF << $j)) >> $j);
+            }
+        }
+
+        return $binary;
+    }
 }

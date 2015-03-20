@@ -385,17 +385,23 @@ class Module_HttpClient_Driver_Curl
         if ($this->ip)
         {
             # 如果设置了IP，则把URL替换，然后设置Host的头即可
-            if (preg_match('#^(http(?:s)?)\://([^/\:]+)(\:[0-9]+)?/#', $the_url.'/', $m))
+            if (preg_match('#^(http(?:s)?)\://([^/\:]+)(\:[0-9]+)?/#', $the_url .'/', $m))
             {
-                $this->header[] = 'Host: '.$m[2];
-                $the_url = $m[1].'://'.$this->ip.$m[3].'/'.substr($the_url, strlen($m[0]));
+                $this->header[] = 'Host: '. $m[2];
+                $the_url = $m[1] .'://'. $this->ip.$m[3] .'/'. substr($the_url, strlen($m[0]));
             }
         }
 
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $the_url);
         curl_setopt($ch, CURLOPT_HEADER, true);
-        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+        try
+        {
+            # 发现安全模式开启情况会报错
+            curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+        }
+        catch(Exception $e){}
+
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_TIMEOUT, $timeout);
         curl_setopt($ch, CURLOPT_CONNECTTIMEOUT_MS, HttpClient_Driver_Curl::$connecttimeout_ms);
@@ -532,7 +538,7 @@ class Module_HttpClient_Driver_Curl
 
                         if ($this->http_data[$done_url]['code'] != 200)
                         {
-                            Core::debug()->error('URL:'.$done_url.' ERROR,TIME:' . $this->http_data[$done_url]['time'] . ',CODE:' . $this->http_data[$done_url]['code'] );
+                            Core::debug()->error('URL:'.$done_url.' ERROR, TIME:' . $this->http_data[$done_url]['time'] . ',CODE:' . $this->http_data[$done_url]['code'] );
                             $result[$done_url] = false;
                         }
                         else

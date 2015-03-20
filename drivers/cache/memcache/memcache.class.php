@@ -223,9 +223,9 @@ class Driver_Cache_Driver_Memcache extends Cache_Driver
             $return = $new_rs;
         }
 
-        if (false===$return)
+        if (false === $return)
         {
-            if(IS_DEBUG)Core::debug()->error($key, 'memcache mis key');
+            if(IS_DEBUG)Core::debug()->warn($key, 'memcache mis key');
             return false;
         }
         else
@@ -240,8 +240,8 @@ class Driver_Cache_Driver_Memcache extends Cache_Driver
      * 给memcache存数据
      *
      * @param string/array $key 支持多存
-     * @param $data Value 多存时此项可空
-     * @param $lifetime 有效期，默认3600，即1小时，0表示最大值30天（2592000）
+     * @param mixed $value Value 多存时此项可空
+     * @param int $lifetime 有效期，默认3600，即1小时，0表示最大值30天（2592000）
      * @return boolean
      */
     public function set($key, $value = null, $lifetime = 3600)
@@ -502,6 +502,6 @@ class Driver_Cache_Driver_Memcache extends Cache_Driver
 
     public static function failure_addserver($host, $port, $udp, $info, $code)
     {
-        Core::debug()->error('memcache server failover:' . ' host: ' . $host . ' port: ' . $port . ' udp: ' . $udp . ' info: ' . $info . ' code: ' . $code);
+        if (IS_DEBUG)Core::debug()->warn('memcache server failover:' . ' host: ' . $host . ' port: ' . $port . ' udp: ' . $udp . ' info: ' . $info . ' code: ' . $code);
     }
 }

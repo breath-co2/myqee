@@ -607,7 +607,7 @@ class Module_HttpClient_Driver_Fsock
 
             if ($rs['code']!=200)
             {
-                Core::debug()->error('URL:'.$done_url.' ERROR,TIME:' . $this->http_data[$done_url]['time'] . ',CODE:' . $this->http_data[$done_url]['code'] );
+                Core::debug()->error('URL:'.$done_url.' ERROR, TIME:' . $this->http_data[$done_url]['time'] . ',CODE:' . $this->http_data[$done_url]['code'] );
                 $result[$done_url] = false;
             }
             else

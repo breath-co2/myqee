@@ -7,30 +7,42 @@
  * @category   Driver
  * @package    Database
  * @subpackage Postgre
- * @copyright  Copyright (c) 2008-2013 myqee.com
+ * @copyright  Copyright (c) 2008-2015 myqee.com
  * @license    http://www.myqee.com/license.html
  */
 class Driver_Database_Driver_Postgre_Result extends Database_Result
 {
-    public function __destruct()
+    protected function release_resource()
     {
         if (is_resource($this->_result))
         {
             pg_free_result($this->_result);
         }
+        $this->_result = null;
     }
 
     protected function total_count()
     {
-        $count = @pg_num_rows($this->_result);
-        if (!$count>0)$count = 0;
+        if ($this->_result)
+        {
+            $count = @pg_num_rows($this->_result);
+            if (!$count>0)$count = 0;
+        }
+        else
+        {
+            $count = count($this->_data);
+        }
 
         return $count;
     }
 
     public function seek($offset)
     {
-        if ( $this->offsetExists($offset) && pg_result_seek($this->_result, $offset) )
+        if (isset($this->_data[$offset]))
+        {
+            return true;
+        }
+        elseif ($this->offsetExists($offset) && $this->_result && pg_result_seek($this->_result, $offset))
         {
             $this->_current_row = $this->_internal_row = $offset;
 

@@ -8,75 +8,28 @@
  */
 abstract class Core_Controller_Shell extends Controller
 {
-
     public function action_default()
     {
-        $examples = array_diff(get_class_methods($this), get_class_methods(__CLASS__));
+        echo self::get_cli_help_str($this);
+        echo "\nPlease enter action and parameters, separated by [space].\nExample: my_action param1 param2 param3\n";
 
-        # 获取方法的字符串最大长度
-        $methods = array();
-        $name_max_len = 0;
-        foreach ($examples as $method)
+        while (true)
         {
-            if ($method ==__FUNCTION__) continue;
-            if (strtolower(substr($method, 0, 7)) == 'action_')
+            $std_in     = trim(fgets(STDIN));
+            $std_in_arr = explode(' ', $std_in);
+            $action     = 'action_'. $std_in_arr[0];
+            if (method_exists($this, $action))
             {
-                $m = substr($method, 7);
-                $methods[$m]  = $m;
-                $name_max_len = max(strlen($m), $name_max_len);
-            }
-        }
+                array_shift($std_in_arr);
+                call_user_func_array(array($this, $action), $std_in_arr);
 
-        $str = '';
-        $str_usage = 'Usage: ';
-        foreach ($methods as $method)
-        {
-            $ref_method = new ReflectionMethod( $this, 'action_' . $method );
-
-            $parameters = $ref_method->getParameters();
-
-            $str_usage .= str_pad($method, $name_max_len, ' ', STR_PAD_RIGHT);
-            $comment = self::_parse_doc_comment( $ref_method->getDocComment());
-            $str .= CRLF . CRLF . '   ' . $method . CRLF . '       comment   : ' . $comment['title'][0] . CRLF . '       parameters: ';
-
-            if ($parameters)
-            {
-                $tmpstr = array();
-                $tmpparameter = array();
-                $i = 0;
-                $hava_l = 0;
-                foreach ($parameters as $k => $parameter)
-                {
-                    $tmpstr[] = '                   $' . $parameter->name . ' ' . $comment['param'][$i];
-                    $tmpparameter[$k] = '$' . $parameter->getName();
-                    if ($parameter->isDefaultValueAvailable())
-                    {
-                        $hava_l ++;
-                        $tmpparameter[$k] = '[' . $tmpparameter[$k] . ' = ' . $parameter->getDefaultValue();
-                    }
-                    $i ++;
-                }
-                $str .= trim(implode(CRLF, $tmpstr));
-                $str_usage .= ' [options] ' . '[' . implode(', ', $tmpparameter) . ']';
-
-                if ($hava_l)
-                {
-                    for($i = 0; $i < $hava_l; $i ++)
-                    {
-                        $str_usage .= ' ]';
-                    }
-                }
+                break;
             }
             else
             {
-                $str .= '[no parameter]' . CRLF;
+                echo "The controller {$action} not exist. please try again.\n";
             }
-            $str_usage .= CRLF . '           ';
-
         }
-        $str_usage = trim($str_usage) . CRLF;
-
-        echo $str_usage, $str, CRLF;
     }
 
     protected static function _parse_doc_comment($comment)
@@ -322,5 +275,80 @@ abstract class Core_Controller_Shell extends Controller
     public function output($msg)
     {
         echo $msg . CRLF;
+    }
+
+    /**
+     * 获取命令行帮助文件
+     *
+     * @param $class
+     */
+    public static function get_cli_help_str($class)
+    {
+        $examples = array_diff(get_class_methods($class), get_class_methods(__CLASS__));
+
+        # 获取方法的字符串最大长度
+        $methods = array();
+        $name_max_len = 0;
+        foreach ($examples as $method)
+        {
+            if ($method ==__FUNCTION__) continue;
+            if (strtolower(substr($method, 0, 7)) == 'action_')
+            {
+                $m = substr($method, 7);
+                $methods[$m]  = $m;
+                $name_max_len = max(strlen($m), $name_max_len);
+            }
+        }
+
+        $str = '';
+        $str_usage = 'Usage: ';
+        foreach ($methods as $method)
+        {
+            $ref_method = new ReflectionMethod($class, 'action_'. $method);
+
+            $parameters = $ref_method->getParameters();
+
+            $str_usage .= str_pad($method, $name_max_len, ' ', STR_PAD_RIGHT);
+            $comment = self::_parse_doc_comment( $ref_method->getDocComment());
+            $str .= "\n    \x1b[32m{$method}\x1b[39m\n       comment   : {$comment['title'][0]}\n       parameters: ";
+
+            if ($parameters)
+            {
+                $tmpstr = array();
+                $tmpparameter = array();
+                $i = 0;
+                $hava_l = 0;
+                foreach ($parameters as $k => $parameter)
+                {
+                    $tmpstr[] = '                   $' . $parameter->name . ' ' . $comment['param'][$i];
+                    $tmpparameter[$k] = '$' . $parameter->getName();
+                    if ($parameter->isDefaultValueAvailable())
+                    {
+                        $hava_l ++;
+                        $tmpparameter[$k] = '[' . $tmpparameter[$k] . ' = ' . $parameter->getDefaultValue();
+                    }
+                    $i ++;
+                }
+                $str .= trim(implode(CRLF, $tmpstr));
+                $str_usage .= ' [options] ' . '[' . implode(', ', $tmpparameter) . ']';
+
+                if ($hava_l)
+                {
+                    for($i = 0; $i < $hava_l; $i ++)
+                    {
+                        $str_usage .= ' ]';
+                    }
+                }
+            }
+            else
+            {
+                $str .= '[no parameter]' . CRLF;
+            }
+            $str_usage .= CRLF . '           ';
+
+        }
+        $str_usage = trim($str_usage) . CRLF;
+
+        return $str_usage. $str. CRLF;
     }
 }

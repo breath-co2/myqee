@@ -1,4 +1,18 @@
 <?php
+/*
+ *************** 简要说明，必看 ******************
+
+ 1.本地开发时，请务必找到 $config['local_debug_cfg'] 把它设置成 true（生产环境务必关闭），这样你可使用Chrome浏览器并安装我在做的插件（也可FireFox+FireBug+FirePHP插件），打开控制器台切换到FirePHP标签刷新页面就可以看到程序调试输出的信息了
+ 2.希望开启线上调试可设置 $config['debug_open_password'] 参数的帐号和密码，这样开启后，就可查看和本地开发模式一样的调试信息
+ 3.如果只有1个项目，使用我们提供的 $config['projects'] 配置即可，如果需要增加，可以自己增加
+ 4.如果线上有多个服务器，请配置 $config['web_server_list'] 项目
+ 5.每个参数都有详细使用说明，有兴趣可以看看
+
+*/
+
+
+
+
 /**
  * 项目配置
  *
@@ -103,11 +117,21 @@ $config['url']['assets'] = '/assets/';
  * 那么，服务器上除了会读取 `config.php` 还会再读取 `config.server.runtime.php` 的配置文件，而在开发环境上则读取 `config.dev.runtime.php` 配置文件
  *
  * !!! 只会读取根目录、团队类库和项目中的 .runtime.php，不支持类库(含Core)中 .runtime.php
- * !!! V2中 `$config['debug_config'] = false;` 参数已废弃，可用次参数设为debug实现类似功能
+ * !!! V2中 `$config['debug_config'] = false;` 参数已废弃，可用此参数设为debug实现类似功能
  *
  * @var string
  */
 $config['runtime_config'] = '';
+
+
+
+
+
+
+
+
+
+//---------------------------------------------------------- 开发调试相关
 
 
 /**
@@ -127,23 +151,80 @@ $config['debug_open_password'] = array
 
 
 /**
- * 默认打开开发调试环境的关键字，推荐在本地开发时开启此功能
+ * 打开开发调试环境的关键字
  *
- * !!! 开发时使用Firefox+FireBug将可查看程序执行的各项debug数据，方便开发。但注意：生产环境中不要开启
+ * !!! 本地开发强烈推荐开启，生产环境务必关闭。
  *
- * 如果值为 `myqee.debug` 则可在php.ini中加入：
+ * 使用方法：
+ * 首先需要安装浏览器插件。 Firefox 里安装 FireBug 和 FireBug 插件，Chrome 安装我制作的 FirePHP 插件，下面有插件地址。
+ * 安装好后，Firefox打开控制器，Chrome打开开发者工具并切换到FirePHP标签。
+ * 打开任意MyQEE的php页面，你就可以看到相关的系统输出的信息，这些信息在关闭时时不会有任何输出的。
+ * 生成环境可以用上面的 `$config['debug_open_password']` 参数设置后开启关闭
  *
- *     [MyQEE]
- *     myqee.debug = On
+ * 如何在程序中自行输出些 debug 信息？
  *
- * 如果值为 `test.abc` 则可在php.ini中加入：
+ * 在程序中加入 `Core::debug()->info('test message');`，然后刷新页面看看，在控制台就会得到 test message 的内容
  *
- *     [MyQEE]
+ * `Core::debug()` 常用方法举例：
+ *
+ *     Core::debug()->info('信息内容');
+ *     Core::debug()->error('错误信息');
+ *     Core::debug()->group('分组开启');
+ *     Core::debug()->log('日志信息');
+ *     Core::debug()->warn('警示信息');
+ *     Core::debug()->table('表格', array(
+ *         array('标题一','二','三'),
+ *         array('行1列1','行1列2','行1列3'),
+ *         array('行2列1','行2列2','行2列3'),
+ *     ));
+ *     Core::debug()->groupEnd();      //分组关闭
+ *
+ * 详细用法可参考文档 <http://www.myqee.com/docs/zh-cn/dev.html> 或 <http://www.firephp.org/HQ/Use.htm> 的方法
+ *
+ * 我制作的 FirePHP For Chrome 插件下载地址: <https://chrome.google.com/webstore/detail/firephp/gkkcbhnljobgoehijcpenalbacdmhaff?hl=zh-CN&utm_source=chrome-ntp-launcher&authuser=1>
+ * 若被墙打不开链接，请到我博客去下载插件 <http://www.queyang.com/blog/archives/549>
+ *
+ * 参数说明：可以是字符串也可以是bool类型
+ *
+ * 参数       |  说明
+ * ----------|-----------
+ * `true`    | 表示一定开启本地开发模式
+ * `false`   | 表示一定关闭本地开发模式
+ * 字符串     | 根据 php.ini 中设置判断
+ *
+ * 比如 `$config['local_debug_cfg'] = 'myqee.debug'` 则在 php.ini 中加入如下内容可开启本地 debug，否则关闭：
+ *
+ *      myqee.debug = On
+ *
+ * 如果值为 `$config['local_debug_cfg'] = 'test.abc'` 则可在php.ini中加入如下内容可开启本地 debug，否则关闭：
+ *
  *     test.abc = On
  *
- * @var string
+ * @var string|bool
  */
-$config['local_debug_cfg'] = 'myqee.debug';
+$config['local_debug_cfg'] = false;
+
+
+/**
+ * 当DEBUG开启后，是否关闭 /phpinfo 页面的访问
+ *
+ * 设成成 false 时，当DEBUG开启（包括本地开发模式开启）时，打开根目录 /phpinfo 页面则直接输出 `phpinfo()` 的内容
+ * 设置成 true， 则禁用此功能，打开此页面则会显示404错误页面
+ *
+ * @var bool
+ */
+$config['disable_phpinfo_page'] = false;
+
+
+
+
+
+
+
+
+
+//----------------------------------------------------------系统设置相关
+
 
 
 /**
@@ -219,9 +300,14 @@ $config['error500'] = array
     'type_config' => 'default',
 );
 
+
 /**
  * 错误等级
  *
+ * 开发环境可以用 E_ALL 表示所有的错误都会抛出错误，可以帮助你发现一些不容易察觉的编写不规范的代码
+ * 正式环境可用 7, 即 `E_WARNING ^ E_PARSE ^ E_ERROR`，只会有 E_ERROR、E_WARNING 和 E_PARSE 错误才会报错
+ *
+ * @link http://php.net/manual/zh/function.error-reporting.php
  * @var int
  */
 $config['error_reporting'] = 7;
@@ -262,11 +348,59 @@ $config['timezone'] = 'PRC';
 
 
 /**
- * 默认语言包
+ * 语言包
+ *
+ * 多个语言包请用,隔开
+ * 设置成 auto 则表示根据浏览器自动选择
+ *
+ * 例如 zh-cn，采样的语言包将是 `i18n/zh-cn.lang` 文件
  *
  * @var string
  */
-$config['lang'] = 'zh-cn';
+$config['lang'] = 'auto';
+
+
+/**
+ * 默认语言包，仅当 `$config['lang']` 设置成 auto 时有效
+ *
+ * 即便 `$config['lang']` 设置成 auto 时，此参数仍旧有效，此参数设置成 null 才停用此功能
+ * 例如 zh-cn
+ *
+ * @var string
+ */
+$config['default_lang'] = 'zh-cn';
+
+
+/**
+ * 可用于html中meta的语言类型数据变量
+ *
+ *      <meta http-equiv="Content-Language" content="zh-CN" />
+ *      或
+ *      <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="zh-CN" lang="zh-CN">
+ *
+ */
+$config['html_content_language'] = 'zh-CN';
+
+
+/**
+ * 语言包缓存时间
+ *
+ *  `$config['i18n_cache_time'] = '2592000~5184000,1/10000'` 表示缓存30-60天，在30-60天后1/10000几率命中后更新缓存
+ *
+ * @var string
+ */
+$config['lang_cache_time'] = '2592000~5184000,1/10000';
+
+
+/**
+ * 动态语言包cookie设置的key名称，用于国际化网站用户，可以根据自己语言选择设置对应的语言
+ *
+ * 即便 `$config['lang']` 设置成 auto 时，此参数仍旧有效，此参数设置成 null 才停用此功能
+ * 例如: `$config['local_lang_cookie_name'] = 'lang'` 表示当前动态语言包名称是获取 `$_COOKIE['lang']` 的值
+ *
+ * @var string
+ */
+$config['local_lang_cookie_name'] = null;       // 例如 lang
 
 
 /**
@@ -297,6 +431,15 @@ $config['slow_query_mtime'] = 2000;
 
 
 /**
+ * URL后缀
+ *
+ * 例如设置成：html，则可以接受 http://localhost/test.html 这样的请求，并且通过 `Core::url()` 生成的url也带.html后缀
+ *
+ * @var string
+ */
+$config['url_suffix'] = '';
+
+/**
  * assets允许的文件后缀名，用|隔开
  *
  * @var string
@@ -323,7 +466,7 @@ $config['asset_allow_suffix'] = 'js|css|jpg|jpeg|png|gif|bmp|pdf|html|htm|mp4|sw
  *          'www.queyang.com',
  *      );
  *
- * @var auto | array
+ * @var string|array
  */
 $config['ajax_cross_domain'] = 'auto';
 
@@ -335,7 +478,7 @@ $config['ajax_cross_domain'] = 'auto';
  * false  - 显示
  * string - 自定义输出的头信息
  *
- * @var boolean | string
+ * @var bool|string
  */
 $config['hide_x_powered_by_header'] = false;
 

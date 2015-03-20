@@ -22,7 +22,7 @@ class Module_Session_Driver_Default
             if (function_exists('ini_set'))
             {
                 @ini_set('session.gc_probability', (int)Session::$config['gc_probability']);
-                @ini_set('session.gc_divisor', Session::$config['gc_divisor']?Session::$config['gc_divisor']:100);
+                @ini_set('session.gc_divisor'    , Session::$config['gc_divisor']?Session::$config['gc_divisor']:100);
                 @ini_set('session.gc_maxlifetime', (Session::$config['expiration']==0)?2592000:Session::$config['expiration']);
 
                 // session保存接口
@@ -63,34 +63,33 @@ class Module_Session_Driver_Default
         }
 
         $s_name = session_name();
-        if (Session::$config['type']=='url')
+
+        switch(Session::$config['type'])
         {
-            $old_sid = HttpIO::COOKIE($s_name);
-        }
-        else
-        {
-            $old_sid = HttpIO::COOKIE($s_name);
+            case 'auto':
+                $sid = HttpIO::REQUEST($s_name);
+                break;
+            case 'url':
+                $sid = HttpIO::GET($s_name);
+                break;
+            default;
+                $sid = HttpIO::COOKIE($s_name);
+                break;
         }
 
-        if ($old_sid)
+        if (!$sid || !Session::check_session_id($sid))
         {
-            # 校验Session ID
-            if (!Session::check_session_id($old_sid))
-            {
-                # 如果检验的Session ID不合法，则重新生成一个
-                session_id(Session::create_session_id());
-            }
+            # 如果检验的Session ID不合法，则重新生成一个
+            session_id(Session::create_session_id());
         }
         else
         {
-            # 设置Session ID
-            session_id(Session::create_session_id());
+            session_id($sid);
         }
 
         # Session ID 通过uri传递
         if (Session::$config['type']=='url')
         {
-            @ini_set('session.use_cookies', 0);
             @ini_set('session.use_only_cookies', 0);
         }
         else
@@ -116,7 +115,7 @@ class Module_Session_Driver_Default
      */
     public function destroy()
     {
-        if (session_id() !== '')
+        if (session_id()!=='')
         {
             $name = session_name();
 

@@ -2,7 +2,7 @@
 @chdir(dirname(__FILE__));
 
 /**
- * 负载保护值,0表示不启用
+ * 负载保护值, 0表示不启用
  * 不支持window系统
  *
  * 建议最大负载不要超过3*N核，例如有16核（含8核超线程）则 16*3=48
@@ -37,6 +37,14 @@ $dir_cache   = $dir_data.'cache/';
 $dir_log     = $dir_data.'log/';
 
 
+/**
+ * LOG目录，同上
+ */
+$dir_wwwroot = './wwwroot/';
+
+
+
+
 
 
 
@@ -60,7 +68,6 @@ $dir_log     = $dir_data.'log/';
 
 
 
-
 /**
  * 服务器负载保护函数，本方法目前不支持window系统
  *
@@ -70,31 +77,33 @@ $dir_log     = $dir_data.'log/';
  */
 function _load_protection()
 {
-    global $dir_log,$dir_wwwroot,$max_load_avg;
-    if ( !function_exists('sys_getloadavg') )
+    global $dir_log, $dir_wwwroot, $max_load_avg;
+    if (!function_exists('sys_getloadavg'))
     {
         return false;
     }
 
     $load = sys_getloadavg();
 
-    if ( !isset($load[0]) )
+    if (!isset($load[0]))
     {
         return false;
     }
 
-    if ( $load[0] <= $max_load_avg )
+    if ($load[0] <= $max_load_avg)
     {
         // 未超过负载，则跳出
         return false;
     }
 
     $msg_tpl = "[%s] HOST:%s LOAD:%s ARGV/URI:%s\n";
-    $time = @date(DATE_RFC2822);
-    $host = php_uname('n');
-    $load = sprintf('%.2f', $load[0]);
-    if ( php_sapi_name() == "cli" || empty($_SERVER['PHP_SELF']) )
+    $time    = @date(DATE_RFC2822);
+    $host    = php_uname('n');
+    $load    = sprintf('%.2f', $load[0]);
+    if (php_sapi_name() === 'cli' || empty($_SERVER['PHP_SELF']))
     {
+        $argv = $_SERVER['argv'];
+        array_shift($argv);
         $argv_or_uri = implode(',', $argv);
     }
     else
@@ -104,22 +113,22 @@ function _load_protection()
 
     $msg = sprintf($msg_tpl, $time, $host, $load, $argv_or_uri);
 
-    if ( is_dir($dir_log) && is_writeable($dir_log."php-server-overload.log") )
+    if (is_dir($dir_log))
     {
-        @file_put_contents( $dir_log."php-server-overload.log", $msg, FILE_APPEND );
+        @file_put_contents($dir_log .'php-server-overload.log', $msg, FILE_APPEND);
     }
 
     # exit with 500 page
-    header("HTTP/1.1 500 Internal Server Error");
-    header("Expires: " . gmdate("D, d M Y H:i:s", time()-99999) . " GMT");
-    header("Cache-Control: private");
-    header("Pragma: no-cache");
+    header('HTTP/1.1 500 Internal Server Error');
+    header('Expires: '. gmdate('D, d M Y H:i:s', time() - 99999) . ' GMT');
+    header('Cache-Control: private');
+    header('Pragma: no-cache');
 
-    exit( file_get_contents( $dir_wwwroot.'errors/server_overload.html') );
+    exit(file_get_contents($dir_wwwroot .'errors/server_overload.html'));
 }
 
 // 执行负载保护脚本
-if ($max_load_avg>0)_load_protection();
+if ($max_load_avg > 0)_load_protection();
 
 
 // 是否直接执行Core::run();
@@ -135,6 +144,6 @@ else
     $auto_run = (bool)$auto_run;
 }
 
-include dirname(__FILE__).'/core/bootstrap.php';
+include dirname(__FILE__) .'/core/bootstrap.php';
 
 Bootstrap::setup($auto_run);

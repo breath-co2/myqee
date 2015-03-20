@@ -43,7 +43,7 @@ class Driver_Cache_Driver_File extends Cache_Driver
             $config = (array)Core::config('cache/file.' . $config_name);
         }
 
-        if ($config['storage'])
+        if (isset($config['storage']))
         {
             $this->storage  = $config['storage'];
         }
@@ -74,6 +74,7 @@ class Driver_Cache_Driver_File extends Cache_Driver
             {
                 $data[$k] = $this->get((string)$v);
             }
+
             return $data;
         }
 
@@ -85,19 +86,31 @@ class Driver_Cache_Driver_File extends Cache_Driver
 
             if ($data && $this->get_expired_setting($key, $data))
             {
-                return $data;
+                $return = $data;
             }
             else
             {
                 # 删除失效文件
                 $this->delete($key);
-                return null;
+                $return = null;
             }
         }
         else
         {
-            return null;
+            $return = null;
         }
+
+        if (null === $return)
+        {
+            if(IS_DEBUG)Core::debug()->warn($key, 'file cache mis key');
+            return false;
+        }
+        else
+        {
+            if (IS_DEBUG)Core::debug()->info($key, 'file cache hit key');
+        }
+
+        return $return;
     }
 
     /**
@@ -116,7 +129,7 @@ class Driver_Cache_Driver_File extends Cache_Driver
         {
             # 支持多存
             $i=0;
-            foreach ($key as $k=>$v)
+            foreach ($key as $k => $v)
             {
                 if ($this->set((string)$k, $v, $lifetime))
                 {
@@ -124,14 +137,25 @@ class Driver_Cache_Driver_File extends Cache_Driver
                 }
             }
 
-            return $i==count($key)?true:false;
+            $rs = $i === count($key) ? true : false;
+
+            Core::debug()->info(array_keys($key), 'memcache set key');
+
+            return $rs;
         }
 
         $filename = $this->get_filename_by_key($key);
 
         $value = $this->format_data($lifetime, $value);
 
-        return File::create_file($filename, $value, null, null, $this->storage);
+        $rs = File::create_file($filename, $value, null, null, $this->storage);
+
+        if (IS_DEBUG)
+        {
+            Core::debug()->info($key, 'file cache set key');
+        }
+
+        return $rs;
     }
 
     /**
@@ -143,7 +167,7 @@ class Driver_Cache_Driver_File extends Cache_Driver
     {
         if ($this->is_file_write_disalbed)return false;
 
-        if (true===$key)
+        if (true === $key)
         {
             # 删除全部
             return File::remove_dir($this->dir . $this->prefix, $this->storage);
@@ -153,20 +177,33 @@ class Driver_Cache_Driver_File extends Cache_Driver
         {
             # 支持多取
             $data = array();
-            $i=0;
-            foreach ($key as $k=>$v)
+            $i = 0;
+            foreach ($key as $k => $v)
             {
                 if ($this->delete((string)$v))
                 {
                     $i++;
                 }
             }
-            return $i==count($key)?true:false;
+
+            if (IS_DEBUG)
+            {
+                Core::debug()->info($key, 'file cache delete key');
+            }
+
+            return $i === count($key) ? true : false;
         }
 
         $filename = $this->get_filename_by_key($key);
 
-        return File::unlink($filename, $this->storage);
+        $rs = File::unlink($filename, $this->storage);
+
+        if (IS_DEBUG)
+        {
+            Core::debug()->info($key, 'file cache delete key');
+        }
+
+        return $rs;
     }
 
     /**

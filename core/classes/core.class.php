@@ -26,16 +26,55 @@ function url($uri='')
 }
 
 /**
+ * 获取指定key的配置
+ *
  * 读取配置数据. Core::config() 的别名
+ * 若不传key，则返回 `Config` 对象，可获取动态配置，例如 `Core::config()->get('test');`
  *
  *   echo config('core');    //返回核心配置
  *
+ *   echo Core::config()->get('test');
+ *
  * @param string $key
- * @return string
+ * @param mixed $default 默认值
+ * @return array|string|null|Config
  */
-function config($key=null)
+function config($key = null, $default = null)
 {
-    return Core::config($key);
+    return Core::config($key, $default);
+}
+
+
+/**
+ * 获取一个ORM对象
+ *
+ * 如果要获取 `ORM_Test_Finder` 对象，只需要使用 `OOP::ORM('Test')` 即可
+ * 如果 `ORM_Test_Finder` 对象不存在，系统将返回默认的 `OOP_ORM_Finder_DB` Finder对象，并且数据库名称为 `Test`
+ *
+ * @param string $orm_name ORM名称
+ * @param string $database 数据库配置，动态设置数据库配置
+ * @return OOP_ORM_Finder_DB|OOP_ORM_Finder_REST
+ */
+function ORM($orm_name, $database = null)
+{
+    if (preg_match('#^http(s)?://#', $orm_name))
+    {
+        # REST
+        return new OOP_ORM_Finder_REST($orm_name);
+    }
+    else
+    {
+        $finder_class_name = 'ORM_'. $orm_name .'_Finder';
+
+        if (class_exists($finder_class_name, true))
+        {
+            return new $finder_class_name();
+        }
+        else
+        {
+            return new OOP_ORM_Finder_DB($orm_name, $database ? $database : null);
+        }
+    }
 }
 
 
@@ -120,45 +159,17 @@ abstract class Core_Core extends Bootstrap
     protected static $buffer_level = 0;
 
     /**
-     * 页面在关闭前需要执行的方法列队
-     * 通过Core::register_shutdown_function()设置
+     * 记录所有Event
+     *
      * @var array
      */
-    protected static $shutdown_function = array();
+    protected static $events = array();
 
     /**
      * getFactory获取的对象寄存器
      * @var array
      */
     protected static $instances = array();
-
-    /**
-     * 执行Core::close_all_connect()方法时会关闭链接的类和方法名的列队
-     *
-     * 可通过Core::add_close_connect_class()方法进行设置增加
-     *
-     *     array
-     *     (
-     *         'Database' => 'close_all_connect',
-     *     );
-     *
-     * @var array
-     */
-    protected static $close_connect_class_list = array();
-
-    /**
-     * import_library回调函数列表
-     *
-     * @var array
-     */
-    protected static $import_library_callback = array();
-
-    /**
-     * change_project回调函数列表
-     *
-     * @var array
-     */
-    protected static $change_project_callback = array();
 
     /**
      * 使用 Core::url() 会附带的参数列表
@@ -176,7 +187,7 @@ abstract class Core_Core extends Bootstrap
     {
         static $run = null;
 
-        if (null===$run)
+        if (null === $run)
         {
             $run = true;
 
@@ -232,9 +243,9 @@ abstract class Core_Core extends Bootstrap
             # 注册输出函数
             register_shutdown_function(array('Core', '_output_body'));
 
-            if (true===IS_SYSTEM_MODE)
+            if (true === IS_SYSTEM_MODE)
             {
-                if (false===Core::check_system_request_allow())
+                if (false === Core::check_system_request_allow())
                 {
                     # 内部请求验证不通过
                     Core::show_500('system request hash error');
@@ -309,11 +320,11 @@ abstract class Core_Core extends Bootstrap
             {
                 $code = $e->getCode();
 
-                if (404===$code || E_PAGE_NOT_FOUND===$code)
+                if (404 === $code || E_PAGE_NOT_FOUND === $code)
                 {
                     Core::show_404($e->getMessage());
                 }
-                elseif (500===$code)
+                elseif (500 === $code)
                 {
                     Core::show_500($e->getMessage());
                 }
@@ -334,12 +345,11 @@ abstract class Core_Core extends Bootstrap
      *
      * @param string $key
      * @param mixed $default 默认值
-     * @return Config
-     * @return array
+     * @return array|string|null|Config
      */
     public static function config($key = null, $default = null)
     {
-        if (null===$key)
+        if (null === $key)
         {
             return Core::factory('Config');
         }
@@ -347,7 +357,7 @@ abstract class Core_Core extends Bootstrap
         $c = explode('.', $key);
         $c_name = array_shift($c);
 
-        if (strtolower($c_name)=='core')
+        if (strtolower($c_name) === 'core')
         {
             $v = Core::$core_config;
         }
@@ -367,6 +377,94 @@ abstract class Core_Core extends Bootstrap
         }
 
         return $v;
+    }
+
+    /**
+     * 增加事件调用
+     *
+     *      // 注册一个事件调用
+     *      Core::event_add('system.shut_down', 'test');
+     *
+     *      // 运行一个事件调用
+     *      Core::event_trigger('system.shut_down');
+     *
+     * @param string $event
+     * @param string|array $callback
+     */
+    public static function event_add($event, $callback)
+    {
+        if (!isset(Core::$events[$event]))
+        {
+            Core::$events[$event] = array
+            (
+                $callback,
+            );
+        }
+        elseif (!in_array($callback, Core::$events[$event]))
+        {
+            Core::$events[$event][] = $callback;
+        }
+    }
+
+    /**
+     * 移除事件调用
+     *
+     * 不指定 `$callback` 则移除key下的所有事件调用
+     *
+     * @param string $event
+     * @param null $callback
+     */
+    public static function event_remove($event, $callback = null)
+    {
+        if (isset(Core::$events[$event]))
+        {
+            if ($callback)
+            {
+                if (false !== ($k = array_search($callback, Core::$events[$event])))
+                {
+                    unset(Core::$events[$event][$k]);
+                }
+            }
+            else
+            {
+                unset(Core::$events[$event]);
+            }
+        }
+    }
+
+    /**
+     * 运行事件
+     *
+     * @param string $event
+     * @return bool
+     */
+    public static function event_trigger($event, $arguments = null)
+    {
+        $rs = true;
+
+        if (isset(Core::$events[$event]))foreach(Core::$events[$event] as $call_back)
+        {
+            try
+            {
+                if (false === call_user_func_array($call_back, is_array($arguments) ? $arguments : array()))
+                {
+                    $rs = false;
+                }
+            }
+            catch (Exception $e)
+            {
+                $rs = false;
+                if (IS_DEBUG)
+                {
+                    Core::debug()->group('Run Event '. $event .'Error');
+                    Core::debug()->warn($e->getMessage(), 'Message');
+                    Core::debug()->warn($call_back, 'Event');
+                    Core::debug()->groupEnd();
+                }
+            }
+        }
+
+        return $rs;
     }
 
     /**
@@ -406,18 +504,27 @@ abstract class Core_Core extends Bootstrap
      */
     public static function url($uri = '' , $is_full_url_or_project = false)
     {
-        if (null===$uri)
+        if (null === $uri)
         {
             # 返回当前URL
             return $_SERVER["SCRIPT_URI"]. (isset($_SERVER["QUERY_STRING"]) && $_SERVER["QUERY_STRING"]?'?'.$_SERVER["QUERY_STRING"]:'');
         }
 
-        list($url, $query) = explode('?', $uri , 2);
+        if (false !== strpos($uri, '?'))
+        {
+            list($url, $query) = explode('?', $uri , 2);
+        }
+        else
+        {
+            $url  = $uri;
+            $query = null;
+        }
 
-        $url = Core::$base_url. ltrim($url, '/') . ($url!='' && Core::$config['url_suffix'] && substr($url, -1)!='/' && false===strpos($url, '.')?'.'.Core::$config['url_suffix']:'') . ($query?'?'.$query:'');
+
+        $url = Core::$base_url. ltrim($url, '/') . ($url!='' && Core::$config['url_suffix'] && substr($url, -1) !== '/' && false === strpos($url, '.')?'.'.Core::$config['url_suffix']:'') . ($query?'?'.$query:'');
 
         # 返回完整URL
-        if (true===$is_full_url_or_project && !preg_match('#^http(s)?://#i', $url))
+        if (true === $is_full_url_or_project && !preg_match('#^http(s)?://#i', $url))
         {
             $url = HttpIO::PROTOCOL . $_SERVER["HTTP_HOST"] . $url;
         }
@@ -456,7 +563,7 @@ abstract class Core_Core extends Bootstrap
         if (IS_DEBUG & 1)
         {
             # 本地调试环境
-            $url_asstes = Core::url('/assets-dev/');
+            $url_assets = Core::url('/assets-dev/');
         }
         else
         {
@@ -466,22 +573,22 @@ abstract class Core_Core extends Bootstrap
 
             if (is_file($www_file))
             {
-                $url_asstes  = Core::config('core.url.assets');
+                $url_assets  = Core::config('url.assets');
                 $asstes_path = '';
             }
             else
             {
                 $asstes_path = 'p-'. Core::$project . '/' . (IS_ADMIN_MODE?'~admin/':'');
-                $url_asstes  = URL_ASSETS . $asstes_path;
+                $url_assets  = URL_ASSETS . $asstes_path;
             }
 
             # 自动获取min文件
-            if (substr($file, -3)=='.js')
+            if (substr($file, -3) === '.js')
             {
                 $tmp_filename = substr($file, 0, -3). '.min.js';
                 $min_file     = DIR_ASSETS. $asstes_path . $tmp_filename;
             }
-            else if (substr($file, -4)=='.css')
+            else if (substr($file, -4) === '.css')
             {
                 $tmp_filename = substr($file, 0, -4). '.min.css';
                 $min_file     = DIR_ASSETS. $asstes_path . $tmp_filename;
@@ -506,7 +613,7 @@ abstract class Core_Core extends Bootstrap
 //            $uri = $file . '?' . (strlen($query)>0?$query.'&':'') . Core::assets_hash($file);
         }
 
-        return $url_asstes . $url;
+        return $url_assets . $url;
     }
 
     /**
@@ -566,7 +673,7 @@ abstract class Core_Core extends Bootstrap
      */
     public static function is_file_write_disabled()
     {
-        if (Core::config('core.file_write_mode')=='disable')
+        if (Core::config('file_write_mode') === 'disable')
         {
             return true;
         }
@@ -581,7 +688,7 @@ abstract class Core_Core extends Bootstrap
      *
      * @param string $msg 日志内容
      * @param string $type 类型，例如：log,error,debug 等
-     * @param stirng $file 指定文件名，不指定则默认
+     * @param string $file 指定文件名，不指定则默认
      * @return boolean
      */
     public static function log($msg, $type = 'log', $file = null)
@@ -644,9 +751,12 @@ abstract class Core_Core extends Bootstrap
             }
             else
             {
-                require $found['file'];
+                if (!class_exists($found['class'], false))
+                {
+                    require $found['file'];
+                }
 
-                if ($found['ns']=='team-library' || $found['ns']=='project')
+                if ($found['ns'] === 'team-library' || $found['ns'] === 'project')
                 {
                     $class_name = $found['class'];
                 }
@@ -668,10 +778,10 @@ abstract class Core_Core extends Bootstrap
                 # 是否有必要将action从$arguments中移出
                 $need_shift_action = false;
                 $arguments = $found['args'];
-                if ($arguments)
+                if ($arguments && $arguments)
                 {
                     $action = current($arguments);
-                    if (0===strlen($action))
+                    if (0 === strlen($action))
                     {
                         $action = 'default';
                     }
@@ -694,7 +804,7 @@ abstract class Core_Core extends Bootstrap
                         $action      = 'default';
                         $action_name = 'action_default';
                     }
-                    elseif ($action_name!='' && (!$arguments || $arguments===array('')) && method_exists($controller, 'action_index'))
+                    elseif ($action_name !== '' && (!$arguments || $arguments === array('')) && method_exists($controller, 'action_index'))
                     {
                         $action      = 'index';
                         $action_name = 'action_index';
@@ -703,12 +813,12 @@ abstract class Core_Core extends Bootstrap
                     {
                         $controller->__call($action_name, $arguments);
 
-                        Core::rm_controoler($controller);
+                        Core::rm_controller($controller);
                         return;
                     }
                     else
                     {
-                        Core::rm_controoler($controller);
+                        Core::rm_controller($controller);
 
                         throw new Exception(__('Page Not Found'), 404);
                     }
@@ -729,13 +839,13 @@ abstract class Core_Core extends Bootstrap
                     {
                         if (!isset($controller->allow_suffix[$action]) || !in_array($found['suffix'], explode('|', $controller->allow_suffix[$action])))
                         {
-                            Core::rm_controoler($controller);
+                            Core::rm_controller($controller);
                             throw new Exception(__('Page Not Found'), 404);
                         }
                     }
                     elseif (!in_array($found['suffix'], explode('|', $controller->allow_suffix)))
                     {
-                        Core::rm_controoler($controller);
+                        Core::rm_controller($controller);
                         throw new Exception(__('Page Not Found'), 404);
                     }
 
@@ -750,19 +860,19 @@ abstract class Core_Core extends Bootstrap
 
                 if (!$is_public_method->isPublic())
                 {
-                    Core::rm_controoler($controller);
+                    Core::rm_controller($controller);
                     throw new Exception(__('Request Method Not Allowed.'), 405);
                 }
                 unset($is_public_method);
 
                 # POST 方式，自动CSRF判断
-                if (HttpIO::METHOD=='POST')
+                if (HttpIO::METHOD === 'POST')
                 {
                     $auto_check_post_method_referer = isset($controller->auto_check_post_method_referer)?$controller->auto_check_post_method_referer:Core::config('auto_check_post_method_referer', true);
 
                     if ($auto_check_post_method_referer && !HttpIO::csrf_check())
                     {
-                        Core::rm_controoler($controller);
+                        Core::rm_controller($controller);
                         throw new Exception(__('Not Acceptable.'), 406);
                     }
                 }
@@ -838,7 +948,7 @@ abstract class Core_Core extends Bootstrap
                 }
 
                 # 移除控制器
-                Core::rm_controoler($controller);
+                Core::rm_controller($controller);
 
                 unset($controller);
             }
@@ -853,7 +963,7 @@ abstract class Core_Core extends Bootstrap
         }
     }
 
-    protected static function rm_controoler($controller)
+    protected static function rm_controller($controller)
     {
         foreach (Controller::$controllers as $k=>$c)
         {
@@ -1058,7 +1168,15 @@ abstract class Core_Core extends Bootstrap
 
                 if (strlen($tmp_p)>0)
                 {
-                    $args = explode('/', substr($uri, $path_len));
+                    $tmp_uri = trim(substr($uri, $path_len), ' /');
+                    if (strlen($tmp_uri))
+                    {
+                        $args = explode('/', $tmp_uri);
+                    }
+                    else
+                    {
+                        $args = array();
+                    }
                 }
                 else
                 {
@@ -1070,7 +1188,7 @@ abstract class Core_Core extends Bootstrap
                 $tmp_arg   = $tmp_class;
                 $directory = rtrim('/'. substr($uri, 0, $path_len) . $tmp_class, '/');
 
-                if (0===strlen($tmp_class))
+                if (0 === strlen($tmp_class))
                 {
                     $tmp_class = 'index';
                 }
@@ -1115,7 +1233,7 @@ abstract class Core_Core extends Bootstrap
                             $ids = array_merge($ids, $the_id);
                         }
 
-                        if ($directory && substr($directory, -1-strlen($tmp_class))=='/'.$tmp_class)
+                        if ($directory && substr($directory, -1-strlen($tmp_class)) === '/'.$tmp_class)
                         {
                             $directory = substr($directory, 0, -1-strlen($tmp_class));
                         }
@@ -1132,7 +1250,7 @@ abstract class Core_Core extends Bootstrap
 
                         break 2;
                     }
-                    elseif (!$found_index_class && $tmp_class!='default')
+                    elseif (!$found_index_class && $tmp_class !== 'default')
                     {
                         // 记录 index.controller.php 控制器
                         $tmpfile = $tmp_path . 'default' . Core::$dir_setting['controller'][1] . EXT;
@@ -1167,7 +1285,7 @@ abstract class Core_Core extends Bootstrap
                     }
                 }
 
-                if (IS_DEBUG && $find_log2)
+                if (IS_DEBUG && isset($find_log2) && $find_log2)
                 {
                     $find_log = array_merge($find_log, $find_log2);
                 }
@@ -1239,7 +1357,7 @@ abstract class Core_Core extends Bootstrap
 
         if (!$type)$type = 'log';
 
-        if (null===$pro)
+        if (null === $pro)
         {
             if (preg_match('#^(db|cache)://([a-z0-9_]+)/([a-z0-9_]+)$#i', DIR_LOG , $m))
             {
@@ -1252,12 +1370,12 @@ abstract class Core_Core extends Bootstrap
         }
 
         # Log目录采用文件目录
-        if (false===$pro)
+        if (false === $pro)
         {
-            $write_mode = Core::config('core.file_write_mode');
+            $write_mode = Core::config('file_write_mode');
 
             # 禁用写入
-            if ($write_mode=='disable')return true;
+            if ($write_mode === 'disable')return true;
 
             # 再判断是否有转换储存处理
             if (preg_match('#^(db|cache)://([a-z0-9_]+)/([a-z0-9_]+)$#i', $write_mode , $m))
@@ -1266,7 +1384,7 @@ abstract class Core_Core extends Bootstrap
             }
         }
 
-        if (false===$pro)
+        if (false === $pro)
         {
             # 以文件的形式保存
 
@@ -1292,7 +1410,7 @@ abstract class Core_Core extends Bootstrap
             {
                 $temp = explode('/', str_replace('\\', '/', $dir) );
                 $cur_dir = '';
-                for($i=0; $i<count($temp); $i++)
+                for($i = 0; $i < count($temp); $i++)
                 {
                     $cur_dir .= $temp[$i] . "/";
                     if (!is_dir(DIR_LOG.$cur_dir))
@@ -1302,7 +1420,7 @@ abstract class Core_Core extends Bootstrap
                 }
             }
 
-            return false===@file_put_contents(DIR_LOG . $file, $data . CRLF , FILE_APPEND)?false:true;
+            return false === @file_put_contents(DIR_LOG . $file, $data . CRLF , FILE_APPEND)?false:true;
         }
         else
         {
@@ -1321,7 +1439,7 @@ abstract class Core_Core extends Bootstrap
                 );
 
                 $obj = new Database($pro[2]);
-                $status = $obj->insert($pro[3], $db_data) ? true:false;
+                $status = $obj->insert($pro[3], $db_data) ? true : false;
             }
             else
             {
@@ -1330,11 +1448,11 @@ abstract class Core_Core extends Bootstrap
                     $pro[1]['prefix'] = trim($pro[3]) . '_';
                 }
 
-                $pro[1]['prefix'] .= $type.'_';
+                $pro[1]['prefix'] .= $type .'_';
 
                 $obj = new Cache($pro[2]);
 
-                $status = $obj->set(date('Ymd').'_'.md5($file), $data, 86400*30);        // 存1月
+                $status = $obj->set(date('Ymd') .'_'. md5($file), $data, 86400 * 30);        // 存1月
             }
 
             return $status;
@@ -1376,7 +1494,7 @@ abstract class Core_Core extends Bootstrap
         static $debug = null;
         if (null === $debug)
         {
-            if (!IS_CLI && ( IS_DEBUG || false!==strpos($_SERVER["HTTP_USER_AGENT"],'FirePHP') || isset($_SERVER["HTTP_X_FIREPHP_VERSION"]) ) && class_exists('Debug', true))
+            if (!IS_CLI && (IS_DEBUG || false !== strpos($_SERVER["HTTP_USER_AGENT"], 'FirePHP') || isset($_SERVER["HTTP_X_FIREPHP_VERSION"])) && class_exists('Debug', true))
             {
                 $debug = Debug::instance();
             }
@@ -1397,7 +1515,7 @@ abstract class Core_Core extends Bootstrap
      * @param  boolean $highlight 是否返回高亮前缀，可以传字符颜色，比如#f00
      * @return string
      */
-    public static function debug_path($file, $highlight=false)
+    public static function debug_path($file, $highlight = false)
     {
         if ($highlight)
         {
@@ -1511,7 +1629,7 @@ abstract class Core_Core extends Bootstrap
         Core::close_buffers(false);
 
         # 避免输出的CSS头试抛出页面无法显示
-        @header('Content-Type: text/html;charset=' . Core::config('core.charset'), true);
+        @header('Content-Type: text/html;charset=' . Core::config('charset'), true);
 
         HttpIO::$status = 404;
         HttpIO::send_headers();
@@ -1576,7 +1694,7 @@ abstract class Core_Core extends Bootstrap
         Core::close_buffers(false);
 
         # 避免输出的CSS头试抛出页面无法显示
-        @header('Content-Type: text/html;charset=' . Core::config('charset'), true);
+        @header('Content-Type: text/html;charset='. Core::config('charset'), true);
 
         HttpIO::$status = 500;
         HttpIO::send_headers();
@@ -1617,7 +1735,7 @@ abstract class Core_Core extends Bootstrap
                 $trace_obj = new Exception($msg);
             }
 
-            $error_config = Core::config('core.error500');
+            $error_config = Core::config('error500');
 
             $view = new View('error/500');
             if ($error_config && isset($error_config['close']) && $error_config['close']==true)
@@ -1673,7 +1791,7 @@ abstract class Core_Core extends Bootstrap
                     if ($save_type=='file')
                     {
                         # 文件模式
-                        $write_mode = Core::config('core.file_write_mode');
+                        $write_mode = Core::config('file_write_mode');
 
                         if (preg_match('#^(db|cache)://([a-z0-9_]+)/([a-z0-9_]+)$#i', $write_mode , $m))
                         {
@@ -1782,11 +1900,12 @@ abstract class Core_Core extends Bootstrap
      */
     public static function key_string($arr, $key, $default = null)
     {
-        if (!is_array($arr)) return $default;
+        if (!is_array($arr))return $default;
+
         $keyArr = explode('.', $key);
-        foreach ( $keyArr as $key )
+        foreach ($keyArr as $key)
         {
-            if ( isset($arr[$key]) )
+            if (array_key_exists($key, $arr))
             {
                 $arr = $arr[$key];
             }
@@ -1803,11 +1922,10 @@ abstract class Core_Core extends Bootstrap
      * 将利用call_user_func或call_user_func_array回调
      * 类似 register_shutdown_function
      * @param array $function 方法名，可以是数组
-     * @param array $param_arr 参数，可空
      */
-    public static function register_shutdown_function($function, $param_arr = null)
+    public static function register_shutdown_function($function)
     {
-        Core::$shutdown_function[] = array($function, $param_arr);
+        Core::event_add('system.shutdown', $function);
     }
 
     public static function shutdown_handler()
@@ -1830,7 +1948,7 @@ abstract class Core_Core extends Bootstrap
     public static function exception_handler(Exception $e)
     {
         $code = $e->getCode();
-        if ( $code !== 8 )
+        if ($code !== 8)
         {
             Core::show_500($e);
             exit();
@@ -1839,9 +1957,9 @@ abstract class Core_Core extends Bootstrap
 
     public static function error_handler($code, $error, $file = null, $line = null)
     {
-        if ( (error_reporting() & $code) !== 0 )
+        if ((error_reporting() & $code) !== 0)
         {
-            throw new ErrorException( $error, $code, 0, $file, $line );
+            throw new ErrorException($error, $code, 0, $file, $line);
         }
         return true;
     }
@@ -1943,38 +2061,38 @@ abstract class Core_Core extends Bootstrap
         }
 
         # 记录所有项目设置，当切换回项目时，使用此设置还原
-        static $all_prjects_setting = array();
+        static $all_projects_setting = array();
 
         if (Core::$project)
         {
             // 记录上一个项目设置
-            $all_prjects_setting[Core::$project] = array
+            $all_projects_setting[Core::$project] = array
             (
-                'config'        => Core::$config,
-                'include_path'  => Core::$include_path,
-                'file_list'     => Core::$file_list,
-                'project_dir'   => Core::$project_dir,
-                'base_url'      => Core::$base_url,
+                'config'       => Core::$config,
+                'include_path' => Core::$include_path,
+                'file_list'    => Core::$file_list,
+                'project_dir'  => Core::$project_dir,
+                'base_url'     => Core::$base_url,
             );
         }
 
         # 原来的项目
         $old_project = Core::$project;
 
-        if (isset($all_prjects_setting[$project]))
+        if (isset($all_projects_setting[$project]))
         {
             # 设为当前项目
             Core::$project = $project;
 
             # 还原配置
-            Core::$config         = $all_prjects_setting[$project]['config'];
-            Core::$include_path   = $all_prjects_setting[$project]['include_path'];
-            Core::$file_list      = $all_prjects_setting[$project]['file_list'];
-            Core::$project_dir    = $all_prjects_setting[$project]['project_dir'];
-            Core::$base_url       = $all_prjects_setting[$project]['base_url'];
+            Core::$config       = $all_projects_setting[$project]['config'];
+            Core::$include_path = $all_projects_setting[$project]['include_path'];
+            Core::$file_list    = $all_projects_setting[$project]['file_list'];
+            Core::$project_dir  = $all_projects_setting[$project]['project_dir'];
+            Core::$base_url     = $all_projects_setting[$project]['base_url'];
 
             # 清除缓存数据
-            unset($all_prjects_setting[$project]);
+            unset($all_projects_setting[$project]);
         }
         else
         {
@@ -2058,60 +2176,13 @@ abstract class Core_Core extends Bootstrap
         # 记录debug信息
         if (IS_DEBUG)
         {
-            Core::debug()->info($project, '程序已切换到了新项目');
+            Core::debug()->info($project, 'Change to new Project');
         }
 
-        # 回调callback
-        if (Core::$change_project_callback)
-        {
-            foreach (Core::$change_project_callback as $fun)
-            {
-                call_user_func($fun, $old_project, $project);
-            }
-        }
+        # 调用Event
+        Core::event_trigger('system.change_project');
 
         return true;
-    }
-
-    /**
-     * 增加change_project回调事件
-     *
-     *     //将在每次执行 Core::change_project($new_project) 成功后执行 MyClass::myfun($old_project, $new_project) 方法,其中$old_project是原来的项目名
-     *     Core::change_project_add_callback('MyClass::myfun');
-     *
-     * @param string|array $fun
-     */
-    public static function change_project_add_callback($fun)
-    {
-        Core::$change_project_callback[] = $fun;
-
-        if (count(Core::$change_project_callback)>1)
-        {
-            # 移除重复的项目
-            Core::$change_project_callback = array_unique(Core::$change_project_callback);
-        }
-    }
-
-    /**
-    * 移除import_library回调事件
-    *
-    * @param string|array $fun
-    */
-    public static function change_project_remove_callback($fun)
-    {
-        if (Core::$change_project_callback)
-        {
-            $new_arr = array();
-            foreach (Core::$change_project_callback as $item)
-            {
-                if ($item!==$fun)
-                {
-                    $new_arr = $item;
-                }
-            }
-
-            Core::$change_project_callback = $new_arr;
-        }
     }
 
     /**
@@ -2135,87 +2206,14 @@ abstract class Core_Core extends Bootstrap
         $status = parent::import_library($library_name);
 
         # 回调callback
-        if ($status>0 && Core::$import_library_callback)
+        if ($status>0)
         {
-            foreach (Core::$import_library_callback as $fun)
-            {
-                call_user_func($fun, $library_name);
-            }
+            Core::event_trigger('system.import_library');
         }
 
         return $status;
     }
 
-    /**
-     * 增加import_library回调事件
-     *
-     *     //将在每次执行 Core::import_library($library_name) 成功后执行 MyClass::myfun((array)$library_name) 方法
-     *     Core::add_import_library_callback('MyClass::myfun');
-     *
-     * @param string|array $fun
-     */
-    public static function import_library_add_callback($fun)
-    {
-        Core::$import_library_callback[] = $fun;
-
-        if (count(Core::$import_library_callback)>1)
-        {
-            # 移除重复的项目
-            Core::$import_library_callback = array_unique(Core::$import_library_callback);
-        }
-    }
-
-    /**
-     * 移除import_library回调事件
-     *
-     * @param string|array $fun
-     */
-    public static function import_library_remove_callback($fun)
-    {
-        if (Core::$import_library_callback)
-        {
-            $new_arr = array();
-            foreach (Core::$import_library_callback as $item)
-            {
-                if ($item!==$fun)
-                {
-                    $new_arr = $item;
-                }
-            }
-
-            Core::$import_library_callback = $new_arr;
-        }
-    }
-
-    /**
-     * 执行注册的关闭方法
-     */
-    protected static function run_shutdown_function()
-    {
-        static $run = null;
-        if (null!==$run)
-        {
-            return true;
-        }
-        $run = true;
-
-        if (Core::$shutdown_function)
-        {
-            foreach (Core::$shutdown_function as $item)
-            {
-                try
-                {
-                    call_user_func_array($item[0], (array)$item[1]);
-                }
-                catch (Exception $e)
-                {
-
-                }
-            }
-        }
-
-        return true;
-    }
 
     /**
      * 特殊的合并项目配置
@@ -2234,9 +2232,9 @@ abstract class Core_Core extends Bootstrap
             {
                 $c1[$k] = $v;
             }
-            elseif ( is_array($c1[$k]) && is_array($v) )
+            elseif (is_array($c1[$k]) && is_array($v))
             {
-                $c1[$k] = Core::_merge_project_config($c1[$k] , $v );
+                $c1[$k] = Core::_merge_project_config($c1[$k], $v);
             }
             elseif (is_numeric($k) && is_array($c1[$k]))
             {
@@ -2251,17 +2249,7 @@ abstract class Core_Core extends Bootstrap
      */
     public static function close_all_connect()
     {
-        foreach (Core::$close_connect_class_list as $class_name=>$fun)
-        {
-            try
-            {
-                call_user_func_array(array($class_name, $fun), array());
-            }
-            catch (Exception $e)
-            {
-                Core::debug()->error('close_all_connect error:'.$e->getMessage());
-            }
-        }
+        Core::event_trigger('system.close_all_connect');
     }
 
     /**
@@ -2275,9 +2263,9 @@ abstract class Core_Core extends Bootstrap
      * @param string $class_name
      * @param string $fun
      */
-    public static function add_close_connect_class($class_name, $fun='close_all_connect')
+    public static function add_close_connect_class($class_name, $fun = 'close_all_connect')
     {
-        Core::$close_connect_class_list[$class_name] = $fun;
+        Core::event_add('system.close_all_connect', array($class_name, $fun));
     }
 
     /**
@@ -2304,16 +2292,16 @@ abstract class Core_Core extends Bootstrap
         }
 
         // 验证IP
-        if ('127.0.0.1'!=HttpIO::IP && HttpIO::IP != $_SERVER["SERVER_ADDR"])
+        if ('127.0.0.1' !== HttpIO::IP && HttpIO::IP !== $_SERVER["SERVER_ADDR"])
         {
-            $allow_ip = Core::config('core.system_exec_allow_ip');
+            $allow_ip = Core::config('system_exec_allow_ip');
 
             if (is_array($allow_ip) && $allow_ip)
             {
                 $allow = false;
                 foreach ($allow_ip as $ip)
                 {
-                    if (HttpIO::IP == $ip)
+                    if (HttpIO::IP === $ip)
                     {
                         $allow = true;
                         break;
@@ -2398,17 +2386,17 @@ abstract class Core_Core extends Bootstrap
     {
         $ip = array();
 
-        if (isset($_SERVER['HTTP_X_FORWARDED_FOR']))
+        if (isset($_SERVER['HTTP_X_FORWARDED_FOR']) && $_SERVER['HTTP_X_FORWARDED_FOR'])
         {
             $ip = explode(',', str_replace(' ', '', $_SERVER['HTTP_X_FORWARDED_FOR']));
         }
 
-        if(isset($_SERVER['HTTP_CLIENT_IP']))
+        if(isset($_SERVER['HTTP_CLIENT_IP']) && $_SERVER['HTTP_CLIENT_IP'])
         {
             $ip = array_merge($ip, explode(',', str_replace(' ', '', $_SERVER['HTTP_CLIENT_IP'])));
         }
 
-        if (isset($_SERVER['REMOTE_ADDR']))
+        if (isset($_SERVER['REMOTE_ADDR']) && $_SERVER['REMOTE_ADDR'])
         {
             $ip = array_merge($ip, explode(',', str_replace(' ', '', $_SERVER['REMOTE_ADDR'])));
         }
@@ -2433,7 +2421,7 @@ abstract class Core_Core extends Bootstrap
 
         # 执行注册的关闭方法
         ob_start();
-        Core::run_shutdown_function();
+        Core::event_trigger('system.shutdown');
         $output = ob_get_clean();
 
         # 在页面输出前关闭所有的连接

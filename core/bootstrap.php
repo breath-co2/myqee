@@ -215,19 +215,19 @@ unset($dir_data, $dir_cache, $dir_log, $dir_temp);
  *
  * __('Welcome back, :user', array(':user' => $username));
  *
- * @uses	I18n::get
- * @param	string  text to translate
- * @param	array   values to replace in the translated text
- * @param	string  target language
- * @return	string
+ * @uses    I18n::get
+ * @param   string text to translate
+ * @param   array  $string values to replace in the translated text
+ * @param   string $values target language
+ * @return  string
  */
 function __($string, array $values = null)
 {
     static $have_i18n_class = false;
 
-    if (false===$have_i18n_class)
+    if (false === $have_i18n_class)
     {
-        $have_i18n_class = (boolean)class_exists('I18n', true);
+        $have_i18n_class = class_exists('I18n', true);
     }
 
     if ($have_i18n_class)
@@ -235,7 +235,7 @@ function __($string, array $values = null)
         $string = I18n::get($string);
     }
 
-    return empty($values)?$string:strtr($string, $values);
+    return empty($values) ? $string : strtr($string, $values);
 }
 
 /**
@@ -370,7 +370,7 @@ abstract class Bootstrap
      *
      * @var string
      */
-    public static $project = 'default';
+    public static $project = null;
 
     /**
      * 当前项目目录
@@ -429,11 +429,11 @@ abstract class Bootstrap
             $run = true;
 
             # PHP5.3 支持 composer 的加载
-            if (HAVE_NS && is_file(DIR_VENDOR.'autoload-for-myqee.php'))
+            if (HAVE_NS && is_file(DIR_VENDOR .'autoload-for-myqee.php'))
             {
                 try
                 {
-                    require DIR_VENDOR.'autoload-for-myqee.php';
+                    require DIR_VENDOR .'autoload-for-myqee.php';
                 }
                 catch (Exception $e)
                 {
@@ -465,12 +465,24 @@ abstract class Bootstrap
 
             __include_config_file(self::$core_config, DIR_SYSTEM .'config'. EXT);
 
-            # 本地调试模式
-            if (isset(self::$core_config['local_debug_cfg']) && self::$core_config['local_debug_cfg'])
+            # 调试模式
+            if (IS_CLI && function_exists('getenv') && getenv('DEBUG'))
+            {
+                # 命令行中执行 DEBUG=1 php index.php 可开启DEBUG
+                $open_debug = 1;
+                fwrite(STDOUT, "\x1b[31mNow open debug.\x1b[39m\n");
+            }
+            elseif (isset(self::$core_config['local_debug_cfg']) && self::$core_config['local_debug_cfg'])
             {
                 # 判断是否开启了本地调试
-                if (function_exists('get_cfg_var'))
+                if (true === self::$core_config['local_debug_cfg'])
                 {
+                    # 支持 $config['local_debug_cfg'] = true 的设置
+                    $open_debug = 1;
+                }
+                elseif (is_string(self::$core_config['local_debug_cfg']) && function_exists('get_cfg_var'))
+                {
+                    # 支持字符串方式设置
                     $open_debug = get_cfg_var(self::$core_config['local_debug_cfg'])?1:0;
                 }
                 else
@@ -553,10 +565,10 @@ abstract class Bootstrap
                 }
             }
 
-            if (!IS_CLI)
+            if (!IS_CLI && isset(self::$core_config['charset']))
             {
                 # 输出文件头
-                header('Content-Type: text/html;charset=' . self::$core_config['charset']);
+                header('Content-Type: text/html;charset='. self::$core_config['charset']);
             }
 
             // 设置错误等级
@@ -570,7 +582,6 @@ abstract class Bootstrap
             {
                 @date_default_timezone_set(self::$core_config['timezone']);
             }
-
 
             // 获取全局$project变量
             global $project, $admin_mode, $rest_mode;
@@ -646,21 +657,65 @@ abstract class Bootstrap
                     }
 
                     $argv = $_SERVER["argv"];
+                    array_shift($argv); //将文件名移除
 
-                    //$argv[0]为文件名
-                    if (isset($argv[1]) && $argv[1] && isset(self::$core_config['projects'][$argv[1]]))
+                    # 从运行变量中获取
+                    $env_project  = null;
+                    if (function_exists('getenv'))
                     {
-                        self::$project     = $argv[1];
-                        $tmp_config        = self::$core_config['projects'][$argv[1]];
-                        self::$project_dir = isset($tmp_config['dir']) && $tmp_config['dir'] ? $tmp_config['dir'] : self::$project;
+                        $env_project = getenv('PROJECT');
                     }
 
-                    array_shift($argv); //将文件名移除
-                    array_shift($argv); //将项目名移除
+                    if (!$env_project)
+                    {
+                        if (count($argv) === 0)
+                        {
+                            echo 'Choose a project:'. CRLF;
+                            foreach (self::$core_config['projects'] as $key => $item)
+                            {
+                                echo "    \x1b[32m". str_pad($key, 20) ."\x1b[39m - {$item['name']}\n";
+                            }
+
+                            while (true)
+                            {
+                                $project = trim(fgets(STDIN));
+                                if (isset(self::$core_config['projects'][$project]))
+                                {
+                                    echo "Now use the project: {$project}\n";
+                                    $env_project = $project;
+
+                                    break;
+                                }
+                                else
+                                {
+                                    echo "The project {$project} not exist. please try again.\n";
+                                }
+                            }
+                        }
+                        else
+                        {
+                            # 第一个参数是项目
+                            $env_project = array_shift($argv);
+                        }
+                    }
+
+                    if ($env_project && isset(self::$core_config['projects'][$env_project]))
+                    {
+                        //$argv[0]为文件名
+                        self::$project     = $env_project;
+                        $tmp_config        = self::$core_config['projects'][$env_project];
+                        self::$project_dir = isset($tmp_config['dir']) && $tmp_config['dir'] ? $tmp_config['dir'] : self::$project;
+                    }
+                    else
+                    {
+                        echo "Not found project.\n";
+                        exit;
+                    }
+
 
                     self::$path_info = trim(implode('/', $argv));
 
-                    unset($argv, $tmp_config);
+                    unset($argv, $tmp_config, $env_project);
                 }
                 else
                 {
@@ -735,19 +790,19 @@ abstract class Bootstrap
         $ns_name          = '';
         $ns               = '';
 
-        if ($class_name_array[0]=='core' && count($class_name_array)==2)
+        if ($class_name_array[0] === 'core' && count($class_name_array) === 2)
         {
             # 系统类库
             $ns = 'core';
             $new_class_name = $class_name_array[1];
         }
-        else if ($class_name_array[0]=='ex')
+        else if ($class_name_array[0] === 'ex')
         {
             # 扩展别名
             $is_alias       = true;
             $new_class_name = $class_name_array[1];
         }
-        else if ($class_name_array[0]=='team')
+        else if ($class_name_array[0] === 'team')
         {
             # 扩展别名
             $ns             = 'team';
@@ -791,7 +846,7 @@ abstract class Bootstrap
         {
             $dir_setting = self::$dir_setting[$prefix];
 
-            if ($prefix=='controller')
+            if ($prefix === 'controller')
             {
                 if (IS_SYSTEM_MODE)
                 {
@@ -810,7 +865,7 @@ abstract class Bootstrap
                     $dir_setting[0] .= '-rest';
                 }
             }
-            else if ($prefix=='orm')
+            else if ($prefix === 'orm')
             {
                 array_pop($new_class_arr);
             }
@@ -836,14 +891,14 @@ abstract class Bootstrap
                 case 'module':
                     $file = DIR_MODULE;
 
-                    if ($new_class_name==$ns_name)
+                    if ($new_class_name === $ns_name)
                     {
                         $file .= $ns_name . DS;
                     }
                     break;
                 case 'driver':
                     $file = DIR_DRIVER . $ns_name . DS;
-                    if (false===strpos($new_class_name, '_'))
+                    if (false === strpos($new_class_name, '_'))
                     {
                         $file .= $new_class_name . DS;
                     }
@@ -860,7 +915,7 @@ abstract class Bootstrap
                 require $file;
             }
 
-            if ($prefix=='orm')
+            if ($prefix === 'orm')
             {
                 self::_auto_extend_orm($new_class_name, $ns .'_');
             }
@@ -881,7 +936,7 @@ abstract class Bootstrap
                             require $tmp_file;
                             if (class_exists($class_name, false))
                             {
-                                if ($type=='team-library' && $prefix=='orm')
+                                if ($type === 'team-library' && $prefix === 'orm')
                                 {
                                     self::_auto_extend_orm($new_class_name, 'team_');
                                 }
@@ -917,7 +972,7 @@ abstract class Bootstrap
 
 
             # 处理驱动
-            if ($tmp_driver && $tmp_ns=='driver')
+            if ($tmp_driver && $tmp_ns === 'driver')
             {
                 $driver = $tmp_ns .'/'. $tmp_driver;
                 if (!isset($driver_dir[$driver]))
@@ -946,13 +1001,14 @@ abstract class Bootstrap
             if (!$is_alias)
             {
                 # 在非映射模式下才需要读取team类库
-                $lib_ns[] = 'team-library';
+                $libs[] = 'team-library';
             }
+
             foreach ($libs as $type)
             {
-                foreach ($include_path[$type] as $lib_ns=>$path)
+                foreach ($include_path[$type] as $lib_ns => $path)
                 {
-                    $tmp_ns        = ($type=='library'?'library_':'') . str_replace('.', '_', $lib_ns) . '_';
+                    $tmp_ns        = ($type === 'library' ? 'library_' : '') . str_replace('.', '_', $lib_ns) .'_';
                     $ns_class_name = $tmp_ns . $new_class_name;
 
                     if (self::auto_load($ns_class_name))
@@ -960,7 +1016,7 @@ abstract class Bootstrap
                         if (!$is_alias && class_exists($class_name, false))
                         {
                             # 在加载$ns_class_name时，当前需要的类库有可能被加载了，直接返回true
-                            if ($prefix=='orm')
+                            if ($prefix === 'orm')
                             {
                                 self::_auto_extend_orm($new_class_name, $tmp_ns);
                             }
@@ -969,7 +1025,7 @@ abstract class Bootstrap
                         else
                         {
                             class_alias($ns_class_name, $class_name);
-                            if ($prefix=='orm')
+                            if ($prefix === 'orm')
                             {
                                 self::_auto_extend_orm($new_class_name, $tmp_ns);
                             }
@@ -1001,10 +1057,9 @@ abstract class Bootstrap
     {
         if (preg_match('#^(.*)_(data|result|finder)$#i', $class_name, $m))
         {
-            foreach(array('data', 'result', 'data') as $item)
+            foreach(array('data', 'result', 'finder') as $item)
             {
-                if ($item==$m[2])continue;
-                $new_class = $m[1].'_'.$item;
+                $new_class = $m[1] .'_'. $item;
                 if (class_exists($ns.$new_class, false) && !class_exists($new_class, false))
                 {
                     class_alias($ns.$new_class, $new_class);
@@ -1054,14 +1109,14 @@ abstract class Bootstrap
      * @param boolean $auto_require 是否自动加载上来，对config,i18n无效
      * @return string
      */
-    public static function find_file($dir, $file, $ext=null, $auto_require=false)
+    public static function find_file($dir, $file, $ext = null, $auto_require = false)
     {
         # 处理后缀
-        if (null===$ext)
+        if (null === $ext)
         {
             $the_ext = EXT;
         }
-        elseif (false===$ext || ''===$ext)
+        elseif (false === $ext || '' === $ext)
         {
             $the_ext = '';
         }
@@ -1079,11 +1134,11 @@ abstract class Bootstrap
         {
             case 'models':
                 $file = strtolower(str_replace('_', '/', $file));
-                if (null===$ext)$the_ext = '.model' . EXT;
+                if (null === $ext)$the_ext = '.model' . EXT;
                 break;
             case 'controllers':
                 $file = strtolower(str_replace('_', '/', $file));
-                if (null===$ext)$the_ext = '.controller' . EXT;
+                if (null === $ext)$the_ext = '.controller' . EXT;
 
                 if (IS_SYSTEM_MODE)
                 {
@@ -1103,25 +1158,25 @@ abstract class Bootstrap
                 }
                 break;
             case 'i18n':
-                if (null===$ext)$the_ext = '.lang';
+                if (null === $ext)$the_ext = '.lang';
                 $only_need_one_file = false;
                 break;
             case 'config':
-                if (null===$ext)$the_ext = '.config'. EXT;
+                if (null === $ext)$the_ext = '.config'. EXT;
                 break;
             case 'views':
-                if (null===$ext)$the_ext = '.view' . EXT;
+                if (null === $ext)$the_ext = '.view' . EXT;
                 $file = strtolower($file);
                 break;
             case 'orm':
-                if (null===$ext)$the_ext = '.orm' . EXT;
+                if (null === $ext)$the_ext = '.orm' . EXT;
                 #orm
                 $file = preg_replace('#^(.*)_[a-z0-9]+$#i', '$1', $file);
                 $file = strtolower(str_replace('_', '/', $file));
                 break;
             case 'classes':
                 $file = strtolower(str_replace('_', '/', $file));
-                if (null===$ext)
+                if (null === $ext)
                 {
                     $the_ext = '.class' . EXT;
                 }
@@ -1136,7 +1191,7 @@ abstract class Bootstrap
         # 采用当前项目目录
         $include_path = self::$include_path;
 
-        if ($dir == 'classes')
+        if ($dir === 'classes')
         {
             # 处理 module 和 driver
             if (false===strpos($file, '/'))
@@ -1150,7 +1205,7 @@ abstract class Bootstrap
 
                 $driver_dir = DIR_DRIVER;
                 list($tmp_prefix, $tmp_ns, $tmp_driver, $tmp_name) = explode('/', $file, 4);
-                if ($tmp_ns=='driver' && $tmp_driver)
+                if ($tmp_ns === 'driver' && $tmp_driver)
                 {
                     $driver_dir .= $tmp_prefix .DS;
                     if (!$tmp_name)
@@ -1176,12 +1231,12 @@ abstract class Bootstrap
         {
             if (!$the_path)continue;
 
-            if ($key=='module')
+            if ($key === 'module')
             {
                 $tmpdir = '';
                 $tmpfile = $file;
             }
-            elseif ($key==='driver')
+            elseif ($key === 'driver')
             {
                 $tmpfile = $tmp_name;
                 $tmpdir = '';
@@ -1232,7 +1287,7 @@ abstract class Bootstrap
      *      Bootstrap::import_library(array('com.myqee.test','com.myqee.cms'));
      *
      * @param string|array $library_name 指定类库 支持多个
-     * @return num 返回新加载的类库总数
+     * @return int 返回新加载的类库总数
      */
     public static function import_library($library_name)
     {
@@ -1250,7 +1305,7 @@ abstract class Bootstrap
         {
             $set = self::_add_include_path_lib($lib);
 
-            if (true===$set[2])
+            if (true === $set[2])
             {
                 # 已加载过
                 continue;
@@ -1298,7 +1353,7 @@ abstract class Bootstrap
         $lib = strtolower(trim($lib));
         $lib_arr = explode('.', $lib);
 
-        if (count($lib_arr)!=3 || $lib_arr[0]!='com')
+        if (count($lib_arr) !== 3 || $lib_arr[0] !== 'com')
         {
             throw new Exception(__('Library name :lib error', array(':lib'=>$lib)));
         }
@@ -1317,7 +1372,7 @@ abstract class Bootstrap
         }
 
         # 合并目录
-        self::$include_path['library'] = array_merge( array($ns=>$dir), self::$include_path['library']);
+        self::$include_path['library'] = array_merge(array($ns=>$dir), self::$include_path['library']);
 
         return array($ns, $dir , false);
     }
@@ -1333,7 +1388,7 @@ abstract class Bootstrap
     {
         $config_str = var_export(self::$core_config['debug_open_password'], true);
 
-        return sha1($config_str . '_open$&*@debug' . $password . '_' . $username );
+        return sha1($config_str .'_open$&*@debug'. $password .'_'. $username );
     }
 
     /**
@@ -1347,7 +1402,7 @@ abstract class Bootstrap
     {
         static $protocol = null;
 
-        if (null===$protocol)
+        if (null === $protocol)
         {
             if (IS_CLI)
             {
@@ -1369,7 +1424,7 @@ abstract class Bootstrap
                     {
                         $https_key = strtoupper($https_key);
 
-                        if ($https_key!='HTTPS' && !empty($_SERVER[$https_key]) && filter_var($_SERVER[$https_key], FILTER_VALIDATE_BOOLEAN))
+                        if ($https_key !== 'HTTPS' && !empty($_SERVER[$https_key]) && filter_var($_SERVER[$https_key], FILTER_VALIDATE_BOOLEAN))
                         {
 
                             $protocol = 'https://';
@@ -1398,21 +1453,18 @@ abstract class Bootstrap
         {
             if (!isset($lib_config[$type]) || !$lib_config[$type])continue;
 
-            if ($type=='cli')
+            switch ($type)
             {
-                if (!IS_DEBUG)continue;
-            }
-            else if ($type=='admin')
-            {
-                if (!IS_ADMIN_MODE)continue;
-            }
-            else if ($type=='rest')
-            {
-                if (!IS_REST_MODE)continue;
-            }
-            else if ($type=='debug')
-            {
-                if (!IS_DEBUG)continue;
+                case 'cli':
+                case 'debug':
+                    if (!IS_DEBUG)continue 2;
+                    break;
+                case 'admin':
+                    if (!IS_ADMIN_MODE)continue 2;
+                    break;
+                case 'rest':
+                    if (!IS_REST_MODE)continue 2;
+                    break;
             }
 
             $libs = array_reverse((array)$lib_config[$type]);
@@ -1503,7 +1555,7 @@ abstract class Bootstrap
                     $base_url_len = strlen($base_url);
                 }
 
-                if (strtolower(substr($_SERVER['REQUEST_URI'], 0, $base_url_len)) == strtolower($base_url))
+                if (strtolower(substr($_SERVER['REQUEST_URI'], 0, $base_url_len)) === strtolower($base_url))
                 {
                     self::$base_url = $base_url;
                 }
@@ -1513,10 +1565,10 @@ abstract class Bootstrap
         # 当没有$_SERVER["SCRIPT_URI"] 时拼接起来
         if (!isset($_SERVER['SCRIPT_URI']))
         {
-            $_SERVER['SCRIPT_URI'] = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS']=='on'?'https':'http') .'://'. $_SERVER['HTTP_HOST'] .(isset($_SERVER['SCRIPT_URL'])?$_SERVER['SCRIPT_URL']:$_SERVER["REQUEST_URI"]);
+            $_SERVER['SCRIPT_URI'] = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on'?'https':'http') .'://'. $_SERVER['HTTP_HOST'] .(isset($_SERVER['SCRIPT_URL'])?$_SERVER['SCRIPT_URL']:$_SERVER["REQUEST_URI"]);
         }
 
-        if (isset($_SERVER['PATH_INFO']))
+        if (isset($_SERVER['PATH_INFO']) && $_SERVER['PATH_INFO'])
         {
             if (substr($_SERVER['PATH_INFO'], 0 , 9) === '/wwwroot/')
             {
@@ -1535,12 +1587,12 @@ abstract class Bootstrap
                 $root_uri    = '/'. ltrim(str_replace('\\', '/', substr($_SERVER['SCRIPT_FILENAME'], strlen($_SERVER['DOCUMENT_ROOT']))), '/');
                 $index_file  = 'index'. EXT;
 
-                if (substr($root_uri, -strlen($index_file))==$index_file)
+                if (substr($root_uri, -strlen($index_file)) === $index_file)
                 {
                     $root_uri = substr($root_uri, 0, -strlen($index_file));
                 }
 
-                if ($root_uri && $root_uri!='/')
+                if ($root_uri && $root_uri !== '/')
                 {
                     $request_uri = substr($request_uri, strlen($root_uri));
                 }
@@ -1563,13 +1615,13 @@ abstract class Bootstrap
         }
 
         # 过滤pathinfo传入进来的服务器默认页
-        if (false !== $pathinfo && ($indexpagelen = strlen(self::$core_config['server_index_page'])) && substr($pathinfo, -1 - $indexpagelen) == '/' . self::$core_config['server_index_page'])
+        if (false !== $pathinfo && ($indexpagelen = strlen(self::$core_config['server_index_page'])) && substr($pathinfo, -1 - $indexpagelen) === '/' . self::$core_config['server_index_page'])
         {
             $pathinfo = substr($pathinfo, 0, -$indexpagelen);
         }
         $pathinfo = trim($pathinfo);
 
-        if (!isset($_SERVER["PATH_INFO"]))
+        if (!isset($_SERVER["PATH_INFO"]) || !$_SERVER["PATH_INFO"])
         {
             $_SERVER["PATH_INFO"] = $pathinfo;
         }
@@ -1579,7 +1631,10 @@ abstract class Bootstrap
         # 处理项目
         foreach (self::$core_config['projects'] as $project => $item)
         {
-            if (!preg_match('#^[a-z0-9_]+$#i', $project)) continue;
+            if (!preg_match('#^[a-z0-9_\-\.\~]+$#i', $project))
+            {
+                continue;
+            }
 
             $rest_url  = array();
             $admin_url = array();
@@ -1741,7 +1796,7 @@ abstract class Bootstrap
         if (!isset(self::$core_config['debug_open_password']) || !is_array(self::$core_config['debug_open_password'])) return false;
         foreach (self::$core_config['debug_open_password'] as $username => $password)
         {
-            if ($_COOKIE['_debug_open'] == self::get_debug_hash($username, $password))
+            if ($_COOKIE['_debug_open'] === self::get_debug_hash($username, $password))
             {
                 return true;
             }
@@ -1763,30 +1818,72 @@ abstract class Bootstrap
         $url = strtolower($url);
 
         # 结尾补/
-        if (substr($url, -1) != '/') $url .= '/';
+        if (substr($url, -1) !== '/')$url .= '/';
 
-        if (substr($url, 0, $protocol_len) == $protocol)
+        if (substr($url, 0, $protocol_len) === $protocol)
         {
             $len = strlen($url);
-            if ( strtolower(substr($_SERVER["SCRIPT_URI"], 0, $len)) == $url )
+            if (strtolower(substr($_SERVER["SCRIPT_URI"], 0, $len)) === $url)
             {
                 # 匹配到项目
-                return '/' . substr($_SERVER["SCRIPT_URI"], $len);
+                return '/'. substr($_SERVER["SCRIPT_URI"], $len);
             }
         }
         else
         {
             # 开头补/
-            if (substr($url, 0, 1) != '/') $url = '/' . $url;
-            $len = strlen($url);
+            if (substr($url, 0, 1) !== '/') $url = '/'. $url;
+            $len     = strlen($url);
+            $tmp_url = strtolower(substr(self::$path_info, 0, $len));
 
-            if (strtolower(substr(self::$path_info, 0, $len)) == $url)
+            if ($tmp_url === $url)
             {
                 # 匹配到项目
-                return '/' . substr(self::$path_info, $len);
+                return '/'. substr(self::$path_info, $len);
+            }
+            elseif ($url === $tmp_url .'/' && substr($tmp_url, -1) !== '/')
+            {
+                # 这种情况下处理
+                # $url     = /a/b/c/
+                # $tmp_url = /a/b/c
+
+                if (!IS_CLI && !IS_SYSTEM_MODE && isset($_SERVER["REQUEST_METHOD"]) && $_SERVER["REQUEST_METHOD"] === 'GET' && !self::_is_ajax())
+                {
+                    # 根目录，但是结尾缺少/，非GET请求并且不是AJAX，通过302跳转到项目根目录
+                    header('Location: '. $url . (isset($_SERVER["QUERY_STRING"]) && strlen($_SERVER["QUERY_STRING"]) ? '?'.$_SERVER["QUERY_STRING"] : ''));
+                    exit;
+                }
+                else
+                {
+                    # POST 等请求正常返回
+                    return '/'. substr(self::$path_info, $len);
+                }
             }
         }
 
         return false;
+    }
+
+    /**
+     * 判断页面是否 AJAX 请求
+     *
+     * @return bool
+     */
+    private static function _is_ajax()
+    {
+        if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && 'xmlhttprequest' === strtolower($_SERVER['HTTP_X_REQUESTED_WITH']))
+        {
+            $is_ajax = true;
+        }
+        elseif (isset($_GET['_ajax']) && ($_GET['_ajax'] === 'true' || $_GET['_ajax'] === 'json'))
+        {
+            $is_ajax = true;
+        }
+        else
+        {
+            $is_ajax = false;
+        }
+
+        return $is_ajax;
     }
 }

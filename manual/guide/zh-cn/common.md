@@ -1,12 +1,16 @@
 # 常用类库、方法
 
 
-## Core::config() 获取指定配置文件
-
+## Core::config($key) 获取指定配置文件
+
+也可直接用 `config($key)`
 在V3中，所有的配置都存放在对应的 `config.php` 文件中，比如 `projects/default/config.php` 中
 
     //将返回根目录 config.php 文件的 $config['charset']
     Core::config('core.charset');	//utf-8
+    // 等同于
+    config('core.charset');
+    
     
     //将返回 $config['database'] 中全部配置
     Core::config('database');
@@ -18,19 +22,20 @@
     Core::config('database.default.type');
 
 
-## `Core::url($url)` 或 `url($url)`，主要用于创建URL
+## Core::url($url)，主要用于创建URL
 
+也可直接用 `url($url)`
 
     echo Core::url('test/123');
     // 等同于
     echo url('test/123');
 
 
-## `Core::show_404()` 和 `Core::show_500()`
+## Core::show_404($msg) 和 Core::show_500($msg)
 
 分别用于输出404页面和500错误页面
 
-## `HttpIO::GET()`, `HttpIO::POST()`,  `HttpIO::REQUEST()`
+## HttpIO::GET(), HttpIO::POST(),  HttpIO::REQUEST()
 
 获取页面原始 `$_GET`, `$_POST`, `$_REQUEST` 数据
 `HttpIO::GET()` 和 `$_GET` 的区别是，`$_GET` 已经过XSS安全处理，而`HttpIO::GET()` 是页面原始接受的数据。
@@ -52,10 +57,8 @@
     echo $_GET['q'];
     //http://www.myqee.com/?id=123&amp;amp;m=blog
 
-> 在V2.0 RC1-3之间，`HttpIO` 类名称为 `Request`
 
-
-## `Controller` 控制器的方法
+## Controller 控制器的方法
 
 根据URL直接处理的对象，详细请看[控制器章节](core/class.controller/index.html)
     
@@ -92,7 +95,7 @@
     	->render();
 
 
-## `Database` 数据库对象
+## Database 数据库对象
 
 详细请看查看 [数据库模块](module/class.database/index.html)
 
@@ -107,8 +110,9 @@
     print_r($data);
 
 
-## `Form()` 表单对象
+## Form() 表单对象
 
+详细请查看 [Form API](core/class.form/api.html)
 
     /*
      <input type="text" name="text" value="123" />

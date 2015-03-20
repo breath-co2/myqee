@@ -1,7 +1,7 @@
 <?php
 
 /**
- * runtime config 更新脚本
+ * 实时配置更新脚本
  *
  * @author 呼吸二氧化碳 <jonwang@myqee.com>
  *
@@ -10,12 +10,14 @@ class Core_Controller_RunTime extends Controller_Shell
 {
     /**
      * 检查当前服务器的可用性，包括MySQL,MongoDB,Memcache等
+     *
+     * @param int $a aaa
      */
-    public function action_check_server()
+    public function action_check()
     {
         $config = array
         (
-            'time'=>TIME,
+            'time' => TIME,
         );
 
         $config['mysql'] = $this->check_mysql();

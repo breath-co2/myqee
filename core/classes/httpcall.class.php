@@ -109,12 +109,12 @@ class Core_HttpCall
      */
     public static function exec($uri, $hosts , array $param_arr = array())
     {
-        $one = false;
+        $single = false;
 
         if (is_string($hosts))
         {
             $hosts = array($hosts);
-            $one = true;
+            $single = true;
         }
 
         # 是否支持CURL
@@ -129,7 +129,7 @@ class Core_HttpCall
                 throw new Exception(__('your core config $config[\'url\'][\'site\'] is not defined.check config:ext', array(':ext'=>EXT)));
             }
 
-            $script = $url_site . ltrim($script, '/');
+            $script = $url_site;
         }
         else
         {
@@ -137,7 +137,8 @@ class Core_HttpCall
         }
 
         $url = Core::url($uri);
-        if (false===strpos($url, '://'))
+
+        if (false === strpos($url, '://'))
         {
             preg_match('#^(http(?:s)?\://[^/]+/)#', $script , $m);
             $url = $m[1].ltrim($url, '/');
@@ -149,7 +150,7 @@ class Core_HttpCall
 
         $uri_arr[0] = $scr_arr[0];       // 替换 http://
         $uri_arr[2] = $scr_arr[2];       // 替换 域名部分
-        $url = implode('/', $uri_arr);
+        $url        = implode('/', $uri_arr);
 
         # 加入系统参数
         $data = array
@@ -170,7 +171,14 @@ class Core_HttpCall
         }
 
         # 单条记录
-        if ($one)$result = current(HttpCall::$last_result);
+        if ($single)
+        {
+            $result = current(HttpCall::$last_result);
+        }
+        else
+        {
+            $result = HttpCall::$last_result;
+        }
 
         if (IS_DEBUG)
         {
@@ -264,7 +272,7 @@ class Core_HttpCall
 
                         $code = curl_getinfo($done['handle'], CURLINFO_HTTP_CODE);
 
-                        if ( $code!=200 )
+                        if ($code!=200)
                         {
                             Core::debug()->error('system exec:'.$done_host.' ERROR,CODE:' . $code );
 //                             $result[$done_host] = false;
@@ -309,19 +317,25 @@ class Core_HttpCall
      *
      * @param string $url URL地址
      * @param int $timeout 超时时间
-     * @return curl_init()
+     * @return resource a cURL handle on success, false on errors.
      */
     protected static function _create_curl($host, $port, $url, $path_info, $timeout, $vars, $mictime, $rstr)
     {
-        if (preg_match('#^(http(?:s)?)\://([^/\:]+)(\:[0-9]+)?/#', $url.'/', $m))
+        if (preg_match('#^(http(?:s)?)\://([^/\:]+)(\:[0-9]+)?/#', $url .'/', $m))
         {
-            $url = $m[1].'://'.$host.$m[3].'/'.substr($url, strlen($m[0]));
+            $url = $m[1] .'://'. $host.$m[3] .'/'. substr($url, strlen($m[0]));
         }
 
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $url);
         curl_setopt($ch, CURLOPT_HEADER, false);
-        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+        try
+        {
+            # 发现安全模式开启情况会报错
+            curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+        }
+        catch(Exception $e){}
+
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_TIMEOUT_MS, max(HttpCall::$connecttimeout_ms, $timeout));
         curl_setopt($ch, CURLOPT_CONNECTTIMEOUT_MS, HttpCall::$connecttimeout_ms);
@@ -329,7 +343,7 @@ class Core_HttpCall
         curl_setopt($ch, CURLOPT_POSTFIELDS, $vars);
         curl_setopt($ch, CURLOPT_DNS_CACHE_TIMEOUT, 86400);
 
-        if ( preg_match('#^https://#i', $url) )
+        if (preg_match('#^https://#i', $url))
         {
             if (!$port)$port = 443;
             curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
@@ -382,6 +396,10 @@ class Core_HttpCall
             $uri = '/'.ltrim($m[4],'/');     //获取到URI部分
             $h = $m[2];                      //获取到HOST
         }
+        else
+        {
+           throw new Exception('error url: '. $url);
+        }
 
         $fs = $errno = $errstr = $rs = array();
 
@@ -423,7 +441,7 @@ class Core_HttpCall
             . CRLF . $vars;
 
             // 尝试2次
-            for( $i=1 ;$i<3 ;$i++ )
+            for($i=1 ;$i<3 ;$i++)
             {
                 if (isset($fs[$host]))break;
 
@@ -447,7 +465,7 @@ class Core_HttpCall
 
             if ($fs[$host])
             {
-                for($i=0;$i<3;$i++)
+                for($i=0; $i<3; $i++)
                 {
                     # 写入HTTP协议内容
                     if (strlen($str) === fwrite($fs[$host], $str))
@@ -479,7 +497,7 @@ class Core_HttpCall
             }
             fclose($f);
 
-            list($header,$body) = explode("\r\n\r\n", $str, 2);
+            list($header, $body) = explode("\r\n\r\n", $str, 2);
 
             $rs[$host] = $body;
         }

@@ -68,7 +68,7 @@ MyQEE PHP Framework可以支持Windows/Unix服务器环境，可运行于包括A
 
 ``` Nginx
 server {
-    set         $www /home/www/myqee/wwwroot/;
+    set         $www /home/www/myqee/wwwroot;
     root        $www;
     index       index.html index.htm index.php;
     listen      80;
@@ -76,6 +76,8 @@ server {
     server_name www.myqee.com;
     server_name myqee.com;
 
+    # 以下基本不用怎么修改
+    
     location ~* .(css|js)$ {
         if (-f $request_filename) {
             expires 3d;
@@ -101,11 +103,16 @@ server {
     }
 
     location ~ \.php$ {
-        fastcgi_split_path_info ^(.+\.php)(/.+)$;
-        # With php5-fpm:
-        fastcgi_pass unix:/var/run/php5-fpm.sock;
+        fastcgi_pass   127.0.0.1:9000;
         fastcgi_index index.php;
+        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
         include fastcgi_params;
+        
+        # 以下解决用php输出js,css等文件导致出错的问题
+        gzip on;
+        gzip gzip_min_length 1100;
+        gzip_buffers 4 8k;
+        gzip_types text/plain application/x-javascript text/css image;
     }
 }
 ```

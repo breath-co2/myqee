@@ -7,30 +7,42 @@
  * @category   Driver
  * @package    Database
  * @subpackage MySQLI
- * @copyright  Copyright (c) 2008-2013 myqee.com
+ * @copyright  Copyright (c) 2008-2015 myqee.com
  * @license    http://www.myqee.com/license.html
  */
 class Driver_Database_Driver_MySQLI_Result extends Database_Result
 {
-    public function __destruct()
+    protected function release_resource()
     {
         if (is_resource($this->_result))
         {
             mysqli_free_result($this->_result);
         }
+        $this->_result = null;
     }
 
     protected function total_count()
     {
-        $count = @mysqli_num_rows($this->_result);
-        if (!$count>0)$count = 0;
+        if ($this->_result)
+        {
+            $count = @mysqli_num_rows($this->_result);
+            if (!$count>0)$count = 0;
+        }
+        else
+        {
+            $count = count($this->_data);
+        }
 
         return $count;
     }
 
     public function seek($offset)
     {
-        if ( $this->offsetExists($offset) && mysqli_data_seek($this->_result, $offset) )
+        if (isset($this->_data[$offset]))
+        {
+            return true;
+        }
+        elseif ($this->offsetExists($offset) && $this->_result && mysqli_data_seek($this->_result, $offset))
         {
             $this->_current_row = $this->_internal_row = $offset;
 
