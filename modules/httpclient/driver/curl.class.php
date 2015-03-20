@@ -538,7 +538,7 @@ class Module_HttpClient_Driver_Curl
 
                         if ($this->http_data[$done_url]['code'] != 200)
                         {
-                            Core::debug()->warn('URL:'.$done_url.' ERROR,TIME:' . $this->http_data[$done_url]['time'] . ',CODE:' . $this->http_data[$done_url]['code'] );
+                            Core::debug()->error('URL:'.$done_url.' ERROR, TIME:' . $this->http_data[$done_url]['time'] . ',CODE:' . $this->http_data[$done_url]['code'] );
                             $result[$done_url] = false;
                         }
                         else
