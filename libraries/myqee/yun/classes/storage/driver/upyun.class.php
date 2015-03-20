@@ -26,20 +26,19 @@ class Library_MyQEE_Yun_Storage_Driver_UpYun extends Storage_Driver
     public function __construct($config_name = 'default')
     {
         static $run = null;
-        if (null===$run)
+        if (null === $run)
         {
             $this->load_upyun();
 
             if (!class_exists('UpYun', false))
             {
-                throw new Exception(__('Can not fount UpYun SDK'));
+                throw new Exception(__('Can not found UpYun SDK'));
             }
         }
 
         if (is_array($config_name))
         {
             $config = $config_name;
-            $config_name = md5(serialize($config_name));
         }
         else
         {
@@ -87,14 +86,14 @@ class Library_MyQEE_Yun_Storage_Driver_UpYun extends Storage_Driver
 
         if ($rs['code']==404)return null;
 
-        throw new Exception(__('Swift get error, code: :code.', array(':code'=>$rs['code'])));
+        throw new Exception(__('UpYun get error, code: :code.', array(':code'=>$rs['code'])));
     }
 
     /**
      * 存数据
      *
      * @param string/array $key 支持多存
-     * @param $data Value 多存时此项可空
+     * @param string $value 多存时此项可空
      * @return boolean
      */
     public function set($key, $value = null)
@@ -119,7 +118,7 @@ class Library_MyQEE_Yun_Storage_Driver_UpYun extends Storage_Driver
 
         if ($rs['code']>=200 && $rs['code']<300)return true;
 
-        throw new Exception(__('Swift get error, code: :code.', array(':code'=>$rs['code'])));
+        throw new Exception(__('UpYun get error, code: :code.', array(':code'=>$rs['code'])));
     }
 
     /**
@@ -148,7 +147,7 @@ class Library_MyQEE_Yun_Storage_Driver_UpYun extends Storage_Driver
         if ($rs['code']>=200 && $rs['code']<300)return true;
         if ($rs['code']==404)return true;
 
-        throw new Exception(__('Swift get error, code: :code.', array(':code'=>$rs['code'])));
+        throw new Exception(__('UpYun get error, code: :code.', array(':code'=>$rs['code'])));
     }
 
     /**
@@ -177,7 +176,7 @@ class Library_MyQEE_Yun_Storage_Driver_UpYun extends Storage_Driver
         }
         else
         {
-            $prefix = 'default';
+            $this->prefix = 'default';
         }
 
         return $this;
