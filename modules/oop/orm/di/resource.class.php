@@ -11,6 +11,8 @@
  */
 class OOP_ORM_DI_Resource extends OOP_ORM_DI
 {
+    protected $url;
+
     public function check_config()
     {
         if (is_string($this->config))
@@ -88,21 +90,20 @@ class OOP_ORM_DI_Resource extends OOP_ORM_DI
     public function & get_data(OOP_ORM_Data $obj, & $data, & $compiled_data, & $compiled_raw_data)
     {
         # 处理URL变量
-        $url = $this->config['resource'];
-        if (preg_match_all('#{{([a-z0-9_]+)}}#i', $url, $m))foreach($m[1] as $v)
+        $this->url = $this->config['resource'];
+        if (preg_match_all('#{{([a-z0-9_]+)}}#i', $this->url, $m))foreach($m[1] as $v)
         {
-            $url = str_replace('{{'.$v.'}}', $obj->$v, $url);
+            $this->url = str_replace('{{'. $v .'}}', $obj->$v, $this->url);
         }
 
         # 获取缓存
         if (isset($this->config['cache']))
         {
-            $option   = array
-            (
-                'url' => $url,
-            );
-            $cache    = OOP_ORM_DI::_get_cache_instance($this->config['cache']);
-            $key      = OOP_ORM_DI::_get_cache_key($option);
+            /**
+             * @var $cache Cache
+             */
+            list($cache, $key) = $this->get_cache_instance_and_key($obj);
+
             $tmp_data = $cache->get($key);
         }
         else
@@ -111,9 +112,9 @@ class OOP_ORM_DI_Resource extends OOP_ORM_DI
         }
 
         # 获取内容
-        if (false !== $tmp_data)
+        if (null === $tmp_data || false === $tmp_data)
         {
-            $tmp_data = HttpClient::factory()->get($url)->data();
+            $tmp_data = HttpClient::factory()->get($this->url)->data();
             if (false === $tmp_data)return false;
 
             # 处理数据类型
@@ -121,12 +122,12 @@ class OOP_ORM_DI_Resource extends OOP_ORM_DI
             {
                 OOP_ORM_DI::_check_field_type($this->config['field_type'], $tmp_data);
             }
-        }
 
-        # 设置缓存
-        if (isset($this->config['cache']))
-        {
-            $cache->set($key, $tmp_data, isset($this->config['cache']['expired'])?$this->config['cache']['expired']:3600, isset($this->config['cache']['expire_type'])?$this->config['cache']['expire_type']:null);
+            # 设置缓存
+            if (isset($this->config['cache']))
+            {
+                $cache->set($key, $tmp_data, isset($this->config['cache']['expired'])?$this->config['cache']['expired']:3600, isset($this->config['cache']['expire_type'])?$this->config['cache']['expire_type']:null);
+            }
         }
 
         # 处理格式化数据
@@ -155,5 +156,19 @@ class OOP_ORM_DI_Resource extends OOP_ORM_DI
     public function set_data(OOP_ORM_Data $obj, & $data, & $compiled_data, & $compiled_raw_data, $new_value, $has_compiled)
     {
         return false;
+    }
+
+    /**
+     * 返回用于生成cache的key的option
+     *
+     * @param OOP_ORM_Data $obj
+     * @return array
+     */
+    protected function cache_key_option($obj)
+    {
+        return array
+        (
+            'url' => $this->url,
+        );
     }
 }

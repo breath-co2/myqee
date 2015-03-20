@@ -112,7 +112,7 @@ abstract class Module_OOP_ORM_DI
                     $this->config['cache']['config'] = null;
                 }
             }
-            elseif (is_string($this->config['cache']) && false!==strpos(',', $this->config['cache']))
+            elseif (is_string($this->config['cache']) && false !== strpos(',', $this->config['cache']))
             {
                 $opt = explode(',', $this->config['cache']);
                 $this->config['cache'] = array
@@ -298,7 +298,7 @@ abstract class Module_OOP_ORM_DI
                 else
                 {
                     # 序列化成文本进行对比
-                    return serialize($current_compiled_data) !== serialize($current_raw_compiled_data)? true: false;
+                    return serialize($current_compiled_data) !== serialize($current_raw_compiled_data)? true : false;
                 }
             }
             else
@@ -378,7 +378,7 @@ abstract class Module_OOP_ORM_DI
             }
         }
 
-        if (null===$tmp_data && !isset($data[$this->key]) && isset($this->config['is_temp_instance']) && $this->config['is_temp_instance'])
+        if (null === $tmp_data && !isset($data[$this->key]) && isset($this->config['is_temp_instance']) && $this->config['is_temp_instance'])
         {
             # 对于这种情况应该认为不存在此字段
         }
@@ -410,6 +410,94 @@ abstract class Module_OOP_ORM_DI
         return $this->config;
     }
 
+    /**
+     * 删除指定的offset的缓存（如果有）
+     *
+     * @param OOP_ORM_Data $obj
+     * @return bool
+     */
+    public function delete_cache(OOP_ORM_Data $obj)
+    {
+        # 无缓存设置
+        if (!isset($this->config['cache']))return true;
+
+        /**
+         * @var $cache Cache
+         */
+        list($cache, $key) = $this->get_cache_instance_and_key($obj);
+
+        # 清除缓存
+        return $cache->delete($key);
+    }
+
+    /**
+     * 获取缓存数据
+     *
+     * @param OOP_ORM_Data $obj
+     * @param $orm_config
+     * @return array array($cache, $cache_key, $data)
+     */
+    protected function get_cache_data(OOP_ORM_Data $obj)
+    {
+        $config = $this->config();
+
+        if (isset($config['cache']))
+        {
+            list($cache, $cache_key) = $this->get_cache_instance_and_key($obj);
+
+            /**
+             * @var $cache Cache
+             */
+            $data = $cache->get($cache_key);
+
+            if ($data && IS_DEBUG)
+            {
+                Core::debug()->info($cache_key, 'cache_key');
+                Core::debug()->info('found cache '. get_class($obj) .'{PK:'. $obj->pk() .'}->'. $this->key . ($data instanceof OOP_ORM_Data?'. item pk is '. $data->pk() : ''));
+            }
+
+            return array($cache, $cache_key, $data);
+        }
+        else
+        {
+            return array(null, null, null);
+        }
+    }
+
+    /**
+     * 获取缓存实例化对象和当前key
+     *
+     * @param OOP_ORM_Data $obj
+     * @return array array($cache, $cache_key)
+     */
+    protected function get_cache_instance_and_key(OOP_ORM_Data $obj)
+    {
+        $opt = $this->cache_key_option($obj);
+        $key = 'orm_cache.'. $this->class_name .'->'. $this->key .','. md5(json_encode($opt));
+
+        if (IS_DEBUG)
+        {
+            Core::debug()->info($opt, $key);
+        }
+
+        return array
+        (
+            new Cache($this->config['cache']['config']),
+            $key,
+        );
+    }
+
+    /**
+     * 返回用于生成cache的key的option
+     *
+     * @param OOP_ORM_Data $obj
+     * @return array
+     */
+    protected function cache_key_option(OOP_ORM_Data $obj)
+    {
+        return $this->config();
+    }
+
     public static function parse_offset($class_name, $class_vars = null, $expand_key = null)
     {
         if (isset(OOP_ORM_DI::$OFFSET_DI[$class_name]))
@@ -422,7 +510,7 @@ abstract class Module_OOP_ORM_DI
         # 获取当前对象所有变量
         $config = array();
 
-        if (null===$class_vars)
+        if (null === $class_vars)
         {
             /**
              * @var $obj OOP_ORM_Data
@@ -658,13 +746,13 @@ abstract class Module_OOP_ORM_DI
             {
                 if (is_array($v))
                 {
-                    $fun = 'OOP_ORM_DI::_format_action_' . array_shift($v);
+                    $fun = 'OOP_ORM_DI::_format_action_'. array_shift($v);
                     array_unshift($v, $tmp_data);
                     $tmp_data = call_user_func_array($fun, $v);
                 }
                 else
                 {
-                    $fun = '_format_action_' . $v;
+                    $fun = '_format_action_'. $v;
                     $tmp_data = OOP_ORM_DI::$fun($tmp_data);
                 }
             }
@@ -690,13 +778,13 @@ abstract class Module_OOP_ORM_DI
             {
                 if (is_array($v))
                 {
-                    $fun = 'OOP_ORM_DI::_de_format_action_' . array_shift($v);
+                    $fun = 'OOP_ORM_DI::_de_format_action_'. array_shift($v);
                     array_unshift($v, $tmp_data);
                     $tmp_data = call_user_func_array($fun, $v);
                 }
                 else
                 {
-                    $fun = '_de_format_action_' . $v;
+                    $fun = '_de_format_action_'. $v;
                     $tmp_data = OOP_ORM_DI::$fun($tmp_data);
                 }
             }
@@ -846,33 +934,6 @@ abstract class Module_OOP_ORM_DI
     }
 
     /**
-     * 获取一个缓存对象
-     *
-     * @param $config
-     * @return Cache
-     */
-    protected static function _get_cache_instance($config)
-    {
-        return new Cache($config['config']);
-    }
-
-    /**
-     * 根据option获取一个唯一的缓存key
-     *
-     * @param array $option
-     * @return string
-     */
-    protected function _get_cache_key(array $option)
-    {
-        $str = '_orm_cache';
-        foreach($option as $k=>$v)
-        {
-            $str .= "&$k=$v";
-        }
-        return $str;
-    }
-
-    /**
      * 检验数据类型
      *
      * 目前支持处理整形和浮点型数据转换
@@ -886,7 +947,7 @@ abstract class Module_OOP_ORM_DI
         if (preg_match('#^(Int|TinyInt|Bit|SmallInt|MediumInt|BigInt)(?:\(([0-9]+)\))?((:?,| )Unsigned)?$#i', $field_type, $m))
         {
             $type = strtolower($m[1]);
-            if ($m[3] && strtolower($m[3])=='unsigned')
+            if ($m[3] && strtolower($m[3]) === 'unsigned')
             {
                 $type_num = array
                 (
