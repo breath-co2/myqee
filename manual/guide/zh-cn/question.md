@@ -46,11 +46,10 @@ Nginx的设置：
 
 可参考文章：[http://hi.baidu.com/wastorode/item/ec86ade6ac0af7a2c10d75f4](http://hi.baidu.com/wastorode/item/ec86ade6ac0af7a2c10d75f4)
 
-<br>
-<br>
-您可以通过QQ群(531219) 或 [Github Issues](https://github.com/breath-co2/myqee/issues/new) 进行反馈。
 
 ## 当使用 Nginx + php-fpm 方式部署时，静态资源文件（js,css,image等）无法输出，显示位NET:ERR_CONTENT_LENGTH_MISMATCH 错误的解决办法
+
+见我的博客: [http://www.queyang.com/blog/archives/541](http://www.queyang.com/blog/archives/541) 
 
 当静态文件通过php输出时，浏览器会报错，文件、图片无法正确显示，使用 curl 请求时会在最后提示类似 `curl: (18) transfer closed with 56097 bytes remaining to read` 这样的错误。
 
@@ -61,3 +60,8 @@ Nginx的设置：
 `gzip_types text/plain application/x-javascript text/css image;` 
 即可。当然，如果你的php还有可能输出别的类型的文件，那一样要加类型，否则也会报错
 
+
+
+<br>
+<br>
+您可以通过QQ群(531219) 或 [Github Issues](https://github.com/breath-co2/myqee/issues/new) 进行反馈。
