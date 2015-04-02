@@ -159,22 +159,22 @@ abstract class Module_OOP_ORM
     {
         $count_params = count($params);
 
-        if (method_exists($this->driver(), $method))
+        if (method_exists($this->drive(), $method))
         {
             switch ($count_params)
             {
                 case 0 :
-                    return $this->driver()->$method();
+                    return $this->drive()->$method();
                 case 1 :
-                    return $this->driver()->$method($params[0]);
+                    return $this->drive()->$method($params[0]);
                 case 2 :
-                    return $this->driver()->$method($params[0], $params[1]);
+                    return $this->drive()->$method($params[0], $params[1]);
                 case 3 :
-                    return $this->driver()->$method($params[0], $params[1], $params[2]);
+                    return $this->drive()->$method($params[0], $params[1], $params[2]);
                 case 4 :
-                    return $this->driver()->$method($params[0], $params[1], $params[2], $params[3]);
+                    return $this->drive()->$method($params[0], $params[1], $params[2], $params[3]);
                 default :
-                    return call_user_func_array(array($this->driver(), $method), $params);
+                    return call_user_func_array(array($this->drive(), $method), $params);
             }
         }
         elseif (IS_DEBUG)
@@ -266,7 +266,7 @@ abstract class Module_OOP_ORM
      *
      * @return Database|HttpClient
      */
-    abstract public function driver();
+    abstract public function drive();
 
     /**
      * 但会对象
@@ -401,7 +401,7 @@ abstract class Module_OOP_ORM
         $id_fields = $this->get_pk_name();
         if ($id_fields)
         {
-            $this->driver()->where(array_combine(array_values($id_fields), is_array($id) ? $id : explode($this->_pk_value_delimiter, $id)));
+            $this->drive()->where(array_combine(array_values($id_fields), is_array($id) ? $id : explode($this->_pk_value_delimiter, $id)));
             return $this->find(null, $use_master)->current();
         }
         else
@@ -425,7 +425,7 @@ abstract class Module_OOP_ORM
         {
             if (1 === count($id_fields))
             {
-                $this->driver()->in(current($id_fields), $ids);
+                $this->drive()->in(current($id_fields), $ids);
             }
             else
             {
@@ -435,7 +435,7 @@ abstract class Module_OOP_ORM
 
                 foreach($ids as $id)
                 {
-                    $this->driver()->or_where_open()->where(array_combine($id_fields, is_array($id) ? $id : explode($this->_pk_value_delimiter, $id)))->or_where_close();
+                    $this->drive()->or_where_open()->where(array_combine($id_fields, is_array($id) ? $id : explode($this->_pk_value_delimiter, $id)))->or_where_close();
                 }
             }
 
@@ -454,6 +454,6 @@ abstract class Module_OOP_ORM
      */
     public function last_query()
     {
-        return $this->driver()->last_query();
+        return $this->drive()->last_query();
     }
 }

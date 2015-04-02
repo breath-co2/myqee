@@ -6,7 +6,7 @@
  * @author     呼吸二氧化碳 <jonwang@myqee.com>
  * @category   Module
  * @package    Session
- * @copyright  Copyright (c) 2008-2013 myqee.com
+ * @copyright  Copyright (c) 2008-2016 myqee.com
  * @license    http://www.myqee.com/license.html
  */
 class Module_Session
@@ -26,9 +26,9 @@ class Module_Session
     /**
      * Session驱动
      *
-     * @var Session_Driver_Default
+     * @var Session_Drive_Default
      */
-    protected static $driver;
+    protected static $drive;
 
     /**
      * @var Member
@@ -78,22 +78,22 @@ class Module_Session
                 }
             }
 
-            if (isset(Session::$config['driver']) && class_exists('Session_Driver_' . Session::$config['driver'], true))
+            if (isset(Session::$config['drive']) && class_exists('Session_Drive_' . Session::$config['drive'], true))
             {
-                $driver_name = 'Session_Driver_' . Session::$config['driver'];
+                $drive_name = 'Session_Drive_' . Session::$config['drive'];
 
-                if (isset(Session::$config['driver_config']))
+                if (isset(Session::$config['drive_config']))
                 {
-                    Session::$driver = new $driver_name(Session::$config['driver_config']);
+                    Session::$drive = new $drive_name(Session::$config['drive_config']);
                 }
                 else
                 {
-                    Session::$driver = new $driver_name();
+                    Session::$drive = new $drive_name();
                 }
             }
             else
             {
-                Session::$driver = new Session_Driver_Default();
+                Session::$drive = new Session_Drive_Default();
             }
 
             if (!isset(Session::$config['type']) || Session::$config['type']!='url')
@@ -126,7 +126,7 @@ class Module_Session
             # 清理Flash Session
             $this->expire_flash();
 
-            $_SESSION['SID'] = Session::$driver->session_id();
+            $_SESSION['SID'] = Session::$drive->session_id();
 
             # 确保关闭前执行保存
             Core::register_shutdown_function(array('Session', 'write_close'));
@@ -162,11 +162,11 @@ class Module_Session
     /**
      * 获取驱动对象
      *
-     * @return Session_Driver_Default
+     * @return Session_Drive_Default
      */
-    public function driver()
+    public function drive()
     {
-        return Session::$driver;
+        return Session::$drive;
     }
 
     /**
@@ -177,9 +177,9 @@ class Module_Session
     public function destroy()
     {
         $_SESSION = array();
-        Session::$driver->destroy();
+        Session::$drive->destroy();
         Session::$member   = null;
-        Session::$driver   = null;
+        Session::$drive    = null;
         Session::$instance = null;
     }
 
@@ -426,7 +426,7 @@ class Module_Session
 
             Session::write_member_data();
 
-            Session::$driver->write_close();
+            Session::$drive->write_close();
 
             Session::$instance = null;
         }

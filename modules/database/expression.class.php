@@ -6,7 +6,7 @@
  * @category   MyQEE
  * @package    Module
  * @subpackage Database
- * @copyright  Copyright (c) 2008-2013 myqee.com
+ * @copyright  Copyright (c) 2008-2016 myqee.com
  * @license    http://www.myqee.com/license.html
  */
 class Module_Database_Expression

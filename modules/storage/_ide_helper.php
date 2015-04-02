@@ -2,20 +2,20 @@
 exit;
 
 
-class Storage_Driver_Database extends Module_Storage_Driver_Database{}
-class Ex_Storage_Driver_Database extends Module_Storage_Driver_Database{}
+class Storage_Drive_Database extends Module_Storage_Drive_Database{}
+class Ex_Storage_Drive_Database extends Module_Storage_Drive_Database{}
 
-class Storage_Driver_File extends Module_Storage_Driver_File{}
-class Ex_Storage_Driver_File extends Module_Storage_Driver_File{}
+class Storage_Drive_File extends Module_Storage_Drive_File{}
+class Ex_Storage_Drive_File extends Module_Storage_Drive_File{}
 
-class Storage_Driver_Redis extends Module_Storage_Driver_Redis{}
-class Ex_Storage_Driver_Redis extends Module_Storage_Driver_Redis{}
+class Storage_Drive_Redis extends Module_Storage_Drive_Redis{}
+class Ex_Storage_Drive_Redis extends Module_Storage_Drive_Redis{}
 
-class Storage_Driver_Swift extends Module_Storage_Driver_Swift{}
-class Ex_Storage_Driver_Swift extends Module_Storage_Driver_Swift{}
+class Storage_Drive_Swift extends Module_Storage_Drive_Swift{}
+class Ex_Storage_Drive_Swift extends Module_Storage_Drive_Swift{}
 
-abstract class Storage_Driver extends Module_Storage_Driver{}
-abstract class Ex_Storage_Driver extends Module_Storage_Driver{}
+abstract class Storage_Drive extends Module_Storage_Drive{}
+abstract class Ex_Storage_Drive extends Module_Storage_Drive{}
 
 class Storage extends Module_Storage{}
 class Ex_Storage extends Module_Storage{}

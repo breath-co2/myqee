@@ -8,7 +8,7 @@
  * @category   MyQEE
  * @package    System
  * @subpackage Core
- * @copyright  Copyright (c) 2008-2013 myqee.com
+ * @copyright  Copyright (c) 2008-2016 myqee.com
  * @license    http://www.myqee.com/license.html
  */
 
@@ -107,9 +107,9 @@ class Core_Upload
     /**
      * 驱动对象
      *
-     * @var Upload_Driver_Storage
+     * @var Upload_Drive_Storage
      */
-    protected $driver;
+    protected $drive;
 
     /**
      * 错误号
@@ -188,7 +188,7 @@ class Core_Upload
 
 
             // 保存上传文件
-            if ($this->config['driver'] == 'default')
+            if ($this->config['drive'] == 'default')
             {
                 $this->save_to_file();
 
@@ -212,30 +212,30 @@ class Core_Upload
      *
      * 若驱动为普通文件方式，则返回当前对象
      *
-     * @return Upload_Driver_Storage
+     * @return Upload_Drive_Storage
      */
-    public function driver()
+    public function drive()
     {
-        if ($this->config['driver'] == 'default')
+        if ($this->config['drive'] == 'default')
         {
             return $this;
         }
         else
         {
-            if (!$this->driver)
+            if (!$this->drive)
             {
-                $driver = 'Upload_Driver_' . $this->config['driver'];
-                if (!class_exists($driver, true))
+                $drive = 'Upload_Drive_' . $this->config['drive'];
+                if (!class_exists($drive, true))
                 {
-                    throw new Exception(__('Upload class driver :driver not exist.', array(':driver'=>$this->config['driver'])));
+                    throw new Exception(__('Upload class drive :drive not exist.', array(':drive'=>$this->config['drive'])));
                 }
 
-                $this->driver = new $driver($this->config['driver_config']);
+                $this->drive = new $drive($this->config['drive_config']);
             }
 
-            $this->driver;
+            $this->drive;
 
-            return $this->driver;
+            return $this->drive;
         }
     }
 

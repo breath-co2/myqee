@@ -1,0 +1,12 @@
+<?php
+exit;
+
+
+class Database_Drive_PDO_Result extends Drive_Database_Drive_PDO_Result{}
+class Ex_Database_Drive_PDO_Result extends Drive_Database_Drive_PDO_Result{}
+
+class Database_Drive_PDO_Transaction extends Drive_Database_Drive_PDO_Transaction{}
+class Ex_Database_Drive_PDO_Transaction extends Drive_Database_Drive_PDO_Transaction{}
+
+class Database_Drive_PDO extends Drive_Database_Drive_PDO{}
+class Ex_Database_Drive_PDO extends Drive_Database_Drive_PDO{}

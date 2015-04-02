@@ -6,7 +6,7 @@
  * @author     呼吸二氧化碳 <jonwang@myqee.com>
  * @category   Module
  * @package    ORM
- * @copyright  Copyright (c) 2008-2013 myqee.com
+ * @copyright  Copyright (c) 2008-2016 myqee.com
  * @license    http://www.myqee.com/license.html
  */
 class Module_OOP_ORM_Finder_REST extends OOP_ORM
@@ -43,7 +43,7 @@ class Module_OOP_ORM_Finder_REST extends OOP_ORM
     /**
      * @var HttpClient
      */
-    protected $_driver = null;
+    protected $_drive = null;
 
     /**
      * 当设置method后记录默认的method，用于在请求完毕后重置method
@@ -109,24 +109,24 @@ class Module_OOP_ORM_Finder_REST extends OOP_ORM
         {
             if ($this->method=='POST')
             {
-                $rs = (string)$this->driver()->post($url, $this->parse_api_post_data($query));
+                $rs = (string)$this->drive()->post($url, $this->parse_api_post_data($query));
             }
             else if ($this->method=='PUT')
             {
-                $rs = (string)$this->driver()->put($url, $this->parse_api_post_data($query));
+                $rs = (string)$this->drive()->put($url, $this->parse_api_post_data($query));
             }
             else if ($this->method=='DELETE')
             {
-                $rs = (string)$this->driver()->delete($url);
+                $rs = (string)$this->drive()->delete($url);
             }
             else
             {
                 if ($this->method!='GET')
                 {
-                    $this->driver()->method($this->method);
+                    $this->drive()->method($this->method);
                 }
 
-                $rs = (string)$this->driver()->get($url);
+                $rs = (string)$this->drive()->get($url);
             }
         }
         catch (Exception $e)
@@ -205,10 +205,10 @@ class Module_OOP_ORM_Finder_REST extends OOP_ORM
      *
      * @return HttpClient
      */
-    public function driver()
+    public function drive()
     {
-        if (null===$this->_driver)$this->_driver = HttpClient::factory();
-        return $this->_driver;
+        if (null===$this->_drive)$this->_drive = HttpClient::factory();
+        return $this->_drive;
     }
 
 

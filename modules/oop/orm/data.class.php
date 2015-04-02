@@ -6,7 +6,7 @@
  * @author     呼吸二氧化碳 <jonwang@myqee.com>
  * @category   Module
  * @package    ORM
- * @copyright  Copyright (c) 2008-2015 myqee.com
+ * @copyright  Copyright (c) 2008-2016 myqee.com
  * @license    http://www.myqee.com/license.html
  */
 class Module_OOP_ORM_Data
@@ -649,12 +649,12 @@ class Module_OOP_ORM_Data
         }
 
         # 递增或递减数据处理
-        if ($value_increment && method_exists($this->finder()->driver(), 'value_increment'))foreach ($value_increment as $field => $value)
+        if ($value_increment && method_exists($this->finder()->drive(), 'value_increment'))foreach ($value_increment as $field => $value)
         {
             # 如果存在递增或递减的数据
             if (0 !== $value)
             {
-                $this->finder()->driver()->value_increment($field, $value);
+                $this->finder()->drive()->value_increment($field, $value);
                 unset($changed_data[$field]);
             }
         }
@@ -1976,13 +1976,13 @@ class Module_OOP_ORM_Data
 
         OOP_ORM_Data::$FINDERS[$this->_finder] = $finder;
 
-        $driver = $finder->driver();
+        $drive = $finder->drive();
 
-        if ($driver instanceof Database)
+        if ($drive instanceof Database)
         {
-            $this->_is_support_object_field = $driver->driver()->is_support_object_field();
+            $this->_is_support_object_field = $drive->drive()->is_support_object_field();
         }
-        elseif ($driver instanceof HttpClient)
+        elseif ($drive instanceof HttpClient)
         {
             $this->_is_support_object_field = true;
         }

@@ -6,7 +6,7 @@
  * @category   MyQEE
  * @package    Module
  * @subpackage Database
- * @copyright  Copyright (c) 2008-2013 myqee.com
+ * @copyright  Copyright (c) 2008-2016 myqee.com
  * @license    http://www.myqee.com/license.html
  */
 class Module_Database extends Database_QueryBuilder
@@ -75,9 +75,9 @@ class Module_Database extends Database_QueryBuilder
     /**
      * 当前驱动
      *
-     * @var Database_Driver_MySQLI
+     * @var Database_Drive_MySQLI
      */
-    protected $driver;
+    protected $drive;
 
     /**
      * 数据库连接对象
@@ -194,16 +194,16 @@ class Module_Database extends Database_QueryBuilder
             }
         }
 
-        $driver = $this->config['type'];
-        if (!$driver)
+        $drive = $this->config['type'];
+        if (!$drive)
         {
-            $driver = 'MySQL';
+            $drive = 'MySQL';
         }
-        $driver = 'Database_Driver_' . $driver;
+        $drive = 'Database_Drive_' . $drive;
 
-        if (!class_exists($driver, true))
+        if (!class_exists($drive, true))
         {
-            throw new Exception('Database Driver:' . $driver . ' not found.');
+            throw new Exception('Database Drive:' . $drive . ' not found.');
         }
 
         if (!isset($this->config['connection']))
@@ -217,7 +217,7 @@ class Module_Database extends Database_QueryBuilder
         }
 
         # 当前驱动
-        $this->driver = new $driver($this->config);
+        $this->drive = new $drive($this->config);
 
         parent::__construct();
 
@@ -233,11 +233,11 @@ class Module_Database extends Database_QueryBuilder
     /**
      * 获取驱动引擎对象
      *
-     * @return Database_Driver_MySQLI
+     * @return Database_Drive_MySQLI
      */
-    public function driver()
+    public function drive()
     {
-        return $this->driver;
+        return $this->drive;
     }
 
     /**
@@ -255,9 +255,9 @@ class Module_Database extends Database_QueryBuilder
      */
     public function close_connect()
     {
-        if ($this->driver)
+        if ($this->drive)
         {
-            $this->driver->close_connect();
+            $this->drive->close_connect();
         }
     }
 
@@ -286,7 +286,7 @@ class Module_Database extends Database_QueryBuilder
      * @param array $input_parameters
      * @param bool $as_object
      * @param null $use_master
-     * @return Database_Driver_MySQLI_Result
+     * @return Database_Drive_MySQLI_Result
      */
     public function execute(array $input_parameters = array(), $as_object = false, $use_master = null)
     {
@@ -302,7 +302,7 @@ class Module_Database extends Database_QueryBuilder
 
         $time = $this->_start_slow_query();
 
-        $rs = $this->driver->execute($this->_statement, $input_parameters, $as_object, $use_master);
+        $rs = $this->drive->execute($this->_statement, $input_parameters, $as_object, $use_master);
 
         if (false!==$time)$this->_record_slow_query($time);
 
@@ -319,7 +319,7 @@ class Module_Database extends Database_QueryBuilder
      * @param string $sql
      * @param boolean $as_object 返回对象名称 默认false，即返回数组
      * @param boolean $use_master 是否使用主数据库，不设置则自动判断,对更新的SQL无效
-     * @return Database_Driver_MySQLI_Result
+     * @return Database_Drive_MySQLI_Result
      */
     public function query($sql, $as_object = false, $use_master = null)
     {
@@ -330,7 +330,7 @@ class Module_Database extends Database_QueryBuilder
 
         $time = $this->_start_slow_query();
 
-        $rs = $this->driver->query($sql, $as_object, $use_master);
+        $rs = $this->drive->query($sql, $as_object, $use_master);
 
         if (false!==$time)$this->_record_slow_query($time);
 
@@ -362,10 +362,10 @@ class Module_Database extends Database_QueryBuilder
             $use_master = true;
         }
         # 先连接数据库，因为在compile时需要用到mysql_real_escape_string,mysqli_real_escape_string方法
-        $this->driver->connect($use_master);
+        $this->drive->connect($use_master);
 
         # 获取查询SQL
-        $sql = $this->driver->compile($this->_builder, $type);
+        $sql = $this->drive->compile($this->_builder, $type);
 
         # 重置QueryBulider
         $this->reset();
@@ -378,7 +378,7 @@ class Module_Database extends Database_QueryBuilder
      *
      * @param boolean $as_object 返回对象名称 默认false，即返回数组
      * @param boolean $use_master 是否使用主数据库，不设置则自动判断
-     * @return Database_Driver_MySQLI_Result
+     * @return Database_Drive_MySQLI_Result
      */
     public function get($as_object = false, $use_master = null)
     {
@@ -404,7 +404,7 @@ class Module_Database extends Database_QueryBuilder
      */
     public function last_query()
     {
-        return $this->driver->last_query();
+        return $this->drive->last_query();
     }
 
     /**
@@ -558,7 +558,7 @@ class Module_Database extends Database_QueryBuilder
      */
     public function transaction()
     {
-        return $this->driver->transaction();
+        return $this->drive->transaction();
     }
 
     /**
@@ -596,9 +596,9 @@ class Module_Database extends Database_QueryBuilder
      */
     public function create_database($database, $charset = null, $collate=null)
     {
-        if (method_exists($this->driver, 'create_database'))
+        if (method_exists($this->drive, 'create_database'))
         {
-            return $this->driver->create_database($database, $charset, $collate);
+            return $this->drive->create_database($database, $charset, $collate);
         }
         else
         {
@@ -644,7 +644,7 @@ class Module_Database extends Database_QueryBuilder
             (
                 $start_time,
                 $use_time,
-                $this->driver->last_query(),
+                $this->drive->last_query(),
             );
         }
     }

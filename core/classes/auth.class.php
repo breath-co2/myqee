@@ -7,7 +7,7 @@
  * @category   MyQEE
  * @package    System
  * @subpackage Core
- * @copyright  Copyright (c) 2008-2013 myqee.com
+ * @copyright  Copyright (c) 2008-2016 myqee.com
  * @license    http://www.myqee.com/license.html
  */
 class Core_Auth
@@ -17,14 +17,14 @@ class Core_Auth
      *
      * @var string
      */
-    const DRIVER_DATABASE = 'Database';
+    const DRIVE_DATABASE = 'Database';
 
     /**
      * 文件类型
      *
      * @var string
      */
-    const DRIVER_FILE = 'File';
+    const DRIVE_FILE = 'File';
 
     /**
      * 默认配置名
@@ -55,7 +55,7 @@ class Core_Auth
     /**
      * @return Auth
      */
-    public static function instance($config_name=null)
+    public static function instance($config_name = null)
     {
         if (null===$config_name)
         {
@@ -68,7 +68,7 @@ class Core_Auth
         }
         else
         {
-            $i_name = '.config_'.md5(serialize($config_name));
+            $i_name = '.config_'. md5(serialize($config_name));
         }
 
         if (!isset(Auth::$instances[$i_name]))
@@ -125,14 +125,14 @@ class Core_Auth
      */
     public function get_member_by_username($username)
     {
-        if (!$this->config['driver'] || $this->config['driver']==Auth::DRIVER_DATABASE)
+        if (!$this->config['drive'] || $this->config['drive'] === Auth::DRIVE_DATABASE)
         {
             # 数据库类型
             $tables         = $this->config['tablename'];
             $user_field     = $this->config['username_field']?$this->config['username_field']:'username';
             $data           = Database::instance($this->config['database'])->from($tables)->where($user_field, $username)->limit(1)->get()->current();
         }
-        elseif ($this->config['driver']==Auth::DRIVER_FILE)
+        elseif ($this->config['drive'] === Auth::DRIVE_FILE)
         {
             $file = DIR_DATA . 'auth-data-of-project-' . Core::$project . '.json';
             if (is_file($file))
@@ -151,6 +151,10 @@ class Core_Auth
             {
                 $data = array();
             }
+        }
+        else
+        {
+            $data = null;
         }
 
         if ($data)

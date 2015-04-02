@@ -6,7 +6,7 @@
  * @category   Core
  * @package    Classes
  * @subpackage Database
- * @copyright  Copyright (c) 2008-2013 myqee.com
+ * @copyright  Copyright (c) 2008-2016 myqee.com
  * @license    http://www.myqee.com/license.html
  */
 abstract class Core_I18n

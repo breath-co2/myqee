@@ -6,7 +6,7 @@
  * @author     呼吸二氧化碳 <jonwang@myqee.com>
  * @category   Module
  * @package    ORM
- * @copyright  Copyright (c) 2008-2015 myqee.com
+ * @copyright  Copyright (c) 2008-2016 myqee.com
  * @license    http://www.myqee.com/license.html
  */
 class OOP_ORM_DI_ORM extends OOP_ORM_DI
@@ -623,10 +623,10 @@ class OOP_ORM_DI_ORM extends OOP_ORM_DI
         if (isset($config['orm']['cache']))
         {
             $config['cache'] = $config['orm']['cache'];
-            if (isset($config['cache']['driver_config']))
+            if (isset($config['cache']['drive_config']))
             {
-                $config['cache']['config'] = $config['cache']['driver_config'];
-                unset($config['cache']['driver_config']);
+                $config['cache']['config'] = $config['cache']['drive_config'];
+                unset($config['cache']['drive_config']);
             }
         }
 

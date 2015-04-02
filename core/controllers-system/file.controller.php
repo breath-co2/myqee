@@ -8,7 +8,7 @@
  * @author     呼吸二氧化碳 <jonwang@myqee.com>
  * @category   Core
  * @package    Controller
- * @copyright  Copyright (c) 2008-2013 myqee.com
+ * @copyright  Copyright (c) 2008-2016 myqee.com
  * @license    http://www.myqee.com/license.html
  */
 class Core_Controller_File extends Controller
