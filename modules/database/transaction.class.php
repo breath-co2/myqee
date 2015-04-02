@@ -7,7 +7,7 @@
  * @category   MyQEE
  * @package    Module
  * @subpackage Database
- * @copyright  Copyright (c) 2008-2013 myqee.com
+ * @copyright  Copyright (c) 2008-2016 myqee.com
  * @license    http://www.myqee.com/license.html
  */
 abstract class Module_Database_Transaction
@@ -21,13 +21,13 @@ abstract class Module_Database_Transaction
 
     /**
      * 数据库驱动
-     * @var Database_Driver_MySQLI
+     * @var Database_Drive_MySQLI
      */
-    protected $db_driver;
+    protected $db_drive;
 
-    public function __construct($db_driver)
+    public function __construct($db_drive)
     {
-        $this->db_driver = $db_driver;
+        $this->db_drive = $db_drive;
     }
 
     /**
@@ -65,7 +65,7 @@ abstract class Module_Database_Transaction
     {
         try
         {
-            if ( $this->db_driver->query($sql, null, true) )
+            if ( $this->db_drive->query($sql, null, true) )
             {
                 $status = true;
             }

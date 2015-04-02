@@ -17,7 +17,7 @@
  *
  * //根据起点与终点数据查询自驾车路线信息
  * $drive_route_arr = array('begin_coordinate'=>'116.317245,39.981437','end_coordinate'=>'116.328422,40.077796');
- * $drive_route = $SaeLocationObj->getDriveRoute($drive_route_arr);
+ * $drive_route = $SaeLocationObj->getDriveoute($drive_route_arr);
  * echo 'drive_rote: ';
  * print_r($drive_route);
  * echo '</br>';
@@ -117,7 +117,7 @@ class SaeLocation extends SaeObject {
      * @return array|bool 成功以json格式返回查询结果，失败返回false.
      * @author liuxin
      */
-    public function getDriveRoute($post) {
+    public function getDriveoute($post) {
         if(empty($post)) {
             $this->set_error(-2, $this->_errmsgs[-2]);
             return false;

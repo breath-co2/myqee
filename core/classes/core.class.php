@@ -85,7 +85,7 @@ function ORM($orm_name, $database = null)
  * @category   MyQEE
  * @package    System
  * @subpackage Core
- * @copyright  Copyright (c) 2008-2013 myqee.com
+ * @copyright  Copyright (c) 2008-2016 myqee.com
  * @license    http://www.myqee.com/license.html
  */
 abstract class Core_Core extends Bootstrap
@@ -1554,9 +1554,9 @@ abstract class Core_Core extends Bootstrap
         {
             $file = $l . './modules/' . $r . substr($file, strlen(DIR_MODULE));
         }
-        elseif (strpos($file, DIR_DRIVER) === 0)
+        elseif (strpos($file, DIR_DRIVE) === 0)
         {
-            $file = $l . './drivers/' . $r . substr($file, strlen(DIR_DRIVER));
+            $file = $l . './drives/' . $r . substr($file, strlen(DIR_DRIVE));
         }
         elseif (strpos($file, DIR_PROJECT) === 0)
         {
@@ -2256,9 +2256,9 @@ abstract class Core_Core extends Bootstrap
      * 增加执行Core::close_all_connect()时会去关闭的类
      *
      *     Core::add_close_connect_class('Database','close_all_connect');
-     *     Core::add_close_connect_class('Cache_Driver_Memcache');
+     *     Core::add_close_connect_class('Cache_Drive_Memcache');
      *     Core::add_close_connect_class('TestClass','close');
-     *     //当执行 Core::close_all_connect() 时会调用 Database::close_all_connect() 和 Cache_Driver_Memcache::close_all_connect() 和 TestClass::close() 方法
+     *     //当执行 Core::close_all_connect() 时会调用 Database::close_all_connect() 和 Cache_Drive_Memcache::close_all_connect() 和 TestClass::close() 方法
      *
      * @param string $class_name
      * @param string $fun

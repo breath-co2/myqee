@@ -1,0 +1,12 @@
+<?php
+exit;
+
+
+class Database_Drive_MySQLI_Result extends Drive_Database_Drive_MySQLI_Result{}
+class Ex_Database_Drive_MySQLI_Result extends Drive_Database_Drive_MySQLI_Result{}
+
+class Database_Drive_MySQLI_Transaction extends Drive_Database_Drive_MySQLI_Transaction{}
+class Ex_Database_Drive_MySQLI_Transaction extends Drive_Database_Drive_MySQLI_Transaction{}
+
+class Database_Drive_MySQLI extends Drive_Database_Drive_MySQLI{}
+class Ex_Database_Drive_MySQLI extends Drive_Database_Drive_MySQLI{}

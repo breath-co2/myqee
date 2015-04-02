@@ -6,7 +6,7 @@
  * @author     呼吸二氧化碳 <jonwang@myqee.com>
  * @category   Module
  * @package    ORM
- * @copyright  Copyright (c) 2008-2013 myqee.com
+ * @copyright  Copyright (c) 2008-2016 myqee.com
  * @license    http://www.myqee.com/license.html
  */
 abstract class Module_OOP_ORM
@@ -153,7 +153,7 @@ abstract class Module_OOP_ORM
         return $orm;
     }
 
-    abstract public function driver();
+    abstract public function drive();
 
     abstract public function find();
 
@@ -232,7 +232,7 @@ abstract class Module_OOP_ORM
         $idfield = $this->id_field_name();
         if ($idfield)
         {
-            $this->driver()->where($idfield, $id);
+            $this->drive()->where($idfield, $id);
             return $this->find(null, $use_master)->current();
         }
         else
@@ -253,7 +253,7 @@ abstract class Module_OOP_ORM
 
         if ($idfield)
         {
-            $this->driver()->in($idfield, $ids);
+            $this->drive()->in($idfield, $ids);
 
             return $this->find(null, $use_master);
         }
