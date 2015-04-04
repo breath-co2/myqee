@@ -2440,7 +2440,7 @@ abstract class Core_Core extends Bootstrap
  * @category   Core
  * @package    Classes
  * @subpackage Core
- * @copyright  Copyright (c) 2008-2013 myqee.com
+ * @copyright  Copyright (c) 2008-2016 myqee.com
  * @license    http://www.myqee.com/license.html
  */
 class __NoDebug
