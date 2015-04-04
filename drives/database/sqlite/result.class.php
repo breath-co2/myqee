@@ -7,7 +7,7 @@
  * @category   Drive
  * @package    Database
  * @subpackage SQLite
- * @copyright  Copyright (c) 2008-2015 myqee.com
+ * @copyright  Copyright (c) 2008-2016 myqee.com
  * @license    http://www.myqee.com/license.html
  */
 class Drive_Database_Drive_SQLite_Result extends Database_Result

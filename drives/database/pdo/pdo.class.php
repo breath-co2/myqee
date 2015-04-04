@@ -7,7 +7,7 @@
  * @category   Drive
  * @package    Database
  * @subpackage PDO
- * @copyright  Copyright (c) 2008-2015 myqee.com
+ * @copyright  Copyright (c) 2008-2016 myqee.com
  * @license    http://www.myqee.com/license.html
  */
 class Drive_Database_Drive_PDO extends Database_Drive
