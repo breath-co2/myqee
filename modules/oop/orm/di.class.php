@@ -689,7 +689,7 @@ abstract class Module_OOP_ORM_DI
      */
     public static function get_key_by_field_name($class_name, $field_name)
     {
-        if (null===$field_name)return null;
+        if (null === $field_name)return null;
 
         if (isset(OOP_ORM_DI::$OFFSET_DI[$class_name]))
         {
@@ -862,7 +862,7 @@ abstract class Module_OOP_ORM_DI
     protected static function _format_action_implode($data, $exp_str = ',', $is_add_both_str = false)
     {
         $v = (string)implode($exp_str, $data);
-        if ($v==='')
+        if ($v === '')
         {
             return '';
         }
@@ -975,11 +975,11 @@ abstract class Module_OOP_ORM_DI
             $data = (int)$data;
             $num = $type_num[$type];
 
-            if ($data<$num[0])
+            if ($data < $num[0])
             {
                 $data = $num[0];
             }
-            elseif ($data>$num[1])
+            elseif ($data > $num[1])
             {
                 $data = $num[1];
             }

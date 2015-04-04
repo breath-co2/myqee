@@ -316,7 +316,7 @@ class Module_OOP_ORM_Result implements Iterator, ArrayAccess, Serializable, Coun
      */
     public function prev()
     {
-        if ($this->offset>0)
+        if ($this->offset > 0)
         {
             $this->offset--;
         }
@@ -549,7 +549,7 @@ class Module_OOP_ORM_Result implements Iterator, ArrayAccess, Serializable, Coun
 
         # 移除指定对象
         $key = array_search($obj, OOP_ORM_Result::$GROUP_DATA[$group_id], true);
-        if (false!==$key)
+        if (false !== $key)
         {
             unset(OOP_ORM_Result::$GROUP_DATA[$group_id][$key]);
 

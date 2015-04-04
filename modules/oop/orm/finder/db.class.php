@@ -33,12 +33,12 @@ class Module_OOP_ORM_Finder_DB extends OOP_ORM
 
     function __construct($table_name = null, $database = null)
     {
-        if (null!==$table_name)
+        if (null !== $table_name)
         {
             $this->tablename = $table_name;
         }
 
-        if (null!==$database)
+        if (null !== $database)
         {
             $this->database = $database;
         }
@@ -82,11 +82,11 @@ class Module_OOP_ORM_Finder_DB extends OOP_ORM
             $not_need_find = false;//$this->_get_id_field_cache_data($builder, $cache_obj);
             unset($builder);
 
-            if (false===$not_need_find)
+            if (false === $not_need_find)
             {
                 $rs = $this->drive()->get(false, $use_master);
 
-                if (null!==$cache_obj)
+                if (null !== $cache_obj)
                 {
                     $rs += $cache_obj;
                 }
@@ -197,7 +197,7 @@ class Module_OOP_ORM_Finder_DB extends OOP_ORM
 //            if ($field_name==$this->pk_key_name())
 //            {
 //                $value = $builder['where'][0]['AND'][2];
-////todo                $id_data = OOP_ORM_Data::id_field_cache_data($this->get_orm_name('Data'), $value);
+////                $id_data = OOP_ORM_Data::id_field_cache_data($this->get_orm_name('Data'), $value);
 //                if ($id_data)
 //                {
 //                    # 获取到数据
@@ -243,7 +243,7 @@ class Module_OOP_ORM_Finder_DB extends OOP_ORM
      */
     public function drive()
     {
-        if (null===$this->_database_instance)
+        if (null === $this->_database_instance)
         {
             $this->_database_instance = new Database($this->database);
         }

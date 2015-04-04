@@ -31,9 +31,9 @@ class OOP_ORM_DI_Virtual extends OOP_ORM_DI
                 $parent = array_shift($fields);
                 $this->config = array
                 (
-                    'is_virtual' => true,
-                    'parent_offset'    => $parent,
-                    'sub_offsets'      => $fields,
+                    'is_virtual'    => true,
+                    'parent_offset' => $parent,
+                    'sub_offsets'   => $fields,
                 );
             }
             else
@@ -48,18 +48,18 @@ class OOP_ORM_DI_Virtual extends OOP_ORM_DI
             $this->config['is_virtual'] = true;
             if (!$this->config['parent_offset'] || !$this->config['sub_offsets'])
             {
-                throw new Exception('class: '. $this->class_name. ', key: '.$this->key .' 设置参数缺失');
+                throw new Exception('class: '. $this->class_name .', key: '. $this->key .' 设置参数缺失');
             }
         }
         else
         {
-            throw new Exception('class: '. $this->class_name. ', key: '.$this->key .' 不支持的类型');
+            throw new Exception('class: '. $this->class_name .', key: '. $this->key .' 不支持的类型');
         }
     }
 
     protected function format_config()
     {
-
+        // do nothing
     }
 
     /**

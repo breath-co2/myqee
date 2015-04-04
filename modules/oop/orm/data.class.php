@@ -399,7 +399,6 @@ class Module_OOP_ORM_Data
         # 已经被unset
         if (isset($this->_unset_key[$key]))return null;
 
-//        if ($key=='blog_id'||$key=='hits')return $this->_get_field_parse_obj($key);
         return $this->_get_di_by_key($key)->get_data($this, $this->_data, $this->_compiled_data, $this->_raw_compiled_data);
 
         /*

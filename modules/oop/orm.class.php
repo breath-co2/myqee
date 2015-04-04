@@ -192,15 +192,15 @@ abstract class Module_OOP_ORM
     public function get_orm_name($type)
     {
         $type = strtolower($type);
-        if ($type=='data' && $this->_orm_name_data)
+        if ($type === 'data' && $this->_orm_name_data)
         {
             return $this->_orm_name_data;
         }
-        elseif($type=='result' && $this->_orm_name_result)
+        elseif($type === 'result' && $this->_orm_name_result)
         {
             return $this->_orm_name_result;
         }
-        elseif($type=='index' && $this->_orm_name_index)
+        elseif($type === 'index' && $this->_orm_name_index)
         {
             return $this->_orm_name_index;
         }

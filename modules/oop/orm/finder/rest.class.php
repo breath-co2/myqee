@@ -54,7 +54,7 @@ class Module_OOP_ORM_Finder_REST extends OOP_ORM
 
     function __construct($api_url = null)
     {
-        if (null!==$api_url)
+        if (null !== $api_url)
         {
             $this->api_url = $api_url;
         }
@@ -77,9 +77,9 @@ class Module_OOP_ORM_Finder_REST extends OOP_ORM
      */
     public function method($method = null)
     {
-        if (null===$method)return $this->method;
+        if (null === $method)return $this->method;
 
-        if (null===$this->_default_method)
+        if (null === $this->_default_method)
         {
             $this->_default_method = $this->method;
         }
@@ -107,21 +107,21 @@ class Module_OOP_ORM_Finder_REST extends OOP_ORM
 
         try
         {
-            if ($this->method=='POST')
+            if ($this->method === 'POST')
             {
                 $rs = (string)$this->drive()->post($url, $this->parse_api_post_data($query));
             }
-            else if ($this->method=='PUT')
+            else if ($this->method === 'PUT')
             {
                 $rs = (string)$this->drive()->put($url, $this->parse_api_post_data($query));
             }
-            else if ($this->method=='DELETE')
+            else if ($this->method === 'DELETE')
             {
                 $rs = (string)$this->drive()->delete($url);
             }
             else
             {
-                if ($this->method!='GET')
+                if ($this->method !== 'GET')
                 {
                     $this->drive()->method($this->method);
                 }
@@ -165,7 +165,7 @@ class Module_OOP_ORM_Finder_REST extends OOP_ORM
 
             $url .= (strpos($this->api_url, '?') === false ? '?' : '&') . $query;
         }
-        else if ($this->method!='POST' && $this->method!='PUT')
+        else if ($this->method !== 'POST' && $this->method !== 'PUT')
         {
             $url .= (strpos($this->api_url, '?') === false ? '?' : '&') . http_build_query($this->arguments, '', '&');
         }
@@ -207,7 +207,8 @@ class Module_OOP_ORM_Finder_REST extends OOP_ORM
      */
     public function drive()
     {
-        if (null===$this->_drive)$this->_drive = HttpClient::factory();
+        if (null === $this->_drive)$this->_drive = HttpClient::factory();
+
         return $this->_drive;
     }
 
@@ -281,7 +282,7 @@ class Module_OOP_ORM_Finder_REST extends OOP_ORM
      * @param string $data
      * @return array
      */
-    protected function parse_result_data(&$data)
+    protected function parse_result_data(& $data)
     {
         $data = @json_decode($data, true);
     }
