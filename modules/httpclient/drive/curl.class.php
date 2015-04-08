@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Wget Curl驱动核心
+ * HttpClient Curl驱动核心
  *
  * @author     呼吸二氧化碳 <jonwang@myqee.com>
  * @category   Module
@@ -126,7 +126,7 @@ class Module_HttpClient_Drive_Curl
      */
     public function set_option($key, $value)
     {
-        if ( $key===CURLOPT_HTTPHEADER )
+        if ($key === CURLOPT_HTTPHEADER)
         {
             $this->header = array_merge($this->header, $value);
         }
@@ -143,7 +143,7 @@ class Module_HttpClient_Drive_Curl
      * @param int $num
      * @return HttpClient_Drive_Curl
      */
-    public function set_multi_max_num($num=0)
+    public function set_multi_max_num($num = 0)
     {
         $this->multi_exec_num = (int)$num;
         return $this;
@@ -158,7 +158,7 @@ class Module_HttpClient_Drive_Curl
      */
     public function add_file($file_name, $name)
     {
-        $this->files[$name] = '@'.$file_name;
+        $this->files[$name] = '@'. $file_name;
         return $this;
     }
 
@@ -172,7 +172,7 @@ class Module_HttpClient_Drive_Curl
      */
     public function method($method = null)
     {
-        if (null===$method)return $this->method;
+        if (null === $method)return $this->method;
 
         $this->method = strtoupper($method);
 
@@ -182,19 +182,19 @@ class Module_HttpClient_Drive_Curl
     /**
      * 用POST方式提交，支持多个URL
      *
-     *   $urls = array
-     *   (
-     *     'http://www.baidu.com/',
-     *     'http://mytest.com/url',
-     *     'http://www.abc.com/post',
-     *   );
-     *   $data = array
-     *   (
-     *      array('k1'=>'v1','k2'=>'v2'),
-     *      array('a'=>1,'b'=>2),
-     *      'aa=1&bb=3&cc=3',
-     *   );
-     *   HttpClient::factory()->post($url,$data);
+     *    $urls = array
+     *    (
+     *      'http://www.baidu.com/',
+     *      'http://mytest.com/url',
+     *      'http://www.abc.com/post',
+     *    );
+     *    $data = array
+     *    (
+     *       array('k1'=>'v1','k2'=>'v2'),
+     *       array('a'=>1,'b'=>2),
+     *       'aa=1&bb=3&cc=3',
+     *    );
+     *    HttpClient::factory()->post($url, $data);
      *
      * @param $url
      * @param string/array $vars
@@ -215,6 +215,7 @@ class Module_HttpClient_Drive_Curl
                 $vars
             );
         }
+
         $my_vars = array();
         foreach ((array)$url as $k=>$u)
         {
@@ -261,7 +262,7 @@ class Module_HttpClient_Drive_Curl
      */
     public function get($url, $timeout = 10)
     {
-        if ( is_array($url) )
+        if (is_array($url))
         {
             $get_one = false;
             $urls    = $url;
@@ -272,15 +273,15 @@ class Module_HttpClient_Drive_Curl
             $urls    = array($url);
         }
 
-        if ($this->method=='GET')
+        if ($this->method === 'GET')
         {
             // GET 方式不需要处理
         }
-        else if ($this->method=='POST')
+        else if ($this->method === 'POST')
         {
             $this->set_option(CURLOPT_POST, true);
         }
-        else if ($this->method=='PUT')
+        else if ($this->method === 'PUT')
         {
             $this->set_option(CURLOPT_PUT, true);
         }
@@ -356,7 +357,7 @@ class Module_HttpClient_Drive_Curl
      * @param $timeout
      * @return string, false on failure
      */
-    public function delete($url, $vars, $timeout = 10)
+    public function delete($url, $timeout = 10)
     {
         $this->method('DELETE');
         $this->get($url, $timeout);
