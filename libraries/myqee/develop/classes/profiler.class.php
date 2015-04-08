@@ -23,7 +23,7 @@ class Library_MyQEE_Develop_Profiler
      * 获取实例化对象
      * @return Profiler
      */
-    public static function &instance($type = 'default')
+    public static function & instance($type = 'default')
     {
         if (!isset(Profiler::$instances[$type]))
         {
@@ -48,8 +48,8 @@ class Library_MyQEE_Develop_Profiler
     /**
      * Starts a new benchmark and returns a unique token.
      *
-     * @param   string  group name
-     * @param   string  benchmark name
+     * @param   string $group group name
+     * @param   string $name benchmark name
      * @return  Profiler
      */
     public function start($group, $name)
@@ -69,8 +69,8 @@ class Library_MyQEE_Develop_Profiler
             'start_memory' => memory_get_usage(),
             // Set the stop keys without values
             'stop_time'    => false,
-            'stop_memory'  => false
-       );
+            'stop_memory'  => false,
+        );
 
         $this->token = $token;
 
@@ -80,15 +80,17 @@ class Library_MyQEE_Develop_Profiler
     /**
      * Stops a benchmark.
      *
-     * @param   string  token
+     * @param   string $data token
      * @return  Profiler
      */
     public function stop($data = null)
     {
         if (!$this->is_open())return $this;
         // Stop the benchmark
-        Profiler::$_marks[$this->token]['stop_time'] = microtime(true);
+        Profiler::$_marks[$this->token]['stop_time']   = microtime(true);
         Profiler::$_marks[$this->token]['stop_memory'] = memory_get_usage();
+        Profiler::$_marks[$this->token]['file_count']  = count(get_included_files());
+
         if ($data !== null)
         {
             if (IS_CLI)
@@ -98,10 +100,10 @@ class Library_MyQEE_Develop_Profiler
                 $strlen = $maxlen + 70;
 
                 echo "\x1b[1;32;44m";
-                echo "\n" . str_pad(Profiler::$_marks[$this->token]['group'] . ' - ' . Profiler::$_marks[$this->token]['name'], $strlen, '-', STR_PAD_BOTH);
+                echo "\n" . str_pad(Profiler::$_marks[$this->token]['group'] .' - '. Profiler::$_marks[$this->token]['name'], $strlen, '-', STR_PAD_BOTH);
                 $str = "\x1b[36m";
                 $str .= "\nTime:\x1b[33m";
-                $str .= number_format($mydata[0], 6) ."s	";
+                $str .= number_format($mydata[0], 6) ."s    ";
 
                 $str .= "\x1b[36mMemory:\x1b[33m";
                 $str .= number_format($mydata[1] / 1024, 4) .'kb';
@@ -138,7 +140,6 @@ class Library_MyQEE_Develop_Profiler
     /**
      * Deletes a benchmark.
      *
-     * @param   string  token
      * @return  void
      */
     public function delete()
@@ -189,18 +190,18 @@ class Library_MyQEE_Develop_Profiler
             Profiler::$open_type = $type;
         }
         $run      = true;
-        $profiler = Profiler::instance()->start('Core', 'System SetUp');
+        $profiler = Profiler::instance()->start('Core', 'PHP Framework Start');
 
         Profiler::$_marks[$profiler->get_token()] = array
         (
             'group'        => 'Core',
-            'name'         => 'System SetUp',
+            'name'         => 'PHP Framework Start',
             // Start the benchmark
             'start_time'   => START_TIME,
             'start_memory' => START_MEMORY,
             // Set the stop keys without values
             'stop_time'    => false,
-            'stop_memory'  => false
+            'stop_memory'  => false,
        );
         $profiler->stop();
 
@@ -235,6 +236,22 @@ class Library_MyQEE_Develop_Profiler
         }
 
         return $groups;
+    }
+
+    /**
+     * 返回框架调用信息
+     *
+     * @return array
+     */
+    public static function core_system()
+    {
+        $groups = self::groups();
+        $token  = $groups['Core']['PHP Framework Start'];
+        $rs     = Profiler::stats($token);
+
+        $rs['file_count'] = Profiler::$_marks[$token[0]]['file_count'];
+
+        return $rs;
     }
 
     /**
@@ -310,18 +327,18 @@ class Library_MyQEE_Develop_Profiler
 
         return array
         (
-            'min'     => $min,
-            'max'     => $max,
-            'total'   => $total,
-            'average' => $average
+            'min'        => $min,
+            'max'        => $max,
+            'total'      => $total,
+            'average'    => $average,
         );
     }
 
     /**
      * Gets the total execution time and memory usage of a benchmark as a list.
      *
-     * @param   string  token
-     * @return  array   execution time, memory
+     * @param   string $token token
+     * @return  array execution time, memory
      */
     public static function total($token)
     {
@@ -429,6 +446,8 @@ class Library_MyQEE_Develop_Profiler
         // Do NOT cache these, they are specific to the current request only
         $stats['current']['time']   = $time;
         $stats['current']['memory'] = $memory;
+
+        $stats['file_count'] = count(get_included_files());
 
         // Return the total application run time and memory usage
         return $stats;

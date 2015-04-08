@@ -60,30 +60,30 @@ document.getElementById('expction_div_style').innerHTML = '<style type="text/css
 <?php foreach (ErrException::trace($trace) as $i => $step): ?>
 <li>
 <p>
-	<span class="file">
-		<?php if ($step['file']): $source_id = $error_id.'source'.$i; ?>
-			<a href="#<?php echo $source_id ?>" onclick="return _expcption_mqggle('<?php echo $source_id ?>')"><?php echo Core::debug_path($step['file'],'#a00') ?> [ <?php echo $step['line'] ?> ]</a>
-		<?php else: ?>
-			{PHP internal call}
-		<?php endif ?>
-	</span>
-	&raquo;
-	<?php echo $step['function'] ?>(<?php if ($step['args']): $args_id = $error_id.'args'.$i; ?><a href="#<?php echo $args_id ?>" onclick="return _expcption_mqggle('<?php echo $args_id ?>')">arguments</a><?php endif ?>)
+    <span class="file">
+        <?php if ($step['file']): $source_id = $error_id.'source'.$i; ?>
+            <a href="#<?php echo $source_id ?>" onclick="return _expcption_mqggle('<?php echo $source_id ?>')"><?php echo Core::debug_path($step['file'],'#a00') ?> [ <?php echo $step['line'] ?> ]</a>
+        <?php else: ?>
+            {PHP internal call}
+        <?php endif ?>
+    </span>
+    &raquo;
+    <?php echo $step['function'] ?>(<?php if ($step['args']): $args_id = $error_id.'args'.$i; ?><a href="#<?php echo $args_id ?>" onclick="return _expcption_mqggle('<?php echo $args_id ?>')">arguments</a><?php endif ?>)
 </p>
 <?php if (isset($args_id)): ?>
 <div id="<?php echo $args_id ?>" class="collapsed">
-	<table cellspacing="0">
-	<?php foreach ($step['args'] as $name => $arg): ?>
-		<tr>
-			<td><code><?php echo $name ?></code></td>
-			<td><pre style="padding:0;margin:0;"><?php echo ErrException::dump($arg) ?></pre></td>
-		</tr>
-	<?php endforeach ?>
-	</table>
+    <table cellspacing="0">
+    <?php foreach ($step['args'] as $name => $arg): ?>
+        <tr>
+            <td><code><?php echo $name ?></code></td>
+            <td><pre style="padding:0;margin:0;"><?php echo ErrException::dump($arg) ?></pre></td>
+        </tr>
+    <?php endforeach ?>
+    </table>
 </div>
 <?php endif ?>
 <?php if (isset($source_id)): ?>
-	<pre id="<?php echo $source_id ?>" class="source collapsed"><code><?php echo $step['source'] ?></code></pre>
+    <pre id="<?php echo $source_id ?>" class="source collapsed"><code><?php echo $step['source'] ?></code></pre>
 <?php endif ?>
 </li>
 <?php unset($args_id, $source_id); ?>
@@ -93,53 +93,53 @@ document.getElementById('expction_div_style').innerHTML = '<style type="text/css
 <?php $env_id = $error_id.'environment';?>
 <h2 onclick="return _expcption_mqggle('<?php echo $env_id ?>');" style="cursor:pointer;" onmouseover="this.getElementsByTagName('A')[0].style.color='#f0ff00';" onmouseout="this.getElementsByTagName('A')[0].style.color='';"><a href="#<?php echo $env_id; ?>" onclick="return false">Environment</a></h2>
 <div id="<?php echo $env_id ?>" class="content collapsed">
-	<?php $included = Core::include_path(); ?>
-	<h3><a href="#<?php echo $env_id = $error_id.'environment_include_path' ?>" onclick="return _expcption_mqggle('<?php echo $env_id ?>')">Include path</a> (<?php echo count($included) ?>)</h3>
-	<div id="<?php echo $env_id ?>" class="collapsed">
-		<table cellspacing="0">
-			<?php foreach ($included as $file): ?>
-			<tr>
-				<td><code><?php echo Core::debug_path($file,'#a00') ?></code></td>
-			</tr>
-				<?php endforeach ?>
-		</table>
-	</div>
-	<?php $included = get_included_files(); ?>
-	<h3><a href="#<?php echo $env_id = $error_id.'environment_included' ?>" onclick="return _expcption_mqggle('<?php echo $env_id ?>')">Included files</a> (<?php echo count($included) ?>)</h3>
-	<div id="<?php echo $env_id ?>" class="collapsed">
-		<table cellspacing="0">
-			<?php foreach ($included as $file): ?>
-			<tr>
-				<td><code><?php echo Core::debug_path($file,'#a00') ?></code></td>
-			</tr>
-				<?php endforeach ?>
-		</table>
-	</div>
-	<?php $included = get_loaded_extensions() ?>
-	<h3><a href="#<?php echo $env_id = $error_id.'environment_loaded' ?>" onclick="return _expcption_mqggle('<?php echo $env_id ?>')">Loaded extensions</a> (<?php echo count($included) ?>)</h3>
-	<div id="<?php echo $env_id ?>" class="collapsed">
-		<table cellspacing="0">
-			<?php foreach ($included as $file): ?>
-			<tr>
-				<td><code><?php echo Core::debug_path($file,'#a00') ?></code></td>
-			</tr>
-			<?php endforeach ?>
-		</table>
-	</div>
-	<?php foreach (array('_SESSION', '_GET', '_POST', '_FILES', '_COOKIE', '_SERVER') as $var): ?>
-	<?php if (empty($GLOBALS[$var]) OR ! is_array($GLOBALS[$var])) continue ?>
-	<h3><a href="#<?php echo $env_id = $error_id.'environment'.strtolower($var) ?>" onclick="return _expcption_mqggle('<?php echo $env_id ?>')">$<?php echo $var ?></a></h3>
-	<div id="<?php echo $env_id ?>" class="collapsed">
-		<table cellspacing="0">
-			<?php foreach ($GLOBALS[$var] as $key => $value): ?>
-			<tr>
-				<td><code><?php echo $key ?></code></td>
-				<td><pre style="padding:0;margin:0;"><?php echo ErrException::dump($value) ?></pre></td>
-			</tr>
-			<?php endforeach ?>
-		</table>
-	</div>
-	<?php endforeach ?>
+    <?php $included = Core::include_path(); ?>
+    <h3><a href="#<?php echo $env_id = $error_id.'environment_include_path' ?>" onclick="return _expcption_mqggle('<?php echo $env_id ?>')">Include path</a> (<?php echo count($included) ?>)</h3>
+    <div id="<?php echo $env_id ?>" class="collapsed">
+        <table cellspacing="0">
+            <?php foreach ($included as $file): ?>
+            <tr>
+                <td><code><?php echo Core::debug_path($file,'#a00') ?></code></td>
+            </tr>
+                <?php endforeach ?>
+        </table>
+    </div>
+    <?php $included = get_included_files(); ?>
+    <h3><a href="#<?php echo $env_id = $error_id.'environment_included' ?>" onclick="return _expcption_mqggle('<?php echo $env_id ?>')">Included files</a> (<?php echo count($included) ?>)</h3>
+    <div id="<?php echo $env_id ?>" class="collapsed">
+        <table cellspacing="0">
+            <?php foreach ($included as $file): ?>
+            <tr>
+                <td><code><?php echo Core::debug_path($file,'#a00') ?></code></td>
+            </tr>
+                <?php endforeach ?>
+        </table>
+    </div>
+    <?php $included = get_loaded_extensions() ?>
+    <h3><a href="#<?php echo $env_id = $error_id.'environment_loaded' ?>" onclick="return _expcption_mqggle('<?php echo $env_id ?>')">Loaded extensions</a> (<?php echo count($included) ?>)</h3>
+    <div id="<?php echo $env_id ?>" class="collapsed">
+        <table cellspacing="0">
+            <?php foreach ($included as $file): ?>
+            <tr>
+                <td><code><?php echo Core::debug_path($file,'#a00') ?></code></td>
+            </tr>
+            <?php endforeach ?>
+        </table>
+    </div>
+    <?php foreach (array('_SESSION', '_GET', '_POST', '_FILES', '_COOKIE', '_SERVER') as $var): ?>
+    <?php if (empty($GLOBALS[$var]) OR ! is_array($GLOBALS[$var])) continue ?>
+    <h3><a href="#<?php echo $env_id = $error_id.'environment'.strtolower($var) ?>" onclick="return _expcption_mqggle('<?php echo $env_id ?>')">$<?php echo $var ?></a></h3>
+    <div id="<?php echo $env_id ?>" class="collapsed">
+        <table cellspacing="0">
+            <?php foreach ($GLOBALS[$var] as $key => $value): ?>
+            <tr>
+                <td><code><?php echo $key ?></code></td>
+                <td><pre style="padding:0;margin:0;"><?php echo ErrException::dump($value) ?></pre></td>
+            </tr>
+            <?php endforeach ?>
+        </table>
+    </div>
+    <?php endforeach ?>
 </div>
 </div>
 </div>

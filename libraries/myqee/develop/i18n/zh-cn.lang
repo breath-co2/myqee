@@ -8,3 +8,15 @@ the node_modules directory does not exist, modify the config:ext :config configu
 Systems perform less processing failed, please check the implementation of the recess command          = 系统执行less处理失败，请检查执行recess命令
 The system does not allow you to execute exec function, you can not call the node processing less file = 您的系统不允许执行exec函数，无法调用node处理less文件
 Only allows the development mode                                                                       = 只允许开发模式下使用
+Application Execution               = 程序累计执行
+Core Execution                      = 框架核心消耗
+seconds                             = 秒
+min                                 = 最小
+max                                 = 最大
+average                             = 平均
+total                               = 累计
+runtime                             = 执行时间
+memory                              = 占用内存
+Benchmark                           = 测试分类
+include file                        = 加载文件数
+System Information                  = 系统信息
