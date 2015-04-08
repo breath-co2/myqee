@@ -12,7 +12,7 @@ define('E_DATABASE_ERROR', 44);
  * @category   MyQEE
  * @package    System
  * @subpackage Core
- * @copyright  Copyright (c) 2008-2013 myqee.com
+ * @copyright  Copyright (c) 2008-2016 myqee.com
  * @license    http://www.myqee.com/license.html
  */
 class Library_MyQEE_Develop_ErrException extends Exception
@@ -48,8 +48,8 @@ class Library_MyQEE_Develop_ErrException extends Exception
     /**
      * Set exception message.
      *
-     * @param  string  i18n language key for the message
-     * @param  array   addition line parameters
+     * @param  string $message i18n language key for the message
+     * @param  array  $code addition line parameters
      */
     public function __construct($message, $code = null)
     {
@@ -396,9 +396,9 @@ class Library_MyQEE_Develop_ErrException extends Exception
      *
      * Borrows heavily on concepts from the Debug class of [Nette](http://nettephp.com/).
      *
-     * @param   mixed	variable to dump
-     * @param   integer  maximum length of strings
-     * @return  string
+     * @param mixed $value variable to dump
+     * @param integer $length maximum length of strings
+     * @return string
      */
     public static function dump($value, $length = 128)
     {
@@ -408,9 +408,9 @@ class Library_MyQEE_Develop_ErrException extends Exception
     /**
      * Helper for Kohana::dump(), handles recursion in arrays and objects.
      *
-     * @param   mixed	variable to dump
-     * @param   integer  maximum length of strings
-     * @param   integer  recursion level (internal)
+     * @param mixed $varvariable to dump
+     * @param integer $length maximum length of strings
+     * @param integer $level recursion level (internal)
      * @return  string
      */
     private static function _dump(& $var, $length = 128, $level = 0)
@@ -613,7 +613,7 @@ class Library_MyQEE_Develop_ErrException extends Exception
             }
 
             // 输出debug信息
-            $file = Core::find_file('views', 'debug/profiler');
+            $file = Core::find_file('views', IS_CLI ? 'debug/profiler_cli' : 'debug/profiler');
             if ($file)
             {
                 ob_start();
