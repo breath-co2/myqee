@@ -547,7 +547,7 @@ class Drive_Database_Drive_MySQLI extends Database_Drive
                 $data[0]['all rows']      = '';
                 $data[0]['possible_keys'] = '';
 
-                if (strtoupper(substr($sql,0,6))=='SELECT')
+                if (strtoupper(substr($sql, 0, 6)) === 'SELECT')
                 {
                     $re = $connection->query('EXPLAIN ' . $sql);
                     $i = 0;
