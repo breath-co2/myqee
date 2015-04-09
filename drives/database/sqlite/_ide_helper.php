@@ -1,9 +1,0 @@
-<?php
-exit;
-
-
-class Database_Drive_SQLite_Result extends Drive_Database_Drive_SQLite_Result{}
-class Ex_Database_Drive_SQLite_Result extends Drive_Database_Drive_SQLite_Result{}
-
-class Database_Drive_SQLite extends Drive_Database_Drive_SQLite{}
-class Ex_Database_Drive_SQLite extends Drive_Database_Drive_SQLite{}

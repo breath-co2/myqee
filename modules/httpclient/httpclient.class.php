@@ -43,9 +43,9 @@ class Module_HttpClient
     /**
      * 驱动
      *
-     * @var HttpClient_Drive_Curl
+     * @var HttpClient_Driver_Curl
      */
-    protected $drive;
+    protected $driver;
 
     /**
      * 客户端信息
@@ -100,7 +100,7 @@ class Module_HttpClient
      */
     public function set_agent($agent = null)
     {
-        $this->drive()->set_agent($agent);
+        $this->driver()->set_agent($agent);
         return $this;
     }
 
@@ -112,7 +112,7 @@ class Module_HttpClient
      */
     public function set_cookies($cookies)
     {
-        $this->drive()->set_cookies($cookies);
+        $this->driver()->set_cookies($cookies);
         return $this;
     }
 
@@ -124,7 +124,7 @@ class Module_HttpClient
      */
     public function set_referer($referer)
     {
-        $this->drive()->set_referer($referer);
+        $this->driver()->set_referer($referer);
         return $this;
     }
 
@@ -136,7 +136,7 @@ class Module_HttpClient
      */
     public function set_ip($ip)
     {
-        $this->drive()->set_ip($ip);
+        $this->driver()->set_ip($ip);
         return $this;
     }
 
@@ -150,7 +150,7 @@ class Module_HttpClient
      */
     public function set_header($header)
     {
-        $this->drive()->set_header($header);
+        $this->driver()->set_header($header);
         return $this;
     }
 
@@ -163,7 +163,7 @@ class Module_HttpClient
      */
     public function set_option($key, $value)
     {
-        $this->drive()->set_option($key, $value);
+        $this->driver()->set_option($key, $value);
 
         return $this;
     }
@@ -176,7 +176,7 @@ class Module_HttpClient
      */
     public function set_multi_max_num($num = 0)
     {
-        $this->drive()->set_multi_max_num($num);
+        $this->driver()->set_multi_max_num($num);
         return $this;
     }
 
@@ -194,11 +194,11 @@ class Module_HttpClient
     {
         if (IS_DEBUG && Core::debug()->profiler()->is_open())
         {
-            $bk = Core::debug()->profiler()->start('HttpClient', $this->drive()->method() .' Http URL');
+            $bk = Core::debug()->profiler()->start('HttpClient', $this->driver()->method() .' Http URL');
         }
 
-        $this->drive()->get($url, $timeout);
-        $data = $this->drive()->get_result_data();
+        $this->driver()->get($url, $timeout);
+        $data = $this->driver()->get_result_data();
 
         if (is_array($url))
         {
@@ -211,7 +211,7 @@ class Module_HttpClient
                 if (isset($bk))$bk_data[] = array
                 (
                     'URL'    => $key,
-                    'method' => $this->drive()->method(),
+                    'method' => $this->driver()->method(),
                     'Code'   => $item['code'],
                     'Time'   => $item['time'],
                     'Head'   => trim(implode("\r\n", $item['header'])),
@@ -231,7 +231,7 @@ class Module_HttpClient
                 $bk_data = array
                 (
                     'Url'    => $url,
-                    'Method' => $this->drive()->method(),
+                    'Method' => $this->driver()->method(),
                     'Code'   => $data['code'],
                     'Time'   => $data['time'],
                     'Head'   => trim(implode("\r\n", $data['header'])),
@@ -310,9 +310,9 @@ class Module_HttpClient
         }
 
         $time = microtime(true);
-        $this->drive()->post($url, $post_data, $timeout);
+        $this->driver()->post($url, $post_data, $timeout);
         $time = microtime(true) - $time;
-        $data = $this->drive()->get_result_data();
+        $data = $this->driver()->get_result_data();
         $data['total_time'] = $time;
 
         if (isset($bk))
@@ -349,9 +349,9 @@ class Module_HttpClient
         }
 
         $time = microtime(true);
-        $this->drive()->put($url, $data, $timeout);
+        $this->driver()->put($url, $data, $timeout);
         $time = microtime(true) - $time;
-        $data = $this->drive()->get_result_data();
+        $data = $this->driver()->get_result_data();
         $data['total_time'] = $time;
 
         if (isset($bk))
@@ -377,7 +377,7 @@ class Module_HttpClient
      */
     public function delete($url, $timeout = 30)
     {
-        $this->drive()->method('DELETE');
+        $this->driver()->method('DELETE');
 
         return $this->get($url, $timeout);
     }
@@ -412,16 +412,16 @@ class Module_HttpClient
      */
     public function add_file($file_name, $name = 'upload')
     {
-        $this->drive()->add_file($file_name, $name?$name:'upload');
+        $this->driver()->add_file($file_name, $name?$name:'upload');
 
         return $this;
     }
 
     public function __call($method, $params)
     {
-        if (method_exists($this->drive(), $method))
+        if (method_exists($this->driver(), $method))
         {
-            return call_user_func_array(array($this->drive(), $method), $params);
+            return call_user_func_array(array($this->driver(), $method), $params);
         }
         else
         {
@@ -440,9 +440,9 @@ class Module_HttpClient
      */
     public function method($method = null)
     {
-        if (null === $method)return $this->drive()->method();
+        if (null === $method)return $this->driver()->method();
 
-        $this->drive()->method(strtoupper($method));
+        $this->driver()->method(strtoupper($method));
 
         return $this;
     }
@@ -451,15 +451,15 @@ class Module_HttpClient
     /**
      * 获取当前驱动
      *
-     * @return HttpClient_Drive_Curl
+     * @return HttpClient_Driver_Curl
      */
-    public function drive()
+    public function driver()
     {
-        if (null === $this->drive)
+        if (null === $this->driver)
         {
-            $f = 'HttpClient_Drive_'. $this->type;
-            $this->drive = new $f();
+            $f = 'HttpClient_Driver_'. $this->type;
+            $this->driver = new $f();
         }
-        return $this->drive;
+        return $this->driver;
     }
 }

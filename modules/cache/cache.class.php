@@ -79,9 +79,9 @@ class Module_Cache
     /**
      * 缓存驱动对象
      *
-     * @var Cache_Drive_Memcache
+     * @var Cache_Driver_Memcache
      */
-    protected $drive;
+    protected $driver;
 
     /**
      * 是否为session模式
@@ -124,30 +124,30 @@ class Module_Cache
     {
         $this->load_config($name);
 
-        if ($this->config['drive']=='file')
+        if ($this->config['driver']=='file')
         {
             $this->check_file_config($name);
         }
 
-        $drive = 'Cache_Drive_' . $this->config['drive'];
-        if (!class_exists($drive, true))
+        $driver = 'Cache_Driver_' . $this->config['driver'];
+        if (!class_exists($driver, true))
         {
-            throw new Exception(__('The :type drive :drive does not exist', array(':type'=>'Cache', ':drive'=>$this->config['drive'])));
+            throw new Exception(__('The :type driver :driver does not exist', array(':type'=>'Cache', ':driver'=>$this->config['driver'])));
         }
 
-        if (isset($this->config['drive_config']))
+        if (isset($this->config['driver_config']))
         {
-            $this->drive = new $drive($this->config['drive_config']);
+            $this->driver = new $driver($this->config['driver_config']);
         }
         else
         {
-            $this->drive = new $drive();
+            $this->driver = new $driver();
         }
 
         # 设置前缀
         if (isset($this->config['prefix']))
         {
-            $this->drive->set_prefix($this->config['prefix']);
+            $this->driver->set_prefix($this->config['prefix']);
         }
     }
 
@@ -189,7 +189,7 @@ class Module_Cache
 
         try
         {
-            $data = $this->drive->get($key);
+            $data = $this->driver->get($key);
 
             if (is_array($data))
             {
@@ -265,7 +265,7 @@ class Module_Cache
 
         try
         {
-            return $this->drive->set($key, $value, $expire);
+            return $this->driver->set($key, $value, $expire);
         }
         catch (Exception $e)
         {
@@ -285,7 +285,7 @@ class Module_Cache
     {
         try
         {
-            return $this->drive->delete($key);
+            return $this->driver->delete($key);
         }
         catch (Exception $e)
         {
@@ -317,7 +317,7 @@ class Module_Cache
     {
         try
         {
-            return $this->drive->delete_all();
+            return $this->driver->delete_all();
         }
         catch (Exception $e)
         {
@@ -336,7 +336,7 @@ class Module_Cache
     {
         try
         {
-            return $this->drive->delete_expired();
+            return $this->driver->delete_expired();
         }
         catch (Exception $e)
         {
@@ -361,7 +361,7 @@ class Module_Cache
         try
         {
             $key = $this->config['prefix'] . $key;
-            return $this->drive->decrement($key, $offset, $lifetime);
+            return $this->driver->decrement($key, $offset, $lifetime);
         }
         catch (Exception $e)
         {
@@ -383,7 +383,7 @@ class Module_Cache
         try
         {
             $key = $this->config['prefix'] . $key;
-            return $this->drive->increment($key, $offset, $lifetime);
+            return $this->driver->increment($key, $offset, $lifetime);
         }
         catch (Exception $e)
         {
@@ -432,7 +432,7 @@ class Module_Cache
      */
     public function set_prefix($prefix)
     {
-        $this->drive->set_prefix($prefix);
+        $this->driver->set_prefix($prefix);
 
         return $this;
     }
@@ -444,7 +444,7 @@ class Module_Cache
      */
     public function get_prefix()
     {
-        $this->drive->get_prefix();
+        $this->driver->get_prefix();
     }
 
     /**
@@ -474,7 +474,7 @@ class Module_Cache
     {
         try
         {
-            return call_user_func_array(array($this->drive,$method) , $params);
+            return call_user_func_array(array($this->driver,$method) , $params);
         }
         catch (Exception $e)
         {
@@ -558,7 +558,7 @@ class Module_Cache
                 case Cache::TYPE_ADV_HIT :
                 case Cache::TYPE_MAX_HIT :
                     # 获取命中统计数
-                    $exp = $this->drive->get($match['expkey']);
+                    $exp = $this->driver->get($match['expkey']);
                     break;
                 case Cache::TYPE_ADV_AGE :
                 case Cache::TYPE_MAX_AGE :
@@ -588,7 +588,7 @@ class Module_Cache
             if ($match['type'] == Cache::TYPE_ADV_HIT || $match['type'] == Cache::TYPE_MAX_HIT)
             {
                 # 计数器增加
-                $this->drive->increment($match['expkey'], 1, $match_exp[1]);
+                $this->driver->increment($match['expkey'], 1, $match_exp[1]);
             }
 
             $value = @unserialize($match['value']);
@@ -618,12 +618,12 @@ class Module_Cache
             $this->config = Core::config('cache.' . $name);
         }
 
-        if (!isset($this->config['drive']))
+        if (!isset($this->config['driver']))
         {
-            $this->config['drive'] = 'file';
+            $this->config['driver'] = 'file';
         }
 
-        $this->config['drive'] = strtolower($this->config['drive']);
+        $this->config['driver'] = strtolower($this->config['driver']);
     }
 
     /**
@@ -648,7 +648,7 @@ class Module_Cache
 
             if ($m[1]=='db')
             {
-                $this->config['drive'] = 'database';
+                $this->config['driver'] = 'database';
 
                 $this->load_config($new_config);
             }
@@ -663,14 +663,14 @@ class Module_Cache
                 {
                     $this->load_config($new_config);
 
-                    if ($this->config['drive']=='file')
+                    if ($this->config['driver']=='file')
                     {
                         # 读取的配置仍旧是文件缓存
                         throw new Exception(__('core config file_write_mode error.'));
                     }
                 }
 
-                $this->config['drive'] = 'cache';
+                $this->config['driver'] = 'cache';
             }
 
             $this->config['prefix'] = $m[3];

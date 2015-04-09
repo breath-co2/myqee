@@ -27,7 +27,7 @@ class Core_File
         DIR_TEAM_LIBRARY,
         DIR_PROJECT,
         DIR_MODULE,
-        DIR_DRIVE,
+        DIR_DRIVER,
         DIR_SYSTEM,
         DIR_ASSETS,
     );

@@ -9,7 +9,7 @@
  * @copyright  Copyright (c) 2008-2016 myqee.com
  * @license    http://www.myqee.com/license.html
  */
-class Module_HttpClient_Drive_Curl
+class Module_HttpClient_Driver_Curl
 {
 
     protected $http_data = array();
@@ -61,7 +61,7 @@ class Module_HttpClient_Drive_Curl
      * 设置$cookie
      *
      * @param $agent
-     * @return HttpClient_Drive_Curl
+     * @return HttpClient_Driver_Curl
      */
     public function set_agent($agent)
     {
@@ -73,7 +73,7 @@ class Module_HttpClient_Drive_Curl
      * 设置$cookie
      *
      * @param string $cookie
-     * @return HttpClient_Drive_Curl
+     * @return HttpClient_Driver_Curl
      */
     public function set_cookies($cookies)
     {
@@ -85,7 +85,7 @@ class Module_HttpClient_Drive_Curl
      * 设置$referer
      *
      * @param string $referer
-     * @return HttpClient_Drive_Curl
+     * @return HttpClient_Driver_Curl
      */
     public function set_referer($referer)
     {
@@ -97,7 +97,7 @@ class Module_HttpClient_Drive_Curl
      * 设置IP
      *
      * @param string $ip
-     * @return HttpClient_Drive_Curl
+     * @return HttpClient_Driver_Curl
      */
     public function set_ip($ip)
     {
@@ -109,7 +109,7 @@ class Module_HttpClient_Drive_Curl
      * 设置Header
      *
      * @param string $header
-     * @return HttpClient_Drive_Curl
+     * @return HttpClient_Driver_Curl
      */
     public function set_header($header)
     {
@@ -122,7 +122,7 @@ class Module_HttpClient_Drive_Curl
      *
      * @param string $key
      * @param mixed $value
-     * @return HttpClient_Drive_Curl
+     * @return HttpClient_Driver_Curl
      */
     public function set_option($key, $value)
     {
@@ -141,7 +141,7 @@ class Module_HttpClient_Drive_Curl
      * 设置多个列队默认排队数上限
      *
      * @param int $num
-     * @return HttpClient_Drive_Curl
+     * @return HttpClient_Driver_Curl
      */
     public function set_multi_max_num($num = 0)
     {
@@ -168,7 +168,7 @@ class Module_HttpClient_Drive_Curl
      * @param string $method GET|POST|DELETE|PUT 等，不传则返回当前method
      *
      * @return string
-     * @return HttpClient_Drive_Curl
+     * @return HttpClient_Driver_Curl
      */
     public function method($method = null)
     {
@@ -405,7 +405,7 @@ class Module_HttpClient_Drive_Curl
 
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_TIMEOUT, $timeout);
-        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT_MS, HttpClient_Drive_Curl::$connecttimeout_ms);
+        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT_MS, HttpClient_Driver_Curl::$connecttimeout_ms);
 
         if (preg_match('#^https://#i', $the_url))
         {

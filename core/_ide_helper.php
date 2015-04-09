@@ -80,8 +80,8 @@ class Ex_Str extends Core_Str{}
 abstract class Text extends Core_Text{}
 abstract class Ex_Text extends Core_Text{}
 
-class Upload_Drive_Storage extends Core_Upload_Drive_Storage{}
-class Ex_Upload_Drive_Storage extends Core_Upload_Drive_Storage{}
+class Upload_Driver_Storage extends Core_Upload_Driver_Storage{}
+class Ex_Upload_Driver_Storage extends Core_Upload_Driver_Storage{}
 
 class Upload extends Core_Upload{}
 class Ex_Upload extends Core_Upload{}

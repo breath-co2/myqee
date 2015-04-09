@@ -26,7 +26,7 @@ $file       = isset($args[3])?$args[3]:null;
 
 
 
-if ($type=='core' || $type=='module' || $type=='drive')
+if ($type=='core' || $type=='module' || $type=='driver')
 {
     # 不用特别处理，已经加载
 }

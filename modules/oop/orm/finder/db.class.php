@@ -62,19 +62,19 @@ class Module_OOP_ORM_Finder_DB extends OOP_ORM
     {
         if ($sql)
         {
-            $rs        = $this->drive()->query($sql, false, $use_master);
+            $rs        = $this->driver()->query($sql, false, $use_master);
             $cache_obj = null;
         }
         else
         {
-            $builder = & $this->drive()->get_builder();
+            $builder = & $this->driver()->get_builder();
             if (!$builder['from'])
             {
-                $this->drive()->from($this->tablename);
+                $this->driver()->from($this->tablename);
             }
             if ($this->_auto_where)
             {
-                $this->drive()->where($this->_auto_where);
+                $this->driver()->where($this->_auto_where);
             }
             $cache_obj = null;
 
@@ -84,7 +84,7 @@ class Module_OOP_ORM_Finder_DB extends OOP_ORM
 
             if (false === $not_need_find)
             {
-                $rs = $this->drive()->get(false, $use_master);
+                $rs = $this->driver()->get(false, $use_master);
 
                 if (null !== $cache_obj)
                 {
@@ -93,7 +93,7 @@ class Module_OOP_ORM_Finder_DB extends OOP_ORM
             }
             else
             {
-                $this->drive()->reset();
+                $this->driver()->reset();
                 $rs = $cache_obj;
             }
 
@@ -124,7 +124,7 @@ class Module_OOP_ORM_Finder_DB extends OOP_ORM
      */
     public function insert($value = null)
     {
-        return $this->drive()->insert($this->tablename(), $value);
+        return $this->driver()->insert($this->tablename(), $value);
     }
 
     /**
@@ -136,7 +136,7 @@ class Module_OOP_ORM_Finder_DB extends OOP_ORM
      */
     public function update($value = null, $where = null)
     {
-        return $this->drive()->update($this->tablename(), $value, $where);
+        return $this->driver()->update($this->tablename(), $value, $where);
     }
 
     /**
@@ -147,7 +147,7 @@ class Module_OOP_ORM_Finder_DB extends OOP_ORM
      */
     public function delete($where = null)
     {
-        return $this->drive()->delete($this->tablename(), $where);
+        return $this->driver()->delete($this->tablename(), $where);
     }
 
     /**
@@ -241,7 +241,7 @@ class Module_OOP_ORM_Finder_DB extends OOP_ORM
      *
      * @return Database
      */
-    public function drive()
+    public function driver()
     {
         if (null === $this->_database_instance)
         {
@@ -260,7 +260,7 @@ class Module_OOP_ORM_Finder_DB extends OOP_ORM
      */
     public function db()
     {
-        return $this->drive();
+        return $this->driver();
     }
 
     /**
@@ -273,7 +273,7 @@ class Module_OOP_ORM_Finder_DB extends OOP_ORM
      */
     public function where($column, $value = null, $op = '=')
     {
-        $this->drive()->where($column, $value, $op);
+        $this->driver()->where($column, $value, $op);
         return $this;
     }
 
@@ -287,7 +287,7 @@ class Module_OOP_ORM_Finder_DB extends OOP_ORM
      */
     public function or_where($column, $value, $op = '=')
     {
-        $this->drive()->or_where($column, $value, $op);
+        $this->driver()->or_where($column, $value, $op);
         return $this;
     }
 
@@ -300,7 +300,7 @@ class Module_OOP_ORM_Finder_DB extends OOP_ORM
      */
     public function select($columns)
     {
-        call_user_func_array(array($this->drive(), 'select'), func_get_args());
+        call_user_func_array(array($this->driver(), 'select'), func_get_args());
         return $this;
     }
 
@@ -313,7 +313,7 @@ class Module_OOP_ORM_Finder_DB extends OOP_ORM
      */
     public function order_by($column, $direction = 'ASC')
     {
-        $this->drive()->order_by($column, $direction);
+        $this->driver()->order_by($column, $direction);
         return $this;
     }
 
@@ -325,7 +325,7 @@ class Module_OOP_ORM_Finder_DB extends OOP_ORM
      */
     public function offset($number)
     {
-        $this->drive()->offset($number);
+        $this->driver()->offset($number);
         return $this;
     }
 
@@ -337,7 +337,7 @@ class Module_OOP_ORM_Finder_DB extends OOP_ORM
      */
     public function limit($number)
     {
-        $this->drive()->limit($number);
+        $this->driver()->limit($number);
         return $this;
     }
 
@@ -350,7 +350,7 @@ class Module_OOP_ORM_Finder_DB extends OOP_ORM
      */
     public function in($column, $value, $no_in = false)
     {
-        $this->drive()->in($column, $value, $no_in);
+        $this->driver()->in($column, $value, $no_in);
         return $this;
     }
 
@@ -363,7 +363,7 @@ class Module_OOP_ORM_Finder_DB extends OOP_ORM
      */
     public function notin($column, $value)
     {
-        $this->drive()->notin($column, $value);
+        $this->driver()->notin($column, $value);
         return $this;
     }
 
@@ -376,7 +376,7 @@ class Module_OOP_ORM_Finder_DB extends OOP_ORM
      */
     public function group_by($columns)
     {
-        call_user_func_array(array($this->drive(), 'group_by'), func_get_args());
+        call_user_func_array(array($this->driver(), 'group_by'), func_get_args());
         return $this;
     }
 
@@ -391,7 +391,7 @@ class Module_OOP_ORM_Finder_DB extends OOP_ORM
      */
     public function group_concat($column, $order_by = null, $separator = null, $distinct = false)
     {
-        $this->drive()->group_concat($column, $order_by, $separator, $distinct);
+        $this->driver()->group_concat($column, $order_by, $separator, $distinct);
         return $this;
     }
 
@@ -405,7 +405,7 @@ class Module_OOP_ORM_Finder_DB extends OOP_ORM
      */
     public function having($column, $value = null, $op = '=')
     {
-        $this->drive()->having($column, $value, $op);
+        $this->driver()->having($column, $value, $op);
         return $this;
     }
 
@@ -418,7 +418,7 @@ class Module_OOP_ORM_Finder_DB extends OOP_ORM
      */
     public function join($table, $type = null)
     {
-        $this->drive()->join($table, $type);
+        $this->driver()->join($table, $type);
         return $this;
     }
 
@@ -438,9 +438,9 @@ class Module_OOP_ORM_Finder_DB extends OOP_ORM
 
     public function __call($method, $params)
     {
-        if (method_exists($this->drive(), $method))
+        if (method_exists($this->driver(), $method))
         {
-            call_user_func_array(array($this->drive(), $method), $params);
+            call_user_func_array(array($this->driver(), $method), $params);
 
             return $this;
         }

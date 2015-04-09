@@ -43,7 +43,7 @@ class Module_OOP_ORM_Finder_REST extends OOP_ORM
     /**
      * @var HttpClient
      */
-    protected $_drive = null;
+    protected $_driver = null;
 
     /**
      * 当设置method后记录默认的method，用于在请求完毕后重置method
@@ -109,24 +109,24 @@ class Module_OOP_ORM_Finder_REST extends OOP_ORM
         {
             if ($this->method === 'POST')
             {
-                $rs = (string)$this->drive()->post($url, $this->parse_api_post_data($query));
+                $rs = (string)$this->driver()->post($url, $this->parse_api_post_data($query));
             }
             else if ($this->method === 'PUT')
             {
-                $rs = (string)$this->drive()->put($url, $this->parse_api_post_data($query));
+                $rs = (string)$this->driver()->put($url, $this->parse_api_post_data($query));
             }
             else if ($this->method === 'DELETE')
             {
-                $rs = (string)$this->drive()->delete($url);
+                $rs = (string)$this->driver()->delete($url);
             }
             else
             {
                 if ($this->method !== 'GET')
                 {
-                    $this->drive()->method($this->method);
+                    $this->driver()->method($this->method);
                 }
 
-                $rs = (string)$this->drive()->get($url);
+                $rs = (string)$this->driver()->get($url);
             }
         }
         catch (Exception $e)
@@ -205,11 +205,11 @@ class Module_OOP_ORM_Finder_REST extends OOP_ORM
      *
      * @return HttpClient
      */
-    public function drive()
+    public function driver()
     {
-        if (null === $this->_drive)$this->_drive = HttpClient::factory();
+        if (null === $this->_driver)$this->_driver = HttpClient::factory();
 
-        return $this->_drive;
+        return $this->_driver;
     }
 
 

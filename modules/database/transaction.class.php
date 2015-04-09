@@ -21,13 +21,13 @@ abstract class Module_Database_Transaction
 
     /**
      * 数据库驱动
-     * @var Database_Drive_MySQLI
+     * @var Database_Driver_MySQLI
      */
-    protected $db_drive;
+    protected $db_driver;
 
-    public function __construct($db_drive)
+    public function __construct($db_driver)
     {
-        $this->db_drive = $db_drive;
+        $this->db_driver = $db_driver;
     }
 
     /**
@@ -65,7 +65,7 @@ abstract class Module_Database_Transaction
     {
         try
         {
-            if ( $this->db_drive->query($sql, null, true) )
+            if ( $this->db_driver->query($sql, null, true) )
             {
                 $status = true;
             }

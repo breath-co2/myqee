@@ -623,10 +623,10 @@ class OOP_ORM_DI_ORM extends OOP_ORM_DI
         if (isset($config['orm']['cache']))
         {
             $config['cache'] = $config['orm']['cache'];
-            if (isset($config['cache']['drive_config']))
+            if (isset($config['cache']['driver_config']))
             {
-                $config['cache']['config'] = $config['cache']['drive_config'];
-                unset($config['cache']['drive_config']);
+                $config['cache']['config'] = $config['cache']['driver_config'];
+                unset($config['cache']['driver_config']);
             }
         }
 

@@ -648,12 +648,12 @@ class Module_OOP_ORM_Data
         }
 
         # 递增或递减数据处理
-        if ($value_increment && method_exists($this->finder()->drive(), 'value_increment'))foreach ($value_increment as $field => $value)
+        if ($value_increment && method_exists($this->finder()->driver(), 'value_increment'))foreach ($value_increment as $field => $value)
         {
             # 如果存在递增或递减的数据
             if (0 !== $value)
             {
-                $this->finder()->drive()->value_increment($field, $value);
+                $this->finder()->driver()->value_increment($field, $value);
                 unset($changed_data[$field]);
             }
         }
@@ -1975,13 +1975,13 @@ class Module_OOP_ORM_Data
 
         OOP_ORM_Data::$FINDERS[$this->_finder] = $finder;
 
-        $drive = $finder->drive();
+        $driver = $finder->driver();
 
-        if ($drive instanceof Database)
+        if ($driver instanceof Database)
         {
-            $this->_is_support_object_field = $drive->drive()->is_support_object_field();
+            $this->_is_support_object_field = $driver->driver()->is_support_object_field();
         }
-        elseif ($drive instanceof HttpClient)
+        elseif ($driver instanceof HttpClient)
         {
             $this->_is_support_object_field = true;
         }
