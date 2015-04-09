@@ -67,18 +67,18 @@ class Module_OOP_ORM_Finder_DB extends OOP_ORM
     {
         if ( $sql )
         {
-            $data = $this->drive()->query($sql , false , $use_master)->as_array();
+            $data = $this->driver()->query($sql , false , $use_master)->as_array();
         }
         else
         {
-            $bulider = & $this->drive()->get_builder();
+            $bulider = & $this->driver()->get_builder();
             if ( !$bulider['from'] )
             {
-                $this->drive()->from($this->tablename);
+                $this->driver()->from($this->tablename);
             }
             if ( $this->_auto_where )
             {
-                $this->drive()->where($this->_auto_where);
+                $this->driver()->where($this->_auto_where);
             }
             $id_cache_data = null;
             # 优化主键数据查询
@@ -87,7 +87,7 @@ class Module_OOP_ORM_Finder_DB extends OOP_ORM
 
             if (false===$not_need_find)
             {
-                $data = $this->drive()->get(false , $use_master)->as_array();
+                $data = $this->driver()->get(false , $use_master)->as_array();
                 if ( null!==$id_cache_data )
                 {
                     $data += $id_cache_data;
@@ -95,14 +95,14 @@ class Module_OOP_ORM_Finder_DB extends OOP_ORM
             }
             else
             {
-                $this->drive()->reset();
+                $this->driver()->reset();
                 $data = $id_cache_data;
             }
 
         }
 
         # 最后查询SQL
-        $this->last_query = $this->drive()->last_query();
+        $this->last_query = $this->driver()->last_query();
 
         $obj = $this->create_group_data($data, true);
 
@@ -175,7 +175,7 @@ class Module_OOP_ORM_Finder_DB extends OOP_ORM
      *
      * @return Database
      */
-    public function drive()
+    public function driver()
     {
         if (null===$this->_database_instance)
         {
@@ -194,7 +194,7 @@ class Module_OOP_ORM_Finder_DB extends OOP_ORM
      */
     public function db()
     {
-        return $this->drive();
+        return $this->driver();
     }
 
     /**
@@ -206,7 +206,7 @@ class Module_OOP_ORM_Finder_DB extends OOP_ORM
      */
     public function where($column, $value = null, $op = '=')
     {
-        $this->drive()->where($column, $value, $op);
+        $this->driver()->where($column, $value, $op);
         return $this;
     }
 
@@ -219,7 +219,7 @@ class Module_OOP_ORM_Finder_DB extends OOP_ORM
      */
     public function order_by($column, $direction = 'ASC')
     {
-        $this->drive()->order_by($column, $direction);
+        $this->driver()->order_by($column, $direction);
         return $this;
     }
 
@@ -231,7 +231,7 @@ class Module_OOP_ORM_Finder_DB extends OOP_ORM
      */
     public function offset($number)
     {
-        $this->drive()->offset($number);
+        $this->driver()->offset($number);
         return $this;
     }
 
@@ -243,7 +243,7 @@ class Module_OOP_ORM_Finder_DB extends OOP_ORM
      */
     public function limit($number)
     {
-        $this->drive()->limit($number);
+        $this->driver()->limit($number);
         return $this;
     }
 
@@ -256,7 +256,7 @@ class Module_OOP_ORM_Finder_DB extends OOP_ORM
      */
     public function in($column, $value, $no_in = false)
     {
-        $this->drive()->in($column, $value, $no_in);
+        $this->driver()->in($column, $value, $no_in);
         return $this;
     }
 
@@ -269,7 +269,7 @@ class Module_OOP_ORM_Finder_DB extends OOP_ORM
      */
     public function insert($value = null)
     {
-        return $this->drive()->insert($this->tablename(), $value);
+        return $this->driver()->insert($this->tablename(), $value);
     }
 
     /**
@@ -281,7 +281,7 @@ class Module_OOP_ORM_Finder_DB extends OOP_ORM
      */
     public function update($value = null, $where = null)
     {
-        return $this->drive()->update($this->tablename(), $value, $where);
+        return $this->driver()->update($this->tablename(), $value, $where);
     }
 
     /**
@@ -292,7 +292,7 @@ class Module_OOP_ORM_Finder_DB extends OOP_ORM
      */
     public function delete($where = null)
     {
-        return $this->drive()->delete($this->tablename(), $where);
+        return $this->driver()->delete($this->tablename(), $where);
     }
 }
 

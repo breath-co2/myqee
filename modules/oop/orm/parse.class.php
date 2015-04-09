@@ -165,9 +165,9 @@ abstract class Module_OOP_ORM_Parse
             unset($field_config['data']);
             return;
         }
-        if ( !isset($field_config['data']['drive']) )
+        if ( !isset($field_config['data']['driver']) )
         {
-            Core::debug()->error($field_config,'ORM字段:'.$key.'配置错误，data属性缺少drive');
+            Core::debug()->error($field_config,'ORM字段:'.$key.'配置错误，data属性缺少driver');
             unset($field_config['data']);
             return;
         }
@@ -178,7 +178,7 @@ abstract class Module_OOP_ORM_Parse
             return;
         }
 
-        $run = '_parse_' . $field_config['data']['drive'];
+        $run = '_parse_' . $field_config['data']['driver'];
         if ( method_exists('OOP_ORM_Parse', $run) )
         {
             # 处理数据解析
@@ -433,7 +433,7 @@ abstract class Module_OOP_ORM_Parse
             }
         }
 
-        $fun = '_get_data_'.$config['drive'];
+        $fun = '_get_data_'.$config['driver'];
 
         return OOP_ORM_Parse::$fun($config, $obj);
     }
@@ -870,7 +870,7 @@ abstract class Module_OOP_ORM_Parse
         # 获取一个key
         $key = OOP_ORM_Parse::get_offset_cache_key($data_obj , $index);
 
-        return Cache::instance($cache_config['drive_config'])->get($key);
+        return Cache::instance($cache_config['driver_config'])->get($key);
     }
 
 
@@ -888,7 +888,7 @@ abstract class Module_OOP_ORM_Parse
         # 获取一个key
         $key = OOP_ORM_Parse::get_offset_cache_key($data_obj, $index);
 
-        return Cache::instance($cache_config['drive_config'])->set($key , $data , isset($cache_config['expire'])?$cache_config['expire']:3600 , $cache_config['expire_type'] );
+        return Cache::instance($cache_config['driver_config'])->set($key , $data , isset($cache_config['expire'])?$cache_config['expire']:3600 , $cache_config['expire_type'] );
     }
 
     /**
@@ -904,7 +904,7 @@ abstract class Module_OOP_ORM_Parse
         $key = OOP_ORM_Parse::get_offset_cache_key($data_obj , $index);
 
         # 清除缓存
-        return Cache::instance($cache_config['drive_config'])->delete($key);
+        return Cache::instance($cache_config['driver_config'])->delete($key);
     }
 
     /**
@@ -932,7 +932,7 @@ abstract class Module_OOP_ORM_Parse
         # 获取一个key
         $key = OOP_ORM_Parse::get_orm_cache_key($data_obj , $index , $config);
 
-        return Cache::instance($config['cache']['drive_config'])->get($key);
+        return Cache::instance($config['cache']['driver_config'])->get($key);
     }
 
 
@@ -950,7 +950,7 @@ abstract class Module_OOP_ORM_Parse
         # 获取一个key
         $key = OOP_ORM_Parse::get_orm_cache_key($data_obj , $index , $config);
 
-        return Cache::instance($config['cache']['drive_config'])->set($key , $data , isset($config['cache']['expire'])?$config['cache']['expire']:3600 , $config['cache']['expire_type'] );
+        return Cache::instance($config['cache']['driver_config'])->set($key , $data , isset($config['cache']['expire'])?$config['cache']['expire']:3600 , $config['cache']['expire_type'] );
     }
 
     /**
@@ -966,7 +966,7 @@ abstract class Module_OOP_ORM_Parse
         $key = OOP_ORM_Parse::get_orm_cache_key($data_obj ,$index , $config);
 
         # 清除缓存
-        return Cache::instance($config['cache']['drive_config'])->delete($key);
+        return Cache::instance($config['cache']['driver_config'])->delete($key);
     }
 
     /**

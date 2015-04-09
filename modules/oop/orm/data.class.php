@@ -773,12 +773,12 @@ class Module_OOP_ORM_Data
         }
 
         # 递增或递减数据处理
-        if ( $this->_value_increment && method_exists($orm->drive(), 'value_increment') ) foreach ( $this->_value_increment as $field=>$value )
+        if ( $this->_value_increment && method_exists($orm->driver(), 'value_increment') ) foreach ( $this->_value_increment as $field=>$value )
         {
             # 如果存在递增或递减的数据
             if ( isset($data[$field]) )
             {
-                $orm->drive()->value_increment($field,$value);
+                $orm->driver()->value_increment($field,$value);
                 unset($data[$field]);
             }
         }

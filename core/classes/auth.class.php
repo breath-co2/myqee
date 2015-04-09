@@ -17,14 +17,14 @@ class Core_Auth
      *
      * @var string
      */
-    const DRIVE_DATABASE = 'Database';
+    const DRIVER_DATABASE = 'Database';
 
     /**
      * 文件类型
      *
      * @var string
      */
-    const DRIVE_FILE = 'File';
+    const DRIVER_FILE = 'File';
 
     /**
      * 默认配置名
@@ -125,14 +125,14 @@ class Core_Auth
      */
     public function get_member_by_username($username)
     {
-        if (!$this->config['drive'] || $this->config['drive'] === Auth::DRIVE_DATABASE)
+        if (!$this->config['driver'] || $this->config['driver'] === Auth::DRIVER_DATABASE)
         {
             # 数据库类型
             $tables         = $this->config['tablename'];
             $user_field     = $this->config['username_field']?$this->config['username_field']:'username';
             $data           = Database::instance($this->config['database'])->from($tables)->where($user_field, $username)->limit(1)->get()->current();
         }
-        elseif ($this->config['drive'] === Auth::DRIVE_FILE)
+        elseif ($this->config['driver'] === Auth::DRIVER_FILE)
         {
             $file = DIR_DATA . 'auth-data-of-project-' . Core::$project . '.json';
             if (is_file($file))

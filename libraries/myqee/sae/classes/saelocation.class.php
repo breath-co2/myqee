@@ -16,10 +16,10 @@
  * $SaeLocationObj = new SaeLocation();
  *
  * //根据起点与终点数据查询自驾车路线信息
- * $drive_route_arr = array('begin_coordinate'=>'116.317245,39.981437','end_coordinate'=>'116.328422,40.077796');
- * $drive_route = $SaeLocationObj->getDriveoute($drive_route_arr);
- * echo 'drive_rote: ';
- * print_r($drive_route);
+ * $driver_route_arr = array('begin_coordinate'=>'116.317245,39.981437','end_coordinate'=>'116.328422,40.077796');
+ * $driver_route = $SaeLocationObj->getDriveroute($driver_route_arr);
+ * echo 'driver_rote: ';
+ * print_r($driver_route);
  * echo '</br>';
  *
  * // 失败时输出错误码和错误信息
@@ -34,7 +34,7 @@
  * echo '</br>';
  *
  *  // 失败时输出错误码和错误信息
- * if ($drive_route === false)
+ * if ($driver_route === false)
  *         var_dump($SaeLocationObj->errno(), $SaeLocationObj->errmsg());
  *
  * // 根据关键词查询公交线路及其站点信息
@@ -117,7 +117,7 @@ class SaeLocation extends SaeObject {
      * @return array|bool 成功以json格式返回查询结果，失败返回false.
      * @author liuxin
      */
-    public function getDriveoute($post) {
+    public function getDriveroute($post) {
         if(empty($post)) {
             $this->set_error(-2, $this->_errmsgs[-2]);
             return false;
@@ -129,7 +129,7 @@ class SaeLocation extends SaeObject {
             $this->set_error(-1, $this->_errmsgs[-1]);
             return false;
         }
-        $url = self::baseurl_one."?type=".self::DRIVE_ROTE;
+        $url = self::baseurl_one."?type=".self::DRIVER_ROTE;
         $res = $this->_request($url,$post);
         return $res;
     }
@@ -271,7 +271,7 @@ class SaeLocation extends SaeObject {
     /**
      * 查询分类：根据起点与终点数据查询自驾车路线信息
      */
-    const DRIVE_ROTE = "LINE_ONE";
+    const DRIVER_ROTE = "LINE_ONE";
 
     /**
      * 查询分类：根据起点与终点数据查询公交乘坐路线信息

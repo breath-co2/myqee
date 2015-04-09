@@ -2,8 +2,8 @@
 exit;
 
 
-abstract class Database_Drive extends Module_Database_Drive{}
-abstract class Ex_Database_Drive extends Module_Database_Drive{}
+abstract class Database_Driver extends Module_Database_Driver{}
+abstract class Ex_Database_Driver extends Module_Database_Driver{}
 
 class Database_Expression extends Module_Database_Expression{}
 class Ex_Database_Expression extends Module_Database_Expression{}

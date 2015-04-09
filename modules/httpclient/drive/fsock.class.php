@@ -8,7 +8,7 @@
  * @copyright  Copyright (c) 2008-2016 myqee.com
  * @license    http://www.myqee.com/license.html
  */
-class Module_HttpClient_Drive_Fsock
+class Module_HttpClient_Driver_Fsock
 {
     protected $http_data = array();
 
@@ -52,7 +52,7 @@ class Module_HttpClient_Drive_Fsock
      * 设置$cookie
      *
      * @param $agent
-     * @return HttpClient_Drive_Fsock
+     * @return HttpClient_Driver_Fsock
      */
     public function set_agent($agent)
     {
@@ -64,7 +64,7 @@ class Module_HttpClient_Drive_Fsock
      * 设置$cookie
      *
      * @param string $cookie
-     * @return HttpClient_Drive_Fsock
+     * @return HttpClient_Driver_Fsock
      */
     public function set_cookies($cookies)
     {
@@ -76,7 +76,7 @@ class Module_HttpClient_Drive_Fsock
      * 设置$referer
      *
      * @param string $referer
-     * @return HttpClient_Drive_Fsock
+     * @return HttpClient_Driver_Fsock
      */
     public function set_referer($referer)
     {
@@ -88,7 +88,7 @@ class Module_HttpClient_Drive_Fsock
      * 设置IP
      *
      * @param string $ip
-     * @return HttpClient_Drive_Fsock
+     * @return HttpClient_Driver_Fsock
      */
     public function set_ip($ip)
     {
@@ -100,7 +100,7 @@ class Module_HttpClient_Drive_Fsock
      * 设置Header
      *
      * @param string $header
-     * @return HttpClient_Drive_Curl
+     * @return HttpClient_Driver_Curl
      */
     public function set_header($header)
     {
@@ -115,7 +115,7 @@ class Module_HttpClient_Drive_Fsock
      *
      * @param string $key
      * @param mixed $value
-     * @return HttpClient_Drive_Fsock
+     * @return HttpClient_Driver_Fsock
      */
     public function set_option($key, $value)
     {
@@ -126,7 +126,7 @@ class Module_HttpClient_Drive_Fsock
      * 设置多个列队默认排队数上限
      *
      * @param int $num
-     * @return HttpClient_Drive_Fsock
+     * @return HttpClient_Driver_Fsock
      */
     public function set_multi_max_num($num = 0)
     {
@@ -154,7 +154,7 @@ class Module_HttpClient_Drive_Fsock
      * @param string $method GET|POST|DELETE|PUT 等，不传则返回当前method
      *
      * @return string
-     * @return HttpClient_Drive_Fsock
+     * @return HttpClient_Driver_Fsock
      */
     public function method($method = null)
     {

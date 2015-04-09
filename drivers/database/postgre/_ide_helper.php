@@ -1,0 +1,12 @@
+<?php
+exit;
+
+
+class Database_Driver_Postgre_Result extends Driver_Database_Driver_Postgre_Result{}
+class Ex_Database_Driver_Postgre_Result extends Driver_Database_Driver_Postgre_Result{}
+
+class Database_Driver_Postgre_Transaction extends Driver_Database_Driver_Postgre_Transaction{}
+class Ex_Database_Driver_Postgre_Transaction extends Driver_Database_Driver_Postgre_Transaction{}
+
+class Database_Driver_Postgre extends Driver_Database_Driver_Postgre{}
+class Ex_Database_Driver_Postgre extends Driver_Database_Driver_Postgre{}

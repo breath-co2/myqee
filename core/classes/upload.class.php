@@ -107,9 +107,9 @@ class Core_Upload
     /**
      * 驱动对象
      *
-     * @var Upload_Drive_Storage
+     * @var Upload_Driver_Storage
      */
-    protected $drive;
+    protected $driver;
 
     /**
      * 错误号
@@ -188,7 +188,7 @@ class Core_Upload
 
 
             // 保存上传文件
-            if ($this->config['drive'] == 'default')
+            if ($this->config['driver'] == 'default')
             {
                 $this->save_to_file();
 
@@ -212,30 +212,30 @@ class Core_Upload
      *
      * 若驱动为普通文件方式，则返回当前对象
      *
-     * @return Upload_Drive_Storage
+     * @return Upload_Driver_Storage
      */
-    public function drive()
+    public function driver()
     {
-        if ($this->config['drive'] == 'default')
+        if ($this->config['driver'] == 'default')
         {
             return $this;
         }
         else
         {
-            if (!$this->drive)
+            if (!$this->driver)
             {
-                $drive = 'Upload_Drive_' . $this->config['drive'];
-                if (!class_exists($drive, true))
+                $driver = 'Upload_Driver_' . $this->config['driver'];
+                if (!class_exists($driver, true))
                 {
-                    throw new Exception(__('Upload class drive :drive not exist.', array(':drive'=>$this->config['drive'])));
+                    throw new Exception(__('Upload class driver :driver not exist.', array(':driver'=>$this->config['driver'])));
                 }
 
-                $this->drive = new $drive($this->config['drive_config']);
+                $this->driver = new $driver($this->config['driver_config']);
             }
 
-            $this->drive;
+            $this->driver;
 
-            return $this->drive;
+            return $this->driver;
         }
     }
 

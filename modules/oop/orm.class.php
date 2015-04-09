@@ -153,7 +153,7 @@ abstract class Module_OOP_ORM
         return $orm;
     }
 
-    abstract public function drive();
+    abstract public function driver();
 
     abstract public function find();
 
@@ -232,7 +232,7 @@ abstract class Module_OOP_ORM
         $idfield = $this->id_field_name();
         if ($idfield)
         {
-            $this->drive()->where($idfield, $id);
+            $this->driver()->where($idfield, $id);
             return $this->find(null, $use_master)->current();
         }
         else
@@ -253,7 +253,7 @@ abstract class Module_OOP_ORM
 
         if ($idfield)
         {
-            $this->drive()->in($idfield, $ids);
+            $this->driver()->in($idfield, $ids);
 
             return $this->find(null, $use_master);
         }

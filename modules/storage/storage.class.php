@@ -16,14 +16,14 @@ class Module_Storage
      *
      * @var string
      */
-    const DRIVE_FILE = 'File';
+    const DRIVER_FILE = 'File';
 
     /**
      * 驱动类型为Redis
      *
      * @var string
      */
-    const DRIVE_REDIS = 'Redis';
+    const DRIVER_REDIS = 'Redis';
 
     /**
      * 驱动类型为OpenStack Object Storage (Swift)
@@ -31,14 +31,14 @@ class Module_Storage
      * @see http://www.openstack.org/software/openstack-storage/
      * @var string
      */
-    const DRIVE_SWIFT = 'Swift';
+    const DRIVER_SWIFT = 'Swift';
 
     /**
      * 驱动类型为Database
      *
      * @var string
      */
-    const DRIVE_DATABASE = 'Database';
+    const DRIVER_DATABASE = 'Database';
 
     /**
      * 默认配置名
@@ -53,9 +53,9 @@ class Module_Storage
     /**
      * 驱动对象
      *
-     * @var Storage_Drive_File
+     * @var Storage_Driver_File
      */
-    protected $drive;
+    protected $driver;
 
     /**
      * 配置
@@ -110,23 +110,23 @@ class Module_Storage
             $this->config = Core::config('storage.' . $config_name);
         }
 
-        if (!isset($this->config['drive']))
+        if (!isset($this->config['driver']))
         {
-            $this->config['drive'] = Storage::DRIVE_FILE;
+            $this->config['driver'] = Storage::DRIVER_FILE;
         }
 
-        $drive = 'Storage_Drive_' . $this->config['drive'];
-        if (!class_exists($drive, true))
+        $driver = 'Storage_Driver_' . $this->config['driver'];
+        if (!class_exists($driver, true))
         {
-            throw new Exception(__('The :type drive :drive does not exist', array(':type'=>'Storge',':drive'=>$this->config['drive'])));
+            throw new Exception(__('The :type driver :driver does not exist', array(':type'=>'Storge',':driver'=>$this->config['driver'])));
         }
 
-        $this->drive = new $drive($this->config['drive_config']);
+        $this->driver = new $driver($this->config['driver_config']);
 
         # 设置前缀
         if ($this->config['prefix'])
         {
-            $this->drive->set_prefix($this->config['prefix']);
+            $this->driver->set_prefix($this->config['prefix']);
         }
     }
 
@@ -154,7 +154,7 @@ class Module_Storage
             return null;
         }
 
-        return $this->drive->get($key);
+        return $this->driver->get($key);
     }
 
     /**
@@ -166,7 +166,7 @@ class Module_Storage
      */
     public function set($key, $value)
     {
-        return $this->drive->set($key, $value);
+        return $this->driver->set($key, $value);
     }
 
     /**
@@ -177,7 +177,7 @@ class Module_Storage
      */
     public function exists($key)
     {
-        return $this->drive->exists($key);
+        return $this->driver->exists($key);
     }
 
     /**
@@ -188,7 +188,7 @@ class Module_Storage
      */
     public function delete($key)
     {
-        return $this->drive->delete($key);
+        return $this->driver->delete($key);
     }
 
     /**
@@ -210,7 +210,7 @@ class Module_Storage
      */
     public function delete_all()
     {
-        return $this->drive->delete_all();
+        return $this->driver->delete_all();
     }
 
     public function __get($key)
@@ -230,7 +230,7 @@ class Module_Storage
 
     public function __call($method, $params)
     {
-        return call_user_func_array(array($this->drive,$method) , $params);
+        return call_user_func_array(array($this->driver,$method) , $params);
     }
 
 }
