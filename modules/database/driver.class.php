@@ -13,18 +13,18 @@
 abstract class Module_Database_Driver
 {
     /**
-     * 当前连接类型 master|slaver
+     * 当前连接类型 master|slave
      *
      * @var string
      */
-    protected $_connection_type = 'slaver';
+    protected $_connection_type = 'slave';
 
     /**
      * 当前连接的所有的ID
      *
      *    array(
      *    	'master' => 'abcdef...',
-     *    	'slaver' => 'defdef...',
+     *    	'slave' => 'defdef...',
      *    )
      *
      * @var array
@@ -32,7 +32,7 @@ abstract class Module_Database_Driver
     protected $_connection_ids = array
     (
         'master' => null,
-        'slaver' => null,
+        'slave' => null,
     );
 
     /**
@@ -87,7 +87,7 @@ abstract class Module_Database_Driver
         if (!is_array($this->config['connection']['hostname']))
         {
             # 主从链接采用同一个内存地址
-            $this->_connection_ids['master'] =& $this->_connection_ids['slaver'];
+            $this->_connection_ids['master'] =& $this->_connection_ids['slave'];
         }
 
         if ($this->_default_port && (!isset($this->config['connection']['port']) || !$this->config['connection']['port']>0))
@@ -400,6 +400,16 @@ abstract class Module_Database_Driver
     }
 
     /**
+     * 返回是否支持对象数据
+     *
+     * @var bool
+     */
+    public function is_suport_object_value()
+    {
+        return false;
+    }
+
+    /**
      * 获取一个随机HOST
      *
      * @param array $exclude_hosts 排除的HOST
@@ -537,7 +547,7 @@ abstract class Module_Database_Driver
         }
         elseif (false===$use_connection_type)
         {
-            $use_connection_type = 'slaver';
+            $use_connection_type = 'slave';
         }
         elseif (!$use_connection_type)
         {
@@ -575,8 +585,8 @@ abstract class Module_Database_Driver
             $type = 'MASTER';
         }
 
-        $slaverType = array('SELECT', 'SHOW', 'EXPLAIN');
-        if ($type!='MASTER' && in_array($type, $slaverType))
+        $slave_type = array('SELECT', 'SHOW', 'EXPLAIN');
+        if ($type!='MASTER' && in_array($type, $slave_type))
         {
             if (true === $connection_type)
             {
@@ -588,7 +598,7 @@ abstract class Module_Database_Driver
             }
             else
             {
-                $connection_type = 'slaver';
+                $connection_type = 'slave';
             }
         }
         else

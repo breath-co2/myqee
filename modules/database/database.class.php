@@ -607,6 +607,18 @@ class Module_Database extends Database_QueryBuilder
     }
 
     /**
+     * 返回是否支持对象数据
+     *
+     * 通常传统的数据库是不支持直接存储对象数据的，而MongoDB是支持的
+     *
+     * @return bool
+     */
+    public function is_suport_object_value()
+    {
+        $this->driver()->is_suport_object_value();
+    }
+
+    /**
      * 开启记录慢查询
      *
      * 返回当前时间，如果系统设置关闭记录慢查询，则返回 false
