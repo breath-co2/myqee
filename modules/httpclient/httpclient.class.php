@@ -117,14 +117,14 @@ class Module_HttpClient
     }
 
     /**
-     * 设置$referer
+     * 设置 $referrer
      *
-     * @param string $referer
+     * @param string $referrer
      * @return HttpClient
      */
-    public function set_referer($referer)
+    public function set_referrer($referrer)
     {
-        $this->driver()->set_referer($referer);
+        $this->driver()->set_referrer($referrer);
         return $this;
     }
 

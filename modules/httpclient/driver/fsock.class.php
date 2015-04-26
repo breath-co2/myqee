@@ -16,7 +16,7 @@ class Module_HttpClient_Driver_Fsock
 
     protected $cookies;
 
-    protected $referer;
+    protected $referrer;
 
     protected $ip;
 
@@ -73,14 +73,14 @@ class Module_HttpClient_Driver_Fsock
     }
 
     /**
-     * 设置$referer
+     * 设置$referrer
      *
-     * @param string $referer
+     * @param string $referrer
      * @return HttpClient_Driver_Fsock
      */
-    public function set_referer($referer)
+    public function set_referrer($referrer)
     {
-        $this->referer = $referer;
+        $this->referrer = $referrer;
         return $this;
     }
 
@@ -380,9 +380,9 @@ class Module_HttpClient_Driver_Fsock
             $header['Cookie'] = is_array($this->cookies)?http_build_query($this->cookies, '', ';'):$this->cookies;
         }
 
-        if ($this->referer)
+        if ($this->referrer)
         {
-            $header['Referer'] = $this->referer;
+            $header['Referer'] = $this->referrer;
         }
 
         if ($this->agent)
@@ -651,7 +651,7 @@ class Module_HttpClient_Driver_Fsock
         $this->files      = array();
         $this->ip         = null;
         $this->cookies    = null;
-        $this->referer    = null;
+        $this->referrer    = null;
         $this->method     = 'GET';
     }
 }

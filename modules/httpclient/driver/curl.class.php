@@ -18,7 +18,7 @@ class Module_HttpClient_Driver_Curl
 
     protected $cookies;
 
-    protected $referer;
+    protected $referrer;
 
     protected $ip;
 
@@ -82,14 +82,14 @@ class Module_HttpClient_Driver_Curl
     }
 
     /**
-     * 设置$referer
+     * 设置$referrer
      *
-     * @param string $referer
+     * @param string $referrer
      * @return HttpClient_Driver_Curl
      */
-    public function set_referer($referer)
+    public function set_referrer($referrer)
     {
-        $this->referer = $referer;
+        $this->referrer = $referrer;
         return $this;
     }
 
@@ -425,9 +425,9 @@ class Module_HttpClient_Driver_Curl
             }
         }
 
-        if ($this->referer)
+        if ($this->referrer)
         {
-            curl_setopt($ch, CURLOPT_REFERER, $this->referer);
+            curl_setopt($ch, CURLOPT_REFERER, $this->referrer);
         }
 
         if ($this->agent)
@@ -620,7 +620,7 @@ class Module_HttpClient_Driver_Curl
         $this->files      = array();
         $this->ip         = null;
         $this->cookies    = null;
-        $this->referer    = null;
+        $this->referrer    = null;
         $this->method     = 'GET';
     }
 }
