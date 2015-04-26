@@ -23,7 +23,7 @@ class Core_Controller_File extends Controller
         # 目录
         $dir = $this->arguments[0];
 
-        if ( !isset(File::$dir[$dir]) )
+        if (!isset(File::$dir[$dir]))
         {
             # 目录不允许操作
             $this->show_error('目录不允许操作');
@@ -47,7 +47,7 @@ class Core_Controller_File extends Controller
         else
         {
             # 记录错误日志
-            Core::log('create file('.$filename.') error.','error');
+            Core::log('system.error.file.create', array('file' => $filename), Core::LOG_ERROR);
             $this->show_error('执行失败');
         }
     }
@@ -61,7 +61,7 @@ class Core_Controller_File extends Controller
         # 目录
         $dir = $this->arguments[0];
 
-        if ( !isset(File::$dir[$dir]) )
+        if (!isset(File::$dir[$dir]))
         {
             # 目录不允许操作
             $this->show_error('目录不允许操作');
@@ -70,14 +70,14 @@ class Core_Controller_File extends Controller
         # 目录
         $the_dir = File::$dir[$dir].$this->arguments[1];
 
-        if ( File::create_dir($the_dir,$this->arguments[2]) )
+        if (File::create_dir($the_dir,$this->arguments[2]))
         {
             $this->show_success();
         }
         else
         {
             # 记录错误日志
-            Core::log('create dir('.$the_dir.') error.','error');
+            Core::log('system.error.dir.create', array('dir' => $the_dir), Core::LOG_ERROR);
             $this->show_error('执行失败');
         }
     }
@@ -91,9 +91,9 @@ class Core_Controller_File extends Controller
         # 目录
         $dirs = (array)$this->arguments[0];
         # 文件
-        $filenames = (array)$this->arguments[1];
+        $file_names = (array)$this->arguments[1];
 
-        if (count($dirs)!=count($filenames))
+        if (count($dirs) !== count($file_names))
         {
             $this->show_error('参数错误');
         }
@@ -101,22 +101,22 @@ class Core_Controller_File extends Controller
         $files = array();
         foreach ($dirs as $k=>$dir)
         {
-            if ( !isset(File::$dir[$dir]) )
+            if (!isset(File::$dir[$dir]))
             {
                 # 目录不允许操作
                 $this->show_error('目录不允许操作');
             }
-            $files[] = File::$dir[$dir] . $filenames[$k];
+            $files[] = File::$dir[$dir] . $file_names[$k];
         }
 
-        if ( File::unlink($files) )
+        if (File::unlink($files))
         {
             $this->show_success();
         }
         else
         {
             # 记录错误日志
-            Core::log($files,'delete file error');
+            Core::log('system.error.file.delete', array('file' => $files), Core::LOG_ERROR);
             $this->show_error('执行失败');
         }
     }
@@ -130,7 +130,7 @@ class Core_Controller_File extends Controller
         # 目录
         $dir = $this->arguments[0];
 
-        if ( !isset(File::$dir[$dir]) )
+        if (!isset(File::$dir[$dir]))
         {
             # 目录不允许操作
             $this->show_error('目录不允许操作');
@@ -144,14 +144,14 @@ class Core_Controller_File extends Controller
         # 目录
         $the_dir = File::$dir[$dir].$this->arguments[1];
 
-        if ( File::remove_dir($the_dir) )
+        if (File::remove_dir($the_dir))
         {
             $this->show_success();
         }
         else
         {
             # 记录错误日志
-            Core::log('remove dir('.$the_dir.') error.','error');
+            Core::log('system.error.dir.remove', array('dir' => $the_dir), Core::LOG_ERROR);
             $this->show_error('执行失败');
         }
     }
@@ -166,13 +166,13 @@ class Core_Controller_File extends Controller
         $from_dir = $this->arguments[0];
         $to_dir   = $this->arguments[2];
 
-        if ( !isset(File::$dir[$from_dir]) )
+        if (!isset(File::$dir[$from_dir]))
         {
             # 目录不允许操作
             $this->show_error('目录不允许操作');
         }
 
-        if ( !isset(File::$dir[$to_dir]) )
+        if (!isset(File::$dir[$to_dir]))
         {
             # 目录不允许操作
             $this->show_error('目录不允许操作');
@@ -182,14 +182,14 @@ class Core_Controller_File extends Controller
         $the_from_dir = File::$dir[$from_dir].$this->arguments[1];
         $the_to_dir   = File::$dir[$to_dir]  .$this->arguments[3];
 
-        if ( File::move_dir($the_from_dir,$the_to_dir,$this->arguments[4]) )
+        if (File::move_dir($the_from_dir,$the_to_dir,$this->arguments[4]))
         {
             $this->show_success();
         }
         else
         {
             # 记录错误日志
-            Core::log('move dir('.$from_dir.')to dir('.$to_dir.') error.','error');
+            Core::log('system.error.dir.move', array('form_dir' => $from_dir, 'to_dir' => $to_dir), Core::LOG_ERROR);
             $this->show_error('执行失败');
         }
     }
@@ -204,13 +204,13 @@ class Core_Controller_File extends Controller
         $from_dir = $this->arguments[0];
         $to_dir   = $this->arguments[2];
 
-        if ( !isset(File::$dir[$from_dir]) )
+        if (!isset(File::$dir[$from_dir]))
         {
             # 目录不允许操作
             $this->show_error('目录不允许操作');
         }
 
-        if ( !isset(File::$dir[$to_dir]) )
+        if (!isset(File::$dir[$to_dir]))
         {
             # 目录不允许操作
             $this->show_error('目录不允许操作');
@@ -220,14 +220,14 @@ class Core_Controller_File extends Controller
         $the_from_dir = File::$dir[$from_dir].$this->arguments[1];
         $the_to_dir   = File::$dir[$to_dir]  .$this->arguments[3];
 
-        if ( File::copy_dir($the_from_dir,$the_to_dir,$this->arguments[4]) )
+        if (File::copy_dir($the_from_dir,$the_to_dir,$this->arguments[4]))
         {
             $this->show_success();
         }
         else
         {
             # 记录错误日志
-            Core::log('copy dir('.$from_dir.')to dir('.$to_dir.') error.','error');
+            Core::log('system.error.dir.copy', array('form_dir' => $from_dir, 'to_dir' => $to_dir), Core::LOG_ERROR);
             $this->show_error('执行失败');
         }
     }
@@ -242,7 +242,7 @@ class Core_Controller_File extends Controller
         # 目录
         $dir = $this->arguments[0];
 
-        if ( !isset(File::$dir[$dir]) )
+        if (!isset(File::$dir[$dir]))
         {
             # 目录不允许操作
             $this->show_error('目录不允许操作');
@@ -256,14 +256,14 @@ class Core_Controller_File extends Controller
         # 文件
         $filename = File::$dir[$dir].$this->arguments[1];
 
-        if ( File::split($filename , $this->arguments[2]) )
+        if (File::split($filename , $this->arguments[2]))
         {
             $this->show_success();
         }
         else
         {
             # 记录错误日志
-            Core::log('split file('.$filename.') error.','error');
+            Core::log('system.error.file.split', array('file' => $filename), Core::LOG_ERROR);
             $this->show_error('执行失败');
         }
     }
@@ -277,7 +277,7 @@ class Core_Controller_File extends Controller
         # 目录
         $dir = $this->arguments[0];
 
-        if ( !isset(File::$dir[$dir]) )
+        if (!isset(File::$dir[$dir]))
         {
             # 目录不允许操作
             $this->show_error('目录不允许操作');
@@ -291,14 +291,14 @@ class Core_Controller_File extends Controller
         # 文件
         $filename = File::$dir[$dir].$this->arguments[1];
 
-        if ( File::join($filename) )
+        if (File::join($filename))
         {
             $this->show_success();
         }
         else
         {
             # 记录错误日志
-            Core::log('join file('.$filename.') error.','error');
+            Core::log('system.error.file.join', array('file' => $filename), Core::LOG_ERROR);
             $this->show_error('执行失败');
         }
     }

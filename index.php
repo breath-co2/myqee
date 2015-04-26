@@ -14,10 +14,11 @@ $max_load_avg = 48;
 /**
  * 数据目录,默认为文件目录，支持数据库，缓存，可用于类似BAE,SAE,SEE,ACE等目录无写权限的环境
  *
- * PS：如果是希望保存到redis里，可使用 cache://redis/ 然后在config中配置一个$config['cache']['redis']的配置
+ * PS：如果是希望保存到redis里，可使用 cache://redis/ 然后在config中配置一个 $config['cache']['redis'] 的配置
+ * 注意结尾不要带斜杠
  *
- * db://default/test        //表示用配置为default数据库保存，表名称为test
- * cache://test/abc         //表示用缓存配置为test的保存，数据前缀为 abc
+ *      db://default/test        //表示用配置为default数据库保存，表名称为test
+ *      cache://test/abc         //表示用缓存配置为test的保存，数据前缀为 abc
  *
  * @var string
  * @see http://www.myqee.com/docs/config/index_page/
@@ -28,13 +29,18 @@ $dir_data    = './data/';
 /**
  * 缓存目录，同上
  */
-$dir_cache   = $dir_data.'cache/';
+$dir_cache   = $dir_data .'cache/';
 
 
 /**
  * LOG目录，同上
+ *
+ * 额外支持直接推送到 fluent 上，见 http://docs.fluentd.org/ 页面
+ * 也可以在 config.php 中 `$config['log']['fluent']` 进行设置
+ *
+ *      fd://127.0.0.1/24224       //表示使用tcp方式推送到 127.0.0.1 的 24224 端口
  */
-$dir_log     = $dir_data.'log/';
+$dir_log     = $dir_data .'log/';
 
 
 /**

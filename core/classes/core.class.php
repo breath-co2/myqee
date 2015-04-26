@@ -113,6 +113,51 @@ abstract class Core_Core extends Bootstrap
      */
     const CODER = '呼吸二氧化碳 <jonwang@myqee.com>';
 
+
+    //日志等级 fatal, error, warn, info, debug, and trace
+
+    /**
+     * fatal
+     *
+     * @var string
+     */
+    const LOG_FATAL = 'fatal';
+
+    /**
+     * error
+     *
+     * @var string
+     */
+    const LOG_ERROR = 'error';
+
+    /**
+     * warn
+     *
+     * @var string
+     */
+    const LOG_WARN  = 'warn';
+
+    /**
+     * info
+     *
+     * @var string
+     */
+    const LOG_INFO  = 'info';
+
+    /**
+     * debug
+     *
+     * @var string
+     */
+    const LOG_DEBUG = 'debug';
+
+    /**
+     * trace
+     *
+     * @var string
+     */
+    const LOG_TRACE = 'trace';
+
     /**
      * 页面编码
      *
@@ -217,7 +262,7 @@ abstract class Core_Core extends Bootstrap
                 }
             }
 
-            if ((IS_CLI || IS_DEBUG) && class_exists('ErrException', true))
+            if (1==2 &&(IS_CLI || IS_DEBUG) && class_exists('ErrException', true))
             {
                 # 注册脚本
                 register_shutdown_function(array('ErrException', 'shutdown_handler'));
@@ -229,7 +274,7 @@ abstract class Core_Core extends Bootstrap
             {
                 # 注册脚本
                 register_shutdown_function(array('Core', 'shutdown_handler'));
-                # 捕获错误
+//                # 捕获错误
                 set_exception_handler(array('Core', 'exception_handler'));
                 set_error_handler(array('Core', 'error_handler'), error_reporting());
             }
@@ -312,27 +357,28 @@ abstract class Core_Core extends Bootstrap
         {
             ob_start();
 
-            try
-            {
-                Core::execute(Core::$path_info);
-            }
-            catch (Exception $e)
-            {
-                $code = $e->getCode();
-
-                if (404 === $code || E_PAGE_NOT_FOUND === $code)
-                {
-                    Core::show_404($e->getMessage());
-                }
-                elseif (500 === $code)
-                {
-                    Core::show_500($e->getMessage());
-                }
-                else
-                {
-                    Core::show_500($e);
-                }
-            }
+            Core::execute(Core::$path_info);
+//            try
+//            {
+//            }
+//            catch (Exception $e)
+//            {
+//                throw $e;
+//                $code = $e->getCode();
+//
+//                if (404 === $code || E_PAGE_NOT_FOUND === $code)
+//                {
+//                    Core::show_404($e->getMessage());
+//                }
+//                elseif (500 === $code)
+//                {
+//                    Core::show_500($e->getMessage());
+//                }
+//                else
+//                {
+//                    Core::show_500($e);
+//                }
+//            }
 
             Core::$output = ob_get_clean();
         }
@@ -665,70 +711,6 @@ abstract class Core_Core extends Bootstrap
     }
 
     /**
-     * 是否系统设置禁用文件写入功能
-     *
-     * 可在 `config.php` 中设置 `$config['file_write_mode'] = 'disable';` 如果disable则返回true,否则返回false
-     *
-     * @return boolean
-     */
-    public static function is_file_write_disabled()
-    {
-        if (Core::config('file_write_mode') === 'disable')
-        {
-            return true;
-        }
-        else
-        {
-            return false;
-        }
-    }
-
-    /**
-     * 记录日志
-     *
-     * @param string $msg 日志内容
-     * @param string $type 类型，例如：log,error,debug 等
-     * @param string $file 指定文件名，不指定则默认
-     * @return boolean
-     */
-    public static function log($msg, $type = 'log', $file = null)
-    {
-        if (Core::is_file_write_disabled())return true;
-
-        # log配置
-        $log_config = Core::config('log');
-
-        # 不记录日志
-        if (isset($log_config['use']) && !$log_config['use'])
-        {
-            return true;
-        }
-
-        # 内容格式化
-        if ($log_config['format'])
-        {
-            $format = $log_config['format'];
-        }
-        else
-        {
-            # 默认格式
-            $format = ':time - :host::port - :url - :msg';
-        }
-
-        # 获取日志内容
-        $data = Core::log_format($msg, $type, $format);
-
-        if (IS_DEBUG)
-        {
-            # 如果有开启debug模式，输出到浏览器
-            Core::debug()->log($data, $type);
-        }
-
-        # 保存日志
-        return Core::write_log($data, $type, $file);
-    }
-
-    /**
      * 执行指定URI的控制器
      *
      * @param string $uri
@@ -868,9 +850,9 @@ abstract class Core_Core extends Bootstrap
                 # POST 方式，自动CSRF判断
                 if (HttpIO::METHOD === 'POST')
                 {
-                    $auto_check_post_method_referer = isset($controller->auto_check_post_method_referer)?$controller->auto_check_post_method_referer:Core::config('auto_check_post_method_referer', true);
+                    $auto_check_post_method_referrer = isset($controller->auto_check_post_method_referrer)?$controller->auto_check_post_method_referrer:Core::config('auto_check_post_method_referrer', true);
 
-                    if ($auto_check_post_method_referer && !HttpIO::csrf_check())
+                    if ($auto_check_post_method_referrer && !HttpIO::csrf_check())
                     {
                         Core::rm_controller($controller);
                         throw new Exception(__('Not Acceptable.'), 406);
@@ -1342,77 +1324,174 @@ abstract class Core_Core extends Bootstrap
 
 
     /**
-    * 写入日志
-    *
-    * 若有特殊写入需求，可以扩展本方法（比如调用数据库类克写到数据库里）
-    *
-    * @param string $data
-    * @param string $type 日志类型
-    * @param string $file 指定文件名，不指定则默认
-    * @return boolean
-    */
-    protected static function write_log($data, $type = 'log', $file = null)
+     * 记录日志
+     *
+     * 推荐使用 fluent 进行log推送，请先配置根目录 `$config['log']['fluent'] = 'tcp://127.0.0.1:24224/'`
+     *
+     *      Core::log('core.debug.test', array('key'=>'value', 'key2'=>'value'));
+     *
+     * @param string $tag 日志标签，字符串，比如 core.debug.test
+     * @param array|string $data 日志数据，若传字符串，则自动转换成 array('msg'=>$data)
+     * @return boolean
+     */
+    public static function log($tag, $data, $level = Core::LOG_INFO)
     {
-        static $pro = null;
+        # log配置
+        $log_config = Core::config('log');
 
-        if (!$type)$type = 'log';
-
-        if (null === $pro)
+        # 不记录日志
+        if (isset($log_config['use']) && !$log_config['use'])
         {
-            if (preg_match('#^(db|cache)://([a-z0-9_]+)/([a-z0-9_]+)$#i', DIR_LOG , $m))
+            return true;
+        }
+
+        if (!isset($log_config['fluent']['server']) && strpos(DIR_LOG, '://') !== false && Core::is_file_write_disabled())
+        {
+            # 没有使用 fluent 日志系统，文件系统禁止写入
+            return true;
+        }
+
+        if (IS_DEBUG)
+        {
+            # 如果有开启debug模式，输出到浏览器
+            Core::debug()->log($data, $tag);
+        }
+
+        if (!is_array($data))
+        {
+            $data = array
+            (
+                'msg' => $data,
+            );
+        }
+
+        # 保存日志
+        return Core::write_log($tag, $data, $level);
+    }
+
+
+    /**
+     * 是否系统设置禁用文件写入功能
+     *
+     * 可在 `config.php` 中设置 `$config['file_write_mode'] = 'disable';` 如果disable则返回true,否则返回false
+     *
+     * @return boolean
+     */
+    public static function is_file_write_disabled()
+    {
+        if (Core::config('file_write_mode') === 'disable')
+        {
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
+
+
+    /**
+     * 写入日志
+     *
+     * @param string $tag 日志类型
+     * @param string $data
+     * @return boolean
+     */
+    protected static function write_log($tag = 'log', $data)
+    {
+        /**
+         * 按项目记录每个项目的日志保存方式
+         */
+        static $st = array();
+
+        if (!isset($st[Core::$project]))
+        {
+            # 读取项目日志保存方式
+            if (preg_match('#^(db|cache|fd)://([a-z0-9_]+)/([a-z0-9_]+)?$#i', DIR_LOG , $m))
             {
-                $pro = $m;
+                if ($m[1] === 'fd')
+                {
+                    $m[0] = 'tcp://'. $m[2] .':'. $m[3];
+                }
+                $st[Core::$project] = array
+                (
+                    'link'   => $m[0],
+                    'type'   => $m[1],
+                    'host'   => $m[2],
+                    'prefix' => $m[3],
+                );
             }
             else
             {
-                $pro = false;
+                $log_config = Core::config('log');
+
+                if (isset($log_config['fluent']) && $log_config['fluent'])
+                {
+                    $st[Core::$project] = array
+                    (
+                        'link'   => $log_config['fluent'],
+                        'type'   => 'fd',
+                        'host'   => $m[2],
+                        'prefix' => $m[3],
+                    );
+                }
+                else
+                {
+                    $write_mode = Core::config('file_write_mode');
+
+                    # 禁用写入
+                    if ($write_mode === 'disable')
+                    {
+                        return true;
+                    }
+
+                    # 判断是否有转换储存处理
+                    if (preg_match('#^(db|cache)://([a-z0-9_]+)/([a-z0-9_]+)$#i', $write_mode, $m))
+                    {
+                        $st[Core::$project] = array
+                        (
+                            'link'   => $m[0],
+                            'type'   => $m[1],
+                            'host'   => $m[2],
+                            'prefix' => $m[3],
+                        );
+                    }
+                    else
+                    {
+                        $st[Core::$project] = false;
+                    }
+                }
             }
         }
 
-        # Log目录采用文件目录
-        if (false === $pro)
-        {
-            $write_mode = Core::config('file_write_mode');
 
-            # 禁用写入
-            if ($write_mode === 'disable')return true;
-
-            # 再判断是否有转换储存处理
-            if (preg_match('#^(db|cache)://([a-z0-9_]+)/([a-z0-9_]+)$#i', $write_mode , $m))
-            {
-                $pro = $m;
-            }
-        }
+        if (!$tag)$tag = 'log';
+        $pro = $st[Core::$project];
 
         if (false === $pro)
         {
             # 以文件的形式保存
 
-            $log_config = Core::config('log');
-
-            if (!$file)
+            if ($log_config['file'])
             {
-                if ($log_config['file'])
-                {
-                    $file = date($log_config['file']);
-                }
-                else
-                {
-                    $file = date('Y/m/d/');
-                }
-                $file .= $type . '.log';
+                $file = date($log_config['file']);
             }
+            else
+            {
+                $file = date('Y/m/d/');
+            }
+            $file .= $tag . '.log';
 
             $dir = trim(dirname($file), '/');
 
             # 如果目录不存在，则创建
             if (!is_dir(DIR_LOG.$dir))
             {
-                $temp = explode('/', str_replace('\\', '/', $dir) );
+                $temp = explode('/', str_replace('\\', '/', $dir));
                 $cur_dir = '';
                 for($i = 0; $i < count($temp); $i++)
                 {
-                    $cur_dir .= $temp[$i] . "/";
+                    $cur_dir .= $temp[$i] . '/';
                     if (!is_dir(DIR_LOG.$cur_dir))
                     {
                         @mkdir(DIR_LOG.$cur_dir, 0755);
@@ -1420,39 +1499,39 @@ abstract class Core_Core extends Bootstrap
                 }
             }
 
-            return false === @file_put_contents(DIR_LOG . $file, $data . CRLF , FILE_APPEND)?false:true;
+            return false === @file_put_contents(DIR_LOG . $file, (defined('JSON_UNESCAPED_UNICODE') ? json_encode($data, JSON_UNESCAPED_UNICODE) : json_encode($data)) . CRLF , FILE_APPEND) ? false : true;
         }
         else
         {
-            # 以db或cache方式保存
+            # 以db或cache或fd方式保存
 
-            if ($pro[1]=='db')
+            if ($pro['type'] === 'fd')
             {
+                return Fluent::instance($pro['link'])->push($tag, $data);
+            }
+            elseif ($pro['type'] === 'db')
+            {
+                $obj = new Database($pro['host']);
+
                 $db_data = array
                 (
-                    'key'    => md5($file),
-                    'key_str'=> substr($file, 0, 255),
-                    'type'   => $type,
-                    'day'    => date('Ymd'),
-                    'time'   => TIME,
-                    'value'  => $data,
+                    'type'   => $tag,
+                    'day'    => (int)date('Ymd'),
+                    'time'   => TIME_FLOAT,
+                    'value'  => $obj->is_suport_object_value() ? $data : (defined('JSON_UNESCAPED_UNICODE') ? json_encode($data, JSON_UNESCAPED_UNICODE) : json_encode($data)),
                 );
 
-                $obj = new Database($pro[2]);
-                $status = $obj->insert($pro[3], $db_data) ? true : false;
+                $status = $obj->insert($pro['prefix'], $db_data) ? true : false;
             }
             else
             {
-                if ($pro[3])
+                $obj = Cache::instance($pro['host']);
+                if ($pro['prefix'])
                 {
-                    $pro[1]['prefix'] = trim($pro[3]) . '_';
+                    $obj->set_prefix($pro['prefix']);
                 }
 
-                $pro[1]['prefix'] .= $type .'_';
-
-                $obj = new Cache($pro[2]);
-
-                $status = $obj->set(date('Ymd') .'_'. md5($file), $data, 86400 * 30);        // 存1月
+                $status = $obj->set(date('Ymd') .'_'. $tag, $data, 86400 * 30);        // 存1月
             }
 
             return $status;
@@ -1466,7 +1545,7 @@ abstract class Core_Core extends Bootstrap
     * @param string $format
     * @return string
     */
-    protected static function log_format($msg,$type,$format)
+    protected static function log_format($msg, $type, $format)
     {
         $value = array
         (
@@ -1478,7 +1557,7 @@ abstract class Core_Core extends Bootstrap
             ':port'    => $_SERVER["SERVER_PORT"],         //端口
             ':ip'      => HttpIO::IP,                      //请求的IP
             ':agent'   => $_SERVER["HTTP_USER_AGENT"],     //客户端信息
-            ':referer' => $_SERVER["HTTP_REFERER"],        //来源页面
+            ':referrer'=> $_SERVER["HTTP_REFERER"],        //来源页面
         );
 
         return strtr($format, $value);
@@ -1748,17 +1827,17 @@ abstract class Core_Core extends Bootstrap
             {
                 $trace_array = array
                 (
-                    'project'     => Core::$project,
-                    'uri'         => HttpIO::$uri,
-                    'url'         => HttpIO::PROTOCOL . $_SERVER['HTTP_HOST'] . $_SERVER["REQUEST_URI"],
-                    'post'        => HttpIO::POST(null, HttpIO::PARAM_TYPE_OLDDATA),
-                    'get'         => $_SERVER['QUERY_STRING'],
-                    'cookie'      => HttpIO::COOKIE(null, HttpIO::PARAM_TYPE_OLDDATA),
-                    'client_ip'   => HttpIO::IP,
-                    'user_agent'  => HttpIO::USER_AGENT,
-                    'referrer'    => HttpIO::REFERRER,
-                    'server_ip'   => $_SERVER["SERVER_ADDR"],
-                    'trace'       => $trace_obj->__toString(),
+                    'project'    => Core::$project,
+                    'uri'        => HttpIO::$uri,
+                    'url'        => HttpIO::PROTOCOL . $_SERVER['HTTP_HOST'] . $_SERVER["REQUEST_URI"],
+                    'post'       => HttpIO::POST(null, HttpIO::PARAM_TYPE_OLDDATA),
+                    'get'        => $_SERVER['QUERY_STRING'],
+                    'cookie'     => HttpIO::COOKIE(null, HttpIO::PARAM_TYPE_OLDDATA),
+                    'client_ip'  => HttpIO::IP,
+                    'user_agent' => HttpIO::USER_AGENT,
+                    'referrer'   => HttpIO::REFERRER,
+                    'server_ip'  => $_SERVER["SERVER_ADDR"],
+                    'trace'      => $trace_obj->__toString(),
                 );
 
                 $date     = @date('Y-m-d');
@@ -1919,8 +1998,10 @@ abstract class Core_Core extends Bootstrap
 
     /**
      * 添加页面在关闭前执行的列队
+     *
      * 将利用call_user_func或call_user_func_array回调
      * 类似 register_shutdown_function
+     *
      * @param array $function 方法名，可以是数组
      */
     public static function register_shutdown_function($function)
@@ -1931,12 +2012,13 @@ abstract class Core_Core extends Bootstrap
     public static function shutdown_handler()
     {
         $error = error_get_last();
-        if ( $error )
+
+        if ($error)
         {
             static $run = null;
-            if ( $run === true ) return;
+            if ($run === true)return;
             $run = true;
-            if ( ((E_ERROR | E_PARSE | E_CORE_ERROR | E_COMPILE_ERROR | E_USER_ERROR | E_RECOVERABLE_ERROR) & $error['type']) !== 0 )
+            if (((E_ERROR | E_PARSE | E_CORE_ERROR | E_COMPILE_ERROR | E_USER_ERROR | E_RECOVERABLE_ERROR) & $error['type']) !== 0)
             {
                 $error['file'] = Core::debug_path($error['file']);
                 Core::show_500(var_export($error, true));
@@ -1948,20 +2030,38 @@ abstract class Core_Core extends Bootstrap
     public static function exception_handler(Exception $e)
     {
         $code = $e->getCode();
-        if ($code !== 8)
+
+        if ($code !== E_NOTICE && $code !== E_USER_NOTICE)
         {
             Core::show_500($e);
             exit();
         }
     }
 
-    public static function error_handler($code, $error, $file = null, $line = null)
+    public static function error_handler($level, $message, $file = null, $line = null)
     {
-        if ((error_reporting() & $code) !== 0)
+        if (!(error_reporting() & $level))
         {
-            throw new ErrorException($error, $code, 0, $file, $line);
+            return null;
         }
-        return true;
+
+        switch ($level)
+        {
+            case E_USER_ERROR:
+            case E_USER_WARNING:
+                throw new ErrorException($message, $level, 0, $file, $line);
+                break;
+            case E_USER_NOTICE:
+                if (IS_DEBUG)
+                {
+                    Core::debug()->info($message, 'USER_NOTICE');
+                }
+                return true;
+                break;
+            default:
+                throw new ErrorException($message, $level, 0, $file, $line);
+                break;
+        }
     }
 
     /**
@@ -1995,13 +2095,13 @@ abstract class Core_Core extends Bootstrap
             $old_memory = memory_get_usage();
         }
 
-        if  (null===$obj_name)
+        if  (null === $obj_name)
         {
             Core::$instances = array();
         }
         elseif (isset(Core::$instances[$obj_name]))
         {
-            if (null===$key)
+            if (null === $key)
             {
                 unset(Core::$instances[$obj_name]);
             }
@@ -2045,19 +2145,19 @@ abstract class Core_Core extends Bootstrap
      */
     public static function change_project($project)
     {
-        if (Core::$project==$project)
+        if (Core::$project === $project)
         {
             return true;
         }
 
-        if ( !isset(Core::$core_config['projects'][$project] ) )
+        if (!isset(Core::$core_config['projects'][$project]))
         {
-            Core::show_500( __('not found the project: :project.', array(':project'=>$project) ) );
+            Core::show_500(__('not found the project: :project.', array(':project' => $project)));
         }
 
-        if ( !Core::$core_config['projects'][$project]['isuse'] )
+        if (!Core::$core_config['projects'][$project]['isuse'])
         {
-            Core::show_500( __('the project: :project is not open.', array(':project'=>$project) ) );
+            Core::show_500( __('the project: :project is not open.', array(':project' => $project)));
         }
 
         # 记录所有项目设置，当切换回项目时，使用此设置还原
@@ -2206,7 +2306,7 @@ abstract class Core_Core extends Bootstrap
         $status = parent::import_library($library_name);
 
         # 回调callback
-        if ($status>0)
+        if ($status > 0)
         {
             Core::event_trigger('system.import_library');
         }
@@ -2287,7 +2387,7 @@ abstract class Core_Core extends Bootstrap
         // 请求时效检查
         if (microtime(1) - $time > 600)
         {
-            Core::log('system request timeout', 'system-request');
+            Core::log('system.error.request.timeout', array('msg' => 'system request timeout', 'time1' => microtime(1), 'time0' => $time), Core::LOG_WARN);
             return false;
         }
 
@@ -2320,7 +2420,7 @@ abstract class Core_Core extends Bootstrap
 
                 if (!$allow)
                 {
-                    Core::log('system request not allow ip:' . HttpIO::IP, 'system-request');
+                    Core::log('system.error.request.ip', array('ip' => HttpIO::IP), Core::LOG_WARN);
                     return false;
                 }
             }
@@ -2351,13 +2451,13 @@ abstract class Core_Core extends Bootstrap
             $new_hash = sha1($body . $time . serialize(Core::config('core')) . serialize(Core::config('database')) . $rstr .'_'. $other);
         }
 
-        if ($new_hash==$hash)
+        if ($new_hash == $hash)
         {
             return true;
         }
         else
         {
-            Core::log('system request hash error', 'system-request');
+            Core::log('system.error.request.hash', array('hash' => $hash), Core::LOG_WARN);
             return false;
         }
     }

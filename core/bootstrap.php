@@ -35,6 +35,13 @@ define('EXT', '.php');
 define('TIME', time());
 
 /**
+ * 系统当前时间
+ *
+ * @var int
+ */
+define('TIME_FLOAT', START_TIME);
+
+/**
  * 目录分隔符简写
  *
  * @var string
@@ -172,21 +179,21 @@ if (!isset($dir_temp  )) $dir_temp   = null;
  *
  * @var string
  */
-define('DIR_UPLOAD', strpos($dir_upload,'://')!==false ? $dir_upload : (realpath($dir_upload)?realpath($dir_upload):DIR_WWWROOT.'upload').DS);
+define('DIR_UPLOAD', strpos($dir_upload, '://')!==false ? $dir_upload : (realpath($dir_upload)?realpath($dir_upload):DIR_WWWROOT.'upload').DS);
 
 /**
  * 数据目录
  *
  * @var string
  */
-define('DIR_DATA', strpos($dir_data,'://')!==false ? $dir_data : (realpath($dir_data)?realpath($dir_data):DIR_SYSTEM.'data').DS);
+define('DIR_DATA', strpos($dir_data, '://')!==false ? $dir_data : (realpath($dir_data)?realpath($dir_data):DIR_SYSTEM.'data').DS);
 
 /**
  * Cache目录
  *
  * @var string
 */
-define('DIR_CACHE', strpos($dir_cache,'://')!==false ? $dir_cache : (realpath($dir_cache)?realpath($dir_cache):DIR_DATA.'cache').DS);
+define('DIR_CACHE', strpos($dir_cache, '://')!==false ? $dir_cache : (realpath($dir_cache)?realpath($dir_cache):DIR_DATA.'cache').DS);
 
 /**
  * Temp目录
@@ -195,14 +202,14 @@ define('DIR_CACHE', strpos($dir_cache,'://')!==false ? $dir_cache : (realpath($d
  *
  * @var string
 */
-define('DIR_TEMP', strpos($dir_temp,'://')!==false ? $dir_temp : ($dir_temp && realpath($dir_temp)?realpath($dir_temp).DS:sys_get_temp_dir()));
+define('DIR_TEMP', strpos($dir_temp, '://')!==false ? $dir_temp : ($dir_temp && realpath($dir_temp)?realpath($dir_temp).DS:sys_get_temp_dir()));
 
 /**
  * Log目录
  *
  * @var string
 */
-define('DIR_LOG', strpos($dir_log,'://')!==false ? $dir_log : (realpath($dir_log)?realpath($dir_log):DIR_DATA.'log').DS);
+define('DIR_LOG', strpos($dir_log, '://')!==false ? $dir_log : (realpath($dir_log)?realpath($dir_log):DIR_DATA.'log').DS);
 
 
 unset($dir_data, $dir_cache, $dir_log, $dir_temp);
@@ -545,23 +552,23 @@ abstract class Bootstrap
 
 
             # Runtime配置
-            if (!isset(self::$core_config['runtime_config']))
+            if (!isset(self::$core_config['env_config_suffix']))
             {
-                self::$core_config['runtime_config'] = '';
+                self::$core_config['env_config_suffix'] = '';
             }
-            else if (self::$core_config['runtime_config'] && !preg_match('#^[a-z0-9_]+$#', self::$core_config['runtime_config']))
+            else if (self::$core_config['env_config_suffix'] && !preg_match('#^[a-z0-9_]+$#', self::$core_config['env_config_suffix']))
             {
-                self::$core_config['runtime_config'] = '';
+                self::$core_config['env_config_suffix'] = '';
             }
 
-            if (self::$core_config['runtime_config'])
+            if (self::$core_config['env_config_suffix'])
             {
-                $runtime_file = DIR_SYSTEM .'config.'. self::$core_config['runtime_config'] .'.runtime'. EXT;
+                $env_config_file = DIR_SYSTEM .'config.'. self::$core_config['env_config_suffix'] .'.env'. EXT;
 
                 # 读取配置
-                if (is_file($runtime_file))
+                if (is_file($env_config_file))
                 {
-                    __include_config_file(self::$core_config, $runtime_file);
+                    __include_config_file(self::$core_config, $env_config_file);
                 }
             }
 
@@ -1318,9 +1325,9 @@ abstract class Bootstrap
                 $config_files[] = $config_file;
             }
 
-            if (self::$core_config['runtime_config'])
+            if (self::$core_config['env_config_suffix'])
             {
-                $config_file = $set[1] .'config'. self::$core_config['runtime_config'] .'.runtime'. EXT;
+                $config_file = $set[1] .'config'. self::$core_config['env_config_suffix'] .'.env'. EXT;
 
                 if (is_file($config_file))
                 {
@@ -1499,13 +1506,13 @@ abstract class Bootstrap
         }
     }
 
-    protected static function get_config_file_by_path(&$config_files, $paths, $runtime = false)
+    protected static function get_config_file_by_path(&$config_files, $paths, $run_env = false)
     {
         foreach ($paths as $path)
         {
-            if ($runtime && self::$core_config['runtime_config'])
+            if ($run_env && self::$core_config['env_config_suffix'])
             {
-                $config_file = $path . 'config.'. self::$core_config['runtime_config'] .'.runtime'. EXT;
+                $config_file = $path . 'config.'. self::$core_config['env_config_suffix'] .'.env'. EXT;
 
                 if (is_file($config_file))
                 {
@@ -1513,7 +1520,7 @@ abstract class Bootstrap
                 }
             }
 
-            $config_file = $path . 'config' . EXT;
+            $config_file = $path .'config'. EXT;
             if (is_file($config_file))
             {
                 $config_files[] = $config_file;
