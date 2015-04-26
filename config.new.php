@@ -638,20 +638,4 @@ $config['log'] = array
  * @see http://docs.fluentd.org/
  * @var array
  */
-$config['log']['fluent'] = array
-(
-    // 主节点，直接推送到指定位置（远程的fd-agent）
-    'server' => array
-    (
-        'name'   => 'default',
-        'ip'     => '192.168.1.111',
-        'port'   => '24225',
-    ),
-    // 本地带buffer的备用 fd-agent
-    'backup' => array
-    (
-        'name'   => 'localhost',
-        'ip'     => '127.0.0.1',
-        'port'   => '24226',
-    ),
-);
+$config['log']['fluent'] = 'tcp://127.0.0.1:24224';
