@@ -262,7 +262,7 @@ abstract class Core_Core extends Bootstrap
                 }
             }
 
-            if (1==2 &&(IS_CLI || IS_DEBUG) && class_exists('ErrException', true))
+            if ((IS_CLI || IS_DEBUG) && class_exists('ErrException', true))
             {
                 # 注册脚本
                 register_shutdown_function(array('ErrException', 'shutdown_handler'));
