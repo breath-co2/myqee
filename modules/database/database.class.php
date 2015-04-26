@@ -782,7 +782,7 @@ class Module_Database extends Database_QueryBuilder
         );
 
         // 写入LOG
-        return Core::log('database.slow_query', $data, Core::LOG_WARN);
+        return Core::log('database.slow_query', $data, LOG_WARNING);
     }
 
     protected static function _get_slow_query_setting_time()

@@ -113,51 +113,6 @@ abstract class Core_Core extends Bootstrap
      */
     const CODER = '呼吸二氧化碳 <jonwang@myqee.com>';
 
-
-    //日志等级 fatal, error, warn, info, debug, and trace
-
-    /**
-     * fatal
-     *
-     * @var string
-     */
-    const LOG_FATAL = 'fatal';
-
-    /**
-     * error
-     *
-     * @var string
-     */
-    const LOG_ERROR = 'error';
-
-    /**
-     * warn
-     *
-     * @var string
-     */
-    const LOG_WARN  = 'warn';
-
-    /**
-     * info
-     *
-     * @var string
-     */
-    const LOG_INFO  = 'info';
-
-    /**
-     * debug
-     *
-     * @var string
-     */
-    const LOG_DEBUG = 'debug';
-
-    /**
-     * trace
-     *
-     * @var string
-     */
-    const LOG_TRACE = 'trace';
-
     /**
      * 页面编码
      *
@@ -356,30 +311,7 @@ abstract class Core_Core extends Bootstrap
         else
         {
             ob_start();
-
             Core::execute(Core::$path_info);
-//            try
-//            {
-//            }
-//            catch (Exception $e)
-//            {
-//                throw $e;
-//                $code = $e->getCode();
-//
-//                if (404 === $code || E_PAGE_NOT_FOUND === $code)
-//                {
-//                    Core::show_404($e->getMessage());
-//                }
-//                elseif (500 === $code)
-//                {
-//                    Core::show_500($e->getMessage());
-//                }
-//                else
-//                {
-//                    Core::show_500($e);
-//                }
-//            }
-
             Core::$output = ob_get_clean();
         }
     }
@@ -802,7 +734,7 @@ abstract class Core_Core extends Bootstrap
                     {
                         Core::rm_controller($controller);
 
-                        throw new Exception(__('Page Not Found'), 404);
+                        throw new Exception(__('Page Not Found'), E_PAGE_NOT_FOUND);
                     }
                 }
                 elseif ($need_shift_action)
@@ -822,13 +754,13 @@ abstract class Core_Core extends Bootstrap
                         if (!isset($controller->allow_suffix[$action]) || !in_array($found['suffix'], explode('|', $controller->allow_suffix[$action])))
                         {
                             Core::rm_controller($controller);
-                            throw new Exception(__('Page Not Found'), 404);
+                            throw new Exception(__('Page Not Found'), E_PAGE_NOT_FOUND);
                         }
                     }
                     elseif (!in_array($found['suffix'], explode('|', $controller->allow_suffix)))
                     {
                         Core::rm_controller($controller);
-                        throw new Exception(__('Page Not Found'), 404);
+                        throw new Exception(__('Page Not Found'), E_PAGE_NOT_FOUND);
                     }
 
                     # 默认输出页面头信息
@@ -843,7 +775,7 @@ abstract class Core_Core extends Bootstrap
                 if (!$is_public_method->isPublic())
                 {
                     Core::rm_controller($controller);
-                    throw new Exception(__('Request Method Not Allowed.'), 405);
+                    Core::show_404(__('Request Method Not Allowed.'), 405);
                 }
                 unset($is_public_method);
 
@@ -855,7 +787,7 @@ abstract class Core_Core extends Bootstrap
                     if ($auto_check_post_method_referrer && !HttpIO::csrf_check())
                     {
                         Core::rm_controller($controller);
-                        throw new Exception(__('Not Acceptable.'), 406);
+                        Core::show_404(__('Not Acceptable.'), 406);
                     }
                 }
 
@@ -936,12 +868,13 @@ abstract class Core_Core extends Bootstrap
             }
             else
             {
-                throw new Exception(__('Page Not Found'), 404);
+                Core::show_404();
             }
         }
         else
         {
-            throw new Exception(__('Page Not Found'), 404);
+            Core::show_404();
+            //throw new Exception(__('Page Not Found'), E_PAGE_NOT_FOUND);
         }
     }
 
@@ -1334,7 +1267,7 @@ abstract class Core_Core extends Bootstrap
      * @param array|string $data 日志数据，若传字符串，则自动转换成 array('msg'=>$data)
      * @return boolean
      */
-    public static function log($tag, $data, $level = Core::LOG_INFO)
+    public static function log($tag, $data, $level = LOG_INFO)
     {
         # log配置
         $log_config = Core::config('log');
@@ -1357,6 +1290,15 @@ abstract class Core_Core extends Bootstrap
             Core::debug()->log($data, $tag);
         }
 
+        if (isset($log_config['level']) && $log_config['level'] > 0)
+        {
+            if ($level > $log_config['level'])
+            {
+                # 没有达到记录等级
+                return true;
+            }
+        }
+
         if (!is_array($data))
         {
             $data = array
@@ -1366,7 +1308,7 @@ abstract class Core_Core extends Bootstrap
         }
 
         # 保存日志
-        return Core::write_log($tag, $data, $level);
+        return Core::write_log($tag, $data);
     }
 
 
@@ -1703,14 +1645,14 @@ abstract class Core_Core extends Bootstrap
      *
      * @param string/Exception $msg
      */
-    public static function show_404($msg = null)
+    public static function show_404($msg = null, $code = 404)
     {
         Core::close_buffers(false);
 
         # 避免输出的CSS头试抛出页面无法显示
         @header('Content-Type: text/html;charset=' . Core::config('charset'), true);
 
-        HttpIO::$status = 404;
+        HttpIO::$status = $code;
         HttpIO::send_headers();
 
         if (null === $msg)
@@ -1726,7 +1668,7 @@ abstract class Core_Core extends Bootstrap
             }
             else
             {
-                throw new Exception($msg, 43);
+                throw new Exception($msg, E_PAGE_NOT_FOUND);
             }
         }
 
@@ -2031,7 +1973,11 @@ abstract class Core_Core extends Bootstrap
     {
         $code = $e->getCode();
 
-        if ($code !== E_NOTICE && $code !== E_USER_NOTICE)
+        if ($code === E_PAGE_NOT_FOUND)
+        {
+            Core::show_404($e->getMessage());
+        }
+        elseif ($code !== E_NOTICE && $code !== E_USER_NOTICE)
         {
             Core::show_500($e);
             exit();
@@ -2387,7 +2333,7 @@ abstract class Core_Core extends Bootstrap
         // 请求时效检查
         if (microtime(1) - $time > 600)
         {
-            Core::log('system.error.request.timeout', array('msg' => 'system request timeout', 'time1' => microtime(1), 'time0' => $time), Core::LOG_WARN);
+            Core::log('system.error.request.timeout', array('msg' => 'system request timeout', 'time1' => microtime(1), 'time0' => $time), LOG_WARNING);
             return false;
         }
 
@@ -2420,7 +2366,7 @@ abstract class Core_Core extends Bootstrap
 
                 if (!$allow)
                 {
-                    Core::log('system.error.request.ip', array('ip' => HttpIO::IP), Core::LOG_WARN);
+                    Core::log('system.error.request.ip', array('ip' => HttpIO::IP), LOG_WARNING);
                     return false;
                 }
             }
@@ -2457,7 +2403,7 @@ abstract class Core_Core extends Bootstrap
         }
         else
         {
-            Core::log('system.error.request.hash', array('hash' => $hash), Core::LOG_WARN);
+            Core::log('system.error.request.hash', array('hash' => $hash), LOG_WARNING);
             return false;
         }
     }
@@ -2484,6 +2430,8 @@ abstract class Core_Core extends Bootstrap
      */
     public static function ip()
     {
+        if (IS_CLI)return array('127.0.0.1');
+
         $ip = array();
 
         if (isset($_SERVER['HTTP_X_FORWARDED_FOR']) && $_SERVER['HTTP_X_FORWARDED_FOR'])

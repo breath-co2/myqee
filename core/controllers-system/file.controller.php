@@ -47,7 +47,7 @@ class Core_Controller_File extends Controller
         else
         {
             # 记录错误日志
-            Core::log('system.error.file.create', array('file' => $filename), Core::LOG_ERROR);
+            Core::log('system.error.file.create', array('file' => $filename), LOG_ERR);
             $this->show_error('执行失败');
         }
     }
@@ -77,7 +77,7 @@ class Core_Controller_File extends Controller
         else
         {
             # 记录错误日志
-            Core::log('system.error.dir.create', array('dir' => $the_dir), Core::LOG_ERROR);
+            Core::log('system.error.dir.create', array('dir' => $the_dir), LOG_ERR);
             $this->show_error('执行失败');
         }
     }
@@ -116,7 +116,7 @@ class Core_Controller_File extends Controller
         else
         {
             # 记录错误日志
-            Core::log('system.error.file.delete', array('file' => $files), Core::LOG_ERROR);
+            Core::log('system.error.file.delete', array('file' => $files), LOG_ERR);
             $this->show_error('执行失败');
         }
     }
@@ -151,7 +151,7 @@ class Core_Controller_File extends Controller
         else
         {
             # 记录错误日志
-            Core::log('system.error.dir.remove', array('dir' => $the_dir), Core::LOG_ERROR);
+            Core::log('system.error.dir.remove', array('dir' => $the_dir), LOG_ERR);
             $this->show_error('执行失败');
         }
     }
@@ -189,7 +189,7 @@ class Core_Controller_File extends Controller
         else
         {
             # 记录错误日志
-            Core::log('system.error.dir.move', array('form_dir' => $from_dir, 'to_dir' => $to_dir), Core::LOG_ERROR);
+            Core::log('system.error.dir.move', array('form_dir' => $from_dir, 'to_dir' => $to_dir), LOG_ERR);
             $this->show_error('执行失败');
         }
     }
@@ -227,7 +227,7 @@ class Core_Controller_File extends Controller
         else
         {
             # 记录错误日志
-            Core::log('system.error.dir.copy', array('form_dir' => $from_dir, 'to_dir' => $to_dir), Core::LOG_ERROR);
+            Core::log('system.error.dir.copy', array('form_dir' => $from_dir, 'to_dir' => $to_dir), LOG_ERR);
             $this->show_error('执行失败');
         }
     }
@@ -263,7 +263,7 @@ class Core_Controller_File extends Controller
         else
         {
             # 记录错误日志
-            Core::log('system.error.file.split', array('file' => $filename), Core::LOG_ERROR);
+            Core::log('system.error.file.split', array('file' => $filename), LOG_ERR);
             $this->show_error('执行失败');
         }
     }
@@ -298,7 +298,7 @@ class Core_Controller_File extends Controller
         else
         {
             # 记录错误日志
-            Core::log('system.error.file.join', array('file' => $filename), Core::LOG_ERROR);
+            Core::log('system.error.file.join', array('file' => $filename), LOG_ERR);
             $this->show_error('执行失败');
         }
     }

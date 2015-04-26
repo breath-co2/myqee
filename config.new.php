@@ -627,7 +627,8 @@ $config['web_server_list'] = array
  */
 $config['log'] = array
 (
-    'use' => true,            // 是否启用记录日志，默认启用
+    'use'   => true,          // 是否启用记录日志，默认启用
+    'level' => LOG_NOTICE,    // 记录日志等级，只有等级在这个之上(含)的日志才会被记录
 );
 
 /**

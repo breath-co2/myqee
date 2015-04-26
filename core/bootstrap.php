@@ -76,6 +76,13 @@ define('IS_MBSTRING', extension_loaded('mbstring')?true:false);
  */
 if (!defined('IS_CLI'))define('IS_CLI', (PHP_SAPI==='cli'));
 
+// Define 404 error constant
+define('E_PAGE_NOT_FOUND', 43);
+
+// Define database error constant
+define('E_DATABASE_ERROR', 44);
+
+
 /**
  * 是否有NameSpace（PHP5.3及以上则为true,以下为False）
  *
