@@ -607,6 +607,18 @@ class Module_Database extends Database_QueryBuilder
     }
 
     /**
+     * 返回是否支持对象数据
+     *
+     * 通常传统的数据库是不支持直接存储对象数据的，而MongoDB是支持的
+     *
+     * @return bool
+     */
+    public function is_suport_object_value()
+    {
+        $this->driver()->is_suport_object_value();
+    }
+
+    /**
      * 开启记录慢查询
      *
      * 返回当前时间，如果系统设置关闭记录慢查询，则返回 false
@@ -746,15 +758,31 @@ class Module_Database extends Database_QueryBuilder
     {
         if (!Database::$slow_querys)return true;
 
-        // 记录URL信息
-        $data = "\n".str_pad(HttpIO::METHOD, 4, ' ') .' '. date('H:i:s', TIME) .' - '. str_pad((int)(1000*(microtime(1)-START_TIME)),6,' ',STR_PAD_LEFT) . ' - '. str_pad(HttpIO::IP, 15) .' '.$_SERVER["SCRIPT_URI"] .(''!==$_SERVER["QUERY_STRING"]?'?'.$_SERVER["QUERY_STRING"]:'') . (HttpIO::METHOD=='POST'?'   POST:'.json_encode(HttpIO::POST()):'') ."\n";
+        $queries = array();
         foreach (Database::$slow_querys as $item)
         {
-            $data .= '     ' . date('H:i:s', $item[0]).' - '.str_pad((int)$item[1], 6, ' ', STR_PAD_LEFT) . ' - ' . $item[2] . "\n";
+            $queries[] = array
+            (
+                'from' => $item[0],
+                'to'   => $item[1],
+                'use'  => $item[1] - $item[0],
+                'sql'  => $item[2],
+            );
         }
 
+        $data = array
+        (
+            'url'       => $_SERVER["SCRIPT_URI"] .('' !== $_SERVER["QUERY_STRING"] ? '?'.$_SERVER["QUERY_STRING"] : ''),
+            'method'    => HttpIO::METHOD,
+            'time'      => TIME,
+            'ip'        => HttpIO::IP,
+            'page_time' => microtime(1) - START_TIME,
+            'post'      => HttpIO::POST(),
+            'queries'   => $queries,
+        );
+
         // 写入LOG
-        return Core::log($data, 'log', 'slow_query/'. date('Y/m_d', TIME));
+        return Core::log('database.slow_query', $data, LOG_WARNING);
     }
 
     protected static function _get_slow_query_setting_time()

@@ -4,13 +4,13 @@
  * 数据库Mongo驱动
  *
  * @author     呼吸二氧化碳 <jonwang@myqee.com>
- * @category   Drive
+ * @category   Driver
  * @package    Database
  * @subpackage Mongo
- * @copyright  Copyright (c) 2008-2016 myqee.com
+ * @copyright  Copyright (c) 2008-2015 myqee.com
  * @license    http://www.myqee.com/license.html
  */
-class Drive_Database_Drive_Mongo extends Database_Drive
+class Driver_Database_Driver_Mongo extends Database_Driver
 {
     /**
      * 默认端口
@@ -67,7 +67,7 @@ class Drive_Database_Drive_Mongo extends Database_Drive
 
         $connection_id = $this->connection_id();
 
-        if (!$connection_id || !isset(Database_Drive_Mongo::$_connection_instance[$connection_id]))
+        if (!$connection_id || !isset(Database_Driver_Mongo::$_connection_instance[$connection_id]))
         {
             $this->_connect();
         }
@@ -92,9 +92,9 @@ class Drive_Database_Drive_Mongo extends Database_Drive
         # 获取连接ID
         $connection_id = $this->connection_id();
 
-        if ($connection_id && isset(Database_Drive_Mongo::$_connection_instance_db[$connection_id]))
+        if ($connection_id && isset(Database_Driver_Mongo::$_connection_instance_db[$connection_id]))
         {
-            return Database_Drive_Mongo::$_connection_instance_db[$connection_id];
+            return Database_Driver_Mongo::$_connection_instance_db[$connection_id];
         }
         else
         {
@@ -128,7 +128,7 @@ class Drive_Database_Drive_Mongo extends Database_Drive
             }
 
             $_connection_id = $this->_get_connection_hash($hostname, $port, $username);
-            Database_Drive_Mongo::$_current_connection_id_to_hostname[$_connection_id] = $hostname.':'.$port;
+            Database_Driver_Mongo::$_current_connection_id_to_hostname[$_connection_id] = $hostname.':'.$port;
 
             try
             {
@@ -204,7 +204,7 @@ class Drive_Database_Drive_Mongo extends Database_Drive
 
                 # 连接ID
                 $this->_connection_ids[$this->_connection_type] = $_connection_id;
-                Database_Drive_Mongo::$_connection_instance[$_connection_id] = $tmplink;
+                Database_Driver_Mongo::$_connection_instance[$_connection_id] = $tmplink;
 
                 unset($tmplink);
 
@@ -237,7 +237,7 @@ class Drive_Database_Drive_Mongo extends Database_Drive
     protected function _try_use_exists_connection()
     {
         # 检查下是否已经有连接连上去了
-        if (Database_Drive_Mongo::$_connection_instance)
+        if (Database_Driver_Mongo::$_connection_instance)
         {
             $hostname = $this->config['connection']['hostname'];
             if (is_array($hostname))
@@ -266,7 +266,7 @@ class Drive_Database_Drive_Mongo extends Database_Drive
             {
                 $_connection_id = $this->_get_connection_hash($host, $this->config['connection']['port'], $this->config['connection']['username']);
 
-                if (isset(Database_Drive_Mongo::$_connection_instance[$_connection_id]))
+                if (isset(Database_Driver_Mongo::$_connection_instance[$_connection_id]))
                 {
                     $this->_connection_ids[$this->_connection_type] = $_connection_id;
 
@@ -285,19 +285,19 @@ class Drive_Database_Drive_Mongo extends Database_Drive
     {
         if ($this->_connection_ids)foreach ($this->_connection_ids as $key=>$connection_id)
         {
-            if ($connection_id && Database_Drive_Mongo::$_connection_instance[$connection_id])
+            if ($connection_id && Database_Driver_Mongo::$_connection_instance[$connection_id])
             {
-                $id = Database_Drive_Mongo::$_current_connection_id_to_hostname[$connection_id];
+                $id = Database_Driver_Mongo::$_current_connection_id_to_hostname[$connection_id];
 
                 # 销毁对象
-                Database_Drive_Mongo::$_connection_instance[$connection_id]    = null;
-                Database_Drive_Mongo::$_connection_instance_db[$connection_id] = null;
+                Database_Driver_Mongo::$_connection_instance[$connection_id]    = null;
+                Database_Driver_Mongo::$_connection_instance_db[$connection_id] = null;
 
-                unset(Database_Drive_Mongo::$_connection_instance[$connection_id]);
-                unset(Database_Drive_Mongo::$_connection_instance_db[$connection_id]);
-                unset(Database_Drive_Mongo::$_current_databases[$connection_id]);
-                unset(Database_Drive_Mongo::$_current_charset[$connection_id]);
-                unset(Database_Drive_Mongo::$_current_connection_id_to_hostname[$connection_id]);
+                unset(Database_Driver_Mongo::$_connection_instance[$connection_id]);
+                unset(Database_Driver_Mongo::$_connection_instance_db[$connection_id]);
+                unset(Database_Driver_Mongo::$_current_databases[$connection_id]);
+                unset(Database_Driver_Mongo::$_current_charset[$connection_id]);
+                unset(Database_Driver_Mongo::$_current_connection_id_to_hostname[$connection_id]);
 
                 if (IS_DEBUG)Core::debug()->info('close '. $key .' mongo '. $id .' connection.');
             }
@@ -318,23 +318,23 @@ class Drive_Database_Drive_Mongo extends Database_Drive
 
         $connection_id = $this->connection_id();
 
-        if (!$connection_id || !isset(Database_Drive_Mongo::$_current_databases[$connection_id]) || $database!=Database_Drive_Mongo::$_current_databases[$connection_id])
+        if (!$connection_id || !isset(Database_Driver_Mongo::$_current_databases[$connection_id]) || $database!=Database_Driver_Mongo::$_current_databases[$connection_id])
         {
-            if (!Database_Drive_Mongo::$_connection_instance[$connection_id])
+            if (!Database_Driver_Mongo::$_connection_instance[$connection_id])
             {
                 $this->connect();
                 $this->select_db($database);
                 return;
             }
 
-            $connection = Database_Drive_Mongo::$_connection_instance[$connection_id]->selectDB($database);
+            $connection = Database_Driver_Mongo::$_connection_instance[$connection_id]->selectDB($database);
             if (!$connection)
             {
                 throw new Exception('选择Mongo数据表错误');
             }
             else
             {
-                Database_Drive_Mongo::$_connection_instance_db[$connection_id] = $connection;
+                Database_Driver_Mongo::$_connection_instance_db[$connection_id] = $connection;
             }
 
             if (IS_DEBUG)
@@ -343,7 +343,7 @@ class Drive_Database_Drive_Mongo extends Database_Drive
             }
 
             # 记录当前已选中的数据库
-            Database_Drive_Mongo::$_current_databases[$connection_id] = $database;
+            Database_Driver_Mongo::$_current_databases[$connection_id] = $database;
         }
     }
 
@@ -592,7 +592,7 @@ class Drive_Database_Drive_Mongo extends Database_Drive
      * @param array $input_parameters
      * @param null|bool|string $as_object
      * @param null|bool|string $connection_type
-     * @return Database_Drive_MySQLI_Result
+     * @return Database_Driver_MySQLI_Result
      */
     public function execute($statement, array $input_parameters, $as_object = null, $connection_type = null)
     {
@@ -609,7 +609,7 @@ class Drive_Database_Drive_Mongo extends Database_Drive
      * @param array $options
      * @param string $as_object 是否返回对象
      * @param boolean $use_master 是否使用主数据库，不设置则自动判断
-     * @return Database_Drive_Mongo_Result
+     * @return Database_Driver_Mongo_Result
      */
     public function query($options, $as_object = null, $connection_type = null)
     {
@@ -966,7 +966,7 @@ class Drive_Database_Drive_Mongo extends Database_Drive
                             }
                             $count = count($result);
 
-                            $rs = new Database_Drive_Mongo_Result(new ArrayIterator($result), $options, $as_object, $this->config);
+                            $rs = new Database_Driver_Mongo_Result(new ArrayIterator($result), $options, $as_object, $this->config);
                         }
                         else
                         {
@@ -994,7 +994,7 @@ class Drive_Database_Drive_Mongo extends Database_Drive
 
                         if ($result && $result['ok']==1)
                         {
-                            $rs = new Database_Drive_Mongo_Result(new ArrayIterator($result['values']), $options, $as_object, $this->config);
+                            $rs = new Database_Driver_Mongo_Result(new ArrayIterator($result['values']), $options, $as_object, $this->config);
                         }
                         else
                         {
@@ -1021,7 +1021,7 @@ class Drive_Database_Drive_Mongo extends Database_Drive
                             $last_query .= '.count()';
                             $result = $result->count();
                             # 仅统计count
-                            $rs = new Database_Drive_Mongo_Result(new ArrayIterator(array(array('total_row_count'=>$result))), $options, $as_object, $this->config);
+                            $rs = new Database_Driver_Mongo_Result(new ArrayIterator(array(array('total_row_count'=>$result))), $options, $as_object, $this->config);
                         }
                         else
                         {
@@ -1043,7 +1043,7 @@ class Drive_Database_Drive_Mongo extends Database_Drive
                                 $result = $result->limit($options['limit']);
                             }
 
-                            $rs = new Database_Drive_Mongo_Result($result, $options, $as_object, $this->config);
+                            $rs = new Database_Driver_Mongo_Result($result, $options, $as_object, $this->config);
                         }
                     }
 
@@ -1185,11 +1185,11 @@ class Drive_Database_Drive_Mongo extends Database_Drive
     }
 
     /**
-     * 是否存储支持对象或数组字段
+     * 返回是否支持对象数据
      *
-     * @return bool
+     * @var bool
      */
-    public function is_support_object_field()
+    public function is_suport_object_value()
     {
         return true;
     }
@@ -1483,14 +1483,14 @@ class Drive_Database_Drive_Mongo extends Database_Drive
     {
         $type = strtoupper($options['type']);
 
-        $slaverType = array
+        $slave_type = array
         (
             'SELECT',
             'SHOW',
             'EXPLAIN'
         );
 
-        if (in_array($type, $slaverType))
+        if (in_array($type, $slave_type))
         {
             if (true===$connection_type)
             {
@@ -1502,7 +1502,7 @@ class Drive_Database_Drive_Mongo extends Database_Drive
             }
             else
             {
-                $connection_type = 'slaver';
+                $connection_type = 'slave';
             }
         }
         else

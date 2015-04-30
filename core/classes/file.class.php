@@ -71,12 +71,12 @@ class Core_File
     {
         $info = File::check_and_get_path($file);
 
-        # 系统禁用了写入功能
-        if (Core::is_file_write_disabled())return false;
-
         if (File::can_do_run($storage))
         {
             # 系统内部运行时或小于等于1台服时执行
+
+            # 系统禁用了写入功能
+            if (Core::is_file_write_disabled())return false;
 
             $dir = substr($file, 0, (int)strrpos(str_replace('\\', '/', $file), '/'));
 
@@ -120,7 +120,7 @@ class Core_File
         {
             if (!is_dir($dir))
             {
-                if ( substr($dir,0,strlen(DIR_SYSTEM))==DIR_SYSTEM )
+                if (substr($dir,0,strlen(DIR_SYSTEM))==DIR_SYSTEM)
                 {
                     $temp = explode('/', str_replace('\\', '/', substr($dir,strlen(DIR_SYSTEM))));
                     $cur_dir = DIR_SYSTEM;
@@ -231,9 +231,9 @@ class Core_File
                 return true;
             }
 
-            $realpath = realpath($dir);
+            $real_path = realpath($dir);
 
-            if (!$realpath || in_array($realpath.DS, File::$sys_dir))
+            if (!$real_path || in_array($real_path.DS, File::$sys_dir))
             {
                 return true;
             }
@@ -241,7 +241,7 @@ class Core_File
             $handle = opendir($dir);
             while (($file = readdir($handle)) !== false)
             {
-                if ($file != '.' && $file != '..')
+                if ($file !== '.' && $file !== '..')
                 {
                     $tmp_dir = $dir . DS . $file;
                     is_dir($tmp_dir) ? File::remove_dir($tmp_dir) : @unlink($tmp_dir);
@@ -261,83 +261,83 @@ class Core_File
     /**
      * 转移目录下的所有目录和文件，多服务器可以自动同步，可操作非空目录
      *
-     * @param string $fromdir  源文文件目录
-     * @param string $todir  目标文件目录
-     * @param boolean $autocoverageold 是否覆盖已有文件，true覆盖，false跳过
+     * @param string $from_dir  源文文件目录
+     * @param string $to_dir  目标文件目录
+     * @param boolean $auto_coverage_old 是否覆盖已有文件，true覆盖，false跳过
      * @param string $storage 物理存储组，不传则为默认
      * @return array($dook,$doerror)
      */
-    public static function move_dir($fromdir, $todir, $autocoverageold = true, $storage = 'default')
+    public static function move_dir($from_dir, $to_dir, $auto_coverage_old = true, $storage = 'default')
     {
-        $fromdir = rtrim($fromdir,'\\/').DS;
-        $todir   = rtrim($todir,'\\/')  .DS;
+        $from_dir = rtrim($from_dir,'\\/').DS;
+        $to_dir   = rtrim($to_dir,'\\/')  .DS;
 
-        if ( $fromdir==$todir ) return array(0,0);
+        if ( $from_dir==$to_dir ) return array(0,0);
 
-        $info1 = File::check_and_get_path($fromdir);
-        $info2 = File::check_and_get_path($todir);
+        $info1 = File::check_and_get_path($from_dir);
+        $info2 = File::check_and_get_path($to_dir);
 
         if (File::can_do_run($storage))
         {
-            if (!is_dir($fromdir)) return array(0,0);
+            if (!is_dir($from_dir)) return array(0,0);
 
             # 完成数
-            $donum = array(0, 0);
+            $do_num = array(0, 0);
 
-            if (!is_dir($todir))
+            if (!is_dir($to_dir))
             {
                 # 创建目标目录
-                File::create_dir($todir,false,$storage);
+                File::create_dir($to_dir, false, $storage);
             }
 
             # 列出目录中当前级别的目录和文件
-            $files = glob($fromdir . '*');
+            $files = glob($from_dir .'*');
 
             foreach ($files as $file)
             {
                 # 目标文件
-                $tofile = $todir . basename($file);
+                $to_file = $to_dir . basename($file);
 
                 if (is_dir($file))
                 {
                     # 如果当前是目录，则移动目录
 
                     # 移动目录
-                    $donum2 = File::move_dir($file, $tofile, $autocoverageold, $storage);
+                    $donum2 = File::move_dir($file, $to_file, $auto_coverage_old, $storage);
                     if ($donum2)
                     {
-                        $donum[0] += $donum2[0];
-                        $donum[1] += $donum2[1];
+                        $do_num[0] += $donum2[0];
+                        $do_num[1] += $donum2[1];
                     }
                 }
                 else
                 {
                     # 文件
-                    if ($autocoverageold && file_exists($tofile))
+                    if ($auto_coverage_old && file_exists($to_file))
                     {
                         //覆盖已有文件
-                        @unlink($tofile);
+                        @unlink($to_file);
                     }
 
-                    if ( @rename($file, $tofile) )
+                    if (@rename($file, $to_file))
                     {
-                        $donum[0]++;
+                        $do_num[0]++;
                     }
                     else
                     {
-                        $donum[1]++;
+                        $do_num[1]++;
                     }
                 }
             }
 
             //移除旧目录
-            File::remove_dir($fromdir);
+            File::remove_dir($from_dir);
 
-            return $donum;
+            return $do_num;
         }
         else
         {
-            return File::call_http_host($storage,'file/move_dir', $info1[0], $info1[1], $info2[0], $info2[1], $autocoverageold);
+            return File::call_http_host($storage, 'file/move_dir', $info1[0], $info1[1], $info2[0], $info2[1], $auto_coverage_old);
         }
     }
 
@@ -345,49 +345,49 @@ class Core_File
     /**
      * 复制目录下的所有目录和文件到另外一个目录
      *
-     * @param string $fromdir  源文文件目录
-     * @param string $todir  目标文件目录
-     * @param boolean $autocoverageold 是否覆盖已有文件，true覆盖，false跳过
+     * @param string $from_dir  源文文件目录
+     * @param string $to_dir  目标文件目录
+     * @param boolean $auto_coverage_old 是否覆盖已有文件，true覆盖，false跳过
      * @param string $storage 物理存储组，不传则为默认
      * @return array($dook,$doerror)
      */
-    public static function copy_dir($fromdir, $todir, $autocoverageold = true , $storage = 'default')
+    public static function copy_dir($from_dir, $to_dir, $auto_coverage_old = true, $storage = 'default')
     {
-        $fromdir = rtrim($fromdir,'\\/').DS;
-        $todir   = rtrim($todir,'\\/')  .DS;
+        $from_dir = rtrim($from_dir, '\\/') . DS;
+        $to_dir   = rtrim($to_dir, '\\/') . DS;
 
-        if ( $fromdir==$todir ) return array(0,0);
+        if ($from_dir === $to_dir)return array(0, 0);
 
-        $info1 = File::check_and_get_path($fromdir);
-        $info2 = File::check_and_get_path($todir);
+        $info1 = File::check_and_get_path($from_dir);
+        $info2 = File::check_and_get_path($to_dir);
 
         if (File::can_do_run($storage))
         {
-            if (!is_dir($fromdir)) return array(0, 0);
+            if (!is_dir($from_dir)) return array(0, 0);
 
             # 完成数
             $donum = array(0, 0);
 
-            if (!is_dir($todir))
+            if (!is_dir($to_dir))
             {
                 # 创建目标目录
-                File::create_dir($todir,false,$storage);
+                File::create_dir($to_dir, false, $storage);
             }
 
             # 列出目录中当前级别的目录和文件
-            $files = glob($fromdir . '*');
+            $files = glob($from_dir .'*');
 
             foreach ($files as $file)
             {
                 # 目标文件
-                $tofile = $todir . basename($file);
+                $to_file = $to_dir . basename($file);
 
                 if (is_dir($file))
                 {
                     # 如果当前是目录，则移动目录
 
                     # 移动目录
-                    $donum2 = File::copy_dir($file, $tofile, $autocoverageold, $storage);
+                    $donum2 = File::copy_dir($file, $to_file, $auto_coverage_old, $storage);
                     if ($donum2)
                     {
                         $donum[0] += $donum2[0];
@@ -397,13 +397,13 @@ class Core_File
                 else
                 {
                     # 文件
-                    if ($autocoverageold && file_exists($tofile))
+                    if ($auto_coverage_old && file_exists($to_file))
                     {
                         //覆盖已有文件
-                        @unlink($tofile);
+                        @unlink($to_file);
                     }
 
-                    if (@copy($file, $tofile))
+                    if (@copy($file, $to_file))
                     {
                         $donum[0]++;
                     }
@@ -418,7 +418,7 @@ class Core_File
         }
         else
         {
-            return File::call_http_host($storage,'file/copy_dir', $info1[0], $info1[1], $info2[0], $info2[1], $autocoverageold);
+            return File::call_http_host($storage,'file/copy_dir', $info1[0], $info1[1], $info2[0], $info2[1], $auto_coverage_old);
         }
     }
 
@@ -443,6 +443,10 @@ class Core_File
             {
                 # 通过create_file把文件再创建一次
                 return File::create_file($file, file_get_contents($file), null, null, $storage);
+            }
+            else
+            {
+                return false;
             }
         }
     }
@@ -484,7 +488,7 @@ class Core_File
 
                 // Create a new file piece
                 $piece = str_pad($peices, 3, '0', STR_PAD_LEFT);
-                $piece = fopen($filename.'.'.$piece, 'wb+');
+                $piece = fopen($filename .'.'. $piece, 'wb+');
 
                 // Number of bytes read
                 $read = 0;
@@ -510,7 +514,7 @@ class Core_File
         }
         else
         {
-            return File::call_http_host($storage,'file/split',$info[0], $info[1], $piece_size);
+            return File::call_http_host($storage, 'file/split', $info[0], $info[1], $piece_size);
         }
     }
 
@@ -560,7 +564,7 @@ class Core_File
         }
         else
         {
-            return File::call_http_host($storage,'file/join', $info[0], $info[1]);
+            return File::call_http_host($storage, 'file/join', $info[0], $info[1]);
         }
     }
 

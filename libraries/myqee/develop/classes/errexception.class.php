@@ -1,10 +1,4 @@
 <?php
-// Define 404 error constant
-define('E_PAGE_NOT_FOUND', 43);
-
-// Define database error constant
-define('E_DATABASE_ERROR', 44);
-
 /**
  * ErrException.
  *

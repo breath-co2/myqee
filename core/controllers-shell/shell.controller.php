@@ -80,12 +80,11 @@ abstract class Core_Controller_Shell extends Controller
     /**
      * 获取shell命令下参数
      *
-     * 与getopt()具体相似的功能，区别：在命令行中如果执行 `php index.php default test -a=1 -b=c` 这样的命令时，通过getopt()会获取参数失败，而这个方法可以正确获得相应的参数
+     * 与 `getopt()` 具体相似的功能，区别：在命令行中如果执行 `php index.php default test -a=1 -b=c` 这样的命令时，通过 `getopt()` 会获取参数失败，而这个方法可以正确获得相应的参数
      *
      * **示例：**<br/>
      * 在默认项目Shell控制器中加入一个test控制器文件 ( `projects/default/controller_shell/test.controller.php` ) 内容为：
      *
-     *     <?php
      *     class Controller_Test extends Controller_Shell
      *     {
      *         public function action_run()
@@ -121,7 +120,7 @@ abstract class Core_Controller_Shell extends Controller
      *
      *
      * @link   http://cn.php.net/getopt
-     * @param  string $options 但字符参数，只接受[a-zA-Z0-9]的参数，比如 -a, -h, -v=myvalue, -4 这样
+     * @param  string $options 单字符参数，只接受[a-zA-Z0-9]的参数，比如 -a, -h, -v=myvalue, -4 这样
      * @param  array $global_options --参数，比如--test, --help, --v=abc 这样
      * @return array 返回获取到的参数的数组
      */
@@ -132,7 +131,7 @@ abstract class Core_Controller_Shell extends Controller
 
         foreach($argv as $key => $item)
         {
-            if ($item[0]=='-')
+            if ($item[0] === '-')
             {
                 # 读取到第一个带-参数的值
                 break;
@@ -146,10 +145,10 @@ abstract class Core_Controller_Shell extends Controller
         $my_options = array();
 
         $sl = 0;
-        for($i=$len-1; $i>=0; $i--)
+        for($i = $len - 1; $i >= 0; $i--)
         {
             $key = $options[$i];
-            if ($key==':')
+            if ($key === ':')
             {
                 $sl++;
                 continue;
@@ -158,17 +157,17 @@ abstract class Core_Controller_Shell extends Controller
             # 只接受a-zA-Z0-9
             if (preg_match('#[^a-zA-Z0-9]+#', $key))continue;
 
-            if ($sl===0)
+            if ($sl === 0)
             {
                 $my_options[$key] = 1;
             }
-            elseif ($sl===1)
+            elseif ($sl === 1)
             {
-                $my_options[$key.':'] = 1;
+                $my_options[$key .':'] = 1;
             }
             else
             {
-                $my_options[$key.'::'] = 1;
+                $my_options[$key .'::'] = 1;
             }
 
             $sl = 0;
@@ -182,22 +181,22 @@ abstract class Core_Controller_Shell extends Controller
 
         $rs = array();
 
-        foreach($argv as $k=>$item)
+        foreach($argv as $k => $item)
         {
             if (preg_match('#^\-(\-)?([a-z0-9\-]+)=(.*)$#i', $item, $m))
             {
                 $key   = $m[2];
                 $value = $m[3];
-                if ($m[1]=='-')
+                if ($m[1] === '-')
                 {
-                    if (!isset($my_global_options[$key.'::']))
+                    if (!isset($my_global_options[$key .'::']))
                     {
                         continue;
                     }
                 }
                 else
                 {
-                    if (!isset($my_options[$key.'::']))
+                    if (!isset($my_options[$key .'::']))
                     {
                         continue;
                     }
@@ -206,13 +205,13 @@ abstract class Core_Controller_Shell extends Controller
             elseif (preg_match('#^\-(\-)?([a-z0-9\-]+)$#i', $item, $m))
             {
                 $key  = $m[2];
-                if ($m[1]=='-')
+                if ($m[1] === '-')
                 {
                     if (isset($my_global_options[$key]))
                     {
                         $value = false;
                     }
-                    elseif (isset($my_global_options[$key.':']))
+                    elseif (isset($my_global_options[$key .':']))
                     {
                         $value = $argv[$k+1];
                     }
@@ -227,11 +226,11 @@ abstract class Core_Controller_Shell extends Controller
                     {
                         $value = false;
                     }
-                    elseif (isset($my_options[$key.':']))
+                    elseif (isset($my_options[$key .':']))
                     {
-                        $value = $argv[$k+1];
+                        $value = $argv[$k + 1];
                     }
-                    elseif (isset($my_options[$key.'::']))
+                    elseif (isset($my_options[$key .'::']))
                     {
                         $value = false;
                     }
@@ -248,7 +247,7 @@ abstract class Core_Controller_Shell extends Controller
 
             if (isset($rs[$key]))
             {
-                $rs[$key] = (array)$rs[$key];
+                $rs[$key]   = (array)$rs[$key];
                 $rs[$key][] = $value;
             }
             else
@@ -292,7 +291,7 @@ abstract class Core_Controller_Shell extends Controller
         foreach ($examples as $method)
         {
             if ($method ==__FUNCTION__) continue;
-            if (strtolower(substr($method, 0, 7)) == 'action_')
+            if (strtolower(substr($method, 0, 7)) === 'action_')
             {
                 $m = substr($method, 7);
                 $methods[$m]  = $m;

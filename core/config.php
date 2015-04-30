@@ -72,32 +72,6 @@ $config['pagination']['default'] = array
 
 
 /**
- * 日志配置
- *
- * 日志存放目录在index.php中配置
- *
- * format 可以有的参数包括：
- *
- *   :time     当前时间
- *   :url      请求的URL
- *   :msg      日志信息
- *   :type     日志类型
- *   :host     服务器
- *   :port     端口
- *   :ip       请求的IP
- *   :agent    客户端信息
- *   :referer  来源页面
- *
- * @var array
- */
-$config['log'] = array
-(
-    'use'    => true,            // 是否启用记录日志，默认启用
-    'format' => ':time - :host::port - :url - :msg',
-);
-
-
-/**
  * A list of mime types. Our list is generally more complete and accurate than
 * the operating system MIME list.
 *

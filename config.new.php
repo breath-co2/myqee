@@ -5,7 +5,7 @@
  1.本地开发时，请务必找到 $config['local_debug_cfg'] 把它设置成 true（生产环境务必关闭），这样你可使用Chrome浏览器并安装我在做的插件（也可FireFox+FireBug+FirePHP插件），打开控制器台切换到FirePHP标签刷新页面就可以看到程序调试输出的信息了
  2.希望开启线上调试可设置 $config['debug_open_password'] 参数的帐号和密码，这样开启后，就可查看和本地开发模式一样的调试信息
  3.如果只有1个项目，使用我们提供的 $config['projects'] 配置即可，如果需要增加，可以自己增加
- 4.如果线上有多个服务器，请配置 $config['web_server_list'] 项目
+ 4.如果线上有多个PHP服务器，请配置 $config['web_server_list'] 项目
  5.每个参数都有详细使用说明，有兴趣可以看看
 
 */
@@ -106,32 +106,31 @@ $config['libraries'] = array
  */
 $config['url']['assets'] = '/assets/';
 
+
+
 /**
- * 实时配置文件
+ * 开发实时配置文件，留空则禁用此功能
  *
- * 服务器通常设置为 server，本地开发可设置为 dev1, dev_jonwang 等等。只允许a-z0-9_字符串，留空则禁用
+ * 服务器通常可设置为 server，本地开发可设置为 dev1, dev_myname 等等。只允许a-z0-9_字符串
  *
  * 用途说明：
- * 在团队成员开发时，个人的配置和服务器配置可能会有所不同，所以每个人希望有一个自己独有的配置文件可覆盖默认配置，通过runtime_config设置可轻松读取不同的配置
- * 比如，在服务器上设置 `$config['runtime_config'] = 'server';` 在本地开发时设置 `$config['runtime_config'] = 'dev';`
- * 那么，服务器上除了会读取 `config.php` 还会再读取 `config.server.runtime.php` 的配置文件，而在开发环境上则读取 `config.dev.runtime.php` 配置文件
+ * 在团队成员开发时，个人的配置和服务器配置可能会有所不同，所以每个人希望有一个自己独有的配置文件可覆盖默认配置，通过此参数可轻松读取不同的配置
+ * 比如，在服务器上设置 `$config['env_config_suffix'] = 'server';` 在本地开发时设置 `$config['env_config_suffix'] = 'dev';`
+ * 那么，服务器上除了会读取 `config.php` 还会再读取 `config.server.env.php` 的配置文件，而在开发环境上则读取 `config.dev.env.php` 配置文件
  *
- * !!! 只会读取根目录、团队类库和项目中的 .runtime.php，不支持类库(含Core)中 .runtime.php
+ * !!! 只会读取根目录、团队类库和项目中的 .runtime.php，不支持类库(含Core)中 .env.php
  * !!! V2中 `$config['debug_config'] = false;` 参数已废弃，可用此参数设为debug实现类似功能
  *
  * @var string
  */
-$config['runtime_config'] = '';
-
-
-
-
+$config['env_config_suffix'] = '';
 
 
 
 
 
 //---------------------------------------------------------- 开发调试相关
+
 
 
 /**
@@ -192,7 +191,7 @@ $config['debug_open_password'] = array
  * `false`   | 表示一定关闭本地开发模式
  * 字符串     | 根据 php.ini 中设置判断
  *
- * 比如 `$config['local_debug_cfg'] = 'myqee.debug'` 则在 php.ini 中加入如下内容可开启本地 debug，否则关闭：
+ * 设置成字符串时：比如 `$config['local_debug_cfg'] = 'myqee.debug'` 则在 php.ini 中加入如下内容可开启本地 debug，否则关闭：
  *
  *      myqee.debug = On
  *
@@ -497,12 +496,12 @@ $config['hide_x_powered_by_header'] = false;
  *
  * 自行检查的方法: `HttpIO::csrf_check()`, 若返回 `true` 则表示检查通过
  *
- * 若需要某个控制器关闭自动检查，在控制器里设置变量 `public $auto_check_post_method_referer = false` 即可，反之亦然，例如：
+ * 若需要某个控制器关闭自动检查，在控制器里设置变量 `public $auto_check_post_method_referrer = false` 即可，反之亦然，例如：
  *
  *      class Controller_Test extends Controller
  *      {
  *          // 设置不自动验证
- *          public $auto_check_post_method_referer = false;
+ *          public $auto_check_post_method_referrer = false;
  *
  *          public function action_default()
  *          {
@@ -514,7 +513,7 @@ $config['hide_x_powered_by_header'] = false;
  * @see http://www.nxadmin.com/web/924.html
  * @return boolean
  */
-$config['auto_check_post_method_referer'] = true;
+$config['auto_check_post_method_referrer'] = true;
 
 
 /**
@@ -605,3 +604,39 @@ $config['web_server_list'] = array
 );
 
 
+// ----------------------------------------------------------- 日志设置
+
+/**
+ * 日志配置
+ *
+ * 日志存放目录在index.php中配置
+ *
+ * format 可以有的参数包括：
+ *
+ *   :time     当前时间
+ *   :url      请求的URL
+ *   :msg      日志信息
+ *   :type     日志类型
+ *   :host     服务器
+ *   :port     端口
+ *   :ip       请求的IP
+ *   :agent    客户端信息
+ *   :referrer 来源页面
+ *
+ * @var array
+ */
+$config['log'] = array
+(
+    'use'   => true,          // 是否启用记录日志，默认启用
+    'level' => LOG_NOTICE,    // 记录日志等级，只有等级在这个之上(含)的日志才会被记录
+);
+
+/**
+ * fluent 日志分发设置
+ *
+ * 推荐使用fluent日志分发系统
+ *
+ * @see http://docs.fluentd.org/
+ * @var array
+ */
+$config['log']['fluent'] = 'tcp://127.0.0.1:24224';
