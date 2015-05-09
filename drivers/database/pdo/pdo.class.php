@@ -17,7 +17,7 @@ class Driver_Database_Driver_PDO extends Database_Driver
      *
      * @var string
      */
-    protected $_pdo_Driver_type;
+    protected $_pdo_driver_type;
 
     /**
      * 记录当前连接所对应的数据库
@@ -107,7 +107,7 @@ class Driver_Database_Driver_PDO extends Database_Driver
                 throw new Exception(__('pdo config connection hostname error. need pdo driver type'));
             }
 
-            if ($type=='uri')
+            if ($type === 'uri')
             {
                 // uri:file:///path/to/dsnfile
                 $config['connection']['hostname'] = $pdo = file_get_contents($host);
@@ -126,7 +126,7 @@ class Driver_Database_Driver_PDO extends Database_Driver
         {
             throw new Exception(__('Unknown driver type: :type'), array(':type'=>$type));
         }
-        $this->_pdo_Driver_type = $type;
+        $this->_pdo_driver_type = $type;
 
         # driver option
         if (!isset($config['options']) || !is_array($config['options']))
@@ -157,7 +157,8 @@ class Driver_Database_Driver_PDO extends Database_Driver
                 $default_port = 1433;
                 break;
             case 'mysql':
-                $db_name = 'dbname';
+                $db_name           = 'dbname';
+                $this->mysql       = true;
                 $this->_identifier = '`';
                 if ($config['charset'])
                 {
@@ -582,9 +583,17 @@ class Driver_Database_Driver_PDO extends Database_Driver
                 throw new Exception('pdo prepare sql error.');
             }
 
-            if (false===$sth->execute($input_parameters))
+            try
             {
-                throw new Exception('pdo execute error.');
+                if (false === $sth->execute($input_parameters))
+                {
+                    throw new Exception('pdo execute error.');
+                }
+            }
+            catch (Exception $e)
+            {
+                if (IS_DEBUG)throw $e;
+                throw new Exception($e->getMessage(), (int)$e->getCode());
             }
         }
         catch (Exception $e)
