@@ -311,8 +311,37 @@ abstract class Core_Core extends Bootstrap
         else
         {
             ob_start();
-            Core::execute(Core::$path_info);
+            $rs = Core::execute(Core::$path_info);
             Core::$output = ob_get_clean();
+
+            if (is_array($rs))
+            {
+                @header('Content-Type:application/json');
+
+                try
+                {
+                    if (defined('JSON_UNESCAPED_UNICODE'))
+                    {
+                        Core::$output = json_encode($rs, JSON_UNESCAPED_UNICODE);
+                    }
+                    else
+                    {
+                        Core::$output = json_encode($rs);
+                    }
+                }
+                catch (Exception $e)
+                {
+                    Core::$output = json_encode($rs);
+                }
+            }
+            elseif (is_string($rs))
+            {
+                Core::$output = $rs;
+            }
+            elseif (is_object($rs))
+            {
+                Core::$output = (string)$rs;
+            }
         }
     }
 
@@ -728,7 +757,7 @@ abstract class Core_Core extends Bootstrap
                         $controller->__call($action_name, $arguments);
 
                         Core::rm_controller($controller);
-                        return;
+                        return null;
                     }
                     else
                     {
@@ -836,22 +865,22 @@ abstract class Core_Core extends Bootstrap
                 switch ($count_arguments)
                 {
                     case 0:
-                        $controller->$action_name();
+                        $rs = $controller->$action_name();
                         break;
                     case 1:
-                        $controller->$action_name($arguments[0]);
+                        $rs = $controller->$action_name($arguments[0]);
                         break;
                     case 2:
-                        $controller->$action_name($arguments[0], $arguments[1]);
+                        $rs = $controller->$action_name($arguments[0], $arguments[1]);
                         break;
                     case 3:
-                        $controller->$action_name($arguments[0], $arguments[1], $arguments[2]);
+                        $rs = $controller->$action_name($arguments[0], $arguments[1], $arguments[2]);
                         break;
                     case 4:
-                        $controller->$action_name($arguments[0], $arguments[1], $arguments[2], $arguments[3]);
+                        $rs = $controller->$action_name($arguments[0], $arguments[1], $arguments[2], $arguments[3]);
                         break;
                     default:
-                        call_user_func_array(array($controller, $action_name), $arguments);
+                        $rs = call_user_func_array(array($controller, $action_name), $arguments);
                         break;
                 }
 
@@ -865,6 +894,8 @@ abstract class Core_Core extends Bootstrap
                 Core::rm_controller($controller);
 
                 unset($controller);
+
+                return $rs;
             }
             else
             {
@@ -876,6 +907,8 @@ abstract class Core_Core extends Bootstrap
             Core::show_404();
             //throw new Exception(__('Page Not Found'), E_PAGE_NOT_FOUND);
         }
+
+        return null;
     }
 
     protected static function rm_controller($controller)
