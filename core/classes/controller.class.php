@@ -317,11 +317,18 @@ class Core_Controller
     {
         @header('Content-Type:application/json');
 
-        if (defined('JSON_UNESCAPED_UNICODE'))
+        try
         {
-            echo json_encode($data, JSON_UNESCAPED_UNICODE);
+            if (defined('JSON_UNESCAPED_UNICODE'))
+            {
+                echo json_encode($data, JSON_UNESCAPED_UNICODE);
+            }
+            else
+            {
+                echo json_encode($data);
+            }
         }
-        else
+        catch (Exception $e)
         {
             echo json_encode($data);
         }
