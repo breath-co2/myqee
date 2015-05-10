@@ -27,6 +27,13 @@ class Driver_Database_Driver_MySQL extends Database_Driver
     protected $_default_port = 3306;
 
     /**
+     * 引擎是MySQL
+     *
+     * @var bool
+     */
+    protected $mysql = true;
+
+    /**
      * 记录当前连接所对应的数据库
      * @var array
      */

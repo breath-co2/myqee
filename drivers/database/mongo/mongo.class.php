@@ -355,7 +355,12 @@ class Driver_Database_Driver_Mongo extends Database_Driver
             $where = $this->_compile_conditions($builder['where']);
         }
 
-        if ($type=='insert')
+        if ($type === 'insert_update')
+        {
+            $type = 'replace';
+        }
+
+        if ($type === 'insert')
         {
             $sql = array
             (
@@ -437,7 +442,7 @@ class Driver_Database_Driver_Mongo extends Database_Driver
             }
 
             # 全部替换的模式
-            if ($type=='replace')
+            if ($type === 'replace')
             {
                 $sql['options']['upsert'] = true;
 

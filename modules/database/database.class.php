@@ -357,7 +357,7 @@ class Module_Database extends Database_QueryBuilder
      */
     public function compile($type = 'select', $use_master = null)
     {
-        if ($type=='select' && null === $use_master && true === $this->is_auto_use_master)
+        if ($type === 'select' && null === $use_master && true === $this->is_auto_use_master)
         {
             $use_master = true;
         }
@@ -367,7 +367,7 @@ class Module_Database extends Database_QueryBuilder
         # 获取查询SQL
         $sql = $this->driver->compile($this->_builder, $type);
 
-        # 重置QueryBulider
+        # 重置QueryBuilder
         $this->reset();
 
         return $sql;
@@ -429,7 +429,7 @@ class Module_Database extends Database_QueryBuilder
         {
             $this->where($where);
         }
-        $sql = $this->compile('update');
+        $sql = $this->compile('update', true);
 
         return $this->query($sql, false, true);
     }
@@ -453,9 +453,9 @@ class Module_Database extends Database_QueryBuilder
             $this->columns(array_keys($value));
             $this->values($value);
         }
-        $sql = $this->compile('insert');
+        $sql = $this->compile('insert', true);
 
-        return $this->query($sql , false , true);
+        return $this->query($sql, false, true);
     }
 
     /**
@@ -475,7 +475,7 @@ class Module_Database extends Database_QueryBuilder
         {
             $this->where($where);
         }
-        $sql = $this->compile('delete');
+        $sql = $this->compile('delete', true);
 
         return $this->query($sql, false, true);
     }
@@ -483,7 +483,20 @@ class Module_Database extends Database_QueryBuilder
     /**
      * 统计指定条件的数量
      *
-     * @param   mixed $table table name string or array(query, alias)
+     * @param mixed $table table name string or array(query, alias)
+     * @param array $where Where条件
+     * @return  integer
+     */
+    public function total($table = null, $where = null)
+    {
+        return $this->count_records($table, $where);
+    }
+
+    /**
+     * 统计指定条件的数量
+     *
+     * @param mixed $table table name string or array(query, alias)
+     * @param array $where Where条件
      * @return  integer
      */
     public function count_records($table = null, $where = null)
@@ -511,27 +524,40 @@ class Module_Database extends Database_QueryBuilder
     }
 
     /**
-     * 替换数据 replace into
+     * 替换数据 REPLACE INTO
+     *
+     * `$update_on_duplicate_mode` 参数只对MySQL有效
+     *  默认 `false` 使用传统的 REPLACE INTO 语句执行
+     *  当设置成 `true` 后，系统将用 `INSERT INTO .... ON DUPLICATE KEY UPDATE ... ` 的语句方式执行，而不是直接REPLACE INTO语句
+     *  详情见 [https://dev.mysql.com/doc/refman/5.0/en/insert-on-duplicate.html] 页面
+     *
      *
      * @param string $table
      * @param array $value
      * @param array $where
+     * @param array $insert_on_duplicate_key_update_mode 只有MySQL支持
      * @param Database_Result
      */
-    public function replace($table = null, $value = null, $where = null)
+    public function merge($table = null, $value = null, $where = null, $insert_on_duplicate_key_update_mode = false)
     {
-        return $this->merge($table, $value, $where);
+        return $this->replace($table, $value, $where, $insert_on_duplicate_key_update_mode);
     }
 
     /**
-     * 替换数据 replace into
+     * 替换数据 REPLACE INTO
+     *
+     * `$update_on_duplicate_mode` 参数只对MySQL有效
+     *  默认 `false` 使用传统的 REPLACE INTO 语句执行
+     *  当设置成 `true` 后，系统将用 `INSERT INTO .... ON DUPLICATE KEY UPDATE ... ` 的语句方式执行，而不是直接REPLACE INTO语句
+     *  详情见 [https://dev.mysql.com/doc/refman/5.0/en/insert-on-duplicate.html] 页面
      *
      * @param string $table
      * @param array $value
      * @param array $where
+     * @param array $insert_on_duplicate_key_update_mode 只有MySQL支持
      * @param Database_Result
      */
-    public function merge($table = null, $value = null, $where = null)
+    public function replace($table = null, $value = null, $where = null, $insert_on_duplicate_key_update_mode = false)
     {
         if ($table)
         {
@@ -547,7 +573,8 @@ class Module_Database extends Database_QueryBuilder
             $this->where($where);
         }
 
-        $sql = $this->compile('replace');
+        $sql = $this->compile($insert_on_duplicate_key_update_mode ? 'insert_update' : 'replace', true);
+
         return $this->query($sql, false, true);
     }
 
