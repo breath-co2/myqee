@@ -1493,7 +1493,7 @@ abstract class Core_Core extends Bootstrap
                     'type'   => $tag,
                     'day'    => (int)date('Ymd'),
                     'time'   => TIME_FLOAT,
-                    'value'  => $obj->is_suport_object_value() ? $data : (defined('JSON_UNESCAPED_UNICODE') ? json_encode($data, JSON_UNESCAPED_UNICODE) : json_encode($data)),
+                    'value'  => $obj->is_support_object_value() ? $data : Core::json_encode($data),
                 );
 
                 $status = $obj->insert($pro['prefix'], $db_data) ? true : false;
@@ -1868,7 +1868,7 @@ abstract class Core_Core extends Bootstrap
                             (
                                 'time'        => strtotime($date.' 00:00:00'),
                                 'no'          => $no,
-                                'log'         => $obj->is_suport_object_value() ? $trace_array : $trace_string,
+                                'log'         => $obj->is_support_object_value() ? $trace_array : $trace_string,
                                 'expire_time' => TIME + 7 * 86400,
                             );
                             $obj->insert('error500_log', $data);
