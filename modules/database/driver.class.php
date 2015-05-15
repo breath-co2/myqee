@@ -407,7 +407,7 @@ abstract class Module_Database_Driver
      *
      * @var bool
      */
-    public function is_suport_object_value()
+    public function is_support_object_value()
     {
         return false;
     }

@@ -217,13 +217,13 @@ abstract class Core_Core extends Bootstrap
                 }
             }
 
-            if ((IS_CLI || IS_DEBUG) && class_exists('ErrException', true))
+            if ((IS_CLI || IS_DEBUG) && class_exists('DevException', true))
             {
                 # 注册脚本
-                register_shutdown_function(array('ErrException', 'shutdown_handler'));
+                register_shutdown_function(array('DevException', 'shutdown_handler'));
                 # 捕获错误
-                set_exception_handler(array('ErrException', 'exception_handler'));
-                set_error_handler(array('ErrException', 'error_handler'), error_reporting());
+                set_exception_handler(array('DevException', 'exception_handler'));
+                set_error_handler(array('DevException', 'error_handler'), error_reporting());
             }
             else
             {
@@ -699,16 +699,16 @@ abstract class Core_Core extends Bootstrap
                     require $found['file'];
                 }
 
-                if ($found['ns'] === 'team-library' || $found['ns'] === 'project')
+                if (class_exists($found['class'], false))
                 {
-                    $class_name = $found['class'];
+                    $class_name   = $found['class'];
+                    $class_exists = true;
                 }
                 else
                 {
-                    $class_name = str_replace('.', '_', $found['ns']) . '_' . $found['class'];
+                    $class_name   = str_replace('.', '_', $found['ns']) . '_' . $found['class'];
+                    $class_exists = class_exists($class_name, false);
                 }
-
-                $class_exists = class_exists($class_name, false);
             }
 
             if ($class_exists)
@@ -1693,16 +1693,19 @@ abstract class Core_Core extends Bootstrap
             $msg = __('Page Not Found');
         }
 
-        if (IS_DEBUG && class_exists('ErrException', false))
+        if (IS_DEBUG && class_exists('DevException', false))
         {
             if ($msg instanceof Exception)
             {
-                throw $msg;
+                $e = $msg;
             }
             else
             {
-                throw new Exception($msg, E_PAGE_NOT_FOUND);
+                $e = new Exception($msg, $code);
             }
+
+            echo DevException::exception_handler($e, true);
+            exit;
         }
 
         if (IS_CLI)
@@ -1758,16 +1761,19 @@ abstract class Core_Core extends Bootstrap
             $msg = __('Internal Server Error');
         }
 
-        if (IS_DEBUG && class_exists('ErrException', false))
+        if (IS_DEBUG && class_exists('DevException', false))
         {
             if ($msg instanceof Exception)
             {
-                throw $msg;
+                $e = $msg;
             }
             else
             {
-                throw new Exception($msg, 0);
+                $e = new Exception($msg);
             }
+
+            echo DevException::exception_handler($e, true);
+            exit;
         }
 
         if (IS_CLI)
@@ -1803,6 +1809,7 @@ abstract class Core_Core extends Bootstrap
                 $trace_array = array
                 (
                     'project'    => Core::$project,
+                    'admin_mode' => IS_ADMIN_MODE,
                     'uri'        => HttpIO::$uri,
                     'url'        => HttpIO::PROTOCOL . $_SERVER['HTTP_HOST'] . $_SERVER["REQUEST_URI"],
                     'post'       => HttpIO::POST(null, HttpIO::PARAM_TYPE_OLDDATA),
@@ -1812,7 +1819,6 @@ abstract class Core_Core extends Bootstrap
                     'user_agent' => HttpIO::USER_AGENT,
                     'referrer'   => HttpIO::REFERRER,
                     'server_ip'  => $_SERVER["SERVER_ADDR"],
-                    'trace'      => $trace_obj->__toString(),
                 );
 
                 $date     = @date('Y-m-d');
@@ -1823,10 +1829,9 @@ abstract class Core_Core extends Bootstrap
                 $trace_array['server_name'] = (function_exists('php_uname')? php_uname('a') : 'unknown');
                 $trace_array['time']        = TIME;
                 $trace_array['use_time']    = microtime(1) - START_TIME;
-                $trace_array['trace']       = $trace_obj;
+                $trace_array['trace']       = (string)$trace_obj;
 
-                $trace_data = base64_encode(gzcompress(serialize($trace_array), 9));
-                unset($trace_array);
+                $trace_string = Core::json_encode($trace_array);
 
                 $view->error_saved = true;
 
@@ -1842,15 +1847,16 @@ abstract class Core_Core extends Bootstrap
                         $save_type = 'file';
                     }
 
-                    if ($save_type=='file')
+                    if ($save_type === 'file')
                     {
                         # 文件模式
                         $write_mode = Core::config('file_write_mode');
 
-                        if (preg_match('#^(db|cache)://([a-z0-9_]+)/([a-z0-9_]+)$#i', $write_mode , $m))
+                        if (preg_match('#^(db|cache|fluent)://(([a-z0-9\.\-_]+)(?:\:|/)([a-z0-9_]+))$#i', $write_mode , $m))
                         {
                             $save_type = $m[1];
-                            $error_config['type_config'] = $m[2];
+                            $error_config['server']      = $m[2];
+                            $error_config['type_config'] = $m[3];
                         }
                     }
 
@@ -1862,23 +1868,38 @@ abstract class Core_Core extends Bootstrap
                             (
                                 'time'        => strtotime($date.' 00:00:00'),
                                 'no'          => $no,
-                                'log'         => $trace_data,
-                                'expire_time' => TIME + 7*86400,
+                                'log'         => $obj->is_suport_object_value() ? $trace_array : $trace_string,
+                                'expire_time' => TIME + 7 * 86400,
                             );
                             $obj->insert('error500_log', $data);
                             break;
+
                         case 'cache':
                             $obj = $error_config['type_config']?new Cache($error_config['type_config']) : new Cache();
                             if (!$obj->get($error_no))
                             {
-                                $obj->set($error_no, $trace_data, 7*86400);
+                                $obj->set($error_no, $trace_string, 7 * 86400);
                             }
                             break;
+                        case 'fluent':
+                            if (strpos($error_config['server'], ':') !== false)
+                            {
+                                $fd_server = 'tcp://'. $error_config['server'];
+                            }
+                            else
+                            {
+                                $fd_server = 'udp://'. $error_config['server'];
+                            }
+                            $obj = Fluent::instance($fd_server);
+                            $obj->push('system.error500', $trace_array);
+
+                            break;
+
                         default:
                             $file = DIR_LOG .'error500'. DS . str_replace('-', DS, $date) . DS . $no . '.log';
                             if (!is_file($file))
                             {
-                                File::create_file($file, $trace_data, null, null, $error_config['type_config']?$error_config['type_config']:'default');
+                                File::create_file($file, date('Y-m-d\TH:i:s') .' - '. $trace_string, null, null, $error_config['type_config'] ? $error_config['type_config'] : 'default');
                             }
                             break;
                     }
@@ -1890,7 +1911,7 @@ abstract class Core_Core extends Bootstrap
             }
 
             $view->error_no = $error_no;
-            $view->error = $error;
+            $view->error    = $error;
             $view->render(true);
         }
         catch (Exception $e)
@@ -2485,6 +2506,26 @@ abstract class Core_Core extends Bootstrap
         return $ip;
     }
 
+    /**
+     * 格式化JSON
+     *
+     * 默认不对中文字进行格式转换
+     *
+     * @param array $data
+     * @return string
+     */
+    public static function json_encode(array $data)
+    {
+        try
+        {
+            // 解决使用 JSON_UNESCAPED_UNICODE 偶尔会出现编码问题导致json报错
+            return defined('JSON_UNESCAPED_UNICODE') ? json_encode($data, JSON_UNESCAPED_UNICODE) : json_encode($data);
+        }
+        catch (Exception $e)
+        {
+            return json_encode($data);
+        }
+    }
 
     /**
      * 系统调用内容输出函数（请勿自行执行）

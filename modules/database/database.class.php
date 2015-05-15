@@ -640,9 +640,9 @@ class Module_Database extends Database_QueryBuilder
      *
      * @return bool
      */
-    public function is_suport_object_value()
+    public function is_support_object_value()
     {
-        $this->driver()->is_suport_object_value();
+        $this->driver()->is_support_object_value();
     }
 
     /**

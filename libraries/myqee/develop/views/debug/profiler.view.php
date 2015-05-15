@@ -1,7 +1,14 @@
 <style type="text/css">
+    #_the_profiler_div {
+        position: relative;
+        z-index: 999999;
+        background-color: #fff;
+    }
     ._profilerdiv {
         padding:0 10px;
-        text-align:left;font-size:11px;font-family:Arial,sans-serif,Helvetica,"宋体";
+        text-align:left;
+        font-size:11px;
+        font-family:Arial,sans-serif,Helvetica,"宋体";
     }
     ._profilerdiv table.profiler {font-size:10px;width: 100%; margin: 0 auto 1em; border-collapse: collapse;}
     ._profilerdiv table.profiler th,
@@ -35,11 +42,11 @@
         display: inline-block;
     }
 </style>
+<br />
+<br />
+<br />
+<br />
 <div id="_the_profiler_div">
-    <br />
-    <br />
-    <br />
-    <br />
     <div class="_profilerdiv">
         <a name="onlineprofiler"></a>
         <?php
@@ -220,10 +227,9 @@
         <?php
         }
         ?>
+        <br />
+        <br />
     </div>
-    <br />
-    <br />
-
 
 
     <script type="text/javascript">

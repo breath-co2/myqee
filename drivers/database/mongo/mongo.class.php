@@ -1194,7 +1194,7 @@ class Driver_Database_Driver_Mongo extends Database_Driver
      *
      * @var bool
      */
-    public function is_suport_object_value()
+    public function is_support_object_value()
     {
         return true;
     }

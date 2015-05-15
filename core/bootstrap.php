@@ -311,20 +311,20 @@ if (!function_exists('class_alias'))
      */
     function class_alias($original, $alias)
     {
-        if (!class_exists($original,true))
+        if (!class_exists($original, true))
         {
             trigger_error("Class '{$original}' not found", E_USER_WARNING);
             return false;
         }
 
-        if (class_exists($alias,false))
+        if (class_exists($alias, false))
         {
             trigger_error('First argument "'.$alias.'" of class_alias() must be a name of user defined class', E_USER_WARNING);
             return false;
         }
 
         $rf = new ReflectionClass($original);
-        if ( $rf->isAbstract() )
+        if ($rf->isAbstract())
         {
             $abs = 'abstract ';
         }
@@ -334,7 +334,7 @@ if (!function_exists('class_alias'))
         }
         unset($rf);
 
-        eval($abs . 'class ' . $alias . ' extends ' . $original . ' {}');
+        eval($abs .'class '. $alias .' extends '. $original .' {}');
 
         return true;
     }
@@ -1134,9 +1134,13 @@ abstract class Bootstrap
         {
             $the_ext = '';
         }
-        elseif (substr($ext, 0, 1)!='.')
+        elseif (substr($ext, 0, 1) !== '.')
         {
             $the_ext = '.'. $ext;
+        }
+        else
+        {
+            $the_ext = $ext;
         }
 
         # 是否只需要寻找到第一个文件

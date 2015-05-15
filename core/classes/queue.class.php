@@ -24,8 +24,8 @@
  *
  * PHP里创建队列代码例子：
  *
- *      // 创建一个将会调用 `myClass::fun('a', 'b')` 方法执行的任务
- *      $job = Queue::factory('test', 'myClass::fun', array('a', 'b'));
+ *      // 创建一个将会调用 `myClass::fun('a' => 'b', $queue)` 方法执行的任务，其中第2个参数 `$queue` 是当前任务的对象
+ *      $job = Queue::factory('test', 'myClass::fun', array('a'=>'b'));
  *      $job->push();
  *
  *      // 创建一个将会请求 `http://localhost/test.php?test=a` 页面的任务
@@ -85,6 +85,8 @@ class Core_Queue
      * @var array
      */
     protected $job = array();
+
+    protected $accepting = false;
 
     /**
      * 数据驱动
@@ -163,8 +165,9 @@ class Core_Queue
      * @param $callback
      * @param array $arguments
      * @param int $job_time 设定定时任务
+     * @param string $project 所属项目，不指定则为当前项目
      */
-    function __construct($tag, $callback, array $arguments = array(), $job_time = 0)
+    function __construct($tag, $callback, array $arguments = array(), $job_time = 0, $project = null)
     {
         if (is_array($tag) && null === $callback)
         {
@@ -191,6 +194,7 @@ class Core_Queue
             (
                 'id'           => null,
                 'tag'          => $tag,
+                'project'      => $project ? $project : Core::$project,
                 'job_time'     => $job_time,
                 'create_mtime' => $m_time,
                 'update_mtime' => $m_time,
@@ -223,11 +227,12 @@ class Core_Queue
      * @param string|array $callback
      * @param array $data
      * @param int $job_time
+     * @param string $project 所属项目，不指定则为当前项目
      * @return Queue
      */
-    public static function factory($tag, $callback, $data = array(), $job_time = 0)
+    public static function factory($tag, $callback, $data = array(), $job_time = 0, $project = null)
     {
-        return new Queue($tag, $callback, $data, $job_time);
+        return new Queue($tag, $callback, $data, $job_time, $project);
     }
     
     /**
@@ -268,7 +273,7 @@ class Core_Queue
 
         if ($rs = Queue::driver()->insert(Queue::$table_name, $value))
         {
-            $this->id() = $rs[0];
+            $this->job['id'] = $rs[0];
 
             return true;
         }
@@ -347,7 +352,6 @@ class Core_Queue
             # 开启事务
             $tr->start();
 
-            #
             Queue::driver()
                 ->from(Queue::$table_name)
                 ->where('id', $this->id())
@@ -447,6 +451,7 @@ class Core_Queue
             {
                 $callback  = $this->job['callback'];
                 $arguments = $this->job['arguments'];
+
                 if (substr($callback, 0, 7) === 'http://' || substr($callback, 0, 7) === 'https://')
                 {
                     # url
@@ -520,7 +525,7 @@ class Core_Queue
                 }
                 else
                 {
-                    $rs = call_user_func_array($callback, $arguments);
+                    $rs = call_user_func($callback, $arguments, $this);
 
                     if (false === $rs)
                     {
@@ -557,6 +562,7 @@ class Core_Queue
                     'job_time' => time() + $delay,
                     'status'   => Queue::RETRY,
                 );
+
                 $where = array
                 (
                     'id' => $this->id(),
@@ -601,6 +607,7 @@ class Core_Queue
             // 更新成功
             $this->job['status'] = Queue::RUNNING;
             $this->job['update_mtime'] = $value['update_mtime'];
+            $this->accepting = true;
 
             return true;
         }
@@ -718,6 +725,16 @@ class Core_Queue
     }
 
     /**
+     * 任务的项目
+     *
+     * @return string
+     */
+    public function project()
+    {
+        return $this->job['project'];
+    }
+
+    /**
      * 任务执行定时时间
      * 
      * 当前时间大于次时间列队才会被执行
@@ -787,6 +804,16 @@ class Core_Queue
     public function result()
     {
         return $this->job['result'];
+    }
+
+    /**
+     * 是否获取处理中的对象
+     *
+     * @return bool
+     */
+    public function is_accepting()
+    {
+        return $this->accepting;
     }
 
     /**
