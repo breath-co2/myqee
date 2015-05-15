@@ -64,7 +64,7 @@ $config['pagination']['default'] = array
     'source'         => 'default',
     'key'            => '0',
     'total_items'    => 0,
-    'items_per_page' => 10,
+    'items_per_page' => 50,
     'view'           => 'pagination/basic',     // 视图views中的文件
     'auto_hide'      => true,
 );

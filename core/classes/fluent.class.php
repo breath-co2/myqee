@@ -141,7 +141,7 @@ class Core_Fluent
 
     protected function push_with_http($tag, $data)
     {
-        $packed  = $this->json_encode($data);
+        $packed  = Core::json_encode($data);
         $url     = $this->transport .'/'. $tag .'?json='. urlencode($packed);
 
         $ret = file_get_contents($url);
@@ -151,7 +151,7 @@ class Core_Fluent
 
     protected function push_with_socket($tag, $data)
     {
-        $buffer = $packed = $this->json_encode(array($tag, time(), $data));
+        $buffer = $packed = Core::json_encode(array($tag, time(), $data));
         $length = strlen($packed);
         $retry  = $written = 0;
 
@@ -167,7 +167,8 @@ class Core_Fluent
             return false;
         }
 
-        try {
+        try
+        {
             // PHP socket looks weired. we have to check the implementation.
             while ($written < $length)
             {
@@ -342,17 +343,6 @@ class Core_Fluent
     protected function backoff_exponential($base, $attempt)
     {
         usleep(pow($base, $attempt) * 1000);
-    }
-
-    /**
-     * 格式化JSON
-     *
-     * @param $data
-     * @return string
-     */
-    protected function json_encode($data)
-    {
-        return defined('JSON_UNESCAPED_UNICODE') ? json_encode($data, JSON_UNESCAPED_UNICODE) : json_encode($data);
     }
 
     /**

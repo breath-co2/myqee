@@ -74,6 +74,9 @@ class Ex_Permission extends Core_Permission{}
 class PinYin extends Core_PinYin{}
 class Ex_PinYin extends Core_PinYin{}
 
+class Queue extends Core_Queue{}
+class Ex_Queue extends Core_Queue{}
+
 class Route extends Core_Route{}
 class Ex_Route extends Core_Route{}
 

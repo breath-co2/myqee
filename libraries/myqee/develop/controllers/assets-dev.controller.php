@@ -20,7 +20,7 @@ class Library_MyQEE_Develop_Controller_Assets_Dev extends Controller
     /**
      * 文件名
      *
-     * @var sting
+     * @var string
      */
     protected $file;
 
@@ -75,7 +75,7 @@ class Library_MyQEE_Develop_Controller_Assets_Dev extends Controller
             Core::show_404(__('File suffix %s not allow.', array('%s'=>$this->suffix)));
         }
 
-        if ($this->suffix=='css' || $this->suffix=='js')
+        if ($this->suffix === 'css' || $this->suffix === 'js')
         {
             $this->output_css_js_file();
         }
@@ -238,12 +238,12 @@ class Library_MyQEE_Develop_Controller_Assets_Dev extends Controller
         {
             $content = '';
 
-            if ($file_paths['file'])foreach ($file_paths['file'] as $full_path)
+            if (isset($file_paths['file']) && $file_paths['file'])foreach ($file_paths['file'] as $full_path)
             {
                 $content .= file_get_contents($full_path);
             }
 
-            if ($file_paths['main'])foreach ($file_paths['main'] as $file=>$full_path)
+            if (isset($file_paths['main']) && $file_paths['main'])foreach ($file_paths['main'] as $file=>$full_path)
             {
                 # 内容
                 if (true!==$full_path)
@@ -273,7 +273,7 @@ class Library_MyQEE_Develop_Controller_Assets_Dev extends Controller
                 }
             }
 
-            if ($this->suffix=='css')
+            if ($this->suffix === 'css')
             {
                 $this->add_css_image_version($content);
 

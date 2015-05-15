@@ -58,7 +58,7 @@ class Driver_Cache_Driver_Memcache extends Cache_Driver
 
         if (!is_array($this->servers))
         {
-            throw new Exception(__('The memcache config :config does not exist', array(':config'=>$config_name)));
+            throw new Exception('The memcache config '.$config_name.' does not exist');
         }
 
         $this->config_name = $config_name;
