@@ -806,7 +806,7 @@ class Module_OOP_ORM_Data
 
                 $status = 1;
 
-                $tr->rollback();
+                $tr->commit();
             }
         }
 
