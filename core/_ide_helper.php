@@ -35,6 +35,9 @@ class Ex_Email extends Core_Email{}
 class File extends Core_File{}
 class Ex_File extends Core_File{}
 
+class Fluent extends Core_Fluent{}
+class Ex_Fluent extends Core_Fluent{}
+
 class Form extends Core_Form{}
 class Ex_Form extends Core_Form{}
 
@@ -70,6 +73,9 @@ class Ex_Permission extends Core_Permission{}
 
 class PinYin extends Core_PinYin{}
 class Ex_PinYin extends Core_PinYin{}
+
+class Queue extends Core_Queue{}
+class Ex_Queue extends Core_Queue{}
 
 class Route extends Core_Route{}
 class Ex_Route extends Core_Route{}

@@ -2,7 +2,7 @@
 
 if (!defined('_HTTPIO_METHOD'))
 {
-    define('_HTTPIO_METHOD', $_SERVER["REQUEST_METHOD"]);
+    define('_HTTPIO_METHOD', isset($_SERVER["REQUEST_METHOD"]) ? $_SERVER["REQUEST_METHOD"] : '');
 
     if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && 'xmlhttprequest'===strtolower($_SERVER['HTTP_X_REQUESTED_WITH']))
     {
@@ -62,7 +62,7 @@ if (!defined('_HTTPIO_METHOD'))
  * @category   MyQEE
  * @package    System
  * @subpackage Core
- * @copyright  Copyright (c) 2008-2013 myqee.com
+ * @copyright  Copyright (c) 2008-2016 myqee.com
  * @license    http://www.myqee.com/license.html
  */
 abstract class Core_HttpIO

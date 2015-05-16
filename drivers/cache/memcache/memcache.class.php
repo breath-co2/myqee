@@ -6,7 +6,7 @@
  * @author     呼吸二氧化碳 <jonwang@myqee.com>
  * @category   Module
  * @package    Cache
- * @copyright  Copyright (c) 2008-2013 myqee.com
+ * @copyright  Copyright (c) 2008-2016 myqee.com
  * @license	   http://www.myqee.com/license.html
  */
 class Driver_Cache_Driver_Memcache extends Cache_Driver
@@ -58,7 +58,7 @@ class Driver_Cache_Driver_Memcache extends Cache_Driver
 
         if (!is_array($this->servers))
         {
-            throw new Exception(__('The memcache config :config does not exist', array(':config'=>$config_name)));
+            throw new Exception('The memcache config '.$config_name.' does not exist');
         }
 
         $this->config_name = $config_name;

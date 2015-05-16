@@ -35,6 +35,13 @@ define('EXT', '.php');
 define('TIME', time());
 
 /**
+ * 系统当前时间
+ *
+ * @var int
+ */
+define('TIME_FLOAT', START_TIME);
+
+/**
  * 目录分隔符简写
  *
  * @var string
@@ -68,6 +75,13 @@ define('IS_MBSTRING', extension_loaded('mbstring')?true:false);
  * @var boolean
  */
 if (!defined('IS_CLI'))define('IS_CLI', (PHP_SAPI==='cli'));
+
+// Define 404 error constant
+define('E_PAGE_NOT_FOUND', 43);
+
+// Define database error constant
+define('E_DATABASE_ERROR', 44);
+
 
 /**
  * 是否有NameSpace（PHP5.3及以上则为true,以下为False）
@@ -172,21 +186,21 @@ if (!isset($dir_temp  )) $dir_temp   = null;
  *
  * @var string
  */
-define('DIR_UPLOAD', strpos($dir_upload,'://')!==false ? $dir_upload : (realpath($dir_upload)?realpath($dir_upload):DIR_WWWROOT.'upload').DS);
+define('DIR_UPLOAD', strpos($dir_upload, '://')!==false ? $dir_upload : (realpath($dir_upload)?realpath($dir_upload):DIR_WWWROOT.'upload').DS);
 
 /**
  * 数据目录
  *
  * @var string
  */
-define('DIR_DATA', strpos($dir_data,'://')!==false ? $dir_data : (realpath($dir_data)?realpath($dir_data):DIR_SYSTEM.'data').DS);
+define('DIR_DATA', strpos($dir_data, '://')!==false ? $dir_data : (realpath($dir_data)?realpath($dir_data):DIR_SYSTEM.'data').DS);
 
 /**
  * Cache目录
  *
  * @var string
 */
-define('DIR_CACHE', strpos($dir_cache,'://')!==false ? $dir_cache : (realpath($dir_cache)?realpath($dir_cache):DIR_DATA.'cache').DS);
+define('DIR_CACHE', strpos($dir_cache, '://')!==false ? $dir_cache : (realpath($dir_cache)?realpath($dir_cache):DIR_DATA.'cache').DS);
 
 /**
  * Temp目录
@@ -195,14 +209,14 @@ define('DIR_CACHE', strpos($dir_cache,'://')!==false ? $dir_cache : (realpath($d
  *
  * @var string
 */
-define('DIR_TEMP', strpos($dir_temp,'://')!==false ? $dir_temp : ($dir_temp && realpath($dir_temp)?realpath($dir_temp).DS:sys_get_temp_dir()));
+define('DIR_TEMP', strpos($dir_temp, '://')!==false ? $dir_temp : ($dir_temp && realpath($dir_temp)?realpath($dir_temp).DS:sys_get_temp_dir()));
 
 /**
  * Log目录
  *
  * @var string
 */
-define('DIR_LOG', strpos($dir_log,'://')!==false ? $dir_log : (realpath($dir_log)?realpath($dir_log):DIR_DATA.'log').DS);
+define('DIR_LOG', strpos($dir_log, '://')!==false ? $dir_log : (realpath($dir_log)?realpath($dir_log):DIR_DATA.'log').DS);
 
 
 unset($dir_data, $dir_cache, $dir_log, $dir_temp);
@@ -297,20 +311,20 @@ if (!function_exists('class_alias'))
      */
     function class_alias($original, $alias)
     {
-        if (!class_exists($original,true))
+        if (!class_exists($original, true))
         {
             trigger_error("Class '{$original}' not found", E_USER_WARNING);
             return false;
         }
 
-        if (class_exists($alias,false))
+        if (class_exists($alias, false))
         {
             trigger_error('First argument "'.$alias.'" of class_alias() must be a name of user defined class', E_USER_WARNING);
             return false;
         }
 
         $rf = new ReflectionClass($original);
-        if ( $rf->isAbstract() )
+        if ($rf->isAbstract())
         {
             $abs = 'abstract ';
         }
@@ -320,7 +334,7 @@ if (!function_exists('class_alias'))
         }
         unset($rf);
 
-        eval($abs . 'class ' . $alias . ' extends ' . $original . ' {}');
+        eval($abs .'class '. $alias .' extends '. $original .' {}');
 
         return true;
     }
@@ -331,7 +345,7 @@ if (!function_exists('class_alias'))
  *
  * @author     呼吸二氧化碳 <jonwang@myqee.com>
  * @category   Core
- * @copyright  Copyright (c) 2008-2013 myqee.com
+ * @copyright  Copyright (c) 2008-2016 myqee.com
  * @license    http://www.myqee.com/license.html
  */
 abstract class Bootstrap
@@ -344,11 +358,11 @@ abstract class Bootstrap
     public static $include_path = array
     (
         'project'      => array(),                                   // 项目类库
-        'team-library' => array('team'=>DIR_TEAM_LIBRARY),           // Team公共类库
+        'team-library' => array('team' => DIR_TEAM_LIBRARY),         // Team公共类库
         'library'      => array(),                                   // 类库包
-        'driver'       => array(),                                   // 驱动
+        'driver'        => array(),                                   // 驱动
         'module'       => array(),                                   // 组件
-        'core'         => array('core'=>DIR_CORE),                   // 核心类库
+        'core'         => array('core' => DIR_CORE),                 // 核心类库
     );
 
     /**
@@ -545,23 +559,23 @@ abstract class Bootstrap
 
 
             # Runtime配置
-            if (!isset(self::$core_config['runtime_config']))
+            if (!isset(self::$core_config['env_config_suffix']))
             {
-                self::$core_config['runtime_config'] = '';
+                self::$core_config['env_config_suffix'] = '';
             }
-            else if (self::$core_config['runtime_config'] && !preg_match('#^[a-z0-9_]+$#', self::$core_config['runtime_config']))
+            else if (self::$core_config['env_config_suffix'] && !preg_match('#^[a-z0-9_]+$#', self::$core_config['env_config_suffix']))
             {
-                self::$core_config['runtime_config'] = '';
+                self::$core_config['env_config_suffix'] = '';
             }
 
-            if (self::$core_config['runtime_config'])
+            if (self::$core_config['env_config_suffix'])
             {
-                $runtime_file = DIR_SYSTEM .'config.'. self::$core_config['runtime_config'] .'.runtime'. EXT;
+                $env_config_file = DIR_SYSTEM .'config.'. self::$core_config['env_config_suffix'] .'.env'. EXT;
 
                 # 读取配置
-                if (is_file($runtime_file))
+                if (is_file($env_config_file))
                 {
-                    __include_config_file(self::$core_config, $runtime_file);
+                    __include_config_file(self::$core_config, $env_config_file);
                 }
             }
 
@@ -1120,9 +1134,13 @@ abstract class Bootstrap
         {
             $the_ext = '';
         }
-        elseif (substr($ext, 0, 1)!='.')
+        elseif (substr($ext, 0, 1) !== '.')
         {
             $the_ext = '.'. $ext;
+        }
+        else
+        {
+            $the_ext = $ext;
         }
 
         # 是否只需要寻找到第一个文件
@@ -1203,7 +1221,7 @@ abstract class Bootstrap
             {
                 $module_dir = DIR_MODULE;
 
-                $driver_dir = DIR_DRIVER;
+                $driver_dir  = DIR_DRIVER;
                 list($tmp_prefix, $tmp_ns, $tmp_driver, $tmp_name) = explode('/', $file, 4);
                 if ($tmp_ns === 'driver' && $tmp_driver)
                 {
@@ -1318,9 +1336,9 @@ abstract class Bootstrap
                 $config_files[] = $config_file;
             }
 
-            if (self::$core_config['runtime_config'])
+            if (self::$core_config['env_config_suffix'])
             {
-                $config_file = $set[1] .'config'. self::$core_config['runtime_config'] .'.runtime'. EXT;
+                $config_file = $set[1] .'config'. self::$core_config['env_config_suffix'] .'.env'. EXT;
 
                 if (is_file($config_file))
                 {
@@ -1499,13 +1517,13 @@ abstract class Bootstrap
         }
     }
 
-    protected static function get_config_file_by_path(&$config_files, $paths, $runtime = false)
+    protected static function get_config_file_by_path(&$config_files, $paths, $run_env = false)
     {
         foreach ($paths as $path)
         {
-            if ($runtime && self::$core_config['runtime_config'])
+            if ($run_env && self::$core_config['env_config_suffix'])
             {
-                $config_file = $path . 'config.'. self::$core_config['runtime_config'] .'.runtime'. EXT;
+                $config_file = $path . 'config.'. self::$core_config['env_config_suffix'] .'.env'. EXT;
 
                 if (is_file($config_file))
                 {
@@ -1513,7 +1531,7 @@ abstract class Bootstrap
                 }
             }
 
-            $config_file = $path . 'config' . EXT;
+            $config_file = $path .'config'. EXT;
             if (is_file($config_file))
             {
                 $config_files[] = $config_file;

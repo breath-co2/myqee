@@ -6,7 +6,7 @@
  * @author     呼吸二氧化碳 <jonwang@myqee.com>
  * @category   Module
  * @package    Session
- * @copyright  Copyright (c) 2008-2013 myqee.com
+ * @copyright  Copyright (c) 2008-2016 myqee.com
  * @license    http://www.myqee.com/license.html
  */
 class Module_Session
@@ -179,7 +179,7 @@ class Module_Session
         $_SESSION = array();
         Session::$driver->destroy();
         Session::$member   = null;
-        Session::$driver   = null;
+        Session::$driver    = null;
         Session::$instance = null;
     }
 

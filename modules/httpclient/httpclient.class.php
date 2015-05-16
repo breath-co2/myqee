@@ -6,7 +6,7 @@
  * @author     呼吸二氧化碳 <jonwang@myqee.com>
  * @category   Module
  * @package    HttpClient
- * @copyright  Copyright (c) 2008-2013 myqee.com
+ * @copyright  Copyright (c) 2008-2016 myqee.com
  * @license    http://www.myqee.com/license.html
  */
 class Module_HttpClient
@@ -87,7 +87,8 @@ class Module_HttpClient
     protected static function is_support_curl()
     {
         static $s = null;
-        if (null===$s)$s = function_exists('curl_init');
+        if (null === $s)$s = function_exists('curl_init');
+
         return $s;
     }
 
@@ -116,14 +117,14 @@ class Module_HttpClient
     }
 
     /**
-     * 设置$referer
+     * 设置 $referrer
      *
-     * @param string $referer
+     * @param string $referrer
      * @return HttpClient
      */
-    public function set_referer($referer)
+    public function set_referrer($referrer)
     {
-        $this->driver()->set_referer($referer);
+        $this->driver()->set_referrer($referrer);
         return $this;
     }
 
@@ -173,9 +174,9 @@ class Module_HttpClient
      * @param int $num
      * @return HttpClient
      */
-    public function set_multi_max_num($num=0)
+    public function set_multi_max_num($num = 0)
     {
-        $this->driver()->set_multi_exec_num();
+        $this->driver()->set_multi_max_num($num);
         return $this;
     }
 
@@ -184,13 +185,18 @@ class Module_HttpClient
      *
      * 支持多并发进程，这样可以大大缩短API请求时间
      *
-     * @param string/array $url 支持多个URL
+     * @param string|array $url 支持多个URL
      * @param array $data
      * @param $timeout
      * @return HttpClient_Result|Arr 单个URL返回当然内容对象，多个URL时将返回一个数组对象
      */
     public function get($url, $timeout = 10)
     {
+        if (IS_DEBUG && Core::debug()->profiler()->is_open())
+        {
+            $bk = Core::debug()->profiler()->start('HttpClient', $this->driver()->method() .' Http URL');
+        }
+
         $this->driver()->get($url, $timeout);
         $data = $this->driver()->get_result_data();
 
@@ -201,11 +207,39 @@ class Module_HttpClient
             foreach ($data as $key => $item)
             {
                 $result[$key] = new HttpClient_Result($item);
+
+                if (isset($bk))$bk_data[] = array
+                (
+                    'URL'    => $key,
+                    'method' => $this->driver()->method(),
+                    'Code'   => $item['code'],
+                    'Time'   => $item['time'],
+                    'Head'   => trim(implode("\r\n", $item['header'])),
+                    'Result' => $item['data'],
+                );
             }
         }
         else
         {
             $result = new HttpClient_Result($data);
+        }
+
+        if (isset($bk))
+        {
+            if (!is_array($url))
+            {
+                $bk_data = array
+                (
+                    'Url'    => $url,
+                    'Method' => $this->driver()->method(),
+                    'Code'   => $data['code'],
+                    'Time'   => $data['time'],
+                    'Head'   => trim(implode("\r\n", $data['header'])),
+                    'Result' => $data['data'],
+                );
+            }
+
+            Core::debug()->profiler()->stop($bk_data);
         }
 
         return $result;
@@ -264,17 +298,37 @@ class Module_HttpClient
      * POST方式请求
      *
      * @param $url
-     * @param $data
+     * @param $post_data
      * @param $timeout
      * @return HttpClient_Result
      */
-    public function post($url, $data, $timeout = 30)
+    public function post($url, $post_data, $timeout = 30)
     {
+        if (IS_DEBUG && Core::debug()->profiler()->is_open())
+        {
+            $bk = Core::debug()->profiler()->start('HttpClient', 'POST Http URL');
+        }
+
         $time = microtime(true);
-        $this->driver()->post($url, $data, $timeout);
+        $this->driver()->post($url, $post_data, $timeout);
         $time = microtime(true) - $time;
         $data = $this->driver()->get_result_data();
         $data['total_time'] = $time;
+
+        if (isset($bk))
+        {
+            $data = array
+            (
+                'Method'    => 'POST',
+                'Code'      => $data['code'],
+                'Time'      => $data['time'],
+                'Head'      => trim(implode("\r\n", $data['header'])),
+                'Post Data' => $data,
+                'Result'    => $data['data'],
+            );
+
+            Core::debug()->profiler()->stop($data);
+        }
 
         return new HttpClient_Result($data);
     }
@@ -289,11 +343,26 @@ class Module_HttpClient
      */
     public function put($url, $data, $timeout = 30)
     {
+        if (IS_DEBUG && Core::debug()->profiler()->is_open())
+        {
+            $bk = Core::debug()->profiler()->start('HttpClient', 'PUT Http URL');
+        }
+
         $time = microtime(true);
         $this->driver()->put($url, $data, $timeout);
         $time = microtime(true) - $time;
         $data = $this->driver()->get_result_data();
         $data['total_time'] = $time;
+
+        if (isset($bk))
+        {
+            $data = array
+            (
+                'method'   => 'PUT',
+                'put data' => $data,
+            );
+            Core::debug()->profiler()->stop($data);
+        }
 
         return new HttpClient_Result($data);
     }
@@ -350,9 +419,13 @@ class Module_HttpClient
 
     public function __call($method, $params)
     {
-        if ( method_exists($this->driver(), $method) )
+        if (method_exists($this->driver(), $method))
         {
             return call_user_func_array(array($this->driver(), $method), $params);
+        }
+        else
+        {
+            throw new Exception("Call to undefined method HttpClient::$method");
         }
     }
 
@@ -367,7 +440,7 @@ class Module_HttpClient
      */
     public function method($method = null)
     {
-        if (null===$method)return $this->driver()->method();
+        if (null === $method)return $this->driver()->method();
 
         $this->driver()->method(strtoupper($method));
 
@@ -384,7 +457,7 @@ class Module_HttpClient
     {
         if (null === $this->driver)
         {
-            $f = 'HttpClient_Driver_' . $this->type;
+            $f = 'HttpClient_Driver_'. $this->type;
             $this->driver = new $f();
         }
         return $this->driver;

@@ -37,10 +37,10 @@ class Library_MyQEE_SAE_HttpClient_Driver_SAE extends SaeFetchurl
     }
 
     /**
-     * 设置$referer
-     * @param string $referer
+     * 设置$referrer
+     * @param string $referrer
      */
-    public function set_referer($referer)
+    public function set_referrer($referrer)
     {
         # 不支持
     }
@@ -49,7 +49,7 @@ class Library_MyQEE_SAE_HttpClient_Driver_SAE extends SaeFetchurl
      * 用POST方式提交
      * @param $url
      * @param string/array $vars
-     * @param $timeout 超时时间，默认120秒
+     * @param int $timeout 超时时间，默认120秒
      * @return string, false on failure
      */
     public function post($url, $vars, $timeout = 120)

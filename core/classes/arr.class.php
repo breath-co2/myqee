@@ -7,7 +7,7 @@
  * @category   MyQEE
  * @package    System
  * @subpackage Core
- * @copyright  Copyright (c) 2008-2013 myqee.com
+ * @copyright  Copyright (c) 2008-2016 myqee.com
  * @license    http://www.myqee.com/license.html
  */
 class Core_Arr extends ArrayIterator
@@ -20,8 +20,8 @@ class Core_Arr extends ArrayIterator
     /**
      * 获取数组
      *
-     * @param  string  column for associative keys
-     * @param  string  column for values
+     * @param  string $key column for associative keys
+     * @param  string $value column for values
      * @return array
      */
     public function as_array($key = null, $value = null)
@@ -30,18 +30,18 @@ class Core_Arr extends ArrayIterator
 
         $data = $this->getArrayCopy();
 
-        if (null===$key && null===$value)
+        if (null === $key && null === $value)
         {
             return $data;
         }
-        elseif (null===$key)
+        elseif (null === $key)
         {
             foreach ($data as $row)
             {
                 $results[] = $row[$value];
             }
         }
-        elseif (null===$value)
+        elseif (null === $value)
         {
             foreach ($data as $row)
             {
@@ -111,7 +111,7 @@ class Core_Arr extends ArrayIterator
         else
         {
             // Possibly a Traversable object, functionally the same as an array
-            return (is_object($value) AND $value instanceof Traversable);
+            return (is_object($value) && $value instanceof Traversable);
         }
     }
 
@@ -129,10 +129,10 @@ class Core_Arr extends ArrayIterator
      *     // Using an array of keys
      *     $colors = Arr::path($array, array('theme', '*', 'color'));
      *
-     * @param   array   array to search
-     * @param   mixed   key path string (delimiter separated) or array of keys
-     * @param   mixed   default value if the path is not set
-     * @param   string  key path delimiter
+     * @param   array  $array array to search
+     * @param   mixed  $path key path string (delimiter separated) or array of keys
+     * @param   mixed  $default default value if the path is not set
+     * @param   string $delimiter key path delimiter
      * @return  mixed
      */
     public static function path($array, $path, $default = null, $delimiter = null)
@@ -248,7 +248,7 @@ class Core_Arr extends ArrayIterator
     * @param mixed   $value     Value to set
     * @param string  $delimiter Path delimiter
     */
-    public static function set_path( &$array, $path, $value, $delimiter = null)
+    public static function set_path(&$array, $path, $value, $delimiter = null)
     {
         if (!$delimiter)
         {
@@ -288,8 +288,8 @@ class Core_Arr extends ArrayIterator
      *     // Fill an array with values 5, 10, 15, 20
      *     $values = Arr::range(5, 20);
      *
-     * @param   integer  stepping
-     * @param   integer  ending number
+     * @param   integer $step stepping
+     * @param   integer $max ending number
      * @return  array
      */
     public static function range($step = 10, $max = 100)
@@ -316,9 +316,9 @@ class Core_Arr extends ArrayIterator
      *     // Get the value "sorting" from $_GET, if it exists
      *     $sorting = Arr::get($_GET, 'sorting');
      *
-     * @param   array   array to extract from
-     * @param   string  key name
-     * @param   mixed   default value
+     * @param   array  $array array to extract from
+     * @param   string $key key name
+     * @param   mixed  $default default value
      * @return  mixed
      */
     public static function get($array, $key, $default = null)
@@ -333,9 +333,9 @@ class Core_Arr extends ArrayIterator
      *     // Get the values "username", "password" from $_POST
      *     $auth = Arr::extract($_POST, array('username', 'password'));
      *
-     * @param   array   array to extract keys from
-     * @param   array   list of key names
-     * @param   mixed   default value
+     * @param   array $array  array to extract keys from
+     * @param   array $keys  list of key names
+     * @param   mixed $default  default value
      * @return  array
      */
     public static function extract($array, array $keys, $default = null)
@@ -357,8 +357,8 @@ class Core_Arr extends ArrayIterator
      *
      * [!!] A list of arrays is an array that contains arrays, eg: array(array $a, array $b, array $c, ...)
      *
-     * @param   array   list of arrays to check
-     * @param   string  key to pluck
+     * @param   array  $array list of arrays to check
+     * @param   string $key key to pluck
      * @return  array
      */
     public static function pluck($array, $key)
@@ -441,8 +441,8 @@ class Core_Arr extends ArrayIterator
      *     // The output of $john will now be:
      *     array('name' => 'mary', 'children' => array('fred', 'paul', 'sally', 'jane'))
      *
-     * @param   array  initial array
-     * @param   array  array to merge
+     * @param   array $a1 initial array
+     * @param   array $a2 array to merge
      * @param   array  ...
      * @return  array
      */
@@ -515,8 +515,8 @@ class Core_Arr extends ArrayIterator
      *     // The output of $array will now be:
      *     array('name' => 'jack', 'mood' => 'happy', 'food' => 'tacos')
      *
-     * @param   array   master array
-     * @param   array   input arrays that will overwrite existing values
+     * @param   array $array1  master array
+     * @param   array $array2  input arrays that will overwrite existing values
      * @return  array
      */
     public static function overwrite($array1, $array2)
@@ -777,15 +777,15 @@ class Core_Arr extends ArrayIterator
 
     protected static function _format_attribute_value(& $value)
     {
-        if (true===$value)
+        if (true === $value)
         {
             $value = 'true';
         }
-        elseif (false===$value)
+        elseif (false === $value)
         {
             $value = 'false';
         }
-        elseif (null===$value)
+        elseif (null === $value)
         {
             $value = 'null';
         }

@@ -355,7 +355,12 @@ class Driver_Database_Driver_Mongo extends Database_Driver
             $where = $this->_compile_conditions($builder['where']);
         }
 
-        if ($type=='insert')
+        if ($type === 'insert_update')
+        {
+            $type = 'replace';
+        }
+
+        if ($type === 'insert')
         {
             $sql = array
             (
@@ -437,7 +442,7 @@ class Driver_Database_Driver_Mongo extends Database_Driver
             }
 
             # 全部替换的模式
-            if ($type=='replace')
+            if ($type === 'replace')
             {
                 $sql['options']['upsert'] = true;
 
@@ -1184,6 +1189,16 @@ class Driver_Database_Driver_Mongo extends Database_Driver
         // mongodb 不需要手动创建，可自动创建
     }
 
+    /**
+     * 返回是否支持对象数据
+     *
+     * @var bool
+     */
+    public function is_support_object_value()
+    {
+        return true;
+    }
+
     protected function _compile_set_data($op, $value)
     {
         $op = strtolower($op);
@@ -1473,14 +1488,14 @@ class Driver_Database_Driver_Mongo extends Database_Driver
     {
         $type = strtoupper($options['type']);
 
-        $slaverType = array
+        $slave_type = array
         (
             'SELECT',
             'SHOW',
             'EXPLAIN'
         );
 
-        if (in_array($type, $slaverType))
+        if (in_array($type, $slave_type))
         {
             if (true===$connection_type)
             {
@@ -1492,7 +1507,7 @@ class Driver_Database_Driver_Mongo extends Database_Driver
             }
             else
             {
-                $connection_type = 'slaver';
+                $connection_type = 'slave';
             }
         }
         else

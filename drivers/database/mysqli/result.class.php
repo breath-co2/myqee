@@ -7,7 +7,7 @@
  * @category   Driver
  * @package    Database
  * @subpackage MySQLI
- * @copyright  Copyright (c) 2008-2015 myqee.com
+ * @copyright  Copyright (c) 2008-2016 myqee.com
  * @license    http://www.myqee.com/license.html
  */
 class Driver_Database_Driver_MySQLI_Result extends Database_Result

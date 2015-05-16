@@ -7,7 +7,7 @@
  * @category   Driver
  * @package    Database
  * @subpackage MySQL
- * @copyright  Copyright (c) 2008-2013 myqee.com
+ * @copyright  Copyright (c) 2008-2016 myqee.com
  * @license    http://www.myqee.com/license.html
  */
 class Driver_Database_Driver_MySQL_Transaction extends Database_Transaction

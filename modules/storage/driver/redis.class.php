@@ -6,7 +6,7 @@
  * @author     呼吸二氧化碳 <jonwang@myqee.com>
  * @category   Module
  * @package    Storage
- * @copyright  Copyright (c) 2008-2013 myqee.com
+ * @copyright  Copyright (c) 2008-2016 myqee.com
  * @license    http://www.myqee.com/license.html
  */
 class Module_Storage_Driver_Redis extends Storage_Driver
@@ -44,7 +44,7 @@ class Module_Storage_Driver_Redis extends Storage_Driver
     /**
      * Redis缓存驱动器
      *
-     * @param $config_name 配置名或数组
+     * @param string|array $config_name 配置名或数组
      */
     public function __construct($config_name = 'default')
     {
@@ -279,7 +279,7 @@ class Module_Storage_Driver_Redis extends Storage_Driver
 
         if (method_exists($this->_redis, $method))
         {
-            return call_user_func_array(array($this->_redis,$method), $params);
+            return call_user_func_array(array($this->_redis, $method), $params);
         }
     }
 

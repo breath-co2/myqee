@@ -5,7 +5,7 @@
  * @author     呼吸二氧化碳 <jonwang@myqee.com>
  * @category   Module
  * @package    HttpClient
- * @copyright  Copyright (c) 2008-2013 myqee.com
+ * @copyright  Copyright (c) 2008-2016 myqee.com
  * @license    http://www.myqee.com/license.html
  */
 class Module_HttpClient_Driver_Fsock
@@ -16,7 +16,7 @@ class Module_HttpClient_Driver_Fsock
 
     protected $cookies;
 
-    protected $referer;
+    protected $referrer;
 
     protected $ip;
 
@@ -73,14 +73,14 @@ class Module_HttpClient_Driver_Fsock
     }
 
     /**
-     * 设置$referer
+     * 设置$referrer
      *
-     * @param string $referer
+     * @param string $referrer
      * @return HttpClient_Driver_Fsock
      */
-    public function set_referer($referer)
+    public function set_referrer($referrer)
     {
-        $this->referer = $referer;
+        $this->referrer = $referrer;
         return $this;
     }
 
@@ -114,7 +114,7 @@ class Module_HttpClient_Driver_Fsock
      * //TODO 不支持自定义参数
      *
      * @param string $key
-     * @param value $value
+     * @param mixed $value
      * @return HttpClient_Driver_Fsock
      */
     public function set_option($key, $value)
@@ -128,7 +128,7 @@ class Module_HttpClient_Driver_Fsock
      * @param int $num
      * @return HttpClient_Driver_Fsock
      */
-    public function set_multi_max_num($num=0)
+    public function set_multi_max_num($num = 0)
     {
         $this->multi_exec_num = (int)$num;
         return $this;
@@ -185,7 +185,7 @@ class Module_HttpClient_Driver_Fsock
      *
      * @param $url
      * @param string/array $vars
-     * @param $timeout 超时时间，默认120秒
+     * @param int $timeout 超时时间，默认120秒
      * @return string, false on failure
      */
     public function post($url, $vars, $timeout = 60)
@@ -307,12 +307,11 @@ class Module_HttpClient_Driver_Fsock
     /**
      * DELETE方式获取数据，支持多个URL
      *
-     * @param string/array $url
-     * @param string/array $vars
+     * @param string|array $url
      * @param $timeout
      * @return string, false on failure
      */
-    public function delete($url, $vars, $timeout = 10)
+    public function delete($url, $timeout = 10)
     {
         $this->method('DELETE');
 
@@ -381,9 +380,9 @@ class Module_HttpClient_Driver_Fsock
             $header['Cookie'] = is_array($this->cookies)?http_build_query($this->cookies, '', ';'):$this->cookies;
         }
 
-        if ($this->referer)
+        if ($this->referrer)
         {
-            $header['Referer'] = $this->referer;
+            $header['Referer'] = $this->referrer;
         }
 
         if ($this->agent)
@@ -459,10 +458,10 @@ class Module_HttpClient_Driver_Fsock
         # 设置长度
         $header['Content-Length'] = strlen($vars);
 
-        $str = $this->method . ' ' . $uri . ' HTTP/1.1'."\r\n";
-        foreach ($header as $k=>$v)
+        $str = $this->method .' '. $uri ." HTTP/1.1\r\n";
+        foreach ($header as $k => $v)
         {
-            $str .= $k .' :' . str_replace(array("\r","\n"), '', $v) . "\r\n";
+            $str .= $k .' :'. str_replace(array("\r","\n"), '', $v) . "\r\n";
         }
         $str .= "\r\n";
 
@@ -509,7 +508,7 @@ class Module_HttpClient_Driver_Fsock
         $multi_list = array();
         foreach ($urls as $url)
         {
-            if ($this->multi_exec_num>0 && $list_num>=$this->multi_exec_num)
+            if ($this->multi_exec_num > 0 && $list_num >= $this->multi_exec_num)
             {
                 # 加入排队列表
                 $multi_list[] = $url;
@@ -547,7 +546,7 @@ class Module_HttpClient_Driver_Fsock
             $header_arr = explode("\r\n", $header);
             $first_line = array_shift($header_arr);
 
-            if ( preg_match('#^HTTP/1.1 ([0-9]+) #', $first_line, $m) )
+            if (preg_match('#^HTTP/1.1 ([0-9]+) #', $first_line, $m))
             {
                 $code = $m[1];
             }
@@ -565,7 +564,7 @@ class Module_HttpClient_Driver_Fsock
 
             if (preg_match('#Location(?:[ ]*):([^\r]+)\r\n#Uis', $header , $m))
             {
-                if (count($redirect_list[$done_url])>=10)
+                if (count($redirect_list[$done_url]) >= 10)
                 {
                     # 防止跳转次数太大
                     $body = $header = '';
@@ -618,7 +617,7 @@ class Module_HttpClient_Driver_Fsock
 
             $done_num++;
 
-            if ( $multi_list )
+            if ($multi_list)
             {
                 # 获取列队中的一条URL
                 $current_url = array_shift($multi_list);
@@ -630,7 +629,7 @@ class Module_HttpClient_Driver_Fsock
                 $list_num++;
             }
 
-            if ($done_num>=$list_num)break;
+            if ($done_num >= $list_num)break;
         }
 
         return $result;
@@ -652,7 +651,7 @@ class Module_HttpClient_Driver_Fsock
         $this->files      = array();
         $this->ip         = null;
         $this->cookies    = null;
-        $this->referer    = null;
+        $this->referrer    = null;
         $this->method     = 'GET';
     }
 }

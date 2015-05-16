@@ -7,24 +7,24 @@
  * @category   MyQEE
  * @package    Module
  * @subpackage Database
- * @copyright  Copyright (c) 2008-2013 myqee.com
+ * @copyright  Copyright (c) 2008-2016 myqee.com
  * @license    http://www.myqee.com/license.html
  */
 abstract class Module_Database_Driver
 {
     /**
-     * 当前连接类型 master|slaver
+     * 当前连接类型 master|slave
      *
      * @var string
      */
-    protected $_connection_type = 'slaver';
+    protected $_connection_type = 'slave';
 
     /**
      * 当前连接的所有的ID
      *
      *    array(
      *    	'master' => 'abcdef...',
-     *    	'slaver' => 'defdef...',
+     *    	'slave' => 'defdef...',
      *    )
      *
      * @var array
@@ -32,7 +32,7 @@ abstract class Module_Database_Driver
     protected $_connection_ids = array
     (
         'master' => null,
-        'slaver' => null,
+        'slave' => null,
     );
 
     /**
@@ -65,6 +65,13 @@ abstract class Module_Database_Driver
     protected $_as_table = array();
 
     /**
+     * 引擎是MySQL
+     *
+     * @var bool
+     */
+    protected $mysql = false;
+
+    /**
      * 记录事务
      * array(
      * '连接ID'=>'父事务ID',
@@ -87,7 +94,7 @@ abstract class Module_Database_Driver
         if (!is_array($this->config['connection']['hostname']))
         {
             # 主从链接采用同一个内存地址
-            $this->_connection_ids['master'] =& $this->_connection_ids['slaver'];
+            $this->_connection_ids['master'] =& $this->_connection_ids['slave'];
         }
 
         if ($this->_default_port && (!isset($this->config['connection']['port']) || !$this->config['connection']['port']>0))
@@ -153,29 +160,25 @@ abstract class Module_Database_Driver
      */
     public function compile($builder, $type = 'select')
     {
-        if ($type == 'select')
+        switch ($type)
         {
-            return $this->_compile_select($builder);
-        }
-        else if ($type == 'insert')
-        {
-            return $this->_compile_insert($builder);
-        }
-        elseif ($type == 'replace')
-        {
-            return $this->_compile_insert($builder, 'REPLACE');
-        }
-        elseif ($type == 'update')
-        {
-            return $this->_compile_update($builder);
-        }
-        elseif ($type == 'delete')
-        {
-            return $this->_compile_delete($builder);
-        }
-        else
-        {
-            return $this->_compile_select($builder);
+            case 'insert':
+                return $this->_compile_insert($builder);
+
+            case'replace':
+                return $this->_compile_insert($builder, 'REPLACE');
+
+            case'insert_update':
+                return $this->_compile_insert($builder, 'REPLACE', true);
+
+            case 'update':
+                return $this->_compile_update($builder);
+
+            case 'delete':
+                return $this->_compile_delete($builder);
+
+            default:
+                return $this->_compile_select($builder);
         }
     }
 
@@ -400,6 +403,16 @@ abstract class Module_Database_Driver
     }
 
     /**
+     * 返回是否支持对象数据
+     *
+     * @var bool
+     */
+    public function is_support_object_value()
+    {
+        return false;
+    }
+
+    /**
      * 获取一个随机HOST
      *
      * @param array $exclude_hosts 排除的HOST
@@ -537,7 +550,7 @@ abstract class Module_Database_Driver
         }
         elseif (false===$use_connection_type)
         {
-            $use_connection_type = 'slaver';
+            $use_connection_type = 'slave';
         }
         elseif (!$use_connection_type)
         {
@@ -575,8 +588,8 @@ abstract class Module_Database_Driver
             $type = 'MASTER';
         }
 
-        $slaverType = array('SELECT', 'SHOW', 'EXPLAIN');
-        if ($type!='MASTER' && in_array($type, $slaverType))
+        $slave_type = array('SELECT', 'SHOW', 'EXPLAIN');
+        if ($type!='MASTER' && in_array($type, $slave_type))
         {
             if (true === $connection_type)
             {
@@ -588,7 +601,7 @@ abstract class Module_Database_Driver
             }
             else
             {
-                $connection_type = 'slaver';
+                $connection_type = 'slave';
             }
         }
         else
@@ -806,18 +819,29 @@ abstract class Module_Database_Driver
     }
 
     /**
-     * Compile the SQL query and return it.
+     * 构造一条替换的语句
      *
-     * @return  string
+     * @param $builder
+     * @param string $type
+     * @param bool $insert_update
+     * @return string
      */
-    protected function _compile_insert($builder, $type = 'INSERT')
+    protected function _compile_insert($builder, $type = 'INSERT', $insert_update = false)
     {
-        if ($type != 'REPLACE')
+        if ($this->mysql && $insert_update)
         {
-            $type = 'INSERT';
+            $type_string = 'INSERT';
         }
-        // Start an insertion query
-        $query = $type . ' INTO ' . $this->quote_table($builder['table'], false);
+        else if ($type !== 'REPLACE')
+        {
+            $type_string = 'INSERT';
+        }
+        else
+        {
+            $type_string = $type;
+        }
+
+        $query = $type_string . ' INTO ' . $this->quote_table($builder['table'], false);
 
         // Add the column names
         $query .= ' (' . implode(', ', array_map(array($this, '_quote_identifier'), $builder['columns'])) .') ';
@@ -842,7 +866,7 @@ abstract class Module_Database_Driver
             $query .= (string)$builder['values'];
         }
 
-        if ($type == 'REPLACE')
+        if ($type === 'REPLACE')
         {
             //where
             if (!empty($builder['where']))
@@ -850,9 +874,35 @@ abstract class Module_Database_Driver
                 // Add selection conditions
                 $query .= ' WHERE '. $this->_compile_conditions($builder['where']);
             }
+
+            if ($this->mysql && $insert_update)
+            {
+                $query .= ' '. $this->_compile_on_duplicate_key_update($builder);
+            }
         }
 
         return $query;
+    }
+
+    /**
+     * 构造 `ON DUPLICATE KEY UPDATE ...` 语句
+     *
+     * @param $builder
+     * @return string
+     */
+    protected function _compile_on_duplicate_key_update($builder)
+    {
+        $query = 'ON DUPLICATE KEY UPDATE ';
+
+        $groups = array();
+        foreach ($builder['columns'] as $column)
+        {
+            $c = $this->_quote_identifier($column);
+
+            $groups[] = "{$c} = VALUES({$c})";
+        }
+
+        return $query . implode(', ', $groups);
     }
 
     protected function _compile_update($builder)
@@ -1113,7 +1163,7 @@ abstract class Module_Database_Driver
             // Split the set
             list ($column, $value , $op) = $group;
 
-            if ($op=='+' || $op=='-')
+            if ($op === '+' || $op === '-')
             {
                 $w_type = $op;
             }

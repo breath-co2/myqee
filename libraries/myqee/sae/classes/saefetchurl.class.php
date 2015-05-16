@@ -489,7 +489,7 @@ class SaeFetchurl extends SaeObject
 
 
     private $impl_;
-    private $opt_;
+    protected $opt_;
     private $headers_;
 
 }

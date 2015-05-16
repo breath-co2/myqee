@@ -7,7 +7,7 @@ $config['database']['default'] = array
         'hostname'   => array
         (
             'master' => SAE_MYSQL_HOST_M,
-            'slaver' => array
+            'slave' => array
             (
                 SAE_MYSQL_HOST_S,
             ),

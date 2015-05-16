@@ -7,7 +7,7 @@
  * @category   MyQEE
  * @package    System
  * @subpackage Core
- * @copyright  Copyright (c) 2008-2013 myqee.com
+ * @copyright  Copyright (c) 2008-2016 myqee.com
  * @license    http://www.myqee.com/license.html
  */
 class Core_Permission

@@ -7,7 +7,7 @@
  * @category   Driver
  * @package    Database
  * @subpackage PDO
- * @copyright  Copyright (c) 2008-2015 myqee.com
+ * @copyright  Copyright (c) 2008-2016 myqee.com
  * @license    http://www.myqee.com/license.html
  */
 class Driver_Database_Driver_PDO extends Database_Driver
@@ -78,7 +78,7 @@ class Driver_Database_Driver_PDO extends Database_Driver
         if ($c)
         {
             # php5.4以下有注入漏洞，所以本系统不允许使用PDO
-            throw new Exception(__('If use pdo driver, need php 5.4+, because less php 5.4 has the SQL injection vulnerability.'));
+            throw new Exception(__('If use pdo Driver, need php 5.4+, because less php 5.4 has the SQL injection vulnerability.'));
         }
 
         if (is_array($config['connection']['hostname']))
@@ -107,7 +107,7 @@ class Driver_Database_Driver_PDO extends Database_Driver
                 throw new Exception(__('pdo config connection hostname error. need pdo driver type'));
             }
 
-            if ($type=='uri')
+            if ($type === 'uri')
             {
                 // uri:file:///path/to/dsnfile
                 $config['connection']['hostname'] = $pdo = file_get_contents($host);
@@ -124,7 +124,7 @@ class Driver_Database_Driver_PDO extends Database_Driver
 
         if (!in_array($type, Database_Driver_PDO::$_pdo_types))
         {
-            throw new Exception(__('Unknown drive type: :type'), array(':type'=>$type));
+            throw new Exception(__('Unknown driver type: :type'), array(':type'=>$type));
         }
         $this->_pdo_driver_type = $type;
 
@@ -157,7 +157,8 @@ class Driver_Database_Driver_PDO extends Database_Driver
                 $default_port = 1433;
                 break;
             case 'mysql':
-                $db_name = 'dbname';
+                $db_name           = 'dbname';
+                $this->mysql       = true;
                 $this->_identifier = '`';
                 if ($config['charset'])
                 {
@@ -582,9 +583,17 @@ class Driver_Database_Driver_PDO extends Database_Driver
                 throw new Exception('pdo prepare sql error.');
             }
 
-            if (false===$sth->execute($input_parameters))
+            try
             {
-                throw new Exception('pdo execute error.');
+                if (false === $sth->execute($input_parameters))
+                {
+                    throw new Exception('pdo execute error.');
+                }
+            }
+            catch (Exception $e)
+            {
+                if (IS_DEBUG)throw $e;
+                throw new Exception($e->getMessage(), (int)$e->getCode());
             }
         }
         catch (Exception $e)

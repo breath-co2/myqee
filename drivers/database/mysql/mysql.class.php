@@ -7,7 +7,7 @@
  * @category   Driver
  * @package    Database
  * @subpackage MySQL
- * @copyright  Copyright (c) 2008-2013 myqee.com
+ * @copyright  Copyright (c) 2008-2016 myqee.com
  * @license    http://www.myqee.com/license.html
  */
 class Driver_Database_Driver_MySQL extends Database_Driver
@@ -25,6 +25,13 @@ class Driver_Database_Driver_MySQL extends Database_Driver
      * @var int
      */
     protected $_default_port = 3306;
+
+    /**
+     * 引擎是MySQL
+     *
+     * @var bool
+     */
+    protected $mysql = true;
 
     /**
      * 记录当前连接所对应的数据库

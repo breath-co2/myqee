@@ -7,7 +7,7 @@
  * @category   MyQEE
  * @package    System
  * @subpackage Core
- * @copyright  Copyright (c) 2008-2013 myqee.com
+ * @copyright  Copyright (c) 2008-2016 myqee.com
  * @license    http://www.myqee.com/license.html
  */
 class Core_Controller
@@ -93,7 +93,7 @@ class Core_Controller
 
     public function __construct()
     {
-        $this->ids = 1;
+
     }
 
     /**
@@ -317,11 +317,18 @@ class Core_Controller
     {
         @header('Content-Type:application/json');
 
-        if (defined('JSON_UNESCAPED_UNICODE'))
+        try
         {
-            echo json_encode($data, JSON_UNESCAPED_UNICODE);
+            if (defined('JSON_UNESCAPED_UNICODE'))
+            {
+                echo json_encode($data, JSON_UNESCAPED_UNICODE);
+            }
+            else
+            {
+                echo json_encode($data);
+            }
         }
-        else
+        catch (Exception $e)
         {
             echo json_encode($data);
         }

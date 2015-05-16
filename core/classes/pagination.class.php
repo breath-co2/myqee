@@ -31,7 +31,7 @@
  * @category   MyQEE
  * @package    System
  * @subpackage Core
- * @copyright  Copyright (c) 2008-2013 myqee.com
+ * @copyright  Copyright (c) 2008-2016 myqee.com
  * @license    http://www.myqee.com/license.html
  */
 class Core_Pagination
@@ -149,8 +149,8 @@ class Core_Pagination
     /**
      * 实例化对象
      *
-     * @param   array  configuration
-     * @return  void
+     * @param  array $config configuration
+     * @return void
      */
     public function __construct($config = 'default')
     {
@@ -176,8 +176,7 @@ class Core_Pagination
     /**
      * 设置更新
      *
-     * @param   array   configuration
-     * @return  object  Pagination
+     * @return $this
      */
     protected function renew()
     {
@@ -226,6 +225,8 @@ class Core_Pagination
         $this->first_page         = ($this->current_page === 1) ? false : 1;
         $this->last_page          = ($this->current_page >= $this->total_pages) ? false : $this->total_pages;
         $this->offset             = (int)(($this->current_page - 1) * $this->items_per_page);
+
+        return $this;
     }
 
     /**
@@ -234,8 +235,8 @@ class Core_Pagination
      *      $page = new Pagination();
      *      echo $page->total_items(100)->url(10);
      *
-     * @param   integer  page number
-     * @return  string   page URL
+     * @param  integer $page page number
+     * @return string page URL
      */
     public function url($page = 1)
     {
@@ -243,7 +244,7 @@ class Core_Pagination
         $page = max(1, (int)$page);
 
         // No page number in URLs to first page
-        if (1===$page)
+        if (1 === $page)
         {
             $page = null;
         }
@@ -252,8 +253,10 @@ class Core_Pagination
         {
             case 'query_string' :
                 return Core::url(HttpIO::$uri) . HttpIO::query(array($this->config['key'] => $page));
+
             case 'route' :
                 return Core::url(Core::route()->uri(array($this->config['key'] => $page))) . HttpIO::query();
+
             case 'default' :
             default :
                 $tmparr = array();
@@ -268,15 +271,13 @@ class Core_Pagination
 
                 return Core::url(HttpIO::uri($tmparr)) . HttpIO::query();
         }
-
-        return '#';
     }
 
     /**
      * 检查当前分页数是否存在
      *
-     * @param   integer page number
-     * @return  boolean
+     * @param  integer $page page number
+     * @return boolean
      */
     public function valid_page($page)
     {
@@ -289,8 +290,8 @@ class Core_Pagination
     /**
      * 返回分页HTML
      *
-     * @param   $view 视图对象或视图文件名
-     * @return  string 分页HTML
+     * @param  bool $view 视图对象或视图文件名
+     * @return string 分页HTML
      */
     public function render($view = null)
     {
@@ -300,10 +301,10 @@ class Core_Pagination
         }
 
         # 是否自动隐藏只有1个分页或0个分页的HTML
-        if (true===$this->config['auto_hide'] && $this->total_pages <= 1) return '';
+        if (true === $this->config['auto_hide'] && $this->total_pages <= 1) return '';
 
 
-        if (null===$view)
+        if (null === $view)
         {
             $view = $this->config['view'];
         }
@@ -320,6 +321,7 @@ class Core_Pagination
     /**
      * 获取，设置当前页
      *
+     * @param null $value
      * @return int
      * @since  3.0
      */
@@ -331,6 +333,19 @@ class Core_Pagination
     /**
      * 获取，设置总数
      *
+     * @param null $value
+     * @return int
+     * @since  3.0
+     */
+    public function count($value = null)
+    {
+        return $this->total_items($value);
+    }
+
+    /**
+     * 获取，设置总数
+     *
+     * @param null $value
      * @return int
      * @since  3.0
      */
@@ -342,12 +357,25 @@ class Core_Pagination
     /**
      * 获取，设置每页项目数
      *
+     * @param null $value
      * @return int
      * @since  3.0
      */
     public function items_per_page($value = null)
     {
         return $this->get_or_set_data(__FUNCTION__, $value);
+    }
+
+    /**
+     * 获取，设置每页项目数
+     *
+     * @param null $value
+     * @return int
+     * @since  3.0
+     */
+    public function limit($value = null)
+    {
+        return $this->items_per_page($value);
     }
 
     /**
@@ -454,7 +482,7 @@ class Core_Pagination
      */
     protected function get_or_set_data($key, $value = null)
     {
-        if (null===$value)
+        if (null === $value)
         {
             return $this->__get($key);
         }
@@ -480,12 +508,12 @@ class Core_Pagination
     /**
      * Returns a Pagination property.
      *
-     * @param   string  URI of the request
-     * @return  mixed   Pagination property; null if not found
+     * @param  string $key URI of the request
+     * @return mixed Pagination property; null if not found
      */
     public function __get($key)
     {
-        if (false===$this->_is_renew)
+        if (false === $this->_is_renew)
         {
             $this->renew();
         }
@@ -504,8 +532,6 @@ class Core_Pagination
     {
         $this->$key = $value;
         $this->_is_renew = false;
-
-        return $this;
     }
 
 
@@ -513,9 +539,10 @@ class Core_Pagination
     {
         // 兼容V2中的get_***() 方法
 
-        if (substr($method, 0, 4) == 'get_')
+        if (substr($method, 0, 4) === 'get_')
         {
             $key = substr($method, 4);
+
             return $this->__get($key);
         }
 
