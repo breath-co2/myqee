@@ -41,12 +41,6 @@ class OOP_ORM_DI_ORM extends OOP_ORM_DI
         # 设置为ORM时，data, object, format 配置将无效
         unset($this->config['data'], $this->config['object'], $this->config['format']);
 
-        if (isset($this->config['field']))
-        {
-            $this->config['field_name'] = $this->config['field'];
-            unset($this->config['field']);
-        }
-
         if (!isset($this->config['field_name']))
         {
             # 标记为虚拟字段

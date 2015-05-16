@@ -98,6 +98,12 @@ abstract class Module_OOP_ORM
     protected $_orm_name_index;
 
     /**
+     * 表名称
+     * @var string
+     */
+    protected $tablename;
+
+    /**
      * 复合主键多数据分隔符
      *
      * @var string
@@ -194,37 +200,47 @@ abstract class Module_OOP_ORM
         $type = strtolower($type);
         if ($type === 'data' && $this->_orm_name_data)
         {
-            return $this->_orm_name_data;
+            $class_name = $this->_orm_name_data;
         }
         elseif($type === 'result' && $this->_orm_name_result)
         {
-            return $this->_orm_name_result;
+            $class_name = $this->_orm_name_result;
         }
         elseif($type === 'index' && $this->_orm_name_index)
         {
-            return $this->_orm_name_index;
+            $class_name = $this->_orm_name_index;
         }
         elseif ($this->_orm_name)
         {
-            return 'ORM_'. $this->_orm_name .'_'. ucfirst($type);
+            $class_name = 'orm_'. $this->_orm_name .'_'. $type;
         }
         else
         {
             switch ($type)
             {
                 case 'data':
-                    return 'oop_orm_data';
+                    $class_name = 'oop_orm_data';
+                    break;
+
                 case 'result':
-                    return 'oop_orm_result';
+                    $class_name = 'oop_orm_result';
+                    break;
+
                 case 'index':
-                    return 'oop_orm_index';
+                    $class_name = 'oop_orm_index';
+                    break;
+
                 case 'finder':
-                    return 'oop_orm_finder_db';
+                    $class_name = 'oop_orm_finder_db';
+                    break;
+
                 default:
                     throw new Exception('不支持的ORM类型：'. $type);
                     break;
             }
         }
+
+        return $class_name;
     }
 
     /**
@@ -456,4 +472,38 @@ abstract class Module_OOP_ORM
     {
         return $this->driver()->last_query();
     }
+
+    /**
+     * 获取表名称
+     *
+     * @return string
+     */
+    public function tablename()
+    {
+        return $this->tablename;
+    }
+
+    /**
+     * 加载元数据
+     *
+     *      this->load_metadata($obj)            // 加载所有元数据
+     *
+     *      this->load_metadata($obj, 'test')    // 加载 meta_group = test 的元数据
+     *
+     * @param OOP_ORM_Data $obj
+     * @param string $table_name 表名称
+     * @param string $meta_group 元数据组，不设置则加载数据库中所有的元数据
+     * @return array
+     * @throws Exception
+     */
+    abstract public function load_metadata(OOP_ORM_Data $obj, $table_name, $meta_group = null);
+
+
+    /**
+     * 加载对应数据库所有元数据
+     *
+     * @param OOP_ORM_Data $obj
+     * @return $this
+     */
+    abstract public function load_all_metadata(OOP_ORM_Data $obj);
 }

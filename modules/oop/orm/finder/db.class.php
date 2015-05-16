@@ -25,6 +25,13 @@ class Module_OOP_ORM_Finder_DB extends OOP_ORM
     protected $tablename;
 
     /**
+     * 元数据表名称
+     *
+     * @var string
+     */
+    protected $tablename_meta;
+
+    /**
      * 当前数据库对象
      *
      * @var Database
@@ -168,6 +175,16 @@ class Module_OOP_ORM_Finder_DB extends OOP_ORM
     public function tablename()
     {
         return $this->tablename;
+    }
+
+    /**
+     * 获取元数据表名称
+     *
+     * @return string
+     */
+    public function tablename_meta()
+    {
+        return $this->tablename_meta;
     }
 
 //    /**
@@ -446,6 +463,101 @@ class Module_OOP_ORM_Finder_DB extends OOP_ORM
         }
 
         throw new Exception('class '. get_class($this) .' not found method : '. $method);
+    }
+
+    /**
+     * 获取元数据
+     *
+     *      this->load_metadata($obj)            // 加载所有元数据
+     *
+     *      this->load_metadata($obj, 'test')    // 加载 meta_group = test 的元数据
+     *
+     * @param OOP_ORM_Data $obj
+     * @param string $table_name 表名称
+     * @param string $meta_group 元数据组，不设置则加载数据库中所有的元数据
+     * @return array 所有获取到的数据
+     * @throws Exception
+     */
+    public function load_metadata(OOP_ORM_Data $obj, $table_name, $meta_group = null)
+    {
+        $pk = $obj->pk();
+        if (!$pk)
+        {
+            throw new Exception("orm ". get_class($obj) ." not found pk field, can not use metadata.");
+        }
+
+        $db = $this->driver()->from($table_name)->where('theid', $pk)->where('table_name', $this->tablename());
+
+        if (null !== $meta_group)
+        {
+            $db->where('meta_group', $meta_group);
+        }
+
+        return $db->order_by('theid', 'asc')->order_by('meta_index', 'asc')->get()->as_array('hash');
+    }
+
+    /**
+     * 加载对应数据库所有元数据
+     *
+     * @param OOP_ORM_Data $obj
+     * @return $this
+     * @throws Exception
+     */
+    public function load_all_metadata(OOP_ORM_Data $obj)
+    {
+        $class_name = $obj->class_name();
+
+        $meta_table_of_key = OOP_ORM_DI::get_meta_table_of_key($class_name);
+        $meta_group_of_key = OOP_ORM_DI::get_meta_group_of_key($class_name);
+
+        if (!$meta_table_of_key)
+        {
+            # 没有元数据
+            return $this;
+        }
+
+        $keys_of_table = array();
+        foreach($meta_table_of_key as $key => $table)
+        {
+            $keys_of_table[$table][] = $key;
+        }
+
+        $data = array();
+        $groups_of_table = array();
+
+        # 读数据
+        foreach($keys_of_table as $table => $keys)
+        {
+            foreach($this->load_metadata($obj, $table) as $hash => $item)
+            {
+                $data[$table][$item['meta_group']][$hash] = $item;
+            }
+
+            foreach($keys as $key)
+            {
+                $group = $meta_group_of_key[$key];
+                $groups_of_table[$table][$group] = $group;
+            }
+        }
+
+        foreach($groups_of_table as $table => $groups)
+        {
+            foreach($groups as $group)
+            {
+                # 预置空数据
+                $obj->__orm_callback('set_metadata', $table, $group, array());
+            }
+        }
+
+        foreach ($data as $table => $group_data)
+        {
+            foreach ($group_data as $group => $item)
+            {
+                $obj->__orm_callback('set_metadata', $table, $group, $item);
+            }
+        }
+
+        return $this;
     }
 }
 

@@ -16,7 +16,7 @@ class OOP_ORM_DI_Default extends OOP_ORM_DI
      */
     protected function check_config()
     {
-        if (true===$this->config || 1===$this->config)
+        if (true === $this->config || 1 === $this->config)
         {
             # 对于id=true||1的字段，默认为主键
             $this->config = array
@@ -27,7 +27,7 @@ class OOP_ORM_DI_Default extends OOP_ORM_DI
                 'is_virtual'  => false,
             );
         }
-        elseif (null===$this->config)
+        elseif (null === $this->config)
         {
             $this->config = array
             (

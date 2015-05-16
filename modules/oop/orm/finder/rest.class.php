@@ -302,4 +302,21 @@ class Module_OOP_ORM_Finder_REST extends OOP_ORM
 
         $this->arguments = array();
     }
+
+    public function load_metadata(OOP_ORM_Data $obj, $table_name, $meta_group = null)
+    {
+        throw new Exception('no support.');
+    }
+
+    /**
+     * 加载对应数据库所有元数据
+     *
+     * @param OOP_ORM_Data $obj
+     * @return $this
+     * @throws Exception
+     */
+    public function load_all_metadata(OOP_ORM_Data $obj)
+    {
+        throw new Exception('no support.');
+    }
 }

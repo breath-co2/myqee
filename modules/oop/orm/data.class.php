@@ -108,7 +108,7 @@ class Module_OOP_ORM_Data
      *
      * @var bool
      */
-    protected $_is_support_object_field = false;
+    protected $_is_support_object_value = false;
 
     /**
      * 当字段更新时更新虚拟字段对应
@@ -146,15 +146,6 @@ class Module_OOP_ORM_Data
     protected $_parent_group_ids = array();
 
     /**
-     * 记录递增或递减字段
-     *
-     * [!!] 此数组的key是field_name，不是对象的key
-     *
-     * @var array
-     */
-    protected $_value_increment = array();
-
-    /**
      * 记录 _ 开头的变量
      *
      * @var array
@@ -162,7 +153,18 @@ class Module_OOP_ORM_Data
     protected $_private_values = array();
 
     /**
+     * 记录递增或递减字段
+     *
+     * [!!] 此数组是一个二维数组，第一级键是表名称，第二级的键是字段名
+     *
+     * @var array
+     */
+    protected $_value_increment = array();
+
+    /**
      * 记录延迟更新数据
+     *
+     * [!!] 此数组是一个二维数组，第一级键是表名称，第二级的键是字段名
      *
      * @var array
      */
@@ -171,7 +173,7 @@ class Module_OOP_ORM_Data
     /**
      * 记录递增或递减字段
      *
-     * [!!] 此数组的key是field_name，不是对象的key
+     * [!!] 此数组是一个二维数组，第一级键是表名称，第二级的键是字段名
      *
      * @var array
      */
@@ -192,11 +194,18 @@ class Module_OOP_ORM_Data
     protected $_delay_update_when_destruct = false;
 
     /**
-     * 当前的Finder ID
+     * 当前的FinderID
      *
      * @var string
      */
-    protected $_finder = null;
+    protected $_finder_id = null;
+
+    /**
+     * 已经加载了的meta数据
+     *
+     * @var array
+     */
+    protected $_metadata = array();
 
     /**
      * 根据ID实例化的对象
@@ -297,9 +306,9 @@ class Module_OOP_ORM_Data
             unset(OOP_ORM_Data::$KEY_BATCH_GROUPS[$group_id]);
         }
 
-        if ($this->_finder)
+        if ($this->_finder_id)
         {
-            unset(OOP_ORM_Data::$FINDERS[$this->_finder]);
+            unset(OOP_ORM_Data::$FINDERS[$this->_finder_id]);
         }
     }
 
@@ -311,7 +320,20 @@ class Module_OOP_ORM_Data
     protected function _init()
     {
         # 对象名称
-        $this->_class_name = strtolower(get_class($this));
+        $class_name = strtolower(get_class($this));
+
+        if (preg_match('#^(?:Library_[a-z0-9]+_[a-z0-9]+_)?ORM_([a-z0-9_]+)_Data$#i', $class_name, $m))
+        {
+            $this->_class_name = 'orm_'. $m[1] .'_data';
+            if (!$this->_orm_name)
+            {
+                $this->_orm_name = $m[1];
+            }
+        }
+        elseif (!$this->_orm_name)
+        {
+            $this->_orm_name = $class_name;
+        }
 
         if ('oop_orm_data' === substr($this->_class_name, -12))
         {
@@ -328,7 +350,7 @@ class Module_OOP_ORM_Data
         }
 
         # 更新字段配置
-        OOP_ORM_DI::parse_offset($this->_class_name, $class_vars, $this->_expand_key);
+        OOP_ORM_DI::parse_offset($this->_class_name, $class_vars, $this->_expand_key, $this->finder()->tablename(), $this->finder()->tablename_meta());
     }
 
     /**
@@ -358,7 +380,7 @@ class Module_OOP_ORM_Data
             if ($this->_is_temp_instance)
             {
                 # 临时对象赋值后又直接删除，则清理临时数据
-                $field_name = $di->get_field_name();
+                $field_name = $di->field_name();
                 if (!$field_name || !array_key_exists($field_name, $this->_data))
                 {
                     #移除临时对象相关信息
@@ -552,7 +574,8 @@ class Module_OOP_ORM_Data
             return true;
         }
 
-        $rs = $this->_get_di_by_key($key)->set_data($this, $this->_data, $this->_compiled_data, $this->_raw_compiled_data, $value, $this->_orm_data_is_created);
+        $di = $this->_get_di_by_key($key);
+        $rs = $di->set_data($this, $this->_data, $this->_compiled_data, $this->_raw_compiled_data, $value, $this->_orm_data_is_created);
 
         if ($this->_orm_data_is_created && $rs)
         {
@@ -565,17 +588,26 @@ class Module_OOP_ORM_Data
             # 移除标记递增
             if ($this->_value_increment || $this->_delay_update_value_increment)
             {
-                $field_name = $this->_get_di_by_key($key)->get_field_name();
+                $table_name = $di->table_name();
+                $field_name = $di->field_name();
 
-                if (isset($this->_value_increment[$field_name]))
+                if (isset($this->_value_increment[$table_name][$field_name]))
                 {
-                    unset($this->_value_increment[$field_name]);
+                    unset($this->_value_increment[$table_name][$field_name]);
+                    if (!$this->_value_increment[$table_name])
+                    {
+                        unset($this->_value_increment[$table_name]);
+                    }
                 }
 
                 # 重新设置数据后，之前的递增递减就失效了，移除延迟更新中的unset标记
-                if (isset($this->_delay_update_value_increment[$field_name]))
+                if (isset($this->_delay_update_value_increment[$table_name][$field_name]))
                 {
-                    unset($this->_delay_update_value_increment[$field_name]);
+                    unset($this->_delay_update_value_increment[$table_name][$field_name]);
+                    if (!$this->_delay_update_value_increment[$table_name])
+                    {
+                        unset($this->_delay_update_value_increment[$table_name]);
+                    }
                 }
             }
 
@@ -599,7 +631,7 @@ class Module_OOP_ORM_Data
      */
     public function __sleep()
     {
-        return array('_orm_name', '_expand_key', '_data', '_is_temp_instance', '_is_support_object_field', '_private_values', '_finder');
+        return array('_orm_name', '_expand_key', '_data', '_is_temp_instance', '_is_support_object_value', '_private_values', '_finder');
     }
 
     /**
@@ -620,7 +652,7 @@ class Module_OOP_ORM_Data
     /**
      * 更新数据
      *
-     * @return int $status 作用的行数
+     * @return bool 是否成功
      * @throws Exception
      */
     public function update()
@@ -636,60 +668,152 @@ class Module_OOP_ORM_Data
         # 读取延迟更新数据
         if ($this->_delay_update_value_increment)
         {
-            foreach($this->_delay_update_value_increment as $key => $value)
+            foreach($this->_delay_update_value_increment as $table => $item)
             {
-                $value_increment[$key] += $value;
-                if (0 === $value_increment[$key])
+                foreach($item as $key => $value)
                 {
-                    unset($value_increment[$key]);
+                    $value_increment[$table][$key] += $value;
+                    if (0 === $value_increment[$table][$key])
+                    {
+                        unset($value_increment[$table][$key]);
+                        if (!$value_increment[$table])unset($value_increment[$table]);
+                    }
+                    unset($changed_data[$table][$key]);
+                    if (!$changed_data[$table])unset($changed_data[$table]);
                 }
-                unset($changed_data[$key]);
             }
         }
 
         # 递增或递减数据处理
-        if ($value_increment && method_exists($this->finder()->driver(), 'value_increment'))foreach ($value_increment as $field => $value)
+        if ($value_increment && method_exists($this->finder()->driver(), 'value_increment'))foreach ($value_increment as $table => $values)
         {
-            # 如果存在递增或递减的数据
-            if (0 !== $value)
+            foreach ($values as $field => $value)
             {
-                $this->finder()->driver()->value_increment($field, $value);
-                unset($changed_data[$field]);
+                # 如果存在递增或递减的数据
+                if (0 !== $value)
+                {
+                    $this->finder()->driver()->value_increment($field, $value);
+
+                    unset($changed_data[$table][$field]);
+                    if (!$changed_data[$table])
+                    {
+                        unset($changed_data[$table]);
+                    }
+                }
             }
         }
+
 
         if (!$changed_data && !$value_increment)
         {
             return true;
         }
 
-        $where = array();
-        if ($pk = $this->pk(false))
+        if ($changed_data || $value_increment)
         {
-            foreach($pk as $field => $value)
+            # 更新主表
+            $update_main_table = false;
+
+            $table_name = $this->finder()->tablename();
+            if (isset($changed_data[$table_name]))
             {
-                if (array_key_exists($field, $this->_data))
+                $main_table_change_data = $changed_data[$table_name];
+                $update_main_table = true;
+            }
+            else
+            {
+                $main_table_change_data = null;
+            }
+
+            if (isset($value_increment[$table_name]))
+            {
+                $update_main_table = true;
+            }
+
+            if (count($changed_data) > 1 || count($value_increment) > 1)
+            {
+                $use_transaction = true;
+            }
+            else
+            {
+                $use_transaction = false;
+            }
+
+            if ($use_transaction)
+            {
+                $tr = $this->finder()->driver()->transaction();
+                $tr->start();
+            }
+
+            if ($update_main_table)
+            {
+                $where = array();
+                if ($pk = $this->pk(false))
                 {
-                    # 有可能被修改，使用原始数据
-                    $where[$field] = $this->_data[$field];
+                    foreach($pk as $field => $value)
+                    {
+                        if (array_key_exists($field, $this->_data))
+                        {
+                            # 有可能被修改，使用原始数据
+                            $where[$field] = $this->_data[$field];
+                        }
+                        else
+                        {
+                            $where[$field] = $value;
+                        }
+                    }
                 }
                 else
                 {
-                    $where[$field] = $value;
+                    throw new Exception('ORM:'. $this->_class_name .' 不存在ID字段，无法使用ORM系统自带的update方法更新，请设置主键或通过 `$this->set_pk_name(\'id\')` 方法设置');
                 }
+
+                $status = $this->finder()->where($where)->update($main_table_change_data);
+            }
+
+            if ($use_transaction)
+            {
+                unset($changed_data[$table_name]);
+
+                foreach ($changed_data as $table => $item)
+                {
+                    $db = $this->finder()->driver();
+
+                    $up = array();
+                    foreach($item as $k => $v)
+                    {
+                        if (null === $v)
+                        {
+                            # 删除的数据
+                            $db->delete($table, array('hash' => $k));
+                        }
+                        else
+                        {
+                            $up[] = $v;
+                        }
+                    }
+
+                    if ($up)
+                    {
+                        $db->columns(array_keys(current($up)));
+                        foreach ($up as $v)
+                        {
+                            $db->values($v);
+                        }
+                        $db->replace($table);
+                    }
+                }
+
+                $status = 1;
+
+                $tr->rollback();
             }
         }
-        else
-        {
-            throw new Exception('ORM:'. $this->_class_name .' 不存在ID字段，无法使用ORM系统自带的update方法更新，请设置主键或通过 `$this->set_pk_name(\'id\')` 方法设置');
-        }
 
-
-        $status = $this->finder()->update($changed_data, $where);
 
         $this->_clear_and_set_changed_value($changed_data, true);
 
-        return $status;
+        return $status ? true : false;
     }
 
     /**
@@ -722,25 +846,39 @@ class Module_OOP_ORM_Data
         }
 
         $changed_data = $this->get_changed_field_data();
-
         if ($changed_data)
         {
-            $this->_delay_update_field_data = array_merge($this->_delay_update_field_data, $changed_data);
+            foreach ($changed_data as $table => $values)
+            {
+                if ($values)
+                {
+                    $this->_delay_update_field_data[$table] = array_merge($this->_delay_update_field_data[$table], $values);
+                }
+            }
         }
 
         if ($this->_value_increment)
         {
-            if ($changed_data)foreach($this->_value_increment as $key => $value)
+            if ($changed_data)foreach ($changed_data as $table => $values)
             {
-                unset($this->_delay_update_field_data[$key]);
+                foreach($this->_value_increment[$table] as $key => $value)
+                {
+                    unset($this->_delay_update_field_data[$table][$key]);
+                    
+                    if (!$this->_delay_update_field_data[$table])
+                    {
+                        unset($this->_delay_update_field_data[$table]);
+                    }
+                }
             }
 
             $this->_delay_update_value_increment = $this->_value_increment;
         }
 
+
         $this->_clear_and_set_changed_value($changed_data, false);
 
-        if ($auto_update && ($this->_delay_update_field_data || $this->_delay_update_value_increment))
+        if ($auto_update && ($this->_delay_update_field_data || $this->_delay_update_value_increment) && ($this->_delay_update_metadata || $this->_delay_update_value_increment_metadata))
         {
             $this->_delay_update_when_destruct = true;
         }
@@ -832,8 +970,7 @@ class Module_OOP_ORM_Data
     /**
      * 获取修改的数据
      *
-     * !!! 注意，返回的数组的键名是字段的键名，而并不是对象的键名
-     * 如果有多表，其它表的字段则会存在 `_other_table_field` 的key中
+     * [!!] 此数组是一个二维数组，第一级键是表名称，第二级的键是字段名
      *
      * @param $bool $include_delay_update_data
      * @return array
@@ -848,17 +985,18 @@ class Module_OOP_ORM_Data
         {
             $changed_data = $this->_delay_update_field_data;
 
-            if ($this->_delay_update_value_increment)
+            if ($this->_delay_update_value_increment)foreach ($this->_delay_update_value_increment as $table => $values)
             {
-                foreach ($this->_delay_update_value_increment as $key => $value)
+                foreach ($values as $key => $value)
                 {
-                    if (isset($this->_value_increment[$key]) && $value - $this->_value_increment[$key] === 0)
+                    if (isset($this->_value_increment[$table][$key]) && $value - $this->_value_increment[$table][$key] === 0)
                     {
-                        unset($changed_data[$key]);
+                        unset($changed_data[$table][$key]);
+                        if (!$changed_data[$table])unset($changed_data[$table]);
                     }
                     else
                     {
-                        $changed_data[$key] = $this->_data[$key];
+                        $changed_data[$table][$key] = $this->_data[$key];
                     }
                 }
             }
@@ -868,15 +1006,12 @@ class Module_OOP_ORM_Data
         foreach($this->_compiled_data as $key => $value)
         {
             $di = $this->_get_di_by_key($key);
-            if ($di->is_virtual())
-            {
-                # 虚拟字段
-                continue;
-            }
+
+            if ($di->is_virtual())continue;
 
             if ($this->_check_key_is_changed($key))
             {
-                $di->get_field_data($changed_data, $value, $this->_is_temp_instance && !$this->_is_support_object_field);
+                $di->refresh_field_data($this, $changed_data, $value, $this->_is_temp_instance && !$this->_is_support_object_value);
             }
         }
 
@@ -884,17 +1019,15 @@ class Module_OOP_ORM_Data
         {
             # 被unset掉的对象
             $di = $this->_get_di_by_key($key);
-            if ($di->is_virtual())
-            {
-                # 虚拟字段
-                continue;
-            }
 
-            $field_name = $di->get_field_name();
-            if ($field_name)
+            if ($di->is_virtual())continue;
+
+            $table = $di->table_name();
+            $field = $di->field_name();
+            if ($field)
             {
                 # 标记已删除
-                $changed_data[$field_name] = null;
+                $changed_data[$table][$field] = null;
             }
         }
 
@@ -931,9 +1064,9 @@ class Module_OOP_ORM_Data
         {
             $di = $this->_get_di_by_key($k);
 
-            if (true===$key)
+            if (true === $key)
             {
-                $field_name = $di->get_field_name();
+                $field_name = $di->field_name();
 
                 # 没有对应字段，则忽略
                 if (!$field_name)continue;
@@ -961,11 +1094,13 @@ class Module_OOP_ORM_Data
     {
         if (!array_key_exists($key, $this->_compiled_data))return false;
 
-        $value = $this->_compiled_data[$key];
-        $di    = $this->_get_di_by_key($key);
+        $di      = $this->_get_di_by_key($key);
+        $data    = isset($this->_data[$key])?$this->_data[$key] : null;
+        $c_value = $this->_compiled_data[$key];
+        $r_value = isset($this->_raw_compiled_data[$key])?$this->_raw_compiled_data[$key] : null;
 
         # 通过DI控制器来判断，虚拟字段不用判断，实际字段会判断
-        if ($di->check_data_is_change($this, $key, $value, isset($this->_raw_compiled_data[$key])?$this->_raw_compiled_data[$key] : null))
+        if ($di->check_data_is_change($this, $key, $data, $c_value, $r_value))
         {
             return true;
         }
@@ -1016,7 +1151,7 @@ class Module_OOP_ORM_Data
             $key_data = array();
             foreach((array)$pk as $field_name => $key)
             {
-                if (null===$this->$key)return null;     // 如果有一个key为设置，则返回null
+                if (null === $this->$key)return null;     // 如果有一个key为设置，则返回null
                 $key_data[$field_name] = $this->$key;
             }
 
@@ -1149,29 +1284,93 @@ class Module_OOP_ORM_Data
     /**
      * 获取以数据库字段名为键名的数组数据
      *
-     * 以字段名称为key，会排除掉虚拟数据，此数据可直接用于数据库的update
+     * [!!] 返回的数组是一个二维数组，第一级键是表名称，第二级的键是字段名
      *
+     * @param bool $include_metadata 是否包含元数据
      * @return array
      */
-    public function get_all_field_data()
+    public function get_all_field_data($include_metadata = false)
     {
-        $data = $this->_data;
+        $data = array
+        (
+            $this->table_name() => $this->_data
+        );
 
         foreach($this->_compiled_data as $key => $value)
         {
             $di = $this->_get_di_by_key($key);
 
-            if ($di->is_virtual())
+            if ($di->is_virtual() || (!$include_metadata && $di->is_metadata()))
             {
                 continue;
             }
 
-            if (!($field_name = $di->get_field_name()))
+            if (!($field_name = $di->field_name()))
             {
                 continue;
             }
 
-            $this->_get_di_by_key($key)->get_field_data($data, $this->_compiled_data[$key], $this->_is_temp_instance && !$this->_is_support_object_field);
+            $this->_get_di_by_key($key)->refresh_field_data($this, $data, $this->_compiled_data[$key], $this->_is_temp_instance && !$this->_is_support_object_value);
+        }
+
+        if ($include_metadata)
+        {
+            # 读取元数据
+
+            $data += $this->get_all_metadata();
+        }
+
+        return $data;
+    }
+
+    /**
+     * 获取所有元数据
+     *
+     * @return array
+     */
+    public function get_all_metadata()
+    {
+        $meta_group_of_key = OOP_ORM_DI::get_meta_group_of_key($this->_class_name);
+        $meta_table_of_key = OOP_ORM_DI::get_meta_table_of_key($this->_class_name);
+
+//        return array();
+        $data = array();
+        if ($meta_group_of_key)
+        {
+            if ($this->_metadata)
+            {
+                # 检查下是否全部加载完毕
+                $table_loaded = array();
+                foreach ($meta_table_of_key as $key => $table)
+                {
+                    if (isset($table_loaded[$table]))
+                    {
+                        # 已经加载过的表
+                        continue;
+                    }
+
+                    $group = $meta_group_of_key[$key];
+                    if (is_array($this->_metadata[$table]) && array_key_exists($group, $this->_metadata[$table]))
+                    {
+                        continue;
+                    }
+
+                    # 重新加载全部数据
+                    $this->finder()->load_metadata($this, $table);
+
+                    # 标记为已经加载过
+                    $table_loaded[$table] = 1;
+                }
+            }
+            else
+            {
+                $this->finder()->load_all_metadata($this);
+            }
+
+            foreach($meta_table_of_key as $key => $table)
+            {
+                $this->_get_di_by_key($key)->refresh_field_data($this, $data, $this->_compiled_data[$key], $this->_is_temp_instance && !$this->_is_support_object_value);
+            }
         }
 
         return $data;
@@ -1206,7 +1405,7 @@ class Module_OOP_ORM_Data
         {
             if ($db_data)
             {
-                if ($this->_get_di_by_key($key)->get_field_data($data, $this->_compiled_data[$key], $this->_is_temp_instance && !$this->_is_support_object_field))
+                if ($this->_get_di_by_key($key)->refresh_field_data($this, $data, $this->_compiled_data[$key], $this->_is_temp_instance && !$this->_is_support_object_value))
                 {
                     return $data[$field_name];
                 }
@@ -1403,7 +1602,7 @@ class Module_OOP_ORM_Data
      */
     public function finder()
     {
-        if ($this->_finder && isset(OOP_ORM_Data::$FINDERS[$this->_finder]))return OOP_ORM_Data::$FINDERS[$this->_finder];
+        if ($this->_finder_id && isset(OOP_ORM_Data::$FINDERS[$this->_finder_id]))return OOP_ORM_Data::$FINDERS[$this->_finder_id];
 
         if (!$this->_orm_name)
         {
@@ -1443,13 +1642,13 @@ class Module_OOP_ORM_Data
 
         if (!class_exists($orm_class_name, true))
         {
-            throw new Exception(__('Can\'t found ORM :orm.', array(':orm'=>$orm_class_name)));
+            throw new Exception(__('Can\'t found ORM :orm.', array(':orm' => $orm_class_name)));
         }
 
-        $finder        = new $orm_class_name();
-        $this->_finder = uniqid('f');
+        $finder           = new $orm_class_name();
+        $this->_finder_id = uniqid('f');
 
-        OOP_ORM_Data::$FINDERS[$this->_finder] = $finder;
+        OOP_ORM_Data::$FINDERS[$this->_finder_id] = $finder;
 
         return $finder;
     }
@@ -1465,12 +1664,14 @@ class Module_OOP_ORM_Data
      */
     public function value_increment($key, $value = 1)
     {
-        $field_name = $this->_get_di_by_key($key)->get_field_name();
+        $di         = $this->_get_di_by_key($key);
+        $table_name = $di->table_name();
+        $field_name = $di->field_name();
 
-        if ($field_name && isset($this->_value_increment[$field_name]))
+        if ($field_name && isset($this->_value_increment[$table_name][$field_name]))
         {
             # 支持多次递增，先获取旧的递增值，再赋值时会移除 $this->_value_increment[$field_name] 相应的值
-            $old_value = $this->_value_increment[$field_name];
+            $old_value = $this->_value_increment[$table_name][$field_name]['value'];
         }
         else
         {
@@ -1487,11 +1688,15 @@ class Module_OOP_ORM_Data
         {
             if (0 === $old_value + $value)
             {
-                unset($this->_value_increment[$field_name]);
+                unset($this->_value_increment[$table_name][$field_name]);
+                if (!$this->_value_increment[$table_name])
+                {
+                    unset($this->_value_increment[$table_name]);
+                }
             }
             else
             {
-                $this->_value_increment[$field_name] = $old_value + $value;
+                $this->_value_increment[$table_name][$field_name] = $old_value + $value;
             }
         }
 
@@ -1534,7 +1739,7 @@ class Module_OOP_ORM_Data
      */
     public function expand_key($key = false)
     {
-        if (false===$key)
+        if (false === $key)
         {
             return $this->_expand_key;
         }
@@ -1561,6 +1766,16 @@ class Module_OOP_ORM_Data
     public function get_key_by_field_name($field_name)
     {
         return OOP_ORM_DI::get_key_by_field_name($this->_class_name, $field_name);
+    }
+
+    /**
+     * 返回当前对象类名称（小写）
+     *
+     * @return string
+     */
+    public function class_name()
+    {
+        return $this->_class_name;
     }
 
     /**
@@ -1670,9 +1885,11 @@ class Module_OOP_ORM_Data
      */
     protected function _clear_and_set_changed_value(array $changed_value = array(), $clear_delay_update_setting = false)
     {
-        if ($changed_value)
+        $table_name = $this->finder()->tablename();
+
+        if (isset($changed_value[$table_name]))
         {
-            foreach($changed_value as $key => $value)
+            foreach($changed_value[$table_name] as $key => $value)
             {
                 if (null === $value)
                 {
@@ -1683,7 +1900,6 @@ class Module_OOP_ORM_Data
                     $this->_data[$key] = $value;
                 }
             }
-
         }
 
         $this->_unset_key         = array();
@@ -1762,7 +1978,7 @@ class Module_OOP_ORM_Data
 
             foreach($data as $key => $value)
             {
-                if (null!==($field_name = $this->_get_di_by_key($key)->get_field_name()))
+                if (null !== ($field_name = $this->_get_di_by_key($key)->field_name()))
                 {
                     $this->_data[$field_name] = $value;
                 }
@@ -1968,22 +2184,22 @@ class Module_OOP_ORM_Data
      */
     protected function __orm_callback_set_finder(OOP_ORM $finder)
     {
-        if (!$this->_finder)
+        if (!$this->_finder_id)
         {
-            $this->_finder = uniqid('f');
+            $this->_finder_id = uniqid('f');
         }
 
-        OOP_ORM_Data::$FINDERS[$this->_finder] = $finder;
+        OOP_ORM_Data::$FINDERS[$this->_finder_id] = $finder;
 
         $driver = $finder->driver();
 
         if ($driver instanceof Database)
         {
-            $this->_is_support_object_field = $driver->driver()->is_support_object_field();
+            $this->_is_support_object_value = $driver->driver()->is_support_object_value();
         }
         elseif ($driver instanceof HttpClient)
         {
-            $this->_is_support_object_field = true;
+            $this->_is_support_object_value = true;
         }
     }
 
@@ -2031,5 +2247,26 @@ class Module_OOP_ORM_Data
     protected function __orm_callback_get_by_function_di($fun, $args)
     {
         return call_user_func_array($fun, $args);
+    }
+
+    /**
+     * 获取所有元数据
+     *
+     * @return array
+     */
+    protected function & __orm_callback_get_metadata()
+    {
+        return $this->_metadata;
+    }
+
+    /**
+     * 设置指定组的元数据
+     *
+     * @param $group
+     * @param $value
+     */
+    protected function & __orm_callback_set_metadata($table, $group, $value)
+    {
+        $this->_metadata[$table][$group] = $value;
     }
 }
