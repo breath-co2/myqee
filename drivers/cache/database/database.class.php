@@ -4,9 +4,9 @@
  * 数据库缓存驱动器
  *
  * @author     呼吸二氧化碳 <jonwang@myqee.com>
- * @category   Module
+ * @category   Driver
  * @package    Cache
- * @copyright  Copyright (c) 2008-2013 myqee.com
+ * @copyright  Copyright (c) 2008-2016 myqee.com
  * @license	   http://www.myqee.com/license.html
  */
 class Driver_Cache_Driver_Database extends Cache_Driver
