@@ -723,7 +723,7 @@ abstract class Core_Core extends Bootstrap
                 $arguments = $found['args'];
                 if ($arguments && $arguments)
                 {
-                    $action = current($arguments);
+                    $action = str_replace('-', '_', current($arguments));
                     if (0 === strlen($action))
                     {
                         $action = 'default';
