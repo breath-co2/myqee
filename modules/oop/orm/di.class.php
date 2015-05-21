@@ -61,6 +61,13 @@ abstract class Module_OOP_ORM_DI
     protected static $CLASS_PK = array();
 
     /**
+     * 对象所有的key的列表
+     *
+     * @var array
+     */
+    protected static $ALL_KEYS = array();
+
+    /**
      * 记录所有metadata的key
      *
      * @var array
@@ -585,9 +592,12 @@ abstract class Module_OOP_ORM_DI
 
         if (!$class_vars)return;
 
+        $all_keys = array();
         foreach($class_vars as $key => $field_config)
         {
             if ($key[0] === '_')continue;
+
+            $all_keys[] = $key;
 
             $type = 'Default';
 
@@ -708,6 +718,7 @@ abstract class Module_OOP_ORM_DI
 
         OOP_ORM_DI::$OFFSET_DI[$class_name] = $config;
         OOP_ORM_DI::$CLASS_PK[$class_name]  = $pk;
+        OOP_ORM_DI::$ALL_KEYS[$class_name]  = $all_keys;
     }
 
     /**
@@ -763,6 +774,24 @@ abstract class Module_OOP_ORM_DI
         }
 
         return OOP_ORM_DI::$CLASS_PK[$class_name];
+    }
+
+    /**
+     * 返回指定对象所以的key
+     *
+     * 如果没有主键则返回空数组 `array()`
+     *
+     * @param $class_name
+     * @return array
+     */
+    public static function get_all_keys($class_name)
+    {
+        if (!isset(OOP_ORM_DI::$ALL_KEYS[$class_name]))
+        {
+            OOP_ORM_DI::parse_offset($class_name);
+        }
+
+        return OOP_ORM_DI::$ALL_KEYS[$class_name];
     }
 
     /**

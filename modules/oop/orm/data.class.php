@@ -9,7 +9,7 @@
  * @copyright  Copyright (c) 2008-2016 myqee.com
  * @license    http://www.myqee.com/license.html
  */
-class Module_OOP_ORM_Data
+class Module_OOP_ORM_Data implements JsonSerializable
 {
     /**
      * 自定义ORM对象基础名称
@@ -649,10 +649,54 @@ class Module_OOP_ORM_Data
         ];
     }
 
+    public function __toString()
+    {
+//        $d = new ArrayObject();
+//        $d->getArrayCopy()
+        return Core::json_encode($this->as_array());
+    }
+
+    /**
+     * 在使用 json_encode 这个对象时回调的方法
+     *
+     *      echo json_encode($this);
+     *
+     * @see http://cn.php.net/manual/zh/jsonserializable.jsonserialize.php
+     * @return array
+     */
+    public function jsonSerialize()
+    {
+        return $this->as_array();
+    }
+
+    /**
+     * 返回对象的数组形式数据
+     *
+     * @return array
+     */
+    public function as_array()
+    {
+        $arr = array();
+        foreach(OOP_ORM_DI::get_all_keys($this->_class_name) as $key)
+        {
+            $di = $this->_get_di_by_key($key);
+            if ($di instanceof OOP_ORM_DI_ORM)
+            {
+                # ORM对象直接跳过
+                continue;
+            }
+            $arr[$key] = $this->$key;
+        }
+
+        return $arr;
+    }
+
     /**
      * 更新数据
      *
-     * @return bool 是否成功
+     * [!!] 如果数据中含有元数据，则更新行数会增加，对于MySQL来说默认情况下更新1条元数据返回的作用行数是2，删除一条元数据更新的行数是1
+     *
+     * @return int 更新行数，0表示没更新
      * @throws Exception
      */
     public function update()
@@ -684,69 +728,131 @@ class Module_OOP_ORM_Data
             }
         }
 
-        # 递增或递减数据处理
-        if ($value_increment && method_exists($this->finder()->driver(), 'value_increment'))foreach ($value_increment as $table => $values)
-        {
-            foreach ($values as $field => $value)
-            {
-                # 如果存在递增或递减的数据
-                if (0 !== $value)
-                {
-                    $this->finder()->driver()->value_increment($field, $value);
-
-                    unset($changed_data[$table][$field]);
-                    if (!$changed_data[$table])
-                    {
-                        unset($changed_data[$table]);
-                    }
-                }
-            }
-        }
-
-
         if (!$changed_data && !$value_increment)
         {
+            # 没有需要更新的内容
+
             return true;
         }
 
-        if ($changed_data || $value_increment)
+        if ($rs = $this->_do_update_data($changed_data, $value_increment, 0))
         {
-            # 更新主表
-            $update_main_table = false;
+            # 更新信息
+            $this->_clear_and_set_changed_value($changed_data, true);
 
-            $table_name = $this->finder()->tablename();
-            if (isset($changed_data[$table_name]))
+            return $rs;
+        }
+        else
+        {
+            return 0;
+        }
+    }
+
+    protected function _do_update_data($changed_data, $value_increment, $is_insert)
+    {
+        # 更新主表
+        $update_main_table      = false;
+        $main_value_increment   = null;
+        $main_table_change_data = null;
+
+        $main_table = $this->finder()->tablename();
+        if (isset($changed_data[$main_table]))
+        {
+            $main_table_change_data = $changed_data[$main_table];
+            $update_main_table      = true;
+        }
+
+        if (isset($value_increment[$main_table]))
+        {
+            $main_value_increment = $value_increment[$main_table];
+            $update_main_table = true;
+        }
+
+
+
+        $db = $this->finder()->driver();
+
+        if (count($changed_data) > 1 || count($value_increment) > 1)
+        {
+            if (false === $db->transaction_class_name())
             {
-                $main_table_change_data = $changed_data[$table_name];
-                $update_main_table = true;
+                # 当前数据不支持事务
+                $open_transaction = false;
             }
             else
             {
-                $main_table_change_data = null;
+                $open_transaction = true;
             }
+        }
+        else
+        {
+            $open_transaction = false;
+        }
 
-            if (isset($value_increment[$table_name]))
-            {
-                $update_main_table = true;
-            }
+        if ($open_transaction)
+        {
+            $tr = $db->transaction();
+            $tr->start();
+        }
 
-            if (count($changed_data) > 1 || count($value_increment) > 1)
+        if ($update_main_table)
+        {
+            if ($is_insert)
             {
-                $use_transaction = true;
+                // 插入数据
+                list($id, $status) = $this->finder()->insert($main_table_change_data);
+
+                if ($id)
+                {
+
+                    $a_field = $this->_auto_increment_field_name;
+
+                    if(!$a_field && $id)
+                    {
+                        # 没有设置过自增字段却有返回自增数
+                        if ($pk_name = $this->get_pk_name())
+                        {
+                            $a_field = current($pk_name);
+                            $this->auto_increment_field_name($a_field);
+                        }
+                    }
+
+                    if ($a_field)
+                    {
+                        # 给自增字段赋值
+                        $this->_data[$a_field] = $id;
+
+                        if ($key = $this->get_key_by_field_name($a_field))
+                        {
+                            $this->$key = $id;
+                        }
+                    }
+
+                    $metadata = $this->get_all_metadata();
+
+                    if ($metadata)
+                    {
+                        # 更新修改过的数据
+                        $changed_data += $metadata;
+                    }
+                }
             }
             else
             {
-                $use_transaction = false;
-            }
+                // 更新数据
 
-            if ($use_transaction)
-            {
-                $tr = $this->finder()->driver()->transaction();
-                $tr->start();
-            }
 
-            if ($update_main_table)
-            {
+                # 递增或递减数据处理
+                if ($main_value_increment && method_exists($db, 'value_increment'))foreach ($main_value_increment as $field => $value)
+                {
+                    if (0 !== $value)
+                    {
+                        $db->value_increment($field, $value);
+
+                        unset($main_table_change_data[$field]);
+                    }
+                }
+
                 $where = array();
                 if ($pk = $this->pk(false))
                 {
@@ -770,50 +876,58 @@ class Module_OOP_ORM_Data
 
                 $status = $this->finder()->where($where)->update($main_table_change_data);
             }
+        }
+        else
+        {
+            $status = 0;
+        }
 
-            if ($use_transaction)
+        foreach ($changed_data as $table => $item)
+        {
+            # 主表已经更新
+            if ($table === $main_table)continue;
+
+            $up = array();
+            foreach($item as $k => $v)
             {
-                unset($changed_data[$table_name]);
-
-                foreach ($changed_data as $table => $item)
+                if (null === $v)
                 {
-                    $db = $this->finder()->driver();
+                    # 删除的数据
+                    $status += $db->delete($table, array('hash' => $k));
+                }
+                else
+                {
+                    $up[] = $v;
+                }
+            }
 
-                    $up = array();
-                    foreach($item as $k => $v)
-                    {
-                        if (null === $v)
-                        {
-                            # 删除的数据
-                            $db->delete($table, array('hash' => $k));
-                        }
-                        else
-                        {
-                            $up[] = $v;
-                        }
-                    }
-
-                    if ($up)
-                    {
-                        $db->columns(array_keys(current($up)));
-                        foreach ($up as $v)
-                        {
-                            $db->values($v);
-                        }
-                        $db->replace($table);
-                    }
+            if ($up)
+            {
+                $db->columns(array_keys(current($up)));
+                foreach ($up as $v)
+                {
+                    $db->values($v);
                 }
 
-                $status = 1;
+                list($tmp, $tmp2) = $db->replace($table);
 
-                $tr->commit();
+                $status += $tmp2;
             }
         }
 
+        if ($open_transaction)
+        {
+            $tr->commit();
+        }
 
-        $this->_clear_and_set_changed_value($changed_data, true);
-
-        return $status ? true : false;
+        if ($is_insert)
+        {
+            return array($status, $id);
+        }
+        else
+        {
+            return $status;
+        }
     }
 
     /**
@@ -899,44 +1013,42 @@ class Module_OOP_ORM_Data
             throw new Exception('current orm has been deleted.');
         }
 
-        $data = $this->get_all_field_data();
+        $data = $this->get_all_field_data(false);
 
-        if ($data)
+        $rs = $this->_do_update_data($data, array(), true);
+
+        if ($rs && $rs[1]>0)
         {
-            $rs = $this->finder()->insert($data);
+            $a_field = $this->_auto_increment_field_name;
 
-            if ($rs && $rs[1]>0)
+            if(!$a_field && $rs[0])
             {
-                $a_field = $this->_auto_increment_field_name;
-
-                if(!$a_field && $rs[0])
+                # 没有设置过自增字段却有返回自增数
+                if ($pk_name = $this->get_pk_name())
                 {
-                    # 没有设置过自增字段却有返回自增数
-                    if ($pk_name = $this->get_pk_name())
-                    {
-                        $a_field = current($pk_name);
-                        $this->auto_increment_field_name($a_field);
-                    }
+                    $a_field = current($pk_name);
+                    $this->auto_increment_field_name($a_field);
                 }
-
-                if ($a_field)
-                {
-                    # 给自增字段赋值
-                    $this->_data[$a_field] = $rs[0];
-
-                    if ($key = $this->get_key_by_field_name($a_field))
-                    {
-                        $this->$key = $rs[0];
-                    }
-                }
-
-                $this->_clear_and_set_changed_value($data, true);
             }
+
+            if ($a_field)
+            {
+                # 给自增字段赋值
+                $this->_data[$a_field] = $rs[0];
+
+                if ($key = $this->get_key_by_field_name($a_field))
+                {
+                    $this->$key = $rs[0];
+                }
+            }
+
+            $this->_clear_and_set_changed_value($data, true);
+
             return $rs;
         }
         else
         {
-            return false;
+            return array(0, 0);
         }
     }
 
@@ -1235,7 +1347,7 @@ class Module_OOP_ORM_Data
      */
     public function auto_increment_field_name($field_name = false)
     {
-        if (false===$field_name)return $this->_auto_increment_field_name;
+        if (false === $field_name)return $this->_auto_increment_field_name;
 
         $this->_auto_increment_field_name = $field_name;
 
@@ -1326,15 +1438,19 @@ class Module_OOP_ORM_Data
     /**
      * 获取所有元数据
      *
-     * @return array
+     * 若没有主键则返回false
+     *
+     * @return array|false
      */
     public function get_all_metadata()
     {
+        if (!$this->pk())return false;
+
         $meta_group_of_key = OOP_ORM_DI::get_meta_group_of_key($this->_class_name);
         $meta_table_of_key = OOP_ORM_DI::get_meta_table_of_key($this->_class_name);
 
-//        return array();
         $data = array();
+
         if ($meta_group_of_key)
         {
             if ($this->_metadata)
@@ -1682,6 +1798,7 @@ class Module_OOP_ORM_Data
 
         # 赋值
         $this->__set($key, $this->$key + $value);
+
 
         # 标记字段
         if ($field_name)

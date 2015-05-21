@@ -515,6 +515,8 @@ class Module_OOP_ORM_Finder_DB extends OOP_ORM
             # 没有元数据
             return $this;
         }
+        # 没有主键
+        if (!$obj->pk())return $this;
 
         $keys_of_table = array();
         foreach($meta_table_of_key as $key => $table)

@@ -9,7 +9,7 @@
  * @copyright  Copyright (c) 2008-2016 myqee.com
  * @license    http://www.myqee.com/license.html
  */
-class Module_OOP_ORM_Result implements Iterator, ArrayAccess, Serializable, Countable
+class Module_OOP_ORM_Result implements Iterator, ArrayAccess, Serializable, Countable, JsonSerializable
 {
     /**
      * 当前对象唯一ID
@@ -198,6 +198,7 @@ class Module_OOP_ORM_Result implements Iterator, ArrayAccess, Serializable, Coun
     {
         if (!$this->is_get_all_resource())
         {
+
             $old_offset = $this->offset;
 
             # 全部遍历一次
@@ -209,10 +210,11 @@ class Module_OOP_ORM_Result implements Iterator, ArrayAccess, Serializable, Coun
 
             $this->offset = $old_offset;
 
+
             if ($this->resource)
             {
                 # 如果还存在则说明之前有跳过index的
-                if ($old_offset>0)
+                if ($old_offset > 0)
                 {
                     $this->offset = 0;
                     for($i=0; $i<$old_offset; $i++)
@@ -399,6 +401,26 @@ class Module_OOP_ORM_Result implements Iterator, ArrayAccess, Serializable, Coun
     }
 
     /**
+     * 在使用 json_encode 这个对象时回调的方法
+     *
+     *      echo json_encode($this);
+     *
+     * @see http://cn.php.net/manual/zh/jsonserializable.jsonserialize.php
+     * @return array
+     */
+    public function jsonSerialize()
+    {
+        $rs = array();
+        foreach ($this as $item)
+        {
+            $rs[] = $item->as_array();
+        }
+
+        return $rs;
+    }
+
+
+    /**
      * 是否获取了所有资源
      *
      * @return bool
@@ -442,13 +464,14 @@ class Module_OOP_ORM_Result implements Iterator, ArrayAccess, Serializable, Coun
             # 使用获取的数据创建新对象
             $this->data[$index] = $this->finder->create($data, isset($this->option['is_field_key'])?$this->option['is_field_key']:true, $this->id);
 
+
             if ($this->option['count'] == count($this->data))
             {
                 # 获取完所有数据后就可以直接释放资源，不用等到对象被消毁
                 $this->release_resource();
 
                 # 重新排序，避免排序错乱
-                asort($this->data, SORT_NUMERIC);
+                ksort($this->data, SORT_NUMERIC);
             }
         }
 

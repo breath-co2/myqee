@@ -24,6 +24,7 @@ class OOP_ORM_DI_Default extends OOP_ORM_DI
                 'pk'          => true,
                 'is_readonly' => true,
                 'field_name'  => $this->key,
+                'field_type'  => 'bigint',
                 'is_virtual'  => false,
             );
         }
