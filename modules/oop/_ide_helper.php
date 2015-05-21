@@ -23,6 +23,9 @@ abstract class Ex_OOP_ORM_Parse extends Module_OOP_ORM_Parse{}
 class OOP_ORM_Result extends Module_OOP_ORM_Result{}
 class Ex_OOP_ORM_Result extends Module_OOP_ORM_Result{}
 
+abstract class OOP_ORM_DI_Default extends Module_OOP_ORM_DI_Default{}
+abstract class Ex_OOP_ORM_DI_Default extends Module_OOP_ORM_DI_Default{}
+
 abstract class OOP extends Module_OOP{}
 abstract class Ex_OOP extends Module_OOP{}
 
