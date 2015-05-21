@@ -30,6 +30,28 @@ class Core_View
     }
 
     /**
+     * 返回一个实例化好的视图对象
+     *
+     * @param string $file
+     * @param array $data
+     * @return View
+     */
+    public static function factory($file = null, array $data = array())
+    {
+        return new View($file, $data);
+    }
+
+    public function __set($key, $value)
+    {
+        $this->set($key, $value);
+    }
+
+    public function &__get($key)
+    {
+        return $this->_data[$key];
+    }
+
+    /**
      * 设置视图文件名
      *
      *      $view = new View();
@@ -55,27 +77,6 @@ class Core_View
         return $this;
     }
 
-    /**
-     * 返回一个实例化好的视图对象
-     *
-     * @param string $file
-     * @param array $data
-     * @return View
-     */
-    public static function factory($file = null, array $data = array())
-    {
-        return new View($file, $data);
-    }
-
-    public function __set($key, $value)
-    {
-        $this->set($key, $value);
-    }
-
-    public function &__get($key)
-    {
-        return $this->_data[$key];
-    }
 
     /**
      * 设置一个内存地址变量
@@ -138,6 +139,8 @@ class Core_View
         if ($print)
         {
             echo $output;
+
+            return null;
         }
         else
         {
