@@ -265,6 +265,8 @@ class Module_OOP_ORM_Data implements JsonSerializable
      */
     public function __construct(array $array = array(), $finder = null, $is_field_key = true)
     {
+        $this->_set_class_name();
+
         if ($finder && $finder instanceof OOP_ORM)
         {
             $this->__orm_callback_set_finder($finder);
@@ -278,6 +280,32 @@ class Module_OOP_ORM_Data implements JsonSerializable
 
         # 标志ORM为已构造完成
         $this->_orm_data_is_created = true;
+    }
+
+    protected function _set_class_name()
+    {
+        # 对象名称
+        $this->_class_name = $class_name = strtolower(get_class($this));
+
+        if (preg_match('#^(?:Library_[a-z0-9]+_[a-z0-9]+_)?ORM_([a-z0-9_]+)_Data$#i', $class_name, $m))
+        {
+            $class_name = $this->_class_name = 'orm_'. $m[1] .'_data';
+            if (!$this->_orm_name)
+            {
+                $this->_orm_name = $m[1];
+            }
+        }
+        elseif (!$this->_orm_name)
+        {
+            $this->_orm_name = $class_name;
+        }
+
+        if ('oop_orm_data' === substr($class_name, -12))
+        {
+            # 临时对象
+            $this->_is_temp_instance = true;
+            $this->_orm_name = null;
+        }
     }
 
     function __destruct()
@@ -319,28 +347,6 @@ class Module_OOP_ORM_Data implements JsonSerializable
      */
     protected function _init()
     {
-        # 对象名称
-        $class_name = strtolower(get_class($this));
-
-        if (preg_match('#^(?:Library_[a-z0-9]+_[a-z0-9]+_)?ORM_([a-z0-9_]+)_Data$#i', $class_name, $m))
-        {
-            $this->_class_name = 'orm_'. $m[1] .'_data';
-            if (!$this->_orm_name)
-            {
-                $this->_orm_name = $m[1];
-            }
-        }
-        elseif (!$this->_orm_name)
-        {
-            $this->_orm_name = $class_name;
-        }
-
-        if ('oop_orm_data' === substr($this->_class_name, -12))
-        {
-            # 临时对象
-            $this->_is_temp_instance = true;
-        }
-
         # 获取当前对象所有变量
         $class_vars = OOP_ORM_DI::get_object_vars($this);
 
@@ -350,7 +356,7 @@ class Module_OOP_ORM_Data implements JsonSerializable
         }
 
         # 更新字段配置
-        OOP_ORM_DI::parse_offset($this->_class_name, $class_vars, $this->_expand_key, $this->finder()->tablename(), $this->finder()->tablename_meta());
+        OOP_ORM_DI::parse_offset($this->class_name(), $class_vars, $this->_expand_key, $this->finder()->tablename(), $this->finder()->tablename_meta());
     }
 
     /**
@@ -748,6 +754,17 @@ class Module_OOP_ORM_Data implements JsonSerializable
         }
     }
 
+    /**
+     * 更新数据
+     *
+     * 如果是update则返回作用行数，如果是insert则返回 [插入id, 作用行数]
+     *
+     * @param $changed_data
+     * @param $value_increment
+     * @param $is_insert
+     * @return array|int
+     * @throws Exception
+     */
     protected function _do_update_data($changed_data, $value_increment, $is_insert)
     {
         # 更新主表
@@ -759,7 +776,16 @@ class Module_OOP_ORM_Data implements JsonSerializable
         if (isset($changed_data[$main_table]))
         {
             $main_table_change_data = $changed_data[$main_table];
-            $update_main_table      = true;
+            foreach($main_table_change_data as $k => $v)
+            {
+                # 将null的值移除掉
+                if (null === $v)unset($main_table_change_data[$k]);
+            }
+
+            if ($main_table_change_data)
+            {
+                $update_main_table = true;
+            }
         }
 
         if (isset($value_increment[$main_table]))
@@ -828,19 +854,25 @@ class Module_OOP_ORM_Data implements JsonSerializable
                         }
                     }
 
-                    $metadata = $this->get_all_metadata();
+                    // 读取metadata
+                    $metadata = $this->get_all_metadata(false);
 
                     if ($metadata)
                     {
-                        # 更新修改过的数据
-                        $changed_data += $metadata;
+                        # 合并数据
+                        foreach ($changed_data as $table => $value)
+                        {
+                            if (isset($metadata[$table]))
+                            {
+                                $changed_data[$table] = $metadata[$table];
+                            }
+                        }
                     }
                 }
             }
             else
             {
                 // 更新数据
-
 
                 # 递增或递减数据处理
                 if ($main_value_increment && method_exists($db, 'value_increment'))foreach ($main_value_increment as $field => $value)
@@ -909,7 +941,14 @@ class Module_OOP_ORM_Data implements JsonSerializable
                     $db->values($v);
                 }
 
-                list($tmp, $tmp2) = $db->replace($table);
+                if ($is_insert)
+                {
+                    list($tmp, $tmp2) = $db->insert($table);
+                }
+                else
+                {
+                    list($tmp, $tmp2) = $db->replace($table);
+                }
 
                 $status += $tmp2;
             }
@@ -922,7 +961,7 @@ class Module_OOP_ORM_Data implements JsonSerializable
 
         if ($is_insert)
         {
-            return array($status, $id);
+            return array($id, $status);
         }
         else
         {
@@ -1013,14 +1052,13 @@ class Module_OOP_ORM_Data implements JsonSerializable
             throw new Exception('current orm has been deleted.');
         }
 
-        $data = $this->get_all_field_data(false);
+        $data = $this->get_all_field_data(true);
 
         $rs = $this->_do_update_data($data, array(), true);
 
-        if ($rs && $rs[1]>0)
+        if ($rs && $rs[1] > 0)
         {
             $a_field = $this->_auto_increment_field_name;
-
             if(!$a_field && $rs[0])
             {
                 # 没有设置过自增字段却有返回自增数
@@ -1221,33 +1259,6 @@ class Module_OOP_ORM_Data implements JsonSerializable
     }
 
     /**
-     * 获取当前字段配置
-     *
-     * 如果 `$key = null` 则返回全部配置
-     *
-     * @param null $key
-     * @return array|null
-     */
-    public function get_offset_config($key = null)
-    {
-        if (null===$key)
-        {
-            return OOP_ORM_Parse::$CONFIG[$this->_class_name];
-        }
-        else
-        {
-            if (!isset(OOP_ORM_Parse::$CONFIG[$this->_class_name]))
-            {
-                return null;
-            }
-            else
-            {
-                return OOP_ORM_Parse::$CONFIG[$this->_class_name][$key];
-            }
-        }
-    }
-
-    /**
      * 返回当前对象主键值
      *
      * 如果存在多个主键，默认用,分开
@@ -1261,9 +1272,10 @@ class Module_OOP_ORM_Data implements JsonSerializable
         if ($pk = $this->get_pk_name())
         {
             $key_data = array();
-            foreach((array)$pk as $field_name => $key)
+            foreach((array)$pk as $key => $field_name)
             {
-                if (null === $this->$key)return null;     // 如果有一个key为设置，则返回null
+                if (null === $this->$key)return null;       // 如果有一个key为设置，则返回null
+
                 $key_data[$field_name] = $this->$key;
             }
 
@@ -1284,6 +1296,8 @@ class Module_OOP_ORM_Data implements JsonSerializable
 
     /**
      * 获取当前ORM的主键键名
+     *
+     * [!!] key 为字段所对应的 key, value为字段名
      *
      * @return array
      */
@@ -1396,7 +1410,7 @@ class Module_OOP_ORM_Data implements JsonSerializable
     /**
      * 获取以数据库字段名为键名的数组数据
      *
-     * [!!] 返回的数组是一个二维数组，第一级键是表名称，第二级的键是字段名
+     * [!!] 当 `$include_metadata = true` 时返回的数组是一个二维数组，第一级键是表名称，第二级的键是字段名
      *
      * @param bool $include_metadata 是否包含元数据
      * @return array
@@ -1428,8 +1442,14 @@ class Module_OOP_ORM_Data implements JsonSerializable
         if ($include_metadata)
         {
             # 读取元数据
-
-            $data += $this->get_all_metadata();
+            if ($this->pk())
+            {
+                $data += $this->get_all_metadata();
+            }
+        }
+        else
+        {
+            $data = current($data);
         }
 
         return $data;
@@ -1440,9 +1460,10 @@ class Module_OOP_ORM_Data implements JsonSerializable
      *
      * 若没有主键则返回false
      *
+     * @param bool $reload_from_db 如果数据没则自动从数据库加载
      * @return array|false
      */
-    public function get_all_metadata()
+    public function get_all_metadata($reload_from_db = true)
     {
         if (!$this->pk())return false;
 
@@ -1478,7 +1499,7 @@ class Module_OOP_ORM_Data implements JsonSerializable
                     $table_loaded[$table] = 1;
                 }
             }
-            else
+            else if($reload_from_db)
             {
                 $this->finder()->load_all_metadata($this);
             }
@@ -1595,9 +1616,9 @@ class Module_OOP_ORM_Data implements JsonSerializable
                 if ($is_field_key)
                 {
                     # 字段名
-                    foreach($pk_name as $key)
+                    foreach($pk_name as $field_name)
                     {
-                        $tmp_id[] = $data[$key];
+                        $tmp_id[] = $data[$field_name];
                     }
                     $pk = implode(',', $tmp_id);
                 }
@@ -1611,9 +1632,9 @@ class Module_OOP_ORM_Data implements JsonSerializable
                     $tmp_orm = new $orm_data_name($data, $finder, $is_field_key, $delay_data_setting);
 
                     # 字段名
-                    foreach($pk_name as $key)
+                    foreach($pk_name as $field_name)
                     {
-                        $tmp_id[] = $orm->$key;
+                        $tmp_id[] = $orm->$field_name;
                     }
                     $pk = implode(',', $tmp_id);
                 }
@@ -1653,6 +1674,11 @@ class Module_OOP_ORM_Data implements JsonSerializable
         }
         else
         {
+            if (!class_exists($orm_data_name, true))
+            {
+                throw new Exception("Class '{$orm_data_name}' not found", E_ERROR);
+            }
+
             /**
              * 实例化一个新的对象
              *
@@ -1986,7 +2012,7 @@ class Module_OOP_ORM_Data implements JsonSerializable
                     );
                 }
 
-                $this->_temp_di[$key] = new $class($this->_class_name, $key, $config);
+                $this->_temp_di[$key] = new $class($this->_class_name, $key, $this->table_name(), $config);
             }
 
             return $this->_temp_di[$key];

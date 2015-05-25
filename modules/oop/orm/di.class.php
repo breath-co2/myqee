@@ -56,6 +56,14 @@ abstract class Module_OOP_ORM_DI
     /**
      * 对象主键
      *
+     * 其中第一级key是类名称，第二级key是字段所对应的key，value是字段名
+     *
+     *      [
+     *          'my_class' => [
+     *              'test' => 'id'
+     *          ]
+     *      ]
+     *
      * @var array
      */
     protected static $CLASS_PK = array();
@@ -119,6 +127,11 @@ abstract class Module_OOP_ORM_DI
             $this->config['is_virtual'] = true;
         }
 
+        # 支持 array('field_name'=>true) 的形式
+        if (true === $this->field_name)
+        {
+            $this->field_name = $this->config['field_name'] = $this->key;
+        }
 
         # 是否只读字段
         if (isset($this->config['is_readonly']))
@@ -647,6 +660,14 @@ abstract class Module_OOP_ORM_DI
                 {
                     $type = 'Virtual';
                 }
+                elseif (isset($field_config['is_virtual_field']))
+                {
+                    $type = 'Virtual';
+
+                    # 兼容旧版本
+                    $field_config['is_virtual'] = $field_config['is_virtual_field'] ? true : false;
+                    unset($field_config['is_virtual_field']);
+                }
                 elseif (isset($field_config['resource']))
                 {
                     $type = 'Resource';
@@ -700,9 +721,9 @@ abstract class Module_OOP_ORM_DI
             $tmp = new $type_name($class_name, $key, $tablename, $field_config);
 
             # 判断是否主键
-            if ($tmp->is_pk())
+            if ($tmp->is_pk() && !in_array($tmp->field_name(), $pk))
             {
-                $pk[$tmp->field_name()] = $key;
+                $pk[$key] = $tmp->field_name();
             }
 
             $config[$key] = $tmp;
@@ -807,6 +828,8 @@ abstract class Module_OOP_ORM_DI
 
         if (isset(OOP_ORM_DI::$OFFSET_DI[$class_name]))
         {
+
+            # 优先取key=field_name的试试看
             if (isset(OOP_ORM_DI::$OFFSET_DI[$class_name][$field_name]) && $tmp_di = OOP_ORM_DI::$OFFSET_DI[$class_name][$field_name])
             {
                 /**
@@ -820,12 +843,13 @@ abstract class Module_OOP_ORM_DI
             }
 
             # 遍历
-            foreach(OOP_ORM_DI::$OFFSET_DI[$class_name] as $tmp_di)
+            foreach(OOP_ORM_DI::$OFFSET_DI[$class_name] as $key => $tmp_di)
             {
                 if ($field_name == $tmp_di->field_name())
                 {
-                    # field_name 和 key 相同
-                    return $field_name;
+                    # field_name 和 $di 的 field_name 相同
+
+                    return $key;
                 }
             }
         }

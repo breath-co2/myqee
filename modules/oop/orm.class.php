@@ -417,7 +417,7 @@ abstract class Module_OOP_ORM
     /**
      * 获取当前ORM的主键
      *
-     * 如果是单个组件，则返回字符串，如果是复合主键，则返回数值
+     * [!!] 其中key是对象的key，value是字段名
      *
      * @return array
      */

@@ -18,16 +18,16 @@ class OOP_ORM_DI_ORM extends OOP_ORM_DI
      */
     public function format_config()
     {
-        if (isset($this->config['name']) && is_string($this->config['name']))
-        {
-            $this->config['orm'] = $this->config['name'];
-            unset($this->config['name']);
-        }
-
         if (isset($this->config['orm']['return']))
         {
             # 兼容2.0版本的配置
             OOP_ORM_DI_ORM::check_for_v2_config($this->config);
+        }
+
+        if (isset($this->config['name']) && is_string($this->config['name']))
+        {
+            $this->config['orm'] = $this->config['name'];
+            unset($this->config['name']);
         }
 
         if (!$this->config['orm'])
@@ -602,17 +602,24 @@ class OOP_ORM_DI_ORM extends OOP_ORM_DI
     {
         switch ($config['orm']['return'])
         {
-
             case OOP_ORM::PARAM_RETURN_GROUP:
                 $config['type'] = OOP_ORM::PARAM_TYPE_O2M;
                 break;
+
             case OOP_ORM::PARAM_RETURN_FINDER:
                 $config['type'] = OOP_ORM::PARAM_TYPE_O2F;
                 break;
+
             default:
                 $config['type'] = OOP_ORM::PARAM_TYPE_O2O;
                 break;
         }
+
+        $orm_config = $config['orm'];
+        unset($config['orm'], $orm_config['return']);
+
+        # 将数据合并到一起
+        $config += $orm_config;
 
         if (isset($config['orm']['cache']))
         {
