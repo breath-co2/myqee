@@ -5,6 +5,12 @@
  * 配置根目录 `$config['log']['fluent'] = 'tcp://127.0.0.1:24224/'` 后
  * 使用 `Core::log('myapp.test.debug', $_SERVER)` 默认就可以调用本方法
  *
+ *
+ *      Fluent::instance('tcp://127.0.0.1:24224/')->push('xd.game.test', ["test":"hello"]);
+ *
+ *      Fluent::instance('unix:///full/path/to/my/socket.sock')->push('xd.game.test', ["test":"hello"]);
+ *
+ *
  * @see        https://github.com/fluent/fluent-logger-php
  * @author     呼吸二氧化碳 <jonwang@myqee.com>
  * @category   Core
@@ -73,7 +79,7 @@ class Core_Fluent
         {
             $protocol = substr($server, 0, $pos);
 
-            if (!in_array($protocol, array('tcp', 'unix', 'http')))
+            if (!in_array($protocol, array('tcp', 'udp', 'unix', 'http')))
             {
                 throw new Exception("transport `{$protocol}` does not support");
             }

@@ -340,6 +340,29 @@ if (!function_exists('class_alias'))
     }
 }
 
+
+if (!interface_exists('JsonSerializable', false))
+{
+    // PHP5.4.0 后支持被序列化成 JSON 的数据指定回调接口
+    // 在 5.4 之前没有这个接口，所以定义一个，但是只是为了不使程序报错没有实际用途
+
+    // @see http://cn.php.net/manual/zh/jsonserializable.jsonserialize.php
+
+    interface JsonSerializable
+    {
+        /**
+         * (PHP 5 &gt;= 5.4.0)<br/>
+         * Specify data which should be serialized to JSON
+         * @link http://php.net/manual/en/jsonserializable.jsonserialize.php
+         * @return mixed data which can be serialized by <b>json_encode</b>,
+         * which is a value of any type other than a resource.
+         */
+        public function jsonSerialize();
+    }
+}
+
+
+
 /**
  * Bootstrap
  *
