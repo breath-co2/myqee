@@ -133,7 +133,7 @@ class OOP_ORM_DI_Resource extends OOP_ORM_DI
         # 处理格式化数据
         if (isset($this->config['format']))
         {
-            OOP_ORM_DI::_de_format_data($this->config['format'], $tmp_data);
+            OOP_ORM_DI::_do_de_format_data($this->config['format'], $tmp_data);
         }
 
         $compiled_data[$this->key]     = $tmp_data;

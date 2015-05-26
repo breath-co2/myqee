@@ -1161,7 +1161,7 @@ class Module_OOP_ORM_Data implements JsonSerializable
 
             if ($this->_check_key_is_changed($key))
             {
-                $di->refresh_field_data($this, $changed_data, $value, $this->_is_temp_instance && !$this->_is_support_object_value);
+                $di->get_field_data($this, $changed_data, $value, $this->_is_temp_instance && !$this->_is_support_object_value);
             }
         }
 
@@ -1436,7 +1436,7 @@ class Module_OOP_ORM_Data implements JsonSerializable
                 continue;
             }
 
-            $this->_get_di_by_key($key)->refresh_field_data($this, $data, $this->_compiled_data[$key], $this->_is_temp_instance && !$this->_is_support_object_value);
+            $this->_get_di_by_key($key)->get_field_data($this, $data, $this->_compiled_data[$key], $this->_is_temp_instance && !$this->_is_support_object_value);
         }
 
         if ($include_metadata)
@@ -1506,7 +1506,7 @@ class Module_OOP_ORM_Data implements JsonSerializable
 
             foreach($meta_table_of_key as $key => $table)
             {
-                $this->_get_di_by_key($key)->refresh_field_data($this, $data, $this->_compiled_data[$key], $this->_is_temp_instance && !$this->_is_support_object_value);
+                $this->_get_di_by_key($key)->get_field_data($this, $data, $this->_compiled_data[$key], $this->_is_temp_instance && !$this->_is_support_object_value);
             }
         }
 
@@ -1542,7 +1542,7 @@ class Module_OOP_ORM_Data implements JsonSerializable
         {
             if ($db_data)
             {
-                if ($this->_get_di_by_key($key)->refresh_field_data($this, $data, $this->_compiled_data[$key], $this->_is_temp_instance && !$this->_is_support_object_value))
+                if ($this->_get_di_by_key($key)->get_field_data($this, $data, $this->_compiled_data[$key], $this->_is_temp_instance && !$this->_is_support_object_value))
                 {
                     return $data[$field_name];
                 }

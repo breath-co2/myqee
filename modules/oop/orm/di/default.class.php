@@ -65,7 +65,7 @@ class OOP_ORM_DI_Default extends OOP_ORM_DI
             # 处理格式化数据
             if (isset($this->config['format']))
             {
-                OOP_ORM_DI::_de_format_data($this->config['format'], $tmp_data);
+                OOP_ORM_DI::_do_de_format_data($this->config['format'], $tmp_data);
             }
             elseif (isset($this->config['is_temp_instance']) && $this->config['is_temp_instance'])
             {

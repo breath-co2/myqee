@@ -372,14 +372,14 @@ abstract class Module_OOP_ORM_DI
     }
 
     /**
-     * 刷新数据
+     * 获取刷新后的新数据
      *
      * @param array $data 传入刷新的数据
      * @param array $current_compiled_data 当前已经构造的数据
-     * @param bool $runtime_format 动态格式化，传入 true 则会对是 array 或对象的数据 serialize 处理
+     * @param bool $format_type 传入 true 则会对是 array 或对象的数据 serialize 处理
      * @return bool
      */
-    public function refresh_field_data(OOP_ORM_Data $obj, & $data, $current_compiled_data, $runtime_format = false)
+    public function get_field_data(OOP_ORM_Data $obj, & $data, $current_compiled_data, $format_type = false)
     {
         if (!$this->field_name)
         {
@@ -426,7 +426,8 @@ abstract class Module_OOP_ORM_DI
             $new_data = $current_compiled_data;
         }
 
-        if ($runtime_format)
+
+        if ($format_type)
         {
             # 动态格式化
             if (is_array($new_data) || is_object($new_data))
@@ -438,8 +439,7 @@ abstract class Module_OOP_ORM_DI
         {
             if (isset($this->config['format']) && $this->config['format'])
             {
-                # 格式化
-                OOP_ORM_DI::_format_data($this->config['format'], $new_data);
+                $this->_format_data($new_data);
             }
         }
 
@@ -453,6 +453,16 @@ abstract class Module_OOP_ORM_DI
         }
 
         return true;
+    }
+
+    /**
+     * 处理格式化数据
+     *
+     * @param $data
+     */
+    protected function _format_data(& $data)
+    {
+        OOP_ORM_DI::_do_format_data($this->config['format'], $data);
     }
 
     /**
@@ -623,7 +633,6 @@ abstract class Module_OOP_ORM_DI
                 if ($field_config === '@expand')
                 {
                     # 支持使用快速扩展字段
-
                     continue;
                 }
                 elseif (preg_match('#^@meta(?:\@([a-z0-9_\-]+))?$#', $field_config, $m))
@@ -633,7 +642,7 @@ abstract class Module_OOP_ORM_DI
                     (
                         'type'       => 'meta',
                         'field_name' => $key,
-                        'table_name' => isset($m[1])?$m[1]: $meta_tablename,
+                        'table_name' => isset($m[1]) && $m[1] ? $m[1] : $meta_tablename,
                     );
                 }
                 elseif(preg_match('#^(xml|json|http|https)://(.*)$#', $field_config))
@@ -685,15 +694,20 @@ abstract class Module_OOP_ORM_DI
                             $type = 'Meta';
 
                             # 更新元数据数据表
-                            if (isset($field_config['table_name']))
+                            if (isset($field_config['table_name']) && $field_config['table_name'])
                             {
                                 $tablename = $field_config['table_name'];
+                            }
+                            else
+                            {
+                                $tablename = $meta_tablename;
                             }
 
                             # 记录分组
                             OOP_ORM_DI::$META_GROUP_OF_KEY[$class_name][$key] = isset($field_config['meta_group']) ? (string)$field_config['meta_group'] : '';
                             OOP_ORM_DI::$META_TABLE_OF_KEY[$class_name][$key] = $tablename;
                             break;
+
                         default;
                             break;
                     }
@@ -925,7 +939,7 @@ abstract class Module_OOP_ORM_DI
      * @param $format_config
      * @param $compiled_data
      */
-    protected static function _format_data($format_config, &$tmp_data)
+    protected static function _do_format_data($format_config, & $data)
     {
         foreach((array)$format_config as $v)
         {
@@ -934,13 +948,13 @@ abstract class Module_OOP_ORM_DI
                 if (is_array($v))
                 {
                     $fun = 'OOP_ORM_DI::_format_action_'. array_shift($v);
-                    array_unshift($v, $tmp_data);
-                    $tmp_data = call_user_func_array($fun, $v);
+                    array_unshift($v, $data);
+                    $data = call_user_func_array($fun, $v);
                 }
                 else
                 {
                     $fun = '_format_action_'. $v;
-                    $tmp_data = OOP_ORM_DI::$fun($tmp_data);
+                    $data = OOP_ORM_DI::$fun($data);
                 }
             }
             catch (Exception $e)
@@ -957,7 +971,7 @@ abstract class Module_OOP_ORM_DI
      * @param $format_config
      * @param $compiled_data
      */
-    protected static function _de_format_data($format_config, &$tmp_data)
+    protected static function _do_de_format_data($format_config, & $tmp_data)
     {
         foreach(array_reverse((array)$format_config) as $v)
         {
