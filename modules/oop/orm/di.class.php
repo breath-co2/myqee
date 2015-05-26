@@ -302,6 +302,10 @@ abstract class Module_OOP_ORM_DI
             # 数据相同
             return false;
         }
+        elseif ((is_string($current_compiled_data) || is_numeric($current_compiled_data)) && ((string)$current_data === (string)$current_compiled_data || (string)$current_raw_compiled_data === (string)$current_compiled_data))
+        {
+            return false;
+        }
         elseif (!$this->is_metadata() && !$this->field_name() && null === $current_compiled_data)
         {
             # 没有字段名，数据也是空
