@@ -315,7 +315,7 @@ class OOP_ORM_DI_Meta extends OOP_ORM_DI
     {
         return array
         (
-            'hash'       => md5($table .'_'. $id .'_'. $this->field_name .'_'. $meta_index),
+            'hash'       => $table .'_'. $id .'_'. $this->field_name .'_'. $meta_index,
             'table_name' => $table,
             'field_name' => $this->field_name,
             'theid'      => $id,
