@@ -430,31 +430,7 @@ abstract class Module_OOP_ORM_DI
             $new_data = $current_compiled_data;
         }
 
-
-        if ($format_type)
-        {
-            # 动态格式化
-            if (is_array($new_data) || is_object($new_data))
-            {
-                $new_data = serialize($new_data);
-            }
-        }
-        else
-        {
-            if (isset($this->config['format']) && $this->config['format'])
-            {
-                $this->_format_data($new_data);
-            }
-        }
-
-        if (null === $new_data && !isset($data[$this->table_name][$this->key]) && isset($this->config['is_temp_instance']) && $this->config['is_temp_instance'])
-        {
-            # 对于这种情况应该认为不存在此字段
-        }
-        else
-        {
-            $this->format_field_value($obj, $data, $new_data);
-        }
+        $this->format_field_value($obj, $data, $new_data, $format_type);
 
         return true;
     }
@@ -587,9 +563,32 @@ abstract class Module_OOP_ORM_DI
         return $this->config();
     }
 
-    protected function format_field_value(OOP_ORM_Data $obj, & $data, $new_data)
+    protected function format_field_value(OOP_ORM_Data $obj, & $data, $new_data, $format_type)
     {
-        $data[$this->table_name][$this->field_name] = $new_data;
+        if ($format_type)
+        {
+            # 动态格式化
+            if (is_array($new_data) || is_object($new_data))
+            {
+                $new_data = serialize($new_data);
+            }
+        }
+        else
+        {
+            if (isset($this->config['format']) && $this->config['format'])
+            {
+                $this->_format_data($new_data);
+            }
+        }
+
+        if (null === $new_data && !isset($data[$this->table_name][$this->key]) && isset($this->config['is_temp_instance']) && $this->config['is_temp_instance'])
+        {
+            # 对于这种情况应该认为不存在此字段
+        }
+        else
+        {
+            $data[$this->table_name][$this->field_name] = $new_data;
+        }
     }
 
     public static function parse_offset($class_name, $class_vars = null, $expand_key = null, $tablename = null, $meta_tablename = null)

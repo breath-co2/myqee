@@ -224,7 +224,7 @@ class OOP_ORM_DI_Meta extends OOP_ORM_DI
         return $metadata[$key];
     }
 
-    protected function format_field_value(OOP_ORM_Data $obj, & $data, $new_data)
+    protected function format_field_value(OOP_ORM_Data $obj, & $data, $new_data, $format_type)
     {
         # 数据主键
         $id = $obj->pk(',');
@@ -237,7 +237,7 @@ class OOP_ORM_DI_Meta extends OOP_ORM_DI
 
         $meta_group = $this->meta_group;
 
-        if (null === $new_data)
+        if (null === $new_data || '' === $new_data || array() === $new_data)
         {
             # 删除了
 
@@ -289,6 +289,12 @@ class OOP_ORM_DI_Meta extends OOP_ORM_DI
                     continue;
                 }
 
+                if ($tmp['meta_value'] === '')
+                {
+                    # 新设置的数据是空，则不处理
+                    continue;
+                }
+
                 $data[$my_table][$tmp['hash']] = $tmp;
             }
 
@@ -300,19 +306,30 @@ class OOP_ORM_DI_Meta extends OOP_ORM_DI
         }
         else
         {
-            if (isset($this->config['format']) && $this->config['format'])
+            if ($format_type)
+            {
+                # 动态格式化
+                if (is_array($new_data) || is_object($new_data))
+                {
+                    $new_data = serialize($new_data);
+                }
+            }
+            elseif (isset($this->config['format']) && $this->config['format'])
             {
                 # 格式化数据
                 $this->_format_data($new_data);
             }
 
             $new_data = $this->get_meta_item($table, $id, 0, $new_data);
+
             $data[$my_table][$new_data['hash']] = $new_data;
         }
     }
 
     protected function get_meta_item($table, $id, $meta_index, $item)
     {
+        $item = (string)$item;
+
         return array
         (
             'hash'       => $table .'_'. $id .'_'. $this->field_name .'_'. $meta_index,
@@ -322,7 +339,7 @@ class OOP_ORM_DI_Meta extends OOP_ORM_DI
             'meta_index' => $meta_index,
             'meta_group' => $this->meta_group,
             'meta_time'  => time(),
-            'meta_value' => (string)$item,
+            'meta_value' => $item,
         );
     }
 

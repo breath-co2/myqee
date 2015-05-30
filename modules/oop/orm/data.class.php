@@ -922,6 +922,7 @@ class Module_OOP_ORM_Data implements JsonSerializable
             $up = array();
             foreach($item as $k => $v)
             {
+                // || null === $v['meta_value']
                 if (null === $v)
                 {
                     # 删除的数据
