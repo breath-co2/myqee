@@ -258,78 +258,106 @@ class OOP_ORM_DI_Meta extends OOP_ORM_DI
             return;
         }
 
+
+        # 读取已经加载的所有元数据
+        $old_metadata = $obj->__orm_callback('get_metadata');
+        $old_item_data = array();
+        if (isset($old_metadata[$my_table][$meta_group]))foreach ($old_metadata[$my_table][$meta_group] as $hash => $item)
+        {
+            # 把数据整理到一个数组里
+            if ($item['table_name'] === $table && $item['field_name'] === $this->field_name)
+            {
+                # 把当前字段的数据全部设置成 null 以便进行删除处理
+                $old_item_data[$hash] = $item;
+            }
+        }
+
+
+        # 读取新数据
         if ($this->config['depth'])
         {
             # 处理多行数据
-
-            # 读取已经加载的所有元数据
-            $old_metadata = $obj->__orm_callback('get_metadata');
-
-            $old_item_data = array();
-            if (isset($old_metadata[$my_table][$meta_group]))foreach ($old_metadata[$my_table][$meta_group] as $hash => $item)
-            {
-                # 把数据整理到一个数组里
-                if ($item['table_name'] === $table && $item['field_name'] === $this->field_name)
-                {
-                    # 把当前字段的数据全部设置成 null 以便进行删除处理
-                    $old_item_data[$hash] = $item;
-                }
-            }
-
+            $new_item_data = array();
             foreach ($new_data as $k => $v)
             {
                 $tmp = $this->get_meta_item($table, $id, $k, $v);
-
-                # 将临时表中同一个hash的删除
-                unset($old_item_data[$tmp['hash']]);
-
-                if (array_key_exists($tmp['hash'], $old_item_data) && $tmp['meta_value'] == $old_item_data[$tmp['hash']]['meta_value'])
-                {
-                    # 相同的数据，则不处理
-                    continue;
-                }
-
-                if ($tmp['meta_value'] === '')
-                {
-                    # 新设置的数据是空，则不处理
-                    continue;
-                }
-
-                $data[$my_table][$tmp['hash']] = $tmp;
-            }
-
-            if ($old_item_data)foreach($old_item_data as $hash => $tmp)
-            {
-                # 把所有剩余的设置成 null 以便进行删除处理
-                $data[$my_table][$tmp['hash']] = null;
+                $new_item_data[$tmp['hash']] = $tmp;
             }
         }
         else
         {
-            if ($format_type)
+            $tmp = $this->get_meta_item($table, $id, 0, $new_data);
+            $new_item_data[$tmp['hash']] = $tmp;
+        }
+
+        foreach($new_item_data as $hash => $item)
+        {
+            $tmp_value = $item['meta_value'];
+
+            if ($tmp_value !== array() && null !== $tmp_value)
             {
-                # 动态格式化
-                if (is_array($new_data) || is_object($new_data))
+                if ($format_type)
                 {
-                    $new_data = serialize($new_data);
+                    # 动态格式化
+                    if (is_array($tmp_value) || is_object($tmp_value))
+                    {
+                        $tmp_value = serialize($tmp_value);
+                    }
+                }
+                elseif (isset($this->config['format']) && $this->config['format'])
+                {
+                    # 格式化数据
+                    $this->_format_data($tmp_value);
                 }
             }
-            elseif (isset($this->config['format']) && $this->config['format'])
+
+            $tmp_value = (string)$tmp_value;
+
+            if ('' === $tmp_value)
             {
-                # 格式化数据
-                $this->_format_data($new_data);
+                # 空字符串，则移除 null
+                unset($new_item_data[$hash]);
             }
+            else
+            {
+                $new_item_data[$hash]['meta_value'] = $tmp_value;
 
-            $new_data = $this->get_meta_item($table, $id, 0, $new_data);
 
-            $data[$my_table][$new_data['hash']] = $new_data;
+                if (isset($old_item_data[$hash]) || array_key_exists($hash, $old_item_data))
+                {
+                    if ($old_item_data[$hash]['meta_value'] === $tmp_value)
+                    {
+                        # 相同数据，全部去掉掉则不更新
+                        unset($new_item_data[$hash]);
+                        unset($old_item_data[$hash]);
+                    }
+                    else
+                    {
+                        unset($old_item_data[$hash]);
+                    }
+                }
+            }
+        }
+
+        # 把老数据清理掉
+        if ($old_item_data)foreach ($old_item_data as $hash => $item)
+        {
+            $new_item_data[$hash] = null;
+        }
+
+        $new_data = $new_item_data;
+        if (isset($data[$my_table]))
+        {
+            $data[$my_table] += $new_data;
+        }
+        else
+        {
+            $data[$my_table] = $new_data;
         }
     }
 
     protected function get_meta_item($table, $id, $meta_index, $item)
     {
-        $item = (string)$item;
-
         return array
         (
             'hash'       => $table .'_'. $id .'_'. $this->field_name .'_'. $meta_index,
@@ -341,69 +369,6 @@ class OOP_ORM_DI_Meta extends OOP_ORM_DI
             'meta_time'  => time(),
             'meta_value' => $item,
         );
-    }
-
-    /**
-     * 处理格式化数据
-     *
-     * 支持多维度数据格式化
-     *
-     * @param $data
-     */
-    protected function _format_data(& $data)
-    {
-        if ($this->config['depth'] > 0)
-        {
-            // 支持多纬度数据格式化
-            $tmp   = $data;
-            $depth = $this->config['depth'];
-
-            for ($i = 1; $i <= $depth; $i++)
-            {
-                $tmp2 = array();
-
-                if (!is_array($tmp))
-                {
-                    # 不是数组的话,需要出现里下,否则下面foreach出错
-                    $this->_check_depth_data($tmp);
-                }
-
-                foreach ($tmp as $key => & $item)
-                {
-                    if ($i === $depth)
-                    {
-                        # 一个个的格式化
-                        OOP_ORM_DI::_do_format_data($this->config['format'], $item);
-                    }
-                    else
-                    {
-                        # 还没有到最终节点(比如 depth = 3)
-                        if (!is_array($item))
-                        {
-                            $item = (array)$item;
-                        }
-
-                        foreach ($item as $key2 => &$item2)
-                        {
-                            $tmp2[$key.'.'.$key2] =& $item2;
-                        }
-                    }
-                }
-
-                if ($i !== $depth)
-                {
-                    unset($tmp);
-                    $tmp =& $tmp2;
-                    unset($tmp2);
-                }
-            }
-
-            $data = $tmp;
-        }
-        else
-        {
-            OOP_ORM_DI::_do_format_data($this->config['format'], $data);
-        }
     }
 
     /**

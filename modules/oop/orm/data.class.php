@@ -922,7 +922,6 @@ class Module_OOP_ORM_Data implements JsonSerializable
             $up = array();
             foreach($item as $k => $v)
             {
-                // || null === $v['meta_value']
                 if (null === $v)
                 {
                     # 删除的数据
@@ -1420,7 +1419,7 @@ class Module_OOP_ORM_Data implements JsonSerializable
     {
         $data = array
         (
-            $this->table_name() => $this->_data
+            $this->tablename() => $this->_data
         );
 
         foreach($this->_compiled_data as $key => $value)
@@ -1927,9 +1926,19 @@ class Module_OOP_ORM_Data implements JsonSerializable
      *
      * @return string
      */
-    public function table_name()
+    public function tablename()
     {
         return $this->finder()->tablename();
+    }
+
+    /**
+     * 获取当前元数据的表名
+     *
+     * @return string
+     */
+    public function tablename_meta()
+    {
+        return $this->finder()->tablename_meta();
     }
 
     /**
@@ -2013,7 +2022,7 @@ class Module_OOP_ORM_Data implements JsonSerializable
                     );
                 }
 
-                $this->_temp_di[$key] = new $class($this->_class_name, $key, $this->table_name(), $config);
+                $this->_temp_di[$key] = new $class($this->_class_name, $key, $this->tablename(), $config);
             }
 
             return $this->_temp_di[$key];

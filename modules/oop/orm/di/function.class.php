@@ -29,7 +29,21 @@ class OOP_ORM_DI_Function extends OOP_ORM_DI
         {
             throw new Exception("orm {$this->class_name}->{$this->key} func config error.");
         }
-        $this->config['func'] = (array)$this->config['func'];
+        if (is_string($this->config['func']))
+        {
+            if (strpos($this->config['func'], '->'))
+            {
+                $this->config['func'] = explode('->', $this->config['func'], 2);
+            }
+            elseif (strpos($this->config['func'], '::') !== false)
+            {
+                $this->config['func'] = explode('::', $this->config['func'], 2);
+            }
+        }
+        else
+        {
+            $this->config['func'] = (array)$this->config['func'];
+        }
 
         if (!isset($this->config['args']))
         {
