@@ -173,8 +173,17 @@ class Core_Config
      * @param boolean $no_cache 是否允许使用缓存 设置true将直接从数据库中查询
      * @return mixed
      */
-    public function get($key, $type='', $no_cache = false)
+    public function get($key, $type = '', $no_cache = false)
     {
+        if (strpos($key, '.') !== false)
+        {
+            list($key, $key_str) = explode('.', $key, 2);
+        }
+        else
+        {
+            $key_str = null;
+        }
+
         $type = (string)$type;
 
         if ($no_cache)
@@ -185,15 +194,32 @@ class Core_Config
 
             if ($config)
             {
-                return $this->data_unformat($config);
+                $rs = $this->data_unformat($config);
+
+                if ($key_str)
+                {
+                    return Core::key_string($rs, $key_str);
+                }
             }
         }
 
         if (!isset($this->config[$type]))$this->reload(false, $type);
 
-        if (isset($this->config[$type][$key]))return $this->config[$type][$key];
+        if (isset($this->config[$type][$key]))
+        {
+            $rs = $this->config[$type][$key];
 
-        return null;
+            if ($key_str)
+            {
+                return Core::key_string($rs, $key_str);
+            }
+        }
+        else
+        {
+            $rs = null;
+        }
+
+        return $rs;
     }
 
     /**
@@ -292,7 +318,7 @@ class Core_Config
      * @param string $type 类型
      * @return Core_Config
      */
-    public function reload($from_db=true, $type = '')
+    public function reload($from_db = true, $type = '')
     {
         $tmp_file = $this->get_config_cache_file(Core::$project, $type);
 
@@ -300,6 +326,7 @@ class Core_Config
         {
             # 在data目录中直接读取
             $this->config[$type] = @unserialize(file_get_contents($tmp_file));
+
             if (!is_array($this->config[$type]))
             {
                 $this->config[$type] = array();
@@ -310,6 +337,7 @@ class Core_Config
             # 没有缓存数据，则直接在数据库里获取
             $db = new Database($this->database);
             $config = $db->from($this->tablename)->where('type', $type)->get(false, true)->as_array();
+
 
             if ($config)
             {
@@ -330,7 +358,7 @@ class Core_Config
             if ($this->is_use_cache)
             {
                 // 普通模式下写缓存
-                $rs = File::create_file($tmp_file, serialize($this->config));
+                $rs = File::create_file($tmp_file, serialize($this->config[$type]));
 
                 if (IS_DEBUG)Core::debug()->log('save extends config cache ' . ($rs?'success':'fail').'.');
             }
@@ -387,7 +415,7 @@ class Core_Config
      */
     protected function get_config_cache_file($project, $type = '')
     {
-        return DIR_DATA .'extends_config'. $project. ($type?'.'.$type:'') .'.txt';
+        return DIR_DATA .'extends_config_'. $project. ($type?'.'.$type:'') .'.txt';
     }
 
     /**
