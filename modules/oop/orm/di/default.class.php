@@ -137,11 +137,6 @@ class OOP_ORM_DI_Default extends OOP_ORM_DI
                 return false;
             }
         }
-        elseif ($this->field_name)
-        {
-            # 未构造完
-            $data[$this->field_name] = $data;
-        }
 
         # 处理数据类型
         if (isset($this->config['field_type']))
@@ -154,6 +149,12 @@ class OOP_ORM_DI_Default extends OOP_ORM_DI
         if (!$has_compiled)
         {
             $compiled_raw_data[$this->key] = $compiled_data[$this->key];
+
+            if ($this->field_name)
+            {
+                # 未构造完，给data设置值
+                $data[$this->field_name] = $this->get_data($obj, $data, $compiled_data, $compiled_raw_data);
+            }
         }
 
         return true;

@@ -623,6 +623,8 @@ abstract class Module_OOP_ORM_DI
         {
             if ($key[0] === '_')continue;
 
+            $current_tablename = $tablename;
+
             $all_keys[] = $key;
 
             $type = 'Default';
@@ -699,21 +701,26 @@ abstract class Module_OOP_ORM_DI
                             # 更新元数据数据表
                             if (isset($field_config['table_name']) && $field_config['table_name'])
                             {
-                                $tablename = $field_config['table_name'];
+                                $current_tablename = $field_config['table_name'];
                             }
                             else
                             {
-                                $tablename = $meta_tablename;
+                                $current_tablename = $meta_tablename;
                             }
 
                             # 记录分组
                             OOP_ORM_DI::$META_GROUP_OF_KEY[$class_name][$key] = isset($field_config['meta_group']) ? (string)$field_config['meta_group'] : '';
-                            OOP_ORM_DI::$META_TABLE_OF_KEY[$class_name][$key] = $tablename;
+                            OOP_ORM_DI::$META_TABLE_OF_KEY[$class_name][$key] = $current_tablename;
                             break;
 
                         default;
                             break;
                     }
+                }
+
+                if (isset($field_config['table_name']) && $field_config['table_name'])
+                {
+                    $current_tablename = $field_config['table_name'];
                 }
 
                 # 设置扩展key
@@ -735,7 +742,7 @@ abstract class Module_OOP_ORM_DI
             /**
              * @var $tmp OOP_ORM_DI_Default
              */
-            $tmp = new $type_name($class_name, $key, $tablename, $field_config);
+            $tmp = new $type_name($class_name, $key, $current_tablename, $field_config);
 
             # 判断是否主键
             if ($tmp->is_pk() && !in_array($tmp->field_name(), $pk))

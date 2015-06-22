@@ -352,9 +352,9 @@ class Module_OOP_ORM_Finder_DB extends OOP_ORM
      * @param   integer $number maximum results to return
      * @return  $this
      */
-    public function limit($number)
+    public function limit($number, $offset = 0)
     {
-        $this->driver()->limit($number);
+        $this->driver()->limit($number, $offset);
         return $this;
     }
 

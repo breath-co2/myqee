@@ -741,7 +741,8 @@ class Module_OOP_ORM_Data implements JsonSerializable
             return true;
         }
 
-        if ($rs = $this->_do_update_data($changed_data, $value_increment, 0))
+
+        if ($rs = $this->_do_update_data($changed_data, $value_increment, false))
         {
             # 更新信息
             $this->_clear_and_set_changed_value($changed_data, true);
@@ -936,6 +937,7 @@ class Module_OOP_ORM_Data implements JsonSerializable
             if ($up)
             {
                 $db->columns(array_keys(current($up)));
+
                 foreach ($up as $v)
                 {
                     $db->values($v);
@@ -1059,6 +1061,7 @@ class Module_OOP_ORM_Data implements JsonSerializable
         if ($rs && $rs[1] > 0)
         {
             $a_field = $this->_auto_increment_field_name;
+
             if(!$a_field && $rs[0])
             {
                 # 没有设置过自增字段却有返回自增数
@@ -1072,11 +1075,14 @@ class Module_OOP_ORM_Data implements JsonSerializable
             if ($a_field)
             {
                 # 给自增字段赋值
-                $this->_data[$a_field] = $rs[0];
+//                $this->_data[$a_field] = $rs[0];
 
                 if ($key = $this->get_key_by_field_name($a_field))
                 {
+                    $is_created = $this->_orm_data_is_created;
+                    $this->_orm_data_is_created = false;
                     $this->$key = $rs[0];
+                    $this->_orm_data_is_created = $is_created;
                 }
             }
 
