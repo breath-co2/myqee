@@ -118,7 +118,8 @@
                         {
                             $tmpr = $r+1;
                             $tmp_row_num = 1;
-                            while ($tmpr<$row_num){
+                            while ($tmpr<$row_num)
+                            {
                                 if (isset($item['rows'][$tmpr][$key]))
                                 {
                                     break;
@@ -129,7 +130,7 @@
                                 }
                                 $tmpr++;
                             }
-                            echo "<td rowspan=\"{$tmp_row_num}\"><div style=\"max-width:1500px;max-height:500px;padding-right:18px;overflow:auto;white-space:pre-wrap;\">";
+                            echo "<td rowspan=\"{$tmp_row_num}\"><div style=\"max-width:1500px;max-height:500px;padding:4px 6px;overflow:auto;white-space:pre;\">";
 
                             if (is_array($value))
                             {

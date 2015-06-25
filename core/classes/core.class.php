@@ -268,7 +268,7 @@ abstract class Core_Core extends Bootstrap
             }
 
 
-            if (IS_DEBUG)
+            if (IS_DEBUG && !IS_CLI)
             {
                 Core::debug()->info('SERVER IP:' . $_SERVER["SERVER_ADDR"] . (function_exists('php_uname')?'. SERVER NAME:' . php_uname('a') : ''));
 

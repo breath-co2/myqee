@@ -295,6 +295,58 @@ class Core_Controller
     }
 
     /**
+     * 是否移动版
+     *
+     * @return bool
+     */
+    public static function is_mobile()
+    {
+        if (isset($_COOKIE['_mobile']) && $_COOKIE['_mobile'] === 'yes')
+        {
+            return true;
+        }
+
+        $agent = strtolower(HttpIO::USER_AGENT);
+
+        if (strpos($agent, 'iphone') !== false)
+        {
+            return true;
+        }
+
+        if (strpos($agent, 'ipad') !== false)
+        {
+            return true;
+        }
+
+        if (strpos($agent, 'ipod') !== false)
+        {
+            return true;
+        }
+
+        if (strpos($agent, 'ios') !== false)
+        {
+            return true;
+        }
+
+        if (strpos($agent, 'mobile') !== false)
+        {
+            return true;
+        }
+
+        if (strpos($agent, 'android') !== false)
+        {
+            return true;
+        }
+
+        if (strpos($agent, 'tablet') !== false)
+        {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
      * 用于输出message的默认方法
      *
      * 在非ajax时会调用

@@ -96,7 +96,7 @@ class Core_Member extends ORM_Member_Data
      */
     public function check_password($password)
     {
-        if ($this->_get_password_hash($password) == $this->password)
+        if ($this->get_password_hash($password) === $this->password)
         {
             return true;
         }
@@ -112,9 +112,9 @@ class Core_Member extends ORM_Member_Data
      * @param string $password
      * @return string
      */
-    protected function _get_password_hash($password)
+    protected function get_password_hash($password)
     {
-        $rand_code = $this->rand_code?$this->rand_code:'||$34#@_';
+        $rand_code = $this->rand_code ? $this->rand_code : '||$34#@_';
 
         return md5($this->username . $rand_code . $password);
     }
@@ -123,12 +123,14 @@ class Core_Member extends ORM_Member_Data
      * 修改密码
      *
      * @param string $new_password
-     * @return array 失败返回false
+     * @return $this
      */
     public function change_password($new_password)
     {
-        $this->password = $this->_get_password_hash($new_password);
-        return $this->update();
+        $this->rand_code = Text::random('alnum', 32);
+        $this->password  = $this->get_password_hash($new_password);
+
+        return $this;
     }
 
     /**
