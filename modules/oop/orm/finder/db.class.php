@@ -148,11 +148,12 @@ class Module_OOP_ORM_Finder_DB extends OOP_ORM
 
     /**
      * 删除数据
+     *
      * @param string $table
      * @param array $where
      * @return int 作用的行数
      */
-    public function delete($where = null)
+    public function delete($where = array())
     {
         return $this->driver()->delete($this->tablename(), $where);
     }

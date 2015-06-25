@@ -1110,7 +1110,65 @@ class Module_OOP_ORM_Data implements JsonSerializable
             throw new Exception('ORM:'. $this->_class_name .' 不存在ID字段，无法使用ORM系统自带的delete方法删除数据，请设置主键或通过 `$this->set_pk_name(\'id\')` 方法设置');
         }
 
-        if ($rs = $this->finder()->delete($pk))
+        $data = $this->get_all_field_data(true);
+
+        try
+        {
+            if (count($data) > 0)
+            {
+                # 含有meta数据
+                $meta_data = $data;
+                if ($this->finder()->driver()->transaction_class_name())
+                {
+                    $sup_tr = true;
+                }
+                else
+                {
+                    $sup_tr = false;
+                }
+
+                if ($sup_tr)
+                {
+                    $tr = $this->finder()->driver()->transaction();
+                    $tr->start();
+                }
+
+                # 将主表数据移除
+                unset($meta_data[$this->tablename()]);
+            }
+            else
+            {
+                $meta_data = false;
+            }
+
+            # 删除主表数据
+            $rs = $this->finder()->delete($pk);
+
+            if ($meta_data)
+            {
+                # 删除meta数据
+                foreach ($meta_data as $table => $value)
+                {
+                    $this->finder()->driver()->in('hash', array_keys($value))->delete($table);
+                }
+
+                if (isset($tr))
+                {
+                    $tr->commit();
+                }
+            }
+        }
+        catch (Exception $e)
+        {
+            if (isset($tr))
+            {
+                $tr->rollback();
+            }
+
+            throw $e;
+        }
+
+        if ($rs)
         {
             $this->_is_deleted = true;
 
@@ -1548,9 +1606,9 @@ class Module_OOP_ORM_Data implements JsonSerializable
         {
             if ($db_data)
             {
-                if ($this->_get_di_by_key($key)->get_field_data($this, $data, $this->_compiled_data[$key], $this->_is_temp_instance && !$this->_is_support_object_value))
+                if ($this->_get_di_by_key($key)->get_field_data($this, $this->_data, $this->_compiled_data[$key], $this->_is_temp_instance && !$this->_is_support_object_value))
                 {
-                    return $data[$field_name];
+                    return $this->_data[$field_name];
                 }
                 else
                 {
