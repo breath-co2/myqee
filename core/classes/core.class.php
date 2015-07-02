@@ -18,11 +18,12 @@ function url_assets($uri='')
  *   echo url();    //返回首页地址
  *
  * @param string $uri
+ * @param true|string $is_full_url_or_project 若传true，则返回当前项目的完整url(http(s)://开头)，若传项目名，比如default，则返回指定项目的完整URL
  * @return string
  */
-function url($uri='')
+function url($uri = '', $is_full_url_or_project = false)
 {
-    return Core::url($uri);
+    return Core::url($uri, $is_full_url_or_project);
 }
 
 /**
@@ -296,6 +297,11 @@ abstract class Core_Core extends Bootstrap
             }
         }
 
+        /**
+         * 系统加载完毕时间
+         */
+        define('SYSTEM_LOADED_TIME', microtime(1));
+
         if ($auto_execute)
         {
             Core::run();
@@ -362,28 +368,101 @@ abstract class Core_Core extends Bootstrap
         }
 
         $c = explode('.', $key);
-        $c_name = array_shift($c);
+        $config_name = array_shift($c);
 
-        if (strtolower($c_name) === 'core')
+        if (strtolower($config_name) === 'core')
         {
-            $v = Core::$core_config;
-        }
-        elseif (isset(Core::$config[$c_name]))
-        {
-            $v = Core::$config[$c_name];
+            $tmp = Core::$core_config;
         }
         else
         {
-            return $default;
+            /**
+             * 记录是否有配置
+             */
+            static $exists_config = array();
+            if (!isset($exists_config[Core::$project]))
+            {
+                $exists_config[Core::$project] = array();
+            }
+
+            if (isset($exists_config[Core::$project][$config_name]))
+            {
+                # 表明已经读取过
+
+                if (0 === $exists_config[Core::$project][$config_name])
+                {
+                    # 0 表示没有任何配置文件
+
+                    return $default;
+                }
+                else
+                {
+                    $tmp = Core::$config[$config_name];
+                }
+            }
+            else
+            {
+                # 第一次尝试从文件配置中读取
+
+                # 寻找配置文件
+                $config_files = Core::find_file('config', $config_name, null);
+
+                if ($config_files)
+                {
+                    # 寻找到单独的配置文件
+
+                    # 读取配置
+                    if (isset(Core::$config[$config_name]))
+                    {
+                        $config = Core::$config[$config_name];
+                    }
+                    else
+                    {
+                        $config = array();
+                    }
+
+                    #逆向排序，使得最高优先级的文件最后一个加载
+                    krsort($config_files);
+
+                    # 读取配置
+                    __include_config_file($config, $config_files);
+
+                    # 将新的配置更新到 Core::$config 中
+                    $tmp = Core::$config[$config_name] = $config;
+
+                    # 标记有配置
+                    $exists_config[Core::$project][$config_name] = 1;
+                }
+                else
+                {
+                    # 没有找到单独的配置文件
+
+                    if (isset(Core::$config[$config_name]))
+                    {
+                        $tmp = Core::$config[$config_name];
+
+                        # 有内置配置也标记成1
+                        $exists_config[Core::$project][$config_name] = 1;
+                    }
+                    else
+                    {
+                        # 标记没有找到任何文件
+                        $exists_config[Core::$project][$config_name] = 0;
+
+                        return $default;
+                    }
+
+                }
+            }
         }
 
         if ($c)foreach ($c as $i)
         {
-            if (!isset($v[$i]))return $default;
-            $v = $v[$i];
+            if (!isset($tmp[$i]))return $default;
+            $tmp = $tmp[$i];
         }
 
-        return $v;
+        return $tmp;
     }
 
     /**

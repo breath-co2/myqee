@@ -290,7 +290,7 @@ if (!IS_CLI && MAGIC_QUOTES_GPC)
  * @param array $config
  * @param string|array $files
  */
-function __include_config_file(&$config, $__files__)
+function __include_config_file(& $config, $__files__)
 {
     $__files__ = (array)$__files__;
     foreach ($__files__ as $__file__)
@@ -800,7 +800,7 @@ abstract class Bootstrap
                 self::_show_error(__('not found the project: :project', array(':project' => self::$project)));
             }
 
-            self::$include_path['project'] = array(self::$project=>$project_dir);
+            self::$include_path['project'] = array(self::$project => $project_dir);
 
             # 加载类库
             self::reload_all_libraries();
@@ -1204,6 +1204,7 @@ abstract class Bootstrap
                 break;
             case 'config':
                 if (null === $ext)$the_ext = '.config'. EXT;
+                $only_need_one_file = false;
                 break;
             case 'views':
                 if (null === $ext)$the_ext = '.view' . EXT;

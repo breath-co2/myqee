@@ -147,4 +147,19 @@ class Core_Member extends ORM_Member_Data
 
         return $this->_permission;
     }
+
+    /**
+     * 返回数值
+     *
+     * @return array
+     */
+    public function as_array()
+    {
+        $arr = parent::as_array();
+        unset($arr['password']);
+        unset($arr['rand_code']);
+        unset($arr['perm_setting']);
+
+        return $arr;
+    }
 }

@@ -169,7 +169,7 @@ abstract class Core_I18n
 
         if (false === self::$core_initialized)
         {
-            if (class_exists('Core', false))
+            if (defined('SYSTEM_LOADED_TIME'))
             {
                 self::$core_initialized = true;
             }
@@ -253,9 +253,21 @@ abstract class Core_I18n
             $accept_language = array();
 
             # 匹配语言设置
-            # zh-CN,zh;q=0.8,zh-TW;q=0.6
-            if ($language && preg_match_all('#([a-z]+(?:\-[a-z]+)?),|([a-z]+\-[a-z]+);#i', $language, $matches))
+            if ($language && false === strpos($language, ';'))
             {
+                # zh-cn
+                if (preg_match('#^([a-z]+(?:\-[a-z]+)?),#i', $language, $m))
+                {
+                    $accept_language = array(rtrim(strtolower($language), ','));
+                }
+                else
+                {
+                    $accept_language = array(strtolower($language));
+                }
+            }
+            else if ($language && preg_match_all('#([a-z]+(?:\-[a-z]+)?),|([a-z]+\-[a-z]+);#i', $language, $matches))
+            {
+                # zh-CN,zh;q=0.8,zh-TW;q=0.6
                 $accept_language    = $matches[0];
                 $accept_language    = array_values(array_slice($accept_language, 0, 2));    //只取前2个语言设置
                 $accept_language[0] = strtolower(rtrim($accept_language[0], ';,'));
@@ -304,6 +316,11 @@ abstract class Core_I18n
         }
 
         self::$accept_language = $accept_language;
+
+        if (IS_DEBUG)
+        {
+            Core::debug()->info(self::$accept_language, 'language');
+        }
 
         return self::$accept_language;
     }
@@ -377,7 +394,7 @@ abstract class Core_I18n
 
             $item = explode('=', str_replace(array('\\n', "\\'", '\\"'), array("\n", "'", '"'),$item), 2);
 
-            $rs[strtolower(trim($item[0]))] = trim($item[1]);
+            $rs[strtolower(trim($item[0]))] = isset($item[1]) ? trim($item[1]) : '';
         }
 
         return $rs;
