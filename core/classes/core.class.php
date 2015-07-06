@@ -377,41 +377,37 @@ abstract class Core_Core extends Bootstrap
         else
         {
             /**
-             * 记录是否有配置
+             * 记录加载过的配置
              */
-            static $exists_config = array();
-            if (!isset($exists_config[Core::$project]))
-            {
-                $exists_config[Core::$project] = array();
-            }
+            static $loaded_config = array();
 
-            if (isset($exists_config[Core::$project][$config_name]))
+            if (isset($loaded_config[Core::$project][$config_name]))
             {
-                # 表明已经读取过
-
-                if (0 === $exists_config[Core::$project][$config_name])
+                if (isset(Core::$config[$config_name]))
                 {
-                    # 0 表示没有任何配置文件
-
-                    return $default;
+                    $tmp = Core::$config[$config_name];
                 }
                 else
                 {
-                    $tmp = Core::$config[$config_name];
+                    return $default;
                 }
             }
             else
             {
-                # 第一次尝试从文件配置中读取
+                # 标记为已经加载
+                $loaded_config[Core::$project][$config_name] = true;
 
-                # 寻找配置文件
-                $config_files = Core::find_file('config', $config_name, null);
+                $all_config_files = self::get_config_files();
 
-                if ($config_files)
+                if (isset($all_config_files[$config_name]))
                 {
-                    # 寻找到单独的配置文件
+                    # 加载配置文件
 
-                    # 读取配置
+                    $config_files = $all_config_files[$config_name];
+
+                    #逆向排序，使得最高优先级的文件最后一个加载
+                    krsort($config_files);
+
                     if (isset(Core::$config[$config_name]))
                     {
                         $config = Core::$config[$config_name];
@@ -421,37 +417,19 @@ abstract class Core_Core extends Bootstrap
                         $config = array();
                     }
 
-                    #逆向排序，使得最高优先级的文件最后一个加载
-                    krsort($config_files);
-
                     # 读取配置
                     __include_config_file($config, $config_files);
 
                     # 将新的配置更新到 Core::$config 中
                     $tmp = Core::$config[$config_name] = $config;
-
-                    # 标记有配置
-                    $exists_config[Core::$project][$config_name] = 1;
+                }
+                elseif (isset(Core::$config[$config_name]))
+                {
+                    $tmp = Core::$config[$config_name];
                 }
                 else
                 {
-                    # 没有找到单独的配置文件
-
-                    if (isset(Core::$config[$config_name]))
-                    {
-                        $tmp = Core::$config[$config_name];
-
-                        # 有内置配置也标记成1
-                        $exists_config[Core::$project][$config_name] = 1;
-                    }
-                    else
-                    {
-                        # 标记没有找到任何文件
-                        $exists_config[Core::$project][$config_name] = 0;
-
-                        return $default;
-                    }
-
+                    return $default;
                 }
             }
         }
@@ -464,6 +442,119 @@ abstract class Core_Core extends Bootstrap
 
         return $tmp;
     }
+
+    /**
+     * 获取所有配置文件路径
+     *
+     * 系统只读取一次
+     *
+     * @return array
+     */
+    protected static function get_config_files()
+    {
+        static $files = array();
+
+        if (!isset($files[Core::$project]))
+        {
+            $env_config_suffix = Core::$core_config['env_config_suffix'];
+            if ($env_config_suffix)
+            {
+                $env_config_suffix_str = '.'. $env_config_suffix .'.env.php';
+                $env_config_suffix_len = strlen($env_config_suffix_str);
+            }
+            else
+            {
+                $env_config_suffix_str = false;
+                $env_config_suffix_len = 0;
+            }
+
+            $my_files = array();
+            foreach (Core::$include_path as $key => $the_path)
+            {
+                if (!$the_path)continue;
+
+                foreach ($the_path as $path)
+                {
+                    $config_path = $path .'config'. DS;
+                    if (is_dir($config_path))
+                    {
+                        $path_length = strlen($config_path);
+                        self::get_config_files_glob_dir($my_files, $config_path, $path, $path_length, $env_config_suffix_str, $env_config_suffix_len);
+                    }
+                }
+            }
+
+            $files[Core::$project] = $my_files;
+        }
+
+        return $files[Core::$project];
+    }
+
+    protected static function get_config_files_glob_dir(& $files, $dir, $path, $path_length, $env_config_suffix_str, $env_config_suffix_len)
+    {
+        $glob_list = glob($dir.'*');
+        $config_list  = array();
+        $env_list     = array();
+
+        foreach($glob_list as $file)
+        {
+            if (is_dir($file))
+            {
+                self::get_config_files_glob_dir($files, $file.DS, $path, $path_length, $env_config_suffix_str, $env_config_suffix_len);
+            }
+            else
+            {
+                $config_file = substr($file, $path_length);
+
+
+                if (substr($config_file, -11) === '.config.php')
+                {
+                    # 系统配置
+                    $key = substr($config_file, 0, -11);
+                    $config_list[$key][] = $file;
+                }
+                elseif ($env_config_suffix_len > 0 && substr($config_file, -$env_config_suffix_len) === $env_config_suffix_str)
+                {
+                    # 环境配置
+                    $key = substr($config_file, 0, -$env_config_suffix_len);
+                    $env_list[$key] = $file;
+                }
+            }
+        }
+
+        if ($env_list)
+        {
+            foreach ($env_list as $key => $value)
+            {
+                if (isset($config_list[$key]))
+                {
+                    # 将文件加到前面，确保优先级
+                    array_unshift($config_list[$key], $value);
+                }
+                else
+                {
+                    $config_list[$key] = array($value);
+                }
+            }
+        }
+
+        if ($config_list)
+        {
+            # 将获取到的文件加入到列表中
+            foreach($config_list as $key => $value)
+            {
+                if (isset($files[$key]))
+                {
+                    $files[$key] = array_merge($files[$key], $value);
+                }
+                else
+                {
+                    $files[$key] = $value;
+                }
+            }
+        }
+    }
+
 
     /**
      * 增加事件调用

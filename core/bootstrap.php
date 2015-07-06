@@ -383,7 +383,7 @@ abstract class Bootstrap
         'project'      => array(),                                   // 项目类库
         'team-library' => array('team' => DIR_TEAM_LIBRARY),         // Team公共类库
         'library'      => array(),                                   // 类库包
-        'driver'        => array(),                                   // 驱动
+        'driver'       => array(),                                   // 驱动
         'module'       => array(),                                   // 组件
         'core'         => array('core' => DIR_CORE),                 // 核心类库
     );
