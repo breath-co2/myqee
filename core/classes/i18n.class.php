@@ -75,6 +75,9 @@ abstract class Core_I18n
 
         if (self::$core_initialized)
         {
+            # 标记为已初始化
+            self::$is_setup[Core::$project] = true;
+
             if (isset(self::$lang['..core..']))
             {
                 unset(self::$lang['..core..']);
@@ -108,15 +111,11 @@ abstract class Core_I18n
                     if ($lang_cache['mtime'] === $lang_files['last_mtime'])
                     {
                         # 时间相同才使用
-                        self::$lang[Core::$project]     = $lang_cache['lang'];
-                        self::$is_setup[Core::$project] = true;
+                        self::$lang[Core::$project] = $lang_cache['lang'];
                         return;
                     }
                 }
             }
-
-            # 标记为已初始化
-            self::$is_setup[Core::$project] = true;
         }
 
         if (null === $lang_files)
@@ -344,13 +343,16 @@ abstract class Core_I18n
         if (self::$core_initialized)
         {
             $accept_language = I18n::accept_language();
-            $include_path    = array_reverse(Core::$include_path);
+            $include_path    = Core::include_path();
         }
         else
         {
             $accept_language = self::accept_language();
-            $include_path    = array_reverse(Bootstrap::$include_path);
+            $include_path    = Bootstrap::include_path();
         }
+
+        $accept_language = array_reverse($accept_language);
+        $include_path    = array_reverse($include_path);
 
         $found = array
         (
@@ -358,20 +360,16 @@ abstract class Core_I18n
             'last_mtime' => 0,          // 最后修改时间
         );
 
-        foreach ($include_path as $libs)
+        foreach ($include_path as $path)
         {
-            $libs = array_reverse($libs);
-            foreach ($libs as $path)
+            foreach($accept_language as $lang)
             {
-                foreach($accept_language as $lang)
-                {
-                    $file = $path .'i18n'. DS . $lang .'.lang';
+                $file = $path .'i18n'. DS . $lang .'.lang';
 
-                    if (is_file($file))
-                    {
-                        $found['files'][]    = $file;
-                        $found['last_mtime'] = max($found['last_mtime'], filemtime($file));
-                    }
+                if (is_file($file))
+                {
+                    $found['files'][]    = $file;
+                    $found['last_mtime'] = max($found['last_mtime'], filemtime($file));
                 }
             }
         }
