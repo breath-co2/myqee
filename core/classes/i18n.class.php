@@ -47,6 +47,13 @@ abstract class Core_I18n
     private static $core_initialized = false;
 
     /**
+     * 是否在初始化中，用来避免某些特殊情况下导致死循环的问题
+     *
+     * @var bool
+     */
+    private static $is_setuping = false;
+
+    /**
      * 由系统回调执行
      *
      * @param array $lib
@@ -190,9 +197,11 @@ abstract class Core_I18n
         }
 
         # 初始化
-        if (!isset(self::$is_setup[$p]))
+        if (!isset(self::$is_setup[$p]) && false === self::$is_setuping)
         {
+            self::$is_setuping = true;
             self::setup();
+            self::$is_setuping = false;
         }
         else
         {
