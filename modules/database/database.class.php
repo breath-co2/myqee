@@ -589,6 +589,18 @@ class Module_Database extends Database_QueryBuilder
     }
 
     /**
+     * 返回当前事务处理的类名称
+     *
+     * 不支持则返回 false
+     *
+     * @return string|false
+     */
+    public function transaction_class_name()
+    {
+        return $this->driver->transaction_class_name();
+    }
+
+    /**
      * 设置是否一直在主数据库上查询
      *
      * 这样设置后，select会一直停留在主数据库上，直到$this->auto_use_master(false)后才会自动判断

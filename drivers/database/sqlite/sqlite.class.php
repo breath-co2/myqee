@@ -321,7 +321,7 @@ class Driver_Database_Driver_SQLite extends Database_Driver
     {
         $sql = trim($sql);
 
-        if (preg_match('#^([a-z]+)(:? |\n|\r)#i',$sql,$m))
+        if (preg_match('#^([a-z]+)(?: |\n|\r)#i',$sql,$m))
         {
             $type = strtoupper($m[1]);
         }

@@ -18,11 +18,12 @@ function url_assets($uri='')
  *   echo url();    //返回首页地址
  *
  * @param string $uri
+ * @param true|string $is_full_url_or_project 若传true，则返回当前项目的完整url(http(s)://开头)，若传项目名，比如default，则返回指定项目的完整URL
  * @return string
  */
-function url($uri='')
+function url($uri = '', $is_full_url_or_project = false)
 {
-    return Core::url($uri);
+    return Core::url($uri, $is_full_url_or_project);
 }
 
 /**
@@ -268,7 +269,7 @@ abstract class Core_Core extends Bootstrap
             }
 
 
-            if (IS_DEBUG)
+            if (IS_DEBUG && !IS_CLI)
             {
                 Core::debug()->info('SERVER IP:' . $_SERVER["SERVER_ADDR"] . (function_exists('php_uname')?'. SERVER NAME:' . php_uname('a') : ''));
 
@@ -295,6 +296,11 @@ abstract class Core_Core extends Bootstrap
                 Core::debug()->groupEnd();
             }
         }
+
+        /**
+         * 系统加载完毕时间
+         */
+        define('SYSTEM_LOADED_TIME', microtime(1));
 
         if ($auto_execute)
         {
@@ -362,29 +368,193 @@ abstract class Core_Core extends Bootstrap
         }
 
         $c = explode('.', $key);
-        $c_name = array_shift($c);
+        $config_name = array_shift($c);
 
-        if (strtolower($c_name) === 'core')
+        if (strtolower($config_name) === 'core')
         {
-            $v = Core::$core_config;
-        }
-        elseif (isset(Core::$config[$c_name]))
-        {
-            $v = Core::$config[$c_name];
+            $tmp = Core::$core_config;
         }
         else
         {
-            return $default;
+            /**
+             * 记录加载过的配置
+             */
+            static $loaded_config = array();
+
+            if (isset($loaded_config[Core::$project][$config_name]))
+            {
+                if (isset(Core::$config[$config_name]))
+                {
+                    $tmp = Core::$config[$config_name];
+                }
+                else
+                {
+                    return $default;
+                }
+            }
+            else
+            {
+                # 标记为已经加载
+                $loaded_config[Core::$project][$config_name] = true;
+
+                $all_config_files = self::get_config_files();
+
+                if (isset($all_config_files[$config_name]))
+                {
+                    # 加载配置文件
+
+                    $config_files = $all_config_files[$config_name];
+
+                    #逆向排序，使得最高优先级的文件最后一个加载
+                    krsort($config_files);
+
+                    if (isset(Core::$config[$config_name]))
+                    {
+                        $config = Core::$config[$config_name];
+                    }
+                    else
+                    {
+                        $config = array();
+                    }
+
+                    # 读取配置
+                    __include_config_file($config, $config_files);
+
+                    # 将新的配置更新到 Core::$config 中
+                    $tmp = Core::$config[$config_name] = $config;
+                }
+                elseif (isset(Core::$config[$config_name]))
+                {
+                    $tmp = Core::$config[$config_name];
+                }
+                else
+                {
+                    return $default;
+                }
+            }
         }
 
         if ($c)foreach ($c as $i)
         {
-            if (!isset($v[$i]))return $default;
-            $v = $v[$i];
+            if (!isset($tmp[$i]))return $default;
+            $tmp = $tmp[$i];
         }
 
-        return $v;
+        return $tmp;
     }
+
+    /**
+     * 获取所有配置文件路径
+     *
+     * 系统只读取一次
+     *
+     * @return array
+     */
+    protected static function get_config_files()
+    {
+        static $files = array();
+
+        if (!isset($files[Core::$project]))
+        {
+            $env_config_suffix = Core::$core_config['env_config_suffix'];
+            if ($env_config_suffix)
+            {
+                $env_config_suffix_str = '.'. $env_config_suffix .'.env.php';
+                $env_config_suffix_len = strlen($env_config_suffix_str);
+            }
+            else
+            {
+                $env_config_suffix_str = false;
+                $env_config_suffix_len = 0;
+            }
+
+            $my_files = array();
+            foreach (Core::$include_path as $key => $the_path)
+            {
+                if (!$the_path)continue;
+
+                foreach ($the_path as $path)
+                {
+                    $config_path = $path .'config'. DS;
+                    if (is_dir($config_path))
+                    {
+                        $path_length = strlen($config_path);
+                        self::get_config_files_glob_dir($my_files, $config_path, $path, $path_length, $env_config_suffix_str, $env_config_suffix_len);
+                    }
+                }
+            }
+
+            $files[Core::$project] = $my_files;
+        }
+
+        return $files[Core::$project];
+    }
+
+    protected static function get_config_files_glob_dir(& $files, $dir, $path, $path_length, $env_config_suffix_str, $env_config_suffix_len)
+    {
+        $glob_list = glob($dir.'*');
+        $config_list  = array();
+        $env_list     = array();
+
+        foreach($glob_list as $file)
+        {
+            if (is_dir($file))
+            {
+                self::get_config_files_glob_dir($files, $file.DS, $path, $path_length, $env_config_suffix_str, $env_config_suffix_len);
+            }
+            else
+            {
+                $config_file = substr($file, $path_length);
+
+
+                if (substr($config_file, -11) === '.config.php')
+                {
+                    # 系统配置
+                    $key = substr($config_file, 0, -11);
+                    $config_list[$key][] = $file;
+                }
+                elseif ($env_config_suffix_len > 0 && substr($config_file, -$env_config_suffix_len) === $env_config_suffix_str)
+                {
+                    # 环境配置
+                    $key = substr($config_file, 0, -$env_config_suffix_len);
+                    $env_list[$key] = $file;
+                }
+            }
+        }
+
+        if ($env_list)
+        {
+            foreach ($env_list as $key => $value)
+            {
+                if (isset($config_list[$key]))
+                {
+                    # 将文件加到前面，确保优先级
+                    array_unshift($config_list[$key], $value);
+                }
+                else
+                {
+                    $config_list[$key] = array($value);
+                }
+            }
+        }
+
+        if ($config_list)
+        {
+            # 将获取到的文件加入到列表中
+            foreach($config_list as $key => $value)
+            {
+                if (isset($files[$key]))
+                {
+                    $files[$key] = array_merge($files[$key], $value);
+                }
+                else
+                {
+                    $files[$key] = $value;
+                }
+            }
+        }
+    }
+
 
     /**
      * 增加事件调用
@@ -723,7 +893,7 @@ abstract class Core_Core extends Bootstrap
                 $arguments = $found['args'];
                 if ($arguments && $arguments)
                 {
-                    $action = current($arguments);
+                    $action = str_replace('-', '_', current($arguments));
                     if (0 === strlen($action))
                     {
                         $action = 'default';

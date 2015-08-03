@@ -189,10 +189,10 @@ class Module_Session
      * @param Member $member
      * @return Session
      */
-    public function set_member(Member $member)
+    public function set_member(OOP_ORM_Data $member)
     {
         Session::$member = $member;
-        if ($member->id>0)
+        if ($member->id > 0)
         {
             # 设置用户数据
             $member_data        = $member->get_field_data();

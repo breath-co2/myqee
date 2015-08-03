@@ -11,16 +11,19 @@
  */
 class Core_Controller_Captcha extends Controller
 {
+    public $allow_suffix = 'png';
+
     /**
      * 输出缩略图
      */
-    public function action_default($type='')
+    public function action_default($type = '')
     {
-        $width = 80;
+        $width  = 80;
         $height = 30;
-        if ($type && preg_match('#^([0-9]+)x([0-9]+)\.png$#i', $type,$m))
+
+        if ($type && preg_match('#^([0-9]+)x([0-9]+)$#i', $type, $m))
         {
-            if ($m[1]>0)$width = $m[1];
+            if ($m[1]>0)$width  = $m[1];
             if ($m[1]>0)$height = $m[2];
         }
 

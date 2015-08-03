@@ -347,14 +347,33 @@ abstract class Module_Database_Driver
      */
     public function transaction()
     {
-        $tr_name = 'Database_Driver_'. $this->config['type'] .'_Transaction';
-
-        if (!class_exists($tr_name, true))
+        $tr_name = $this->transaction_class_name();
+        if (false === $tr_name)
         {
             throw new Exception(__('the transaction of :driver not exist.', array(':driver'=>$this->config['type'])));
         }
 
         return new $tr_name($this);
+    }
+
+    /**
+     * 返回当前事务处理的类名称
+     *
+     * 不支持事务则返回 false
+     *
+     * @return string|false
+     */
+    public function transaction_class_name()
+    {
+        static $support = array();
+
+        if (!isset($support[$this->config['type']]))
+        {
+            $tr_name = 'Database_Driver_'. $this->config['type'] .'_Transaction';
+            $support[$this->config['type']] = class_exists($tr_name, true) ? $tr_name : false;
+        }
+
+        return $support[$this->config['type']];
     }
 
     /**
@@ -562,7 +581,7 @@ abstract class Module_Database_Driver
 
     protected function _get_query_type($sql, & $connection_type)
     {
-        if (preg_match('#^([a-z]+)(:? |\n|\r)#i', $sql, $m))
+        if (preg_match('#^([a-z]+)(?: |\n|\r)#i', $sql, $m))
         {
             $type = strtoupper($m[1]);
         }
@@ -857,8 +876,14 @@ abstract class Module_Database_Driver
                 $groups[] = '('. implode(', ', array_map($quote, $group)) .')';
             }
 
-            // Add the values
-            $query .= 'VALUES '. implode(', ', $groups);
+            if (count($groups) > 1)
+            {
+                $query .= "\nVALUES\n". implode(",\n", $groups);
+            }
+            else
+            {
+                $query .= 'VALUES '. implode(",\n", $groups);
+            }
         }
         else
         {

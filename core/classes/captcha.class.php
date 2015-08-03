@@ -46,24 +46,37 @@ class Core_Captcha
 
     protected static $valid_countname = '_img_captcha_valid_count';
 
-    public static function valid($mycode, $delsession = false)
+    /**
+     * 验证
+     *
+     * 如果成功则返回 true，失败则返回错误次数，如果没有验证码session数据则返回0
+     *
+     *
+     * @param $mycode
+     * @param bool $del_session
+     * @return int|bool
+     */
+    public static function valid($mycode, $del_session = false)
     {
-        if ( !($code = Session::instance()->get(Captcha::$sessionname)) )
+        if (!($code = Session::instance()->get(Captcha::$sessionname)))
         {
             return 0;
         }
         else
         {
-            if ( TIME - $code['time'] <= Captcha::$config['life'] && $code['time'] > 0 && strtoupper($mycode) == strtoupper($code['code']) )
+            if (TIME - $code['time'] <= Captcha::$config['life'] && $code['time'] > 0 && strtoupper($mycode) == strtoupper($code['code']) )
             {
-                if ( $delsession ) Session::instance()->delete(Captcha::$sessionname, Captcha::$valid_countname);
-                return 1;
+                if ($del_session)
+                {
+                    Session::instance()->delete(Captcha::$sessionname, Captcha::$valid_countname);
+                }
+                return true;
             }
             else
             {
                 $errornum = (int)Session::instance()->get(Captcha::$valid_countname) + 1;
                 Session::instance()->set(Captcha::$valid_countname, $errornum);
-                return - $errornum;
+                return -$errornum;
             }
         }
     }

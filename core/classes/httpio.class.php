@@ -988,9 +988,12 @@ abstract class Core_HttpIO
      *
      * @param Controller $controller
      */
-    public static function set_params_controller(Controller $controller)
+    public static function set_params_controller($controller)
     {
-        HttpIO::$params = get_object_vars($controller);
+        if (is_object($controller))
+        {
+            HttpIO::$params = get_object_vars($controller);
+        }
     }
 
     /**

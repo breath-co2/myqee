@@ -156,7 +156,7 @@ class Core_Ftp
      *
      * @return bool
      */
-    protected function connect()
+    public function connect()
     {
 
         if (false === ($this->_conn_id = @ftp_connect($this->hostname, $this->port)))

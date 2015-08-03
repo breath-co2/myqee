@@ -143,11 +143,15 @@ class Library_MyQEE_Develop_DevException extends Exception
                 }
             }
 
-            if ($return !== true)
+            if (true !== $return)
             {
                 Core::close_buffers(false);
 
-                if ($e->getCode() >= 400 && $e->getCode() <= 410)
+                if ($e->getCode() === E_PAGE_NOT_FOUND)
+                {
+                    HttpIO::$status = 404;
+                }
+                elseif ($e->getCode() >= 400 && $e->getCode() <= 410)
                 {
                     HttpIO::$status = 404;
                 }

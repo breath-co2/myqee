@@ -290,7 +290,7 @@ if (!IS_CLI && MAGIC_QUOTES_GPC)
  * @param array $config
  * @param string|array $files
  */
-function __include_config_file(&$config, $__files__)
+function __include_config_file(& $config, $__files__)
 {
     $__files__ = (array)$__files__;
     foreach ($__files__ as $__file__)
@@ -340,6 +340,29 @@ if (!function_exists('class_alias'))
     }
 }
 
+
+if (!interface_exists('JsonSerializable', false))
+{
+    // PHP5.4.0 后支持被序列化成 JSON 的数据指定回调接口
+    // 在 5.4 之前没有这个接口，所以定义一个，但是只是为了不使程序报错没有实际用途
+
+    // @see http://cn.php.net/manual/zh/jsonserializable.jsonserialize.php
+
+    interface JsonSerializable
+    {
+        /**
+         * (PHP 5 &gt;= 5.4.0)<br/>
+         * Specify data which should be serialized to JSON
+         * @link http://php.net/manual/en/jsonserializable.jsonserialize.php
+         * @return mixed data which can be serialized by <b>json_encode</b>,
+         * which is a value of any type other than a resource.
+         */
+        public function jsonSerialize();
+    }
+}
+
+
+
 /**
  * Bootstrap
  *
@@ -360,7 +383,7 @@ abstract class Bootstrap
         'project'      => array(),                                   // 项目类库
         'team-library' => array('team' => DIR_TEAM_LIBRARY),         // Team公共类库
         'library'      => array(),                                   // 类库包
-        'driver'        => array(),                                   // 驱动
+        'driver'       => array(),                                   // 驱动
         'module'       => array(),                                   // 组件
         'core'         => array('core' => DIR_CORE),                 // 核心类库
     );
@@ -748,6 +771,11 @@ abstract class Bootstrap
                 self::_show_error(__('the project: :project is not open.', array(':project'=>self::$project)));
             }
 
+            if (isset(self::$core_config['projects'][self::$project]['timezone']))
+            {
+                @date_default_timezone_set(self::$core_config['projects'][self::$project]['timezone']);
+            }
+
             /**
              * 初始项目名
              *
@@ -777,7 +805,7 @@ abstract class Bootstrap
                 self::_show_error(__('not found the project: :project', array(':project' => self::$project)));
             }
 
-            self::$include_path['project'] = array(self::$project=>$project_dir);
+            self::$include_path['project'] = array(self::$project => $project_dir);
 
             # 加载类库
             self::reload_all_libraries();
@@ -1181,6 +1209,7 @@ abstract class Bootstrap
                 break;
             case 'config':
                 if (null === $ext)$the_ext = '.config'. EXT;
+                $only_need_one_file = false;
                 break;
             case 'views':
                 if (null === $ext)$the_ext = '.view' . EXT;
