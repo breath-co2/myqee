@@ -581,7 +581,7 @@ abstract class Module_Database_Driver
 
     protected function _get_query_type($sql, & $connection_type)
     {
-        if (preg_match('#^([a-z]+)(:? |\n|\r)#i', $sql, $m))
+        if (preg_match('#^([a-z]+)(?: |\n|\r)#i', $sql, $m))
         {
             $type = strtoupper($m[1]);
         }

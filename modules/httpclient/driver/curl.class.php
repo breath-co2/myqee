@@ -371,7 +371,7 @@ class Module_HttpClient_Driver_Curl
      * @param int $timeout 超时时间
      * @return resource a cURL handle on success, false on errors.
      */
-    protected function _create($url,$timeout)
+    protected function _create($url, $timeout)
     {
         if (false === strpos($url, '://'))
         {

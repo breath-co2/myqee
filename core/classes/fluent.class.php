@@ -6,9 +6,9 @@
  * 使用 `Core::log('myapp.test.debug', $_SERVER)` 默认就可以调用本方法
  *
  *
- *      Fluent::instance('tcp://127.0.0.1:24224/')->push('xd.game.test', ["test":"hello"]);
+ *      Fluent::instance('tcp://127.0.0.1:24224/')->push('xd.game.test', ["test"=>"hello"]);
  *
- *      Fluent::instance('unix:///full/path/to/my/socket.sock')->push('xd.game.test', ["test":"hello"]);
+ *      Fluent::instance('unix:///full/path/to/my/socket.sock')->push('xd.game.test', ["test"=>"hello"]);
  *
  *
  * @see        https://github.com/fluent/fluent-logger-php
@@ -61,7 +61,7 @@ class Core_Fluent
         "backoff_mode"       => self::BACKOFF_TYPE_USLEEP,
         "backoff_base"       => 3,
         "usleep_wait"        => self::USLEEP_WAIT,
-        "persistent"         => false,
+        "persistent"         => true,
         "retry_socket"       => true,
         "max_write_retry"    => self::MAX_WRITE_RETRY,
     );
@@ -360,6 +360,6 @@ class Core_Fluent
      */
     protected function process_error($tag, $data, $error)
     {
-        error_log(sprintf("%s %s: %s", $error, $tag), json_encode($data));
+        error_log(sprintf("%s %s: %s", $error, $tag, json_encode($data)));
     }
 }

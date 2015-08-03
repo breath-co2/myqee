@@ -771,6 +771,11 @@ abstract class Bootstrap
                 self::_show_error(__('the project: :project is not open.', array(':project'=>self::$project)));
             }
 
+            if (isset(self::$core_config['projects'][self::$project]['timezone']))
+            {
+                @date_default_timezone_set(self::$core_config['projects'][self::$project]['timezone']);
+            }
+
             /**
              * 初始项目名
              *
