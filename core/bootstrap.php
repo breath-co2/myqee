@@ -290,7 +290,7 @@ if (!IS_CLI && MAGIC_QUOTES_GPC)
  * @param array $config
  * @param string|array $files
  */
-function __include_config_file(&$config, $__files__)
+function __include_config_file(& $config, $__files__)
 {
     $__files__ = (array)$__files__;
     foreach ($__files__ as $__file__)
@@ -383,7 +383,7 @@ abstract class Bootstrap
         'project'      => array(),                                   // 项目类库
         'team-library' => array('team' => DIR_TEAM_LIBRARY),         // Team公共类库
         'library'      => array(),                                   // 类库包
-        'driver'        => array(),                                   // 驱动
+        'driver'       => array(),                                   // 驱动
         'module'       => array(),                                   // 组件
         'core'         => array('core' => DIR_CORE),                 // 核心类库
     );
@@ -771,6 +771,11 @@ abstract class Bootstrap
                 self::_show_error(__('the project: :project is not open.', array(':project'=>self::$project)));
             }
 
+            if (isset(self::$core_config['projects'][self::$project]['timezone']))
+            {
+                @date_default_timezone_set(self::$core_config['projects'][self::$project]['timezone']);
+            }
+
             /**
              * 初始项目名
              *
@@ -800,7 +805,7 @@ abstract class Bootstrap
                 self::_show_error(__('not found the project: :project', array(':project' => self::$project)));
             }
 
-            self::$include_path['project'] = array(self::$project=>$project_dir);
+            self::$include_path['project'] = array(self::$project => $project_dir);
 
             # 加载类库
             self::reload_all_libraries();
@@ -1204,6 +1209,7 @@ abstract class Bootstrap
                 break;
             case 'config':
                 if (null === $ext)$the_ext = '.config'. EXT;
+                $only_need_one_file = false;
                 break;
             case 'views':
                 if (null === $ext)$the_ext = '.view' . EXT;

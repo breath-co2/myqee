@@ -36,7 +36,7 @@ class Core_Cookie
     public static function get($name)
     {
         if (isset(Cookie::$config['prefix']) && Cookie::$config['prefix'])$name = Cookie::$config['prefix'] . $name;
-        return $_COOKIE[$name];
+        return array_key_exists($name, $_COOKIE) ? $_COOKIE[$name] : null;
     }
 
     /**

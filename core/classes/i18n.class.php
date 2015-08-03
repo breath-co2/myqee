@@ -47,6 +47,13 @@ abstract class Core_I18n
     private static $core_initialized = false;
 
     /**
+     * 是否在初始化中，用来避免某些特殊情况下导致死循环的问题
+     *
+     * @var bool
+     */
+    private static $is_setuping = false;
+
+    /**
      * 由系统回调执行
      *
      * @param array $lib
@@ -68,6 +75,9 @@ abstract class Core_I18n
 
         if (self::$core_initialized)
         {
+            # 标记为已初始化
+            self::$is_setup[Core::$project] = true;
+
             if (isset(self::$lang['..core..']))
             {
                 unset(self::$lang['..core..']);
@@ -101,15 +111,11 @@ abstract class Core_I18n
                     if ($lang_cache['mtime'] === $lang_files['last_mtime'])
                     {
                         # 时间相同才使用
-                        self::$lang[Core::$project]     = $lang_cache['lang'];
-                        self::$is_setup[Core::$project] = true;
+                        self::$lang[Core::$project] = $lang_cache['lang'];
                         return;
                     }
                 }
             }
-
-            # 标记为已初始化
-            self::$is_setup[Core::$project] = true;
         }
 
         if (null === $lang_files)
@@ -169,7 +175,7 @@ abstract class Core_I18n
 
         if (false === self::$core_initialized)
         {
-            if (class_exists('Core', false))
+            if (defined('SYSTEM_LOADED_TIME'))
             {
                 self::$core_initialized = true;
             }
@@ -190,9 +196,11 @@ abstract class Core_I18n
         }
 
         # 初始化
-        if (!isset(self::$is_setup[$p]))
+        if (!isset(self::$is_setup[$p]) && false === self::$is_setuping)
         {
+            self::$is_setuping = true;
             self::setup();
+            self::$is_setuping = false;
         }
         else
         {
@@ -253,9 +261,21 @@ abstract class Core_I18n
             $accept_language = array();
 
             # 匹配语言设置
-            # zh-CN,zh;q=0.8,zh-TW;q=0.6
-            if ($language && preg_match_all('#([a-z]+(?:\-[a-z]+)?),|([a-z]+\-[a-z]+);#i', $language, $matches))
+            if ($language && false === strpos($language, ';'))
             {
+                # zh-cn
+                if (preg_match('#^([a-z]+(?:\-[a-z]+)?),#i', $language, $m))
+                {
+                    $accept_language = array(rtrim(strtolower($language), ','));
+                }
+                else
+                {
+                    $accept_language = array(strtolower($language));
+                }
+            }
+            else if ($language && preg_match_all('#([a-z]+(?:\-[a-z]+)?),|([a-z]+\-[a-z]+);#i', $language, $matches))
+            {
+                # zh-CN,zh;q=0.8,zh-TW;q=0.6
                 $accept_language    = $matches[0];
                 $accept_language    = array_values(array_slice($accept_language, 0, 2));    //只取前2个语言设置
                 $accept_language[0] = strtolower(rtrim($accept_language[0], ';,'));
@@ -305,6 +325,11 @@ abstract class Core_I18n
 
         self::$accept_language = $accept_language;
 
+        if (IS_DEBUG)
+        {
+            Core::debug()->info(self::$accept_language, 'language');
+        }
+
         return self::$accept_language;
     }
 
@@ -318,13 +343,16 @@ abstract class Core_I18n
         if (self::$core_initialized)
         {
             $accept_language = I18n::accept_language();
-            $include_path    = array_reverse(Core::$include_path);
+            $include_path    = Core::include_path();
         }
         else
         {
             $accept_language = self::accept_language();
-            $include_path    = array_reverse(Bootstrap::$include_path);
+            $include_path    = Bootstrap::include_path();
         }
+
+        $accept_language = array_reverse($accept_language);
+        $include_path    = array_reverse($include_path);
 
         $found = array
         (
@@ -332,20 +360,16 @@ abstract class Core_I18n
             'last_mtime' => 0,          // 最后修改时间
         );
 
-        foreach ($include_path as $libs)
+        foreach ($include_path as $path)
         {
-            $libs = array_reverse($libs);
-            foreach ($libs as $path)
+            foreach($accept_language as $lang)
             {
-                foreach($accept_language as $lang)
-                {
-                    $file = $path .'i18n'. DS . $lang .'.lang';
+                $file = $path .'i18n'. DS . $lang .'.lang';
 
-                    if (is_file($file))
-                    {
-                        $found['files'][]    = $file;
-                        $found['last_mtime'] = max($found['last_mtime'], filemtime($file));
-                    }
+                if (is_file($file))
+                {
+                    $found['files'][]    = $file;
+                    $found['last_mtime'] = max($found['last_mtime'], filemtime($file));
                 }
             }
         }
@@ -377,7 +401,7 @@ abstract class Core_I18n
 
             $item = explode('=', str_replace(array('\\n', "\\'", '\\"'), array("\n", "'", '"'),$item), 2);
 
-            $rs[strtolower(trim($item[0]))] = trim($item[1]);
+            $rs[strtolower(trim($item[0]))] = isset($item[1]) ? trim($item[1]) : '';
         }
 
         return $rs;

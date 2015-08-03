@@ -15,7 +15,7 @@ class Library_MyQEE_Develop_Controller_Assets_Dev extends Controller
      *
      * @var string
      */
-    public $allow_suffix = 'js|css|jpg|jpeg|png|gif|bmp|json|pdf|tpl|html|htm|mp4|swf|eot|svg|ttf|woff|map';
+    public $allow_suffix = 'js|css|jpg|jpeg|png|gif|bmp|json|pdf|tpl|html|htm|mp4|swf|eot|svg|ttf|woff|woff2|map';
 
     /**
      * 文件名
