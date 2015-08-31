@@ -851,7 +851,11 @@ class Module_OOP_ORM_Data implements JsonSerializable
 
                         if ($key = $this->get_key_by_field_name($a_field))
                         {
+                            # 避免key无法设置的问题
+                            $old_orm_data_is_created = $this->_orm_data_is_created;
+                            $this->_orm_data_is_created = false;
                             $this->$key = $id;
+                            $this->_orm_data_is_created = $old_orm_data_is_created;
                         }
                     }
 
@@ -1114,10 +1118,14 @@ class Module_OOP_ORM_Data implements JsonSerializable
 
         try
         {
-            if (count($data) > 0)
+            if (count($data) > 1)
             {
                 # 含有meta数据
                 $meta_data = $data;
+
+                # 将主表数据移除
+                unset($meta_data[$this->tablename()]);
+
                 if ($this->finder()->driver()->transaction_class_name())
                 {
                     $sup_tr = true;
@@ -1132,9 +1140,6 @@ class Module_OOP_ORM_Data implements JsonSerializable
                     $tr = $this->finder()->driver()->transaction();
                     $tr->start();
                 }
-
-                # 将主表数据移除
-                unset($meta_data[$this->tablename()]);
             }
             else
             {

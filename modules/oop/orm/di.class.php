@@ -111,6 +111,11 @@ abstract class Module_OOP_ORM_DI
             $this->config = array();
         }
 
+        if (!isset($this->config['is_virtual']))
+        {
+            $this->config['is_virtual'] = false;
+        }
+
         if (isset($this->config['field']) && $this->config['field'])
         {
             $this->field_name = $this->config['field_name'] = $this->config['field'];
@@ -148,6 +153,10 @@ abstract class Module_OOP_ORM_DI
         {
             $this->config['pk'] = (bool)$this->config['is_id_field'];
             unset($this->config['is_id_field']);
+        }
+        elseif (!isset($this->config['pk']))
+        {
+            $this->config['pk'] = false;
         }
 
         # 处理缓存配置
