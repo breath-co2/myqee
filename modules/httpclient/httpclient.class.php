@@ -86,10 +86,10 @@ class Module_HttpClient
      */
     protected static function is_support_curl()
     {
-        static $s = null;
-        if (null === $s)$s = function_exists('curl_init');
+        static $run = null;
+        if (null === $run)$run = function_exists('curl_init');
 
-        return $s;
+        return $run;
     }
 
     /**

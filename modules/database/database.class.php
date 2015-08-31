@@ -828,7 +828,7 @@ class Module_Database extends Database_QueryBuilder
     {
         static $slow_query_m_time = null;
 
-        if (null===$slow_query_m_time)
+        if (null === $slow_query_m_time)
         {
             if (IS_CLI)
             {

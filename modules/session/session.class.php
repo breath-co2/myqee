@@ -179,7 +179,7 @@ class Module_Session
         $_SESSION = array();
         Session::$driver->destroy();
         Session::$member   = null;
-        Session::$driver    = null;
+        Session::$driver   = null;
         Session::$instance = null;
     }
 
@@ -195,7 +195,7 @@ class Module_Session
         if ($member->id > 0)
         {
             # 设置用户数据
-            $member_data        = $member->get_field_data();
+            $member_data        = $member->get_all_field_data();
             $_SESSION['member'] = $member_data;
         }
         else
@@ -303,8 +303,8 @@ class Module_Session
     /**
      * 保持闪存SESSION数据不销毁
      *
-     * @param   string  variable key(s)
-     * @return  void
+     * @param  string $keys variable key(s)
+     * @return void
      */
     public function keep_flash($keys = null)
     {
@@ -464,7 +464,7 @@ class Module_Session
      */
     public static function check_session_id($sid)
     {
-        if (strlen($sid)!=32)return false;
+        if (strlen($sid) !== 32)return false;
         if (!preg_match('/^[a-fA-F\d]{32}$/', $sid))return false;
 
         $mt_str = substr($sid, 0, 28);
@@ -500,7 +500,7 @@ class Module_Session
         if (Session::$member && Session::$member->id>0)
         {
             # 设置用户数据
-            $member_data = Session::$member->get_field_data();
+            $member_data = Session::$member->get_all_field_data();
 
             $_SESSION['member'] = $member_data;
         }

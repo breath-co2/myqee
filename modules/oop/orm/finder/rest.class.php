@@ -52,6 +52,21 @@ class Module_OOP_ORM_Finder_REST extends OOP_ORM
      */
     protected $_default_method = null;
 
+    function __construct($api_url = null)
+    {
+        if (null !== $api_url)
+        {
+            $this->api_url = $api_url;
+        }
+
+        if (null === $this->api_url)
+        {
+            throw new Exception(__('orm api_url is not declared.'));
+        }
+
+        parent::__construct();
+    }
+
     /**
      * 设置，获取REST的类型
      *
@@ -62,9 +77,9 @@ class Module_OOP_ORM_Finder_REST extends OOP_ORM
      */
     public function method($method = null)
     {
-        if (null===$method)return $this->method;
+        if (null === $method)return $this->method;
 
-        if (null===$this->_default_method)
+        if (null === $this->_default_method)
         {
             $this->_default_method = $this->method;
         }
@@ -78,7 +93,7 @@ class Module_OOP_ORM_Finder_REST extends OOP_ORM
     /**
      * 获取数据
      *
-     * @param $query 请求的参数
+     * @param string $query 请求的参数
      * @return OOP_ORM_Result
      */
     public function find($query = null)
@@ -88,25 +103,25 @@ class Module_OOP_ORM_Finder_REST extends OOP_ORM
             throw new Exception(__('orm api url is not declared.'));
         }
 
-        $url = $this->parse_api_fullurl($query);
+        $url = $this->parse_api_full_url($query);
 
         try
         {
-            if ($this->method=='POST')
+            if ($this->method === 'POST')
             {
                 $rs = (string)$this->driver()->post($url, $this->parse_api_post_data($query));
             }
-            else if ($this->method=='PUT')
+            else if ($this->method === 'PUT')
             {
                 $rs = (string)$this->driver()->put($url, $this->parse_api_post_data($query));
             }
-            else if ($this->method=='DELETE')
+            else if ($this->method === 'DELETE')
             {
                 $rs = (string)$this->driver()->delete($url);
             }
             else
             {
-                if ($this->method!='GET')
+                if ($this->method !== 'GET')
                 {
                     $this->driver()->method($this->method);
                 }
@@ -116,7 +131,7 @@ class Module_OOP_ORM_Finder_REST extends OOP_ORM
         }
         catch (Exception $e)
         {
-            Core::debug()->warn('ORM获取数据失败,URL:' . $url);
+            Core::debug()->error($url, 'ORM获取数据失败');
             $rs = '[]';
         }
 
@@ -137,7 +152,7 @@ class Module_OOP_ORM_Finder_REST extends OOP_ORM
      * @param string $query
      * @param string
      */
-    protected function parse_api_fullurl($query = null)
+    protected function parse_api_full_url($query = null)
     {
         $url = $this->api_url;
 
@@ -150,7 +165,7 @@ class Module_OOP_ORM_Finder_REST extends OOP_ORM
 
             $url .= (strpos($this->api_url, '?') === false ? '?' : '&') . $query;
         }
-        else if ($this->method!='POST' && $this->method!='PUT')
+        else if ($this->method !== 'POST' && $this->method !== 'PUT')
         {
             $url .= (strpos($this->api_url, '?') === false ? '?' : '&') . http_build_query($this->arguments, '', '&');
         }
@@ -192,7 +207,8 @@ class Module_OOP_ORM_Finder_REST extends OOP_ORM
      */
     public function driver()
     {
-        if (null===$this->_driver)$this->_driver = HttpClient::factory();
+        if (null === $this->_driver)$this->_driver = HttpClient::factory();
+
         return $this->_driver;
     }
 
@@ -200,10 +216,10 @@ class Module_OOP_ORM_Finder_REST extends OOP_ORM
     /**
      * 设置查询条件
      *
-     * @param   mixed   column name or array($column, $alias) or object
-     * @param   string  logic operator
-     * @param   mixed   column value
-     * @return  OOP_ORM_Finder_REST
+     * @param   mixed  $column column name or array($column, $alias) or object
+     * @param   string $value logic operator
+     * @param   mixed  $op column value
+     * @return  $this
      */
     public function where($column, $value = null, $op = '=')
     {
@@ -217,7 +233,7 @@ class Module_OOP_ORM_Finder_REST extends OOP_ORM
      *
      * @param string $key
      * @param array $value
-     * @return OOP_ORM_Finder_REST
+     * @return $this
      */
     public function in($column, $value, $no_in = false)
     {
@@ -228,13 +244,34 @@ class Module_OOP_ORM_Finder_REST extends OOP_ORM
     /**
      * 排序
      *
-     * @param   mixed   column name or array($column, $alias) or object
-     * @param   string  direction of sorting
-     * @return  OOP_ORM_Finder_REST
+     * @param   mixed  $column column name or array($column, $alias) or object
+     * @param   string $direction direction of sorting
+     * @return  $this
      */
     public function order_by($column, $direction = 'ASC')
     {
         $this->arguments['order'][] = array($column, $direction);
+        return $this;
+    }
+
+    /**
+     * group_by(c1,c2,c3,.....)
+     *
+     * @param   mixed $columns  column name or array($column, $alias) or object
+     * @param   ...
+     * @return  $this
+     */
+    public function group_by($columns)
+    {
+        if (!$this->arguments['group_by'])
+        {
+            $this->arguments['group_by'] = func_get_args();
+        }
+        else
+        {
+            $this->arguments['group_by'] = array_merge($this->arguments['group_by'], func_get_args());
+        }
+
         return $this;
     }
 
@@ -245,7 +282,7 @@ class Module_OOP_ORM_Finder_REST extends OOP_ORM
      * @param string $data
      * @return array
      */
-    protected function parse_result_data(&$data)
+    protected function parse_result_data(& $data)
     {
         $data = @json_decode($data, true);
     }
@@ -264,5 +301,22 @@ class Module_OOP_ORM_Finder_REST extends OOP_ORM
         }
 
         $this->arguments = array();
+    }
+
+    public function load_metadata(OOP_ORM_Data $obj, $table_name, $meta_group = null)
+    {
+        throw new Exception('no support.');
+    }
+
+    /**
+     * 加载对应数据库所有元数据
+     *
+     * @param OOP_ORM_Data $obj
+     * @return $this
+     * @throws Exception
+     */
+    public function load_all_metadata(OOP_ORM_Data $obj)
+    {
+        throw new Exception('no support.');
     }
 }
