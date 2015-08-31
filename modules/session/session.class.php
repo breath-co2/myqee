@@ -179,7 +179,7 @@ class Module_Session
         $_SESSION = array();
         Session::$driver->destroy();
         Session::$member   = null;
-        Session::$driver    = null;
+        Session::$driver   = null;
         Session::$instance = null;
     }
 
@@ -303,8 +303,8 @@ class Module_Session
     /**
      * 保持闪存SESSION数据不销毁
      *
-     * @param   string  variable key(s)
-     * @return  void
+     * @param  string $keys variable key(s)
+     * @return void
      */
     public function keep_flash($keys = null)
     {
@@ -464,7 +464,7 @@ class Module_Session
      */
     public static function check_session_id($sid)
     {
-        if (strlen($sid)!=32)return false;
+        if (strlen($sid) !== 32)return false;
         if (!preg_match('/^[a-fA-F\d]{32}$/', $sid))return false;
 
         $mt_str = substr($sid, 0, 28);
