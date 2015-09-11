@@ -273,16 +273,12 @@ abstract class Core_I18n
                     $accept_language = array(strtolower($language));
                 }
             }
-            else if ($language && preg_match_all('#([a-z]+(?:\-[a-z]+)?),|([a-z]+\-[a-z]+);#i', $language, $matches))
+            elseif ($language)
             {
-                # zh-CN,zh;q=0.8,zh-TW;q=0.6
-                $accept_language    = $matches[0];
-                $accept_language    = array_values(array_slice($accept_language, 0, 2));    //只取前2个语言设置
-                $accept_language[0] = strtolower(rtrim($accept_language[0], ';,'));
-                if (isset($accept_language[1]))
-                {
-                    $accept_language[1] = strtolower(rtrim($accept_language[1], ';,'));
-                }
+                $language = strtolower(trim(str_replace(',', ';', preg_replace('#(,)?q=[0-9\.]+(,)?#', '', $language)), ';'));
+
+                $accept_language = explode(';', $language);
+                $accept_language = array_values(array_slice($accept_language, 0, 4));    //只取前4个语言设置
             }
 
             if (self::$core_initialized && ($default_lang = Core::config('default_lang')) && !in_array($default_lang, $accept_language))
