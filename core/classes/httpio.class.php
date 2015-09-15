@@ -614,7 +614,7 @@ abstract class Core_HttpIO
      */
     public static function redirect($url, $code = 302)
     {
-        if (strpos($url, '://')===true)
+        if ($url[0] !== '/' && strpos($url, '://') === false)
         {
             // Make the URI into a URL
             $url = Core::url($url);
