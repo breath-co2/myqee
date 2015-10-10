@@ -311,7 +311,7 @@ abstract class Module_OOP_ORM_DI
             # 数据相同
             return false;
         }
-        elseif ((is_string($current_compiled_data) || is_numeric($current_compiled_data)) && ((string)$current_data === (string)$current_compiled_data || (string)$current_raw_compiled_data === (string)$current_compiled_data))
+        elseif ((is_string($current_compiled_data) || is_numeric($current_compiled_data)) && (((string)$current_data === (string)$current_compiled_data && $current_data !== null) || (string)$current_raw_compiled_data === (string)$current_compiled_data))
         {
             return false;
         }
