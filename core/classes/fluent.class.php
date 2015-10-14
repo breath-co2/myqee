@@ -28,6 +28,13 @@ class Core_Fluent
     const USLEEP_WAIT = 1000;
 
     /**
+     * 是否开启ACK
+     *
+     * @var bool
+     */
+    const REQUIRE_ACK_RESPONSE = true;
+
+    /**
      * backoff strategies: default usleep
      *
      * attempts | wait
@@ -54,16 +61,20 @@ class Core_Fluent
 
     protected $is_http = false;
 
+    protected $data = [];
+
     protected $options = array
     (
-        "socket_timeout"     => self::SOCKET_TIMEOUT,
-        "connection_timeout" => self::CONNECTION_TIMEOUT,
-        "backoff_mode"       => self::BACKOFF_TYPE_USLEEP,
-        "backoff_base"       => 3,
-        "usleep_wait"        => self::USLEEP_WAIT,
-        "persistent"         => true,
-        "retry_socket"       => true,
-        "max_write_retry"    => self::MAX_WRITE_RETRY,
+        'socket_timeout'       => self::SOCKET_TIMEOUT,
+        'connection_timeout'   => self::CONNECTION_TIMEOUT,
+        'backoff_mode'         => self::BACKOFF_TYPE_USLEEP,
+        'backoff_base'         => 3,
+        'usleep_wait'          => self::USLEEP_WAIT,
+        'persistent'           => true,
+        'retry_socket'         => true,
+        'max_write_retry'      => self::MAX_WRITE_RETRY,
+        'require_ack_response' => self::REQUIRE_ACK_RESPONSE,
+        'max_buffer_length'    => 1000,
     );
 
     /**
@@ -71,7 +82,7 @@ class Core_Fluent
      */
     protected static $instance = array();
 
-    function __construct($server)
+    function __construct($server, array $option = array())
     {
         $this->transport = $server;
 
@@ -95,6 +106,11 @@ class Core_Fluent
         {
             throw new Exception("fluent config error");
         }
+
+        if ($option)
+        {
+            $this->options($option);
+        }
     }
 
     /**
@@ -104,6 +120,15 @@ class Core_Fluent
      */
     public function __destruct()
     {
+        if ($this->data)
+        {
+            # 把遗留的数据全部推送完毕
+            foreach (array_keys($this->data) as $tag)
+            {
+                $this->push($tag);
+            }
+        }
+
         if (!$this->get_option('persistent', false) && is_resource($this->socket))
         {
             @fclose($this->socket);
@@ -126,38 +151,110 @@ class Core_Fluent
     }
 
     /**
-     * post implementation
+     * 添加数据，添加完毕后并不直接推送
      *
-     * @param string $tag
-     * @param array $data
-     * @return bool
-     * @throws Exception
+     * 当开启ack后，推荐先批量 add 后再push，当超过 max_buffer_length 后会自动推送到服务器
+     *
+     *      $fluent = new Fluent('tcp://127.0.0.1:24224/');
+     *      $fluent->add('debug.test1', array('a' => 1));
+     *      $fluent->add('debug.test2', array('a' => 2));
+     *      $fluent->add('debug.test1', array('a' => 1));
+     *
+     *      var_dump($fluent->push('debug.test1'));
+     *      var_dump($fluent->push('debug.test2'));
+     *
+     * @param string $tag tag内容
+     * @param array $data 数据内容
+     * @param int $time 标记日志的时间戳，不设置就是当前时间
      */
-    public function push($tag, $data)
+    public function add($tag, array $data, $time = null)
+    {
+        $this->_add($tag, $data, $time);
+
+        if (count($this->data[$tag]) >= $this->options['max_buffer_length'])
+        {
+            return $this->push($tag);
+        }
+
+        return true;
+    }
+
+    protected function _add($tag, $data, $time)
     {
         if ($this->is_http)
         {
-            return $this->push_with_http($tag, $data);
+            if (!isset($data['time']))
+            {
+                $data['time'] = $time ? $time : time();
+            }
+            $this->data[$tag][] = $data;
         }
         else
         {
-            return $this->push_with_socket($tag, $data);
+            $this->data[$tag][] = array($time ? $time : time(), $data);
         }
     }
 
-    protected function push_with_http($tag, $data)
+    /**
+     * 推送数据到服务器
+     *
+     * @param string $tag tag内容
+     * @param array $data 数据内容
+     * @param int $time 标记日志的时间戳，不设置就是当前时间
+     * @return bool
+     * @throws Exception
+     */
+    public function push($tag, $data = null, $time = null)
     {
-        $packed  = Core::json_encode($data);
-        $url     = $this->transport .'/'. $tag .'?json='. urlencode($packed);
+        if ($data)
+        {
+            $this->_add($tag, $data, $time);
+        }
+
+        if ($this->data[$tag] || !$this->data[$tag])return true;
+
+        if ($this->is_http)
+        {
+            $rs = $this->push_with_http($tag, $time);
+        }
+        else
+        {
+            $rs = $this->push_with_socket($tag);
+        }
+
+        if ($rs)
+        {
+            unset($this->data[$tag]);
+        }
+
+        return $rs;
+    }
+
+    protected function push_with_http($tag, $time)
+    {
+        $packed  = self::json_encode($this->data[$tag]);
+        $url     = $this->transport .'/'. $tag .'?time='. ($time ? $time : time()) .'&json='. urlencode($packed);
 
         $ret = file_get_contents($url);
 
         return ($ret !== false && $ret === '');
     }
 
-    protected function push_with_socket($tag, $data)
+    protected function push_with_socket($tag)
     {
-        $buffer = $packed = Core::json_encode(array($tag, time(), $data));
+        $data = $this->data[$tag];
+
+        if ($ack = $this->get_option('require_ack_response'))
+        {
+            $ack_key = 'a'. (microtime(1) * 10000);
+            $buffer = $packed = self::json_encode(array($tag, $data, array('chunk' => $ack_key)));
+        }
+        else
+        {
+            $ack_key = null;
+            $buffer = $packed = self::json_encode(array($tag, $data));
+        }
+
         $length = strlen($packed);
         $retry  = $written = 0;
 
@@ -214,6 +311,11 @@ class Core_Fluent
                             /* breaking pipes: we have to close socket manually */
                             $this->close();
                             $this->reconnect();
+
+                            # 断开后重新连上后从头开始写，避免出现 incoming chunk is broken 的错误问题
+                            $written = 0;
+                            $buffer = $packed;
+                            continue;
                         }
                         else if (isset($errors['message']) && strpos($errors['message'], 'errno=11 ') !== false)
                         {
@@ -239,6 +341,35 @@ class Core_Fluent
 
                 $written += $nwrite;
                 $buffer   = substr($packed, $written);
+            }
+
+            if ($ack)
+            {
+                $rs = @fread($this->socket, 25);
+                if ($rs)
+                {
+                    $rs = @json_decode($rs, true);
+                    if ($rs && isset($rs['ack']))
+                    {
+                        if ($rs['ack'] !== $ack_key)
+                        {
+                            $this->process_error($tag, $data, 'ack in response and chunk id in sent data are different');
+                            return false;
+                        }
+                        else
+                        {
+                            return true;
+                        }
+                    }
+                    else
+                    {
+                        return false;
+                    }
+                }
+                else
+                {
+                    return false;
+                }
             }
         }
         catch (Exception $e)
@@ -323,6 +454,22 @@ class Core_Fluent
     }
 
     /**
+     * 设置，获取参数
+     *
+     * @param array $option
+     * @return array
+     */
+    public function options(array $option = array())
+    {
+        if ($option)
+        {
+            $this->options = array_merge($this->options, $option);
+        }
+
+        return $this->options;
+    }
+
+    /**
      * get specified option's value
      *
      * @param      $key
@@ -361,5 +508,18 @@ class Core_Fluent
     protected function process_error($tag, $data, $error)
     {
         error_log(sprintf("%s %s: %s", $error, $tag, json_encode($data)));
+    }
+
+    protected static function json_encode(array $data)
+    {
+        try
+        {
+            // 解决使用 JSON_UNESCAPED_UNICODE 偶尔会出现编码问题导致json报错
+            return defined('JSON_UNESCAPED_UNICODE') ? json_encode($data, JSON_UNESCAPED_UNICODE) : json_encode($data);
+        }
+        catch (Exception $e)
+        {
+            return json_encode($data);
+        }
     }
 }
