@@ -35,7 +35,7 @@ class OOP_ORM_DI_ORM extends OOP_ORM_DI
             Core::debug()->info($this->key, 'orm key');
             Core::debug()->warn($this->config, 'orm config');
 
-            throw new Exception('Unknown ORM');
+            throw new Exception('Unknown ORM, class '. $this->class_name .', key '. $this->key);
         }
 
         # 设置为ORM时，data, object, format 配置将无效

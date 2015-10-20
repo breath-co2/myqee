@@ -58,9 +58,15 @@ class OOP_ORM_DI_Default extends OOP_ORM_DI
      */
     public function & get_data(OOP_ORM_Data $obj, & $data, & $compiled_data, & $compiled_raw_data)
     {
-        if ($this->field_name && isset($data[$this->field_name]))
+        $field_name = $this->field_name;
+        if (null === $field_name && array_key_exists($this->key, $data))
         {
-            $tmp_data = $data[$this->field_name];
+            $field_name = $this->key;
+        }
+
+        if ($field_name && isset($data[$field_name]))
+        {
+            $tmp_data = $data[$field_name];
 
             # 处理格式化数据
             if (isset($this->config['format']))

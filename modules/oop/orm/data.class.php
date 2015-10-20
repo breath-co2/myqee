@@ -1458,6 +1458,11 @@ class Module_OOP_ORM_Data implements JsonSerializable
             }
         }
 
+        if (!$group_id && !in_array($this, $data))
+        {
+            $data[] = $this;
+        }
+
         return $data;
     }
 
