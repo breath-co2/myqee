@@ -1313,18 +1313,101 @@ class Module_OOP_ORM_Data implements JsonSerializable
     {
         if (!array_key_exists($key, $this->_compiled_data))return false;
 
-        $di      = $this->_get_di_by_key($key);
-        $data    = isset($this->_data[$key])?$this->_data[$key] : null;
-        $c_value = $this->_compiled_data[$key];
-        $r_value = isset($this->_raw_compiled_data[$key])?$this->_raw_compiled_data[$key] : null;
+        $di = $this->_get_di_by_key($key);
 
-        # 通过DI控制器来判断，虚拟字段不用判断，实际字段会判断
-        if ($di->check_data_is_change($this, $key, $data, $c_value, $r_value))
+        $current_data              = isset($this->_data[$key])?$this->_data[$key] : null;
+        $current_compiled_data     = $this->_compiled_data[$key];
+        $current_raw_compiled_data = isset($this->_raw_compiled_data[$key])?$this->_raw_compiled_data[$key] : null;
+
+        if ($current_data === $current_compiled_data)
         {
-            return true;
+            # 数据相同
+            return false;
         }
-
-        return false;
+        elseif ($current_raw_compiled_data === $current_compiled_data)
+        {
+            if ($current_raw_compiled_data === null && !array_key_exists($key, $this->_raw_compiled_data))
+            {
+                # 已经被删除的数据
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+        elseif ((is_string($current_compiled_data) || is_numeric($current_compiled_data)) && (((string)$current_data === (string)$current_compiled_data && $current_data !== null) || (string)$current_raw_compiled_data === (string)$current_compiled_data))
+        {
+            return false;
+        }
+        elseif (!$di->is_metadata() && !$di->field_name() && null === $current_compiled_data)
+        {
+            # 没有字段名，数据也是空
+            return false;
+        }
+        elseif (is_object($current_compiled_data))
+        {
+            if ($current_compiled_data !== $current_raw_compiled_data)
+            {
+                # 不是同一个对象
+                return true;
+            }
+            elseif ($current_compiled_data instanceof OOP_ORM_Data)
+            {
+                # ORM 数据
+                return $current_compiled_data->is_changed($key);
+            }
+            elseif ($current_compiled_data == $current_raw_compiled_data)
+            {
+                # 同一个类型
+                $config = $di->config();
+                if (isset($config['callback']['is_change']) && ($method = $config['callback']['is_change']) && method_exists($current_compiled_data, $method))
+                {
+                    # 回调是否修改过
+                    return $current_compiled_data->$method();
+                }
+                elseif (isset($config['callback']['get_object_id']) && ($method = $config['callback']['get_object_id']) && method_exists($current_compiled_data, $method))
+                {
+                    # 回调对象ID
+                    return (($id = $current_compiled_data->$method()) && $id === $current_raw_compiled_data->$method()) ? false : true;
+                }
+                elseif (isset($config['callback']['get_data']) && ($method = $config['callback']['get_data']) && method_exists($current_compiled_data, $method))
+                {
+                    # 回调获取数据
+                    return $current_compiled_data->$method() !== $current_raw_compiled_data->$method() ? true : false;
+                }
+                elseif ($current_compiled_data instanceof stdClass || $current_compiled_data instanceof ArrayObject || $current_compiled_data instanceof ArrayIterator)
+                {
+                    # 通过数组进行对比
+                    return (array)$current_compiled_data !== (array)$current_raw_compiled_data ? true: false;
+                }
+                elseif (method_exists($current_compiled_data, '__toString'))
+                {
+                    # 回调获取数据
+                    return $current_compiled_data->__toString() !== $current_raw_compiled_data->__toString() ? true : false;
+                }
+                elseif (method_exists($current_compiled_data, 'getArrayCopy'))
+                {
+                    # 回调获取数据
+                    return $current_compiled_data->getArrayCopy() !== $current_raw_compiled_data->getArrayCopy() ? true : false;
+                }
+                else
+                {
+                    # 序列化成文本进行对比
+                    return serialize($current_compiled_data) !== serialize($current_raw_compiled_data)? true : false;
+                }
+            }
+            else
+            {
+                # 对象发生修改
+                return true;
+            }
+        }
+        else
+        {
+            # 使用旧数据进行对比
+            return $current_compiled_data === $current_raw_compiled_data ? false : true;
+        }
     }
 
     /**
