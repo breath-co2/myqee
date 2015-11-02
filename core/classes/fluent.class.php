@@ -211,7 +211,7 @@ class Core_Fluent
             $this->_add($tag, $data, $time);
         }
 
-        if ($this->data[$tag] || !$this->data[$tag])return true;
+        if (!isset($this->data[$tag]) || !$this->data[$tag])return true;
 
         if ($this->is_http)
         {
